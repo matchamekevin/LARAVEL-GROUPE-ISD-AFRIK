@@ -1,0 +1,65 @@
+.apropos-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 140px;
+    text-align: center;
+  }
+  
+  /* Titre principal */
+  .apropos-page h1 {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #172243;
+    margin-bottom: 20px;
+  }
+  
+  /* Paragraphe introductif */
+  .apropos-page p.intro {
+    color: #555;
+    font-size: 1.1rem;
+    margin-bottom: 40px;
+    line-height: 1.6;
+  }
+  
+  /* Grille des cartes */
+  .apropos-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  @media (min-width: 768px) {
+    .apropos-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  /* Carte */
+  .apropos-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 6px 20px rgba(23, 34, 67, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .apropos-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(251, 156, 8, 0.3);
+  }
+  
+  /* Titre de carte */
+  .apropos-card h2 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #172243;
+    margin-bottom: 10px;
+  }
+  
+  /* Texte de carte */
+  .apropos-card p {
+    color: #666;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  

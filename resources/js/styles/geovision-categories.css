@@ -1,0 +1,1015 @@
+/* Grille de catégories Geovision
+   Usage: <div class="geovision-categories-grid"> ... </div>
+*/
+
+/* GeoVision Presentation Section */
+.geovision-presentation {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  max-width: 1200px;
+  margin: 0 auto 50px;
+  padding: 40px;
+  background: linear-gradient(135deg, #f8fbff, #ffffff);
+  border-radius: 16px;
+  border: 1px solid rgba(23, 34, 67, 0.1);
+}
+
+.geovision-logo-section {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.geovision-logo {
+  max-width: 200px;
+  height: auto;
+  filter: drop-shadow(0 4px 8px rgba(23, 34, 67, 0.1));
+}
+
+.geovision-intro {
+  flex: 1;
+}
+
+.geovision-intro h2 {
+  margin: 0 0 16px 0;
+  color: #172243;
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.geovision-intro p {
+  margin: 0;
+  color: #475569;
+  font-size: 1rem;
+  line-height: 1.7;
+  text-align: justify;
+}
+
+/* Responsive GeoVision Presentation */
+@media (max-width: 768px) {
+  .geovision-presentation {
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+    margin-bottom: 30px;
+  }
+  
+  .geovision-logo {
+    max-width: 150px;
+  }
+  
+  .geovision-intro h2 {
+    font-size: 1.4rem;
+  }
+  
+  .geovision-intro p {
+    font-size: 0.95rem;
+    text-align: left;
+  }
+}
+
+@media (max-width: 480px) {
+  .geovision-presentation {
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .geovision-logo {
+    max-width: 120px;
+  }
+  
+  .geovision-intro h2 {
+    font-size: 1.2rem;
+  }
+  
+  .geovision-intro p {
+    font-size: 0.9rem;
+  }
+}
+
+.geovision-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.geovision-card {
+  position: relative;
+  background: linear-gradient(135deg, #ffffff, #f8fbff);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(23,34,67,0.08);
+  transition: all 0.32s cubic-bezier(0.23, 1, 0.32, 1);
+  cursor: pointer;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(23,34,67,0.06);
+}
+
+.geovision-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 14px 40px rgba(23,34,67,0.14);
+  border-color: rgba(251, 156, 8, 0.2);
+}
+
+/* Image container */
+.geovision-card-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f0f4f9, #e8eef7);
+}
+
+.geovision-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.geovision-card:hover .geovision-card-image img {
+  transform: scale(1.08);
+}
+
+/* Body content */
+.geovision-card-body {
+  padding: 24px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.geovision-card-body h3 {
+  margin: 0;
+  color: #172243;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.geovision-card-body p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  flex-grow: 1;
+}
+
+.geovision-card-body .btn-primary {
+  margin-top: 12px;
+  align-self: flex-start;
+  padding: 8px 16px;
+  background: linear-gradient(90deg, #172243, #223058);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.geovision-card-body .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(23,34,67,0.16);
+  background: linear-gradient(90deg, #fb9c08, #faa31a);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .geovision-categories-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .geovision-categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .geovision-card-body {
+    padding: 16px;
+  }
+  
+  .geovision-card-body h3 {
+    font-size: 1rem;
+  }
+  
+  .geovision-card-image {
+    aspect-ratio: 3/2;
+  }
+}
+
+@media (max-width: 480px) {
+  .geovision-categories-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* ========== PP-CONTAINER MODEL STYLES ========== */
+
+.pp-container {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.pp-hero {
+  padding: 48px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+}
+
+.pp-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.pp-heading-icon {
+  width: 36px;
+  height: 36px;
+  color: #fb9c08;
+  flex-shrink: 0;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pp-heading h2 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #172243;
+  line-height: 1.3;
+  letter-spacing: -0.5px;
+}
+
+/* Category Pills */
+.pp-category-pills {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.pp-category-pills::-webkit-scrollbar {
+  height: 6px;
+}
+
+.pp-category-pills::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 3px;
+}
+
+.pp-category-pills::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.pp-category-pills::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.pp-pill {
+  padding: 10px 20px;
+  border: 2px solid #e2e8f0;
+  background: white;
+  border-radius: 28px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.pp-pill:hover {
+  border-color: #fb9c08;
+  color: #fb9c08;
+  box-shadow: 0 2px 6px rgba(251, 156, 8, 0.15);
+}
+
+.pp-pill.is-active {
+  background: linear-gradient(135deg, #fb9c08, #faa31a);
+  border-color: #fb9c08;
+  color: white;
+  box-shadow: 0 4px 12px rgba(251, 156, 8, 0.3);
+}
+
+/* Search */
+.pp-search-wrap {
+  margin-bottom: 28px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.pp-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pp-search-icon {
+  position: absolute;
+  left: 16px;
+  width: 20px;
+  height: 20px;
+  color: #94a3b8;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.pp-search-input {
+  width: 100%;
+  max-width: 340px;
+  padding: 12px 16px 12px 44px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #1e293b;
+  font-weight: 500;
+  transition: all 0.25s ease;
+  background: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.pp-search-input:focus {
+  outline: none;
+  border-color: #fb9c08;
+  box-shadow: 0 0 0 3px rgba(251, 156, 8, 0.1), 0 2px 6px rgba(251, 156, 8, 0.15);
+}
+
+.pp-search-input::placeholder {
+  color: #cbd5e1;
+}
+
+.pp-search-btn {
+  padding: 12px 28px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+/* Filters */
+.pp-filters-wrap {
+  margin-bottom: 36px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pp-filters-mobile {
+  display: none;
+}
+
+.pp-filters-mobile-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.pp-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 2px solid #e2e8f0;
+  background: white;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.pp-filter-btn:hover {
+  border-color: #fb9c08;
+  color: #fb9c08;
+  box-shadow: 0 2px 6px rgba(251, 156, 8, 0.15);
+}
+
+.pp-filter-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pp-chevron {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.25s ease;
+  margin-left: 4px;
+}
+
+.pp-filter-btn:hover .pp-chevron {
+  transform: rotate(180deg);
+}
+
+.pp-filters-desktop {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.pp-filter-icon {
+  width: 22px;
+  height: 22px;
+  color: #94a3b8;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+  transition: color 0.25s ease;
+}
+
+.pp-filters-desktop:hover .pp-filter-icon {
+  color: #fb9c08;
+}
+
+.pp-filters-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pp-filters-row select {
+  padding: 10px 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  color: #1e293b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.pp-filters-row select:focus {
+  outline: none;
+  border-color: #fb9c08;
+  box-shadow: 0 0 0 3px rgba(251, 156, 8, 0.1);
+}
+
+.pp-filters-row select:hover {
+  border-color: #fb9c08;
+}
+
+.pp-count {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  margin-left: auto;
+  letter-spacing: 0.3px;
+}
+
+/* Grid and Cards */
+.pp-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.pp-card {
+  position: relative;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.pp-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  border-color: #fb9c08;
+}
+
+/* Image Wrap */
+.pp-image-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16/12;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f0f4f9 0%, #e8eef7 100%);
+  text-decoration: none;
+}
+
+.pp-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pp-card:hover .pp-image {
+  transform: scale(1.12);
+}
+
+.pp-image-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  transition: background 0.35s ease;
+}
+
+.pp-card:hover .pp-image-overlay {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* Badge */
+.pp-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #475569;
+  border-radius: 24px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.pp-badge--neuf {
+  background: linear-gradient(135deg, #fb9c08 0%, #faa31a 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 16px rgba(251, 156, 8, 0.3);
+}
+
+/* Image actions bar (fav + view overlaid on image) */
+.pp-img-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 12px;
+  background: linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 100%);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.28s ease, transform 0.28s ease;
+  z-index: 20;
+}
+
+.pp-card:hover .pp-img-actions {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Icon Buttons */
+.pp-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: rgba(255, 255, 255, 0.92);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  color: #374151;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(6px);
+  flex-shrink: 0;
+}
+
+.pp-icon-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pp-icon-btn:hover {
+  background: #fb9c08;
+  color: white;
+  box-shadow: 0 4px 14px rgba(251, 156, 8, 0.4);
+  transform: scale(1.1);
+}
+
+/* Card Body */
+.pp-body {
+  padding: 20px 22px 22px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pp-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #172243;
+  line-height: 1.4;
+  letter-spacing: -0.2px;
+}
+
+.pp-desc {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.55;
+  flex-grow: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Footer Row */
+.pp-footer-row {
+  display: flex;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.pp-add-btn {
+  width: 100%;
+  padding: 10px 18px;
+  background: #172243;
+  color: white;
+  border: 2px solid #172243;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.4px;
+}
+
+.pp-add-btn:hover {
+  background: transparent;
+  color: #fb9c08;
+  border-color: #fb9c08;
+  transform: translateY(-1px);
+}
+
+.pp-add-btn:active {
+  transform: translateY(0);
+}
+
+/* ========== RESPONSIVE PP-CONTAINER ========== */
+
+@media (max-width: 1024px) {
+  .pp-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+  
+  .pp-container {
+    padding: 0 16px;
+  }
+  
+  .pp-heading h2 {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 980px) {
+  .pp-hero {
+    padding: 36px 0;
+  }
+  
+  .pp-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+  
+  .pp-heading h2 {
+    font-size: 1.5rem;
+  }
+  
+  .pp-heading {
+    margin-bottom: 32px;
+  }
+  
+  .pp-filters-desktop {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .pp-filters-row {
+    width: 100%;
+  }
+  
+  .pp-filters-row select {
+    flex: 1;
+    min-width: 140px;
+  }
+  
+  .pp-count {
+    margin-left: 0;
+    margin-top: 10px;
+  }
+  
+  .pp-category-pills {
+    margin-bottom: 20px;
+  }
+  
+  .pp-search-input {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .pp-hero {
+    padding: 32px 0;
+  }
+  
+  .pp-heading {
+    margin-bottom: 28px;
+    gap: 12px;
+  }
+  
+  .pp-heading-icon {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .pp-heading h2 {
+    font-size: 1.4rem;
+  }
+  
+  .pp-category-pills {
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  
+  .pp-pill {
+    padding: 9px 18px;
+    font-size: 0.9rem;
+  }
+  
+  .pp-search {
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .pp-search-input {
+    max-width: 100%;
+    width: 100%;
+    padding: 11px 14px 11px 40px;
+  }
+  
+  .pp-search-icon {
+    left: 14px;
+    width: 18px;
+    height: 18px;
+  }
+  
+  .pp-search-btn {
+    width: 100%;
+    padding: 11px 20px;
+    font-size: 0.9rem;
+  }
+  
+  .pp-filters-mobile {
+    display: block;
+    width: 100%;
+  }
+  
+  .pp-filters-desktop {
+    display: none;
+  }
+  
+  .pp-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .pp-body {
+    padding: 18px;
+  }
+  
+  .pp-title {
+    font-size: 1rem;
+  }
+  
+  .pp-footer-row {
+    gap: 10px;
+    padding-top: 10px;
+  }
+  
+  .pp-add-btn {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .pp-hero {
+    padding: 24px 0;
+  }
+  
+  .pp-container {
+    padding: 0 14px;
+  }
+  
+  .pp-heading {
+    margin-bottom: 22px;
+  }
+  
+  .pp-heading-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .pp-heading h2 {
+    font-size: 1.25rem;
+  }
+  
+  .pp-category-pills {
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  
+  .pp-pill {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    border-radius: 20px;
+  }
+  
+  .pp-search-wrap {
+    margin-bottom: 18px;
+  }
+  
+  .pp-search {
+    width: 100%;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .pp-search-input {
+    max-width: 100%;
+    width: 100%;
+    font-size: 0.9rem;
+    padding: 10px 12px 10px 36px;
+  }
+  
+  .pp-search-icon {
+    left: 12px;
+    width: 16px;
+    height: 16px;
+  }
+  
+  .pp-search-btn {
+    width: 100%;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+  
+  .pp-filters-mobile {
+    display: block;
+    width: 100%;
+  }
+  
+  .pp-filters-desktop {
+    display: none;
+  }
+  
+  .pp-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  
+  .pp-body {
+    padding: 14px;
+    gap: 10px;
+  }
+  
+  .pp-title {
+    font-size: 0.95rem;
+  }
+  
+  .pp-image-wrap {
+    aspect-ratio: 4/3;
+  }
+  
+  .pp-icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .pp-icon-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .pp-count {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .pp-container {
+    padding: 0 12px;
+  }
+  
+  .pp-heading h2 {
+    font-size: 1.1rem;
+  }
+  
+  .pp-pill {
+    padding: 7px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .pp-grid {
+    gap: 12px;
+  }
+  
+  .pp-body {
+    padding: 12px;
+  }
+  
+  .pp-title {
+    font-size: 0.9rem;
+  }
+}

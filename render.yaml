@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: isd-afrik-backend
+    env: docker
+    plan: free
+    repo: https://github.com/your-username/your-repo
+    branch: main
+    dockerfilePath: Dockerfile.prod
+    buildCommand: ''
+    startCommand: ''
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: 'false'
+      - key: APP_KEY
+        value: ''
+      - key: APP_URL
+        value: ''
+  - type: postgres
+    name: isd-afrik-db
+    plan: free

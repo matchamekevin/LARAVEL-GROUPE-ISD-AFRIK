@@ -1,0 +1,806 @@
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "../styles/home.css";
+import "../styles/why-cards-grid.css";
+import "../styles/geovision-categories.css";
+import { getCategories, getProduits } from "../services/ProduitService";
+import ProduitCard from "../components/ProduitCard";
+import usePageMeta from "../hooks/usePageMeta";
+
+export default function Home() {
+  usePageMeta(
+    "Groupe ISD AFRIK | Solutions technologiques en Afrique de l'Ouest",
+    "Expert en solutions technologiques, securite electronique, logiciels professionnels et transformation digitale en Afrique de l'Ouest."
+  );
+  const navigate = useNavigate();
+  
+  const heroSlides = [
+    { src: "/images/home/hero-1.png", alt: "Ingénierie et innovation ISD AFRIK" },
+    { src: "/images/home/hero-2.png", alt: "Solutions sur mesure pour entreprises" },
+    { src: "/images/home/hero-3.png", alt: "Formation et accompagnement" },
+    { src: "/images/home/hero-4.png", alt: "Technologies avancées" },
+    { src: "/images/home/hero-5.png", alt: "Nos produits" },
+    { src: "/images/home/hero-6.png", alt: "Solutions digitales" },
+    { src: "/images/home/hero-7.png", alt: "Innovation continue" },
+    { src: "/images/home/hero-8.png", alt: "Expertise professionnelle" },
+  ];
+  const heroTexts = [
+    { title: "Expertise et savoir-faire technologique", subtitle: "Des experts qualifiés et une parfaite maîtrise du marché africain." },
+    { title: "Solutions technologiques sur mesure", subtitle: "Des solutions adaptées à vos objectifs, votre secteur et vos contraintes." },
+    { title: "Large gamme de produits et services", subtitle: "Sécurité électronique, logiciels professionnels et accompagnement digital." },
+    { title: "Présence régionale en Afrique de l'Ouest", subtitle: "Bénin, Togo, Niger, Côte d'Ivoire et Burkina Faso pour plus de proximité." },
+    { title: "Engagement fort dans la formation", subtitle: "Des parcours pratiques pour développer les compétences technologiques." },
+    { title: "Fiabilité, qualité et performance", subtitle: "Des technologies durables et reconnues pour vos opérations critiques." },
+    { title: "Accompagnement personnalisé", subtitle: "Conseil, déploiement, formation et support à chaque étape de vos projets." },
+    { title: "Innovation technologique continue", subtitle: "Des solutions numériques modernes pour accélérer votre transformation." },
+  ];
+  const [slideIndex, setSlideIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSlideIndex((prev) => (prev + 1) % heroSlides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const whyUs = [
+    { img: "/images/why/im1.png", title: "Expertise et savoir-faire", link: "/details/why/expertise-savoir-faire" },
+    { img: "/images/why/im2.png", title: "Solutions sur mesure", link: "/details/why/solutions-sur-mesure" },
+    { img: "/images/why/im3.png", title: "Large gamme de services", link: "/details/why/large-gamme-services" },
+    { img: "/images/why/im4.png", title: "Présence régionale et réactivité", link: "/details/why/presence-reactivite" },
+    { img: "/images/why/im5.png", title: "Engagement envers la formation", link: "/details/why/engagement-formation" },
+    { img: "/images/why/im6.png", title: "Fiabilité et qualité", link: "/details/why/fiabilite-qualite" },
+    { img: "/images/why/im7.png", title: "Accompagnement personnalisé", link: "/details/why/accompagnement-personnalise" },
+    { img: "/images/why/im8.png", title: "Innovation continue", link: "/details/why/innovation-continue" },
+  ];
+
+  const offers = [
+    {
+      title: "Gestion commerciale",
+      desc: "Motivation de l'équipe commerciale dans l'atteinte des objectifs.",
+      price: "Inscription ouverte",
+      icon: "fas fa-chart-line",
+      img: "/images/offers/offre1.jpg"
+    },
+    {
+      title: "Organisation administrative et financiere",
+      desc: "Conformité au SYSCOHADA révisé et meilleure organisation administrative.",
+      price: "Inscription ouverte",
+      icon: "fas fa-calculator",
+      img: "/images/offers/offre2.jpg"
+    },
+    {
+      title: "Paie et ressources humaines",
+      desc: "Maîtrise des outils RH, optimisation du personnel et conformité sociale.",
+      price: "Inscription ouverte",
+      icon: "fas fa-users-cog",
+      img: "/images/offers/offre3.jpg"
+    },
+  ];
+
+  const inscriptionLink = "/inscription";
+  const formationLink = "/formations";
+
+  // Noms des mois en français
+  const moisNoms = [
+    "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+  ];
+  const moisActuel = new Date().getMonth(); // 0-11
+  const nomMois = moisNoms[moisActuel];
+  const dernierJour = new Date(new Date().getFullYear(), moisActuel + 1, 0).getDate();
+
+  // Promotions dynamiques par mois
+  const promotionsParMois = {
+    0: [ // Janvier
+      { title: "Promo Nouvel An ERP", desc: "Commencez l'année avec -30% sur nos solutions ERP", icon: "fas fa-gift", badge: "-30%" },
+      { title: "Formation Rentrée", desc: "Formations professionnelles à -35% pour bien démarrer", icon: "fas fa-book-open", badge: "-35%" },
+      { title: "Pack Support Janvier", desc: "3 mois de support technique offerts pour tout nouveau contrat", icon: "fas fa-handshake", badge: "3 MOIS OFFERTS" },
+    ],
+    1: [ // Février
+      { title: "Promo Février ERP", desc: "Réduction de 20% sur nos solutions ERP ce mois-ci", icon: "fas fa-gift", badge: "-20%" },
+      { title: "Formation Duo", desc: "Inscrivez-vous à deux et bénéficiez de -50%", icon: "fas fa-book-open", badge: "-50% DUO" },
+      { title: "Pack Support Février", desc: "1 mois de support technique offert pour tout contrat", icon: "fas fa-handshake", badge: "1 MOIS OFFERT" },
+    ],
+    2: [ // Mars
+      { title: "Promo Mars ERP", desc: "Réduction de 25% sur nos solutions ERP pour toute souscription en mars", icon: "fas fa-gift", badge: "-25%" },
+      { title: "Mars Formation Étudiants", desc: "Formations professionnelles à -40% pour les étudiants", icon: "fas fa-book-open", badge: "-40%" },
+      { title: "Pack Support Mars", desc: "2 mois de support technique offerts pour tout nouveau contrat", icon: "fas fa-handshake", badge: "2 MOIS OFFERTS" },
+    ],
+    3: [ // Avril
+      { title: "Promo Printemps ERP", desc: "Offre de printemps : -20% sur toutes nos solutions ERP", icon: "fas fa-gift", badge: "-20%" },
+      { title: "Formation Express Avril", desc: "Formations accélérées à -30% ce mois-ci", icon: "fas fa-book-open", badge: "-30%" },
+      { title: "Pack Support Avril", desc: "2 mois de maintenance offerts sur tout projet", icon: "fas fa-handshake", badge: "2 MOIS OFFERTS" },
+    ],
+    4: [ // Mai
+      { title: "Promo Mai ERP", desc: "Solutions ERP à -35% pour booster votre productivité", icon: "fas fa-gift", badge: "-35%" },
+      { title: "Mai Formation Pro", desc: "Certifications professionnelles à -25%", icon: "fas fa-book-open", badge: "-25%" },
+      { title: "Pack Support Mai", desc: "Support premium offert pendant 3 mois", icon: "fas fa-handshake", badge: "3 MOIS OFFERTS" },
+    ],
+    5: [ // Juin
+      { title: "Promo Été ERP", desc: "Préparez l'été avec -30% sur nos solutions ERP", icon: "fas fa-gift", badge: "-30%" },
+      { title: "Formation Été Étudiants", desc: "Formations d'été à -45% pour les étudiants", icon: "fas fa-book-open", badge: "-45%" },
+      { title: "Pack Support Juin", desc: "1 mois de support offert + audit gratuit", icon: "fas fa-handshake", badge: "AUDIT OFFERT" },
+    ],
+    6: [ // Juillet
+      { title: "Promo Juillet ERP", desc: "Soldes d'été : -40% sur nos solutions ERP", icon: "fas fa-gift", badge: "-40%" },
+      { title: "Formation Vacances", desc: "Formez-vous pendant les vacances à -35%", icon: "fas fa-book-open", badge: "-35%" },
+      { title: "Pack Support Juillet", desc: "Support technique illimité pendant 2 mois", icon: "fas fa-handshake", badge: "2 MOIS OFFERTS" },
+    ],
+    7: [ // Août
+      { title: "Promo Août Rentrée", desc: "Anticipez la rentrée avec -25% sur nos ERP", icon: "fas fa-gift", badge: "-25%" },
+      { title: "Formation Pré-Rentrée", desc: "Préparez votre rentrée avec -30% sur les formations", icon: "fas fa-book-open", badge: "-30%" },
+      { title: "Pack Support Août", desc: "3 mois de support offerts pour les nouveaux clients", icon: "fas fa-handshake", badge: "3 MOIS OFFERTS" },
+    ],
+    8: [ // Septembre
+      { title: "Promo Rentrée ERP", desc: "Offre de rentrée : -30% sur toutes nos solutions", icon: "fas fa-gift", badge: "-30%" },
+      { title: "Formation Rentrée Pro", desc: "Formations certifiantes à -40% pour la rentrée", icon: "fas fa-book-open", badge: "-40%" },
+      { title: "Pack Support Septembre", desc: "2 mois de support premium offerts", icon: "fas fa-handshake", badge: "2 MOIS OFFERTS" },
+    ],
+    9: [ // Octobre
+      { title: "Promo Octobre ERP", desc: "Solutions ERP à -20% pour optimiser votre fin d'année", icon: "fas fa-gift", badge: "-20%" },
+      { title: "Formation Automne", desc: "Formations professionnelles à -35% en octobre", icon: "fas fa-book-open", badge: "-35%" },
+      { title: "Pack Support Octobre", desc: "1 mois de support offert + consultation gratuite", icon: "fas fa-handshake", badge: "CONSULT OFFERTE" },
+    ],
+    10: [ // Novembre
+      { title: "Promo Black Friday ERP", desc: "Offre exceptionnelle : -50% sur nos solutions ERP", icon: "fas fa-gift", badge: "-50%" },
+      { title: "Formation Black Friday", desc: "Toutes les formations à -45% ce mois-ci", icon: "fas fa-book-open", badge: "-45%" },
+      { title: "Pack Support Novembre", desc: "4 mois de support technique offerts", icon: "fas fa-handshake", badge: "4 MOIS OFFERTS" },
+    ],
+    11: [ // Décembre
+      { title: "Promo Fin d'Année ERP", desc: "Terminez l'année en beauté avec -35% sur nos ERP", icon: "fas fa-gift", badge: "-35%" },
+      { title: "Formation Noël", desc: "Offrez-vous une formation à -40% pour les fêtes", icon: "fas fa-book-open", badge: "-40%" },
+      { title: "Pack Support Décembre", desc: "3 mois de support offerts + bilan annuel gratuit", icon: "fas fa-handshake", badge: "BILAN OFFERT" },
+    ],
+  };
+
+  const promotions = promotionsParMois[moisActuel];
+  // Images for promotions with per-promo links (place your files in public/images/promotions/)
+  const promoImages = [
+    { src: "/images/promotions/promo9.jpeg", link: "/produits?categories=ingenierie" },
+    { src: "/images/promotions/promo10.jpeg", link: "/solutions" },
+    { src: "/images/promotions/promo6.jpeg", link: "/produits?categories=drone-formation" },
+    { src: "/images/promotions/promo4.jpeg", link: "/promotions/promo-4" },
+    { src: "/images/promotions/promo5.jpeg", link: "/promotions/promo-5" },
+    { src: "/images/promotions/promo6.jpeg", link: "/promotions/promo-6" },
+    { src: "/images/promotions/promo7.jpeg", link: "/promotions/promo-7" },
+    { src: "/images/promotions/promo8.jpeg", link: "/promotions/promo-8" },
+  ];
+
+  const [promoModalIndex, setPromoModalIndex] = useState(null);
+
+  // État pour gérer le formulaire d'avis (déclaré avant useEffect pour éviter TDZ)
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewData, setReviewData] = useState({
+    name: "",
+    role: "",
+    company: "",
+    text: "",
+    rating: 5
+  });
+
+  // Bloque le scroll de la page quand une modal est ouverte (promo ou review)
+  useEffect(() => {
+    const open = promoModalIndex !== null || showReviewForm;
+    if (open) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => { document.body.classList.remove('modal-open'); };
+  }, [promoModalIndex, showReviewForm]);
+
+  const [geovisionProducts, setGeovisionProducts] = useState([]);
+  const [geovisionLoading, setGeovisionLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    getCategories()
+      .then(async (res) => {
+        const cats = res.data?.data || res.data || [];
+        const filtered = cats.filter((c) => {
+          const segment = (c.segment || "").toLowerCase();
+          const image = (c.image || c.image_url || "").toLowerCase();
+          const slug = (c.slug || "").toLowerCase();
+          const name = (c.nom || "").toLowerCase();
+          return (
+            segment === "geovision" ||
+            image.includes("geovision") ||
+            slug.includes("geovision") ||
+            name.includes("geovision")
+          );
+        });
+        const ids = filtered.map((c) => c.id_categorie || c.id).filter(Boolean);
+        if (ids.length > 0) {
+          const resProd = await getProduits({ tri: "recent", par_page: 24 });
+          const items = resProd.data?.data || [];
+          const filteredProducts = items.filter((p) => ids.includes(p.id_categorie));
+          if (active) setGeovisionProducts(filteredProducts.slice(0, 6));
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setGeovisionProducts([]);
+        }
+      })
+      .finally(() => {
+        if (active) setGeovisionLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
+
+  // GeoVision : catégories principales pour la présentation (séparées)
+  const geovisionCategories = [
+    { title: "Caméras", desc: "Caméras professionnelles pour la surveillance et l'analyse vidéo.", image: "/images/geovision/cam1.png", link: "/geovision?filter=cameras-ip-thermiques" },
+    { title: "Contrôleur d'accès", desc: "Contrôleurs et lecteurs pour la gestion des accès sécurisés.", image: "/images/geovision/controleur1.png", link: "/geovision?filter=controle-d-acces" },
+    { title: "Enregistreurs", desc: "Enregistreurs (NVR/DVR) et solutions d'archivage pour la gestion vidéo.", image: "/images/geovision/nvr1.png", link: "/geovision?filter=enregistreurs-nvr" },
+    { title: "Solutions", desc: "Logiciels et services GeoVision : VMS, analytics et intégration.", image: "/images/geovision/solution1.png", link: "/geovision?filter=vms-analytics" },
+  ];
+
+  const sectors = [
+    { title: "Ingénierie informatique et industrielle", desc: "Développement, architecture système et automatisation", icon: "fas fa-laptop-code", link: "/details/sectors/ingenierie-informatique-industrielle" },
+    { title: "Solutions de gestion d'entreprise", desc: "ERP, CRM, BI et workflows adaptés à votre activité", icon: "fas fa-chart-line", link: "/details/sectors/solutions-gestion-entreprise" },
+    { title: "Formation professionnelle", desc: "Programmes certifiants et accompagnement personnalisé", icon: "fas fa-user-graduate", link: "/details/sectors/formation-professionnelle" },
+    { title: "Communication et publicité", desc: "Solutions de communication et systèmes TPE", icon: "fas fa-satellite-dish", link: "/details/sectors/communication-publicite" },
+    { title: "Fourniture de drone et formation en pilotage de drones", desc: "Équipements professionnels et formation complète", icon: "fas fa-helicopter", link: "/details/sectors/drones-pilotage" },
+    { title: "Développement d'application", desc: "Sites web, applications mobiles et solutions cloud", icon: "fas fa-rocket", link: "/details/sectors/developpement-application" },
+    { title: "Fourniture de TPE", desc: "Sécuriser les transactions et faciliter la gestion des encaissements", icon: "fas fa-cash-register", link: "/details/sectors/fourniture-tpe" },
+    { title: "BTP & Industrie", desc: "Solutions pour le secteur du bâtiment et de l'industrie", icon: "fas fa-hard-hat", link: "/details/sectors/btp-industrie" },
+  ];
+
+  const collaborators = [
+    { img: "/images/collaborateur/col1.jpg", name: "DEV 1" },
+    { img: "/images/collaborateur/col2.jpg", name: "DEV 2" },
+    { img: "/images/collaborateur/col3.jpg", name: "DEV 3" },
+    { img: "/images/collaborateur/col4.jpg", name: "DEV 4" },
+  ];
+
+  const testimonials = [
+  { 
+    name: "Plateforme Industrielle d’Adétikopé (PIA)", 
+    role: "Direction Générale", 
+    text: "Nous avons choisi ISD AFRIK pour accompagner notre développement industriel. Leur expertise digitale nous a permis de fluidifier nos processus et de renforcer notre compétitivité.", 
+    rating: 5, 
+    avatar: "/images/avis/pia.jpg",
+    company: "PIA"
+  },
+  { 
+    name: "CANAL+", 
+    role: "Direction Technique", 
+    text: "ISD AFRIK est un partenaire fiable qui comprend nos enjeux. Grâce à leurs solutions, nous avons amélioré l’expérience de nos abonnés et optimisé nos opérations internes.", 
+    rating: 5, 
+    avatar: "/images/avis/canal.jpg",
+    company: "CANAL+"
+  },
+  { 
+    name: "Hôtel Sarakawa", 
+    role: "Direction Hôtelière", 
+    text: "Avec ISD AFRIK, nous avons modernisé notre gestion et renforcé la satisfaction de nos clients. Leur accompagnement est un vrai atout pour l’hôtellerie.", 
+    rating: 4, 
+    avatar: "/images/avis/sarakawa.jpg",
+    company: "Hôtel Sarakawa"
+  },
+  { 
+    name: "ASKY Airlines", 
+    role: "Direction des Opérations", 
+    text: "ISD AFRIK nous aide à digitaliser nos processus et à offrir un meilleur service à nos passagers. Leur expertise est un levier stratégique pour notre croissance panafricaine.", 
+    rating: 5, 
+    avatar: "/images/avis/asky.jpg",
+    company: "ASKY"
+  },
+  { 
+    name: "ORYX Energies", 
+    role: "Direction Commerciale", 
+    text: "Nous faisons confiance à ISD AFRIK pour la gestion de nos données et la digitalisation de nos services. Leur professionnalisme nous accompagne dans notre expansion.", 
+    rating: 5, 
+    avatar: "/images/avis/oryx.jpg",
+    company: "ORYX Energies"
+  },
+  { 
+    name: "SUNU Bank", 
+    role: "Direction Générale", 
+    text: "ISD AFRIK est un partenaire stratégique qui nous apporte des solutions fiables et sécurisées. Leur expertise renforce notre efficacité et la confiance de nos clients.", 
+    rating: 5, 
+    avatar: "/images/avis/sunu.jpg",
+    company: "SUNU Bank"
+  }
+];
+
+  const partners = [
+    { img: "/images/partenaire/pat1.jpg", name: "vvavesoft" },
+    { img: "/images/partenaire/pat2.jpg", name: "asterbox" },
+    { img: "/images/partenaire/pat3.jpg", name: "gynod" },
+    { img: "/images/partenaire/pat4.jpg", name: "dip afrique" },
+    { img: "/images/partenaire/pat5.jpg", name: "dylog" },
+    { img: "/images/partenaire/pat6.jpg", name: "lacsoft" },
+    { img: "/images/partenaire/pat7.jpg", name: "orchestra" },
+    { img: "/images/partenaire/pat8.jpg", name: "sage" },
+    { img: "/images/partenaire/pat9.jpg", name: "sensoft" },
+    { img: "/images/partenaire/pat10.jpg", name: "show box" },
+    
+  ];
+
+  // ✅ CORRIGÉ : Produits phares redirigent tous vers /solutions (page produits)
+  const featuredProducts = [
+    { title: "Solutions de gestion d'entreprise", price: "Sur mesure", img: "/images/solutions/im1.jpg", category: "Logiciels", link: "/solutions" },
+    { title: "Formation professionnelle", price: "Certifications", img: "/images/solutions/im2.jpg", category: "Formation", link: "/formations" },
+    { title: "Ingénierie informatique et industrielle", price: "Expertise IT", img: "/images/solutions/im3.jpg", category: "Ingénierie", link: "/solutions" },
+    { title: "Fourniture et formation en pilotage de drones", price: "Drone Pro", img: "/images/solutions/im4.png", category: "Drone", link: "/produits?categories=drone-formation" },
+  ];
+
+  const stats = [
+    { number: "300+", label: "Clients satisfaits" },
+    { number: "250+", label: "Projets livrés" },
+    { number: "50+", label: "Experts qualifiés" },
+    { number: "15+", label: "Ans d'expérience" },
+  ];
+
+  const handleReviewSubmit = (e) => {
+    e.preventDefault();
+    // TODO: Envoyer l'avis au backend
+    console.log("Nouvel avis:", reviewData);
+    alert("Merci pour votre avis ! Il sera publié après validation.");
+    setShowReviewForm(false);
+    setReviewData({ name: "", role: "", company: "", text: "", rating: 5 });
+  };
+
+  return (
+    <div className="home">
+      {/* Hero avec slides */}
+      <section className="hero">
+        {heroSlides.map((s, i) => (
+          <img 
+            key={i} 
+            src={s.src} 
+            alt={s.alt} 
+            className={`hero-slide ${i === slideIndex ? "active" : ""}`} 
+          />
+        ))}
+        <div className="hero-overlay" />
+        <div className="hero-content">
+          <style>{`
+            .hero-text-anim{animation:heroTextIn 900ms ease both}
+            @keyframes heroTextIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+            .hero-title{font-size:2.2rem;margin:0 0 8px}
+            .hero-subtitle{font-size:1.05rem;opacity:0.95;margin:0}
+            @media(min-width:768px){.hero-title{font-size:3rem}.hero-subtitle{font-size:1.25rem}}
+          `}</style>
+
+          {/* Texte synchronisé avec le background */}
+          <div key={slideIndex} className="hero-text-anim">
+            <h1 className="hero-title">{heroTexts[slideIndex]?.title}</h1>
+            <p className="hero-subtitle">{heroTexts[slideIndex]?.subtitle}</p>
+          </div>
+
+          <div className="hero-buttons animate-fade-in-delay-2">
+            <a href="#offers" className="btn-primary">
+              <span>Nos Offres</span>
+              <i className="fas fa-arrow-right"></i>
+            </a>
+            <a href="#products" className="btn-secondary">
+              <span>Voir nos produits</span>
+              <i className="fas fa-shopping-cart"></i>
+            </a>
+          </div>
+          {/* Stats intégrés dans le hero */}
+          <div className="hero-stats">
+            {stats.map((stat, idx) => (
+              <div key={idx} className="hero-stat-item">
+                <h3 className="stat-number">{stat.number}</h3>
+                <p className="stat-label">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="hero-indicators">
+          {heroSlides.map((_, i) => (
+            <button
+              key={i}
+              className={`indicator ${i === slideIndex ? "active" : ""}`}
+              onClick={() => setSlideIndex(i)}
+              aria-label={`Slide ${i + 1}`}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Pourquoi nous choisir */}
+      <section className="why-visual">
+        <div className="section-header">
+          <h2>Pourquoi choisir ISD AFRIK ?</h2>
+          <p>Des solutions innovantes adaptées à vos besoins</p>
+        </div>
+        <div className="why-cards-grid">
+          {whyUs.map((item, idx) => (
+            <div key={idx} className="card" onClick={() => navigate(item.link)} role="button" tabIndex={0}>
+              <div className="card-image">
+                <img src={item.img} alt={item.title} />
+                <div className="card-overlay" />
+              </div>
+              <div className="card-content">
+                <h3>{item.title}</h3>
+                <span className="card-arrow">→</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Nos Offres */}
+      <section id="offers" className="offers">
+        <div className="section-header">
+          <h2>Nos Offres</h2>
+          <p>Des packs adaptés à tous les besoins</p>
+        </div>
+        <div className="cards">
+          {offers.map((o, idx) => (
+            <div key={idx} className="card offer-card">
+              <div className="card-image">
+                <img src={o.img} alt={o.title} onError={(e) => { e.target.src = "/images/offers/offre1.jpg"; }} />
+              </div>
+              <div className="icon-badge"><i className={o.icon}></i></div>
+              <div className="card-body">
+                <h3>{o.title}</h3>
+                <p>{o.desc}</p>
+                <div className="price-tag">{o.price}</div>
+                <button className="btn-primary" onClick={() => navigate(formationLink)}>
+                  Je profite
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Promotions */}
+      <section id="promotions" className="promotions">
+        <div className="section-header">
+          <h2>Promotion de {nomMois}</h2>
+          <p>Offres exclusives valables jusqu'au {dernierJour} {nomMois.toLowerCase()}</p>
+        </div>
+        <div className="promo-gallery">
+          {promoImages.slice(0, 3).map((item, idx) => (
+            <button
+              key={idx}
+              type="button"
+              className="promo-image-item"
+              onClick={() => { setPromoModalIndex(idx); }}
+              aria-label={`Voir la promotion ${idx + 1}`}
+            >
+                <img
+                src={item.src}
+                alt={`Promo ${idx + 1}`}
+                className="promo-image"
+                onError={(e)=>{e.target.style.background='#eee'; e.target.src=''}}
+              />
+            </button>
+          ))}
+        </div>
+
+        {/* Bouton pour voir toutes les promotions */}
+        <div className="promo-view-all">
+          <button className="btn-secondary" onClick={() => navigate('/promotions')}>
+            <i className="fas fa-images"></i> Voir toutes les promotions
+          </button>
+        </div>
+
+        {/* Modal for promo image */}
+        {promoModalIndex !== null && (
+          <div
+            className="modal-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Promotion ${promoModalIndex + 1}`}
+            onKeyDown={(e) => { if (e.key === 'Escape') setPromoModalIndex(null); }}
+            onClick={() => setPromoModalIndex(null)}
+          >
+              <div className="modal-content promo-modal" onClick={(e)=>e.stopPropagation()}>
+              <button className="modal-close" onClick={() => setPromoModalIndex(null)}>
+                <i className="fas fa-times"></i>
+              </button>
+
+              <div className="modal-promo-figure">
+                <img
+                  src={promoImages[promoModalIndex]?.src}
+                  alt={`Promo ${promoModalIndex+1}`}
+                  className="modal-promo-img"
+                  onError={(e)=>{e.target.style.background='#eee'; e.target.src=''}}
+                />
+              </div>
+
+              <div className="modal-promo-actions">
+                <button
+                  className="btn-primary"
+                  onClick={() => navigate(promoImages[promoModalIndex]?.link || inscriptionLink)}
+                >
+                  <i className="fas fa-check"></i> Souscrire
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Secteurs d'activité */}
+      <section id="sectors" className="sectors">
+        <div className="section-header">
+          <h2>Nos secteurs d'activités</h2>
+          <p>Une expertise diversifiée pour tous vos projets</p>
+        </div>
+        <div className="sectors-grid">
+          {sectors.map((s, idx) => (
+            <div key={idx} className="card sector-card">
+              <div className="icon"><i className={s.icon}></i></div>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+              <button className="link" onClick={() => navigate(s.link)}>
+                En savoir plus <i className="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ✅ CORRIGÉ : Produits phares - tous redirigent vers leurs pages respectives */}
+      <section id="products" className="products">
+        <div className="section-header">
+          <h2><i className="fas fa-star" style={{color:'#f59e0b',marginRight:'8px'}}></i>PRODUITS PHARES DU GROUPE ISD AFRIK</h2>
+          <p>Nos solutions majeures pour votre développement</p>
+        </div>
+        <div className="cards">
+          {featuredProducts.map((p, i) => (
+            <div key={i} className="card product-card">
+              <div className="product-badge">{p.category}</div>
+              <div className="card-image">
+                <img src={p.img} alt={p.title} />
+              </div>
+              <div className="card-body">
+                <h3>{p.title}</h3>
+                <div className="price">{p.price}</div>
+                <div className="actions">
+                  <button className="btn-primary" onClick={() => navigate(p.link)}>
+                    <i className="fas fa-info-circle"></i> En savoir plus
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Devenir vendeur */}
+      <section className="seller">
+        <img src="/images/vendeur/vendeur.png" alt="Devenir vendeur" className="seller-bg" />
+        <div className="seller-overlay" />
+        <div className="seller-content">
+         
+          <button className="btn-primary" onClick={() => navigate('/devenir-vendeur')}>
+            Devenir vendeur
+          </button>
+        </div>
+      </section>
+
+      {/* Geovision */}
+      <section id="geovision" className="geovision">
+        {/* GeoVision Presentation */}
+        <div className="geovision-presentation">
+          <div className="geovision-logo-section">
+            <img src="/images/geovision/logo (GEOVISION).png" alt="GeoVision Logo" className="geovision-logo" />
+          </div>
+          <div className="geovision-intro">
+            <h2>Représentant officiel de GeoVision en Afrique de l'Ouest</h2>
+            <p>
+              GeoVision est un leader mondial en solutions de vidéosurveillance et de sécurité. 
+              En tant que représentant officiel, GROUPE ISD AFRIK vous propose une gamme complète de produits 
+              et services pour sécuriser vos installations : cameras professionnelles haute résolution, 
+              écrans de supervision, systèmes VMS, contrôle d'accès, et bien d'autres accessoires 
+              professionnels. Nos experts vous accompagnent dans le choix et le déploiement de solutions 
+              adaptées à vos besoins de sécurité et de surveillance.
+            </p>
+          </div>
+        </div>
+
+        {/* Produits GeoVision */}
+        <div className="section-header" style={{ marginTop: "40px" }}>
+          <h3>Nos solutions GeoVision</h3>
+          <p>Explorez notre sélection de produits et services de sécurité vidéo</p>
+        </div>
+        <div className="geovision-categories-grid">
+          {geovisionCategories.map((cat, idx) => (
+            <article key={idx} className="geovision-card" onClick={() => navigate(cat.link)} role="button" tabIndex={0}>
+              <div className="geovision-card-image">
+                <img src={cat.image} alt={cat.title} />
+              </div>
+              <div className="geovision-card-body">
+                <h3>{cat.title}</h3>
+                <p>{cat.desc}</p>
+                <button className="btn-primary" onClick={(e) => { e.stopPropagation(); navigate(cat.link); }}>
+                  Explorer
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="geovision-actions">
+          <button className="btn-secondary" onClick={() => navigate("/geovision")}>Voir tout Geovision</button>
+        </div>
+      </section>
+
+      {/* MODIFIÉ : Avis clients avec bouton pour laisser un avis */}
+      <section className="testimonials">
+        <div className="section-header">
+          <h2>Ce que disent nos clients</h2>
+          <p>Ils nous font confiance et témoignent</p>
+        </div>
+        <div className="testimonials-grid">
+          {testimonials.map((t, i) => (
+            <div key={i} className="testimonial-card-new">
+              <div className="testimonial-header">
+                <img src={t.avatar} alt={t.name} className="testimonial-avatar" />
+                <div className="testimonial-info">
+                  <h4>{t.name}</h4>
+                  <p className="testimonial-role">{t.role}</p>
+                  <div className="stars">
+                    {Array.from({ length: 5 }).map((_, idx) => (
+                      <i key={idx} className={`fas fa-star ${idx < t.rating ? 'filled' : ''}`}></i>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <p className="testimonial-text-new">"{t.text}"</p>
+              <div className="testimonial-company">{t.company}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* NOUVEAU : Bouton pour laisser un avis */}
+        <div className="add-review-section">
+          <button className="btn-primary" onClick={() => setShowReviewForm(!showReviewForm)}>
+            <i className="fas fa-pen"></i> Laisser un avis
+          </button>
+
+          {/* Formulaire d'avis (modal amélioré) */}
+          {showReviewForm && (
+            <div
+              className="modal-overlay"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="review-title"
+              tabIndex={-1}
+              onKeyDown={(e) => { if (e.key === 'Escape') setShowReviewForm(false); }}
+              onClick={(e) => { if (e.target === e.currentTarget) setShowReviewForm(false); }}
+            >
+              <div className="modal-content review-modal" onClick={(e) => e.stopPropagation()} role="document">
+                <div className="modal-header">
+                  <h3 id="review-title">Partagez votre expérience</h3>
+                  <button className="modal-close" aria-label="Fermer" onClick={() => setShowReviewForm(false)}>
+                    <i className="fas fa-times"></i>
+                  </button>
+                </div>
+
+                <form className="review-form" onSubmit={handleReviewSubmit}>
+                  <div className="form-row">
+                    <label className="visually-hidden" htmlFor="rev-name">Votre nom</label>
+                    <input
+                      id="rev-name"
+                      type="text"
+                      placeholder="Votre nom *"
+                      required
+                      value={reviewData.name}
+                      onChange={(e) => setReviewData({ ...reviewData, name: e.target.value })}
+                    />
+
+                    <label className="visually-hidden" htmlFor="rev-role">Votre fonction</label>
+                    <input
+                      id="rev-role"
+                      type="text"
+                      placeholder="Votre fonction *"
+                      required
+                      value={reviewData.role}
+                      onChange={(e) => setReviewData({ ...reviewData, role: e.target.value })}
+                    />
+                  </div>
+
+                  <label className="visually-hidden" htmlFor="rev-company">Votre entreprise</label>
+                  <input
+                    id="rev-company"
+                    type="text"
+                    placeholder="Votre entreprise"
+                    value={reviewData.company}
+                    onChange={(e) => setReviewData({ ...reviewData, company: e.target.value })}
+                  />
+
+                  <label className="visually-hidden" htmlFor="rev-text">Votre avis</label>
+                  <textarea
+                    id="rev-text"
+                    placeholder="Votre avis *"
+                    required
+                    rows="5"
+                    value={reviewData.text}
+                    onChange={(e) => setReviewData({ ...reviewData, text: e.target.value })}
+                  />
+
+                  <div className="rating-select" aria-label="Note">
+                    <label>Note :</label>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <i
+                        key={star}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`${star} étoile${star > 1 ? 's' : ''}`}
+                        className={`fas fa-star ${star <= reviewData.rating ? 'filled' : ''}`}
+                        onClick={() => setReviewData({ ...reviewData, rating: star })}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setReviewData({ ...reviewData, rating: star }); }}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="form-actions">
+                    <button type="button" className="btn-secondary" onClick={() => setShowReviewForm(false)}>
+                      Annuler
+                    </button>
+                    <button type="submit" className="btn-primary">
+                      <i className="fas fa-paper-plane"></i> Envoyer
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Collaborateurs */}
+      <section className="collaborators">
+        <div className="section-header">
+          <h2>Nos collaborateurs prestigieux</h2>
+          <p>Des partenariats de confiance avec les leaders du marché</p>
+        </div>
+        <div className="collaborators-grid">
+          {collaborators.map((collab, i) => (
+            <div key={i} className="collaborator-card">
+              <img src={collab.img} alt={collab.name} />
+              <div className="collaborator-overlay">
+                <span>{collab.name}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ✅ MODIFIÉ : Partenaires en horizontal (scroll infini) */}
+      <section className="partners">
+        <div className="section-header">
+          <h2>Nos partenaires technologiques</h2>
+          <p>Nous travaillons avec les meilleures solutions du marché</p>
+        </div>
+        <div className="partners-horizontal">
+          <div className="partners-track">
+            {[...partners, ...partners].map((partner, i) => (
+              <div key={i} className="partner-item">
+                <img src={partner.img} alt={partner.name} />
+                <h4>{partner.name}</h4>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Final */}
+      <section className="cta-final">
+        <div className="cta-content">
+          <h2 style={{ fontSize: '3.6rem' }}>Prêt à transformer votre entreprise ?</h2>
+          <p>Contactez-nous dès aujourd'hui pour discuter de votre projet</p>
+          <div className="cta-buttons">
+            <button className="btn-primary" onClick={() => navigate('/contact')}>
+              <i className="fas fa-phone"></i> Nous contacter
+            </button>
+            <button className="btn-secondary" onClick={() => navigate('/contact')}>
+              <i className="fas fa-file-alt"></i> Demander un devis
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

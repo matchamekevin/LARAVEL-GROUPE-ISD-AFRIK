@@ -1,0 +1,89 @@
+/* === Conteneur principal du sélecteur de pays === */
+.country-selector {
+    position: relative;       /* Permet de positionner le dropdown par rapport à ce conteneur */
+    width: auto;              /* largeur automatique pour éviter le wrapping */
+    min-width: 115px;
+    font-weight: 600;         /* Texte en gras */
+    color: #fff;              /* Couleur du texte en blanc */
+    font-size: 0.93rem;       /* Taille de police ajustée */
+}
+
+/* === Zone affichant le pays sélectionné === */
+.selected {
+    background-color: #172243; /* fond du bouton sélectionné */
+    color: #fff;
+    padding: 0.52rem 0.95rem;   /* Espacement interne légèrement plus large */
+    border-radius: 8px;       /* Coins arrondis */
+    display: flex;            /* Alignement horizontal des éléments */
+    align-items: center;      /* Centrage vertical */
+    justify-content: space-between; /* Espacement entre texte et flèche */
+    cursor: pointer;          /* Curseur en mode clic */
+    border: 1px solid rgba(255,255,255,0.08); /* bordure subtile */
+    height: 40px;            /* aligne la hauteur avec le header */
+    box-sizing: border-box;
+    white-space: nowrap;
+    gap: 0.5rem;
+}
+
+/* === Drapeau affiché dans la zone sélectionnée === */
+.selected .flag {
+    width: 26px;              /* Largeur du drapeau */
+    height: 18px;             /* Hauteur du drapeau */
+    object-fit: cover;        /* Ajuste l’image sans déformation */
+    margin-right: 0.35rem;     /* Espacement entre drapeau et texte */
+}
+
+/* === Flèche indiquant l’ouverture/fermeture du menu === */
+.arrow {
+    margin-left: 0.25rem;      /* Espacement entre texte et flèche */
+}
+
+/* === Liste déroulante des pays === */
+.dropdown {
+    position: absolute;       /* Positionné par rapport au conteneur */
+    top: calc(100% + 8px);    /* Placé juste en dessous du sélecteur */
+    left: 0;                  /* Aligné à gauche */
+    width: max-content;      /* largeur s'adapte au contenu */
+    min-width: 0;
+    background-color: #172243; /* fond du dropdown */
+    color: #fff;            /* texte */
+    border: 1px solid #444;   /* Bordure grise foncée */
+    border-radius: 8px;       /* Coins arrondis */
+    z-index: 1000;            /* Toujours au-dessus du contenu */
+    max-height: 240px;        /* Hauteur max avec scroll si trop d’options */
+    overflow-y: auto;         /* Scroll vertical si nécessaire */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    margin: 0;
+    padding: 6px 0; /* supprimer le padding par défaut à gauche */
+    list-style: none;
+}
+
+/* === Chaque option dans la liste déroulante === */
+.dropdown li {
+    display: flex;            /* Alignement horizontal drapeau + texte */
+    align-items: center;      /* Centrage vertical */
+    padding: 0.5rem 0.9rem;  /* Espacement interne */
+    cursor: pointer;          /* Curseur clic */
+    gap: 0.5rem;
+}
+
+/* === Effet hover sur les options === */
+.dropdown li:hover {
+    background-color:rgb(224, 216, 216);   /* Fond gris foncé au survol */
+}
+
+/* === Drapeau affiché dans la liste déroulante === */
+.dropdown .flag {
+    width: 24px;
+    height: 16px;
+    object-fit: cover;
+    margin-right: 0.5rem;
+}
+
+/* === Style générique pour toutes les images de drapeaux === */
+.flag {
+    width: 24px;
+    height: 16px;
+    object-fit: cover;
+    margin-right: 0.5rem;
+}

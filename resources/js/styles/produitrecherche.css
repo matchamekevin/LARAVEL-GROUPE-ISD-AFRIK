@@ -1,0 +1,174 @@
+/* =====================================================
+   PRODUIT RECHERCHE — CSS ISOLÉ
+   Préfixe : .pr-
+   ===================================================== */
+
+   .pr-page {
+    background: #f4f6f9;
+    min-height: 100vh;
+    padding-top: 80px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+  
+  /* ── Hero ───────────────────────────────────────────── */
+  .pr-hero {
+    background: linear-gradient(135deg, #172243 0%, #1e2d4f 60%, #0f1829 100%);
+    padding: 44px 20px 52px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .pr-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(251,156,8,0.07) 1.5px, transparent 1.5px);
+    background-size: 38px 38px;
+    pointer-events: none;
+  }
+  
+  .pr-hero-inner {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+  
+  .pr-hero h1 {
+    color: #fff;
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  
+  .pr-hero p {
+    color: rgba(255,255,255,0.7);
+    font-size: 15px;
+    margin-bottom: 24px;
+  }
+  
+  /* Formulaire */
+  .pr-search-form {
+    display: flex;
+    background: #fff;
+    border-radius: 50px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+  }
+  
+  .pr-search-form:focus-within { border-color: #fb9c08; }
+  
+  .pr-search-form input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 14px 20px;
+    font-size: 15px;
+    color: #172243;
+    background: transparent;
+  }
+  
+  .pr-clear {
+    background: none;
+    border: none;
+    padding: 0 12px;
+    font-size: 16px;
+    color: #adb5bd;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .pr-clear:hover { color: #dc3545; }
+  
+  .pr-search-btn {
+    background: #fb9c08;
+    color: #fff;
+    border: none;
+    padding: 14px 28px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .pr-search-btn:hover { background: #d87f06; }
+  
+  /* ── Container ──────────────────────────────────────── */
+  .pr-container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 28px 16px 60px;
+  }
+  
+  /* Stats */
+  .pr-stats {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: #fff;
+    border-radius: 8px;
+    border-left: 4px solid #fb9c08;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  }
+  
+  /* Grille */
+  .pr-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 18px;
+  }
+  
+  /* Skeleton */
+  .pr-skeleton {
+    height: 340px;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: pr-shimmer 1.4s infinite;
+  }
+  
+  @keyframes pr-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  
+  /* État vide */
+  .pr-empty {
+    text-align: center;
+    padding: 80px 20px;
+    background: #fff;
+    border-radius: 16px;
+    border: 2px dashed #dee2e6;
+  }
+  
+  .pr-empty div  { font-size: 64px; margin-bottom: 16px; }
+  .pr-empty h3   { font-size: 22px; color: #172243; margin-bottom: 10px; font-weight: 700; }
+  .pr-empty p    { color: #6c757d; font-size: 15px; }
+  
+  .pr-suggestions {
+    margin-top: 24px;
+    text-align: left;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 16px 20px;
+  }
+  
+  .pr-suggestions p  { font-weight: 700; color: #172243; margin-bottom: 10px; font-size: 14px; }
+  .pr-suggestions ul { padding-left: 18px; }
+  .pr-suggestions li { font-size: 13px; color: #555; margin-bottom: 6px; line-height: 1.5; }
+  
+  /* ── Responsive ─────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .pr-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  }
+  
+  @media (max-width: 480px) {
+    .pr-grid        { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .pr-search-btn  { padding: 12px 16px; font-size: 13px; }
+  }

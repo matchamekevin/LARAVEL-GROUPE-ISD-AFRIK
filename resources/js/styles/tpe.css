@@ -1,0 +1,29 @@
+.tpe-page .service-hero {
+  background: #172243;
+  color: white;
+  text-align: center;
+  padding: 80px 20px;
+}
+.tpe-page .service-hero h1 { color: #fb9c08; }
+.tpe-page .solution-card {
+  background: #172243;
+  border: 2px solid #fb9c08;
+  color: white;
+  border-radius: 12px;
+  padding: 30px;
+}
+.tpe-page .solution-icon {
+  background: #fb9c08;
+  color: #172243;
+  border-radius: 50%;
+  width: 60px; height: 60px;
+  display: flex; align-items: center; justify-content: center;
+}
+.tpe-page .cta-button {
+  background: linear-gradient(135deg, #fb9c08 0%, #172243 100%);
+  color: white;
+  padding: 15px 40px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+}

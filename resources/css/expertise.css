@@ -1,0 +1,419 @@
+/* ===== EXPERTISE PAGE ===== */
+
+:root {
+  --exp-primary: #172243;
+  --exp-accent: #0ea5e9;
+  --exp-accent-warm: #fb9c08;
+  --exp-bg: #f8fafc;
+  --exp-text: #334155;
+  --exp-border: #e2e8f0;
+}
+
+.expertise-page {
+  background: linear-gradient(135deg, var(--exp-bg) 0%, #f1f5f9 100%);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+
+/* HERO SECTION */
+.expertise-hero {
+  max-width: 900px;
+  margin: 0 auto 3rem;
+  text-align: center;
+  animation: fadeIn 0.6s ease-out;
+  position: relative;
+}
+
+.expertise-hero::after {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -80px;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.expertise-hero h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--exp-primary);
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 768px) {
+  .expertise-hero h1 {
+    font-size: 2rem;
+  }
+}
+
+.expertise-hero p {
+  font-size: 1.125rem;
+  color: var(--exp-text);
+  line-height: 1.7;
+  max-width: 750px;
+  margin: 0 auto;
+}
+
+/* DOMAINS SECTION */
+.expertise-domains {
+  max-width: 1000px;
+  margin: 0 auto 3rem;
+}
+
+.expertise-domains-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--exp-primary);
+  margin-bottom: 2rem;
+  text-align: center;
+  position: relative;
+}
+
+.expertise-domains-title::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--exp-accent) 0%, var(--exp-accent-warm) 100%);
+  margin: 1rem auto 0;
+  border-radius: 2px;
+}
+
+.domains-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .domains-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* DOMAIN CARD */
+.domain-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--exp-border);
+  padding: 2rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.domain-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--exp-accent) 0%, var(--exp-accent-warm) 100%);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.domain-card::after {
+  content: '';
+  position: absolute;
+  bottom: -150%;
+  right: -150%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.domain-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--exp-accent);
+  box-shadow: 0 12px 35px rgba(14, 165, 233, 0.12);
+}
+
+.domain-card:hover::before {
+  transform: scaleX(1);
+}
+
+.domain-card:hover::after {
+  bottom: -50%;
+  right: -50%;
+}
+
+.domain-card h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--exp-primary);
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.domain-card p {
+  font-size: 0.95rem;
+  color: var(--exp-text);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* STAGGER ANIMATIONS */
+.domains-grid .domain-card {
+  animation: slideUp 0.6s ease-out backwards;
+}
+
+.domains-grid .domain-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.domains-grid .domain-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.domains-grid .domain-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* METHODOLOGY SECTION */
+.expertise-methodology {
+  max-width: 1000px;
+  margin: 0 auto 3rem;
+  background: white;
+  border: 1px solid var(--exp-border);
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  animation: slideDown 0.7s ease-out;
+}
+
+@media (max-width: 768px) {
+  .expertise-methodology {
+    padding: 1.5rem;
+  }
+}
+
+.expertise-methodology h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--exp-primary);
+  margin-bottom: 2rem;
+  position: relative;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--exp-accent);
+}
+
+.expertise-methodology h2::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--exp-accent) 0%, var(--exp-accent-warm) 100%);
+  width: 100%;
+  opacity: 0;
+  animation: slideRight 0.8s ease-out forwards;
+}
+
+.methodology-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .methodology-list {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.methodology-item {
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #f8fafc 100%);
+  border-left: 3px solid var(--exp-accent);
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  font-size: 0.95rem;
+  color: var(--exp-text);
+  line-height: 1.5;
+}
+
+.methodology-item::before {
+  content: '✓';
+  position: absolute;
+  top: 0.5rem;
+  right: 1rem;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, var(--exp-accent) 0%, #0284c7 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 0.85rem;
+}
+
+.methodology-item:hover {
+  transform: translateX(4px) translateY(-2px);
+  border-left-color: var(--exp-accent-warm);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.1);
+}
+
+/* STAGGER ANIMATION FOR METHODOLOGY */
+.methodology-item {
+  animation: slideRight 0.6s ease-out backwards;
+}
+
+.methodology-list .methodology-item:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.methodology-list .methodology-item:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.methodology-list .methodology-item:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.methodology-list .methodology-item:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+/* CTA SECTION */
+.expertise-cta {
+  max-width: 1000px;
+  margin: 2rem auto 0;
+  text-align: center;
+  padding: 2.5rem;
+  background: linear-gradient(135deg, var(--exp-primary) 0%, #1e3a5f 100%);
+  border-radius: 12px;
+  color: white;
+  animation: fadeIn 1s ease-out 0.8s both;
+  position: relative;
+  overflow: hidden;
+}
+
+.expertise-cta::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.expertise-cta h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.expertise-cta p {
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 1;
+  line-height: 1.6;
+}
+
+.expertise-cta-btn {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background: var(--exp-accent-warm);
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.expertise-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(251, 156, 8, 0.3);
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideRight {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 480px) {
+  .expertise-hero h1 {
+    font-size: 1.5rem;
+  }
+
+  .expertise-hero p {
+    font-size: 0.9rem;
+  }
+
+  .domains-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .domain-card {
+    padding: 1.5rem 1rem;
+  }
+
+  .expertise-methodology h2 {
+    font-size: 1.25rem;
+  }
+}

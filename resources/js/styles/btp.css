@@ -1,0 +1,83 @@
+/* Hero Section */
+.btp-page .service-hero {
+  background: #172243;
+  color: white;
+  text-align: center;
+  padding: 80px 20px;
+}
+.btp-page .service-hero h1 {
+  color: #fb9c08;
+}
+
+/* Intro */
+.btp-page .service-intro h2 {
+  color: #fb9c08;
+}
+.btp-page .service-intro p {
+  color: #b8c1d9;
+}
+
+/* Solutions */
+.btp-page .service-solutions h2 {
+  color: #fb9c08;
+  text-align: center;
+  margin-bottom: 40px;
+}
+.btp-page .solutions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+}
+.btp-page .solution-card {
+  background: #172243;
+  border: 2px solid #fb9c08;
+  border-radius: 12px;
+  padding: 30px;
+  color: white;
+  transition: transform 0.3s ease;
+}
+.btp-page .solution-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(251, 156, 8, 0.4);
+}
+.btp-page .solution-icon {
+  background: #fb9c08;
+  color: #172243;
+  border-radius: 50%;
+  width: 70px; height: 70px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
+}
+.btp-page .solution-icon i {
+  font-size: 2rem;
+}
+
+/* CTA */
+.btp-page .service-cta {
+  background: #172243;
+  text-align: center;
+  padding: 60px 40px;
+  border-radius: 12px;
+  color: white;
+}
+.btp-page .service-cta h2 {
+  color: #fb9c08;
+  margin-bottom: 15px;
+}
+.btp-page .service-cta p {
+  color: #b8c1d9;
+  margin-bottom: 30px;
+}
+.btp-page .cta-button {
+  background: linear-gradient(135deg, #fb9c08 0%, #172243 100%);
+  color: white;
+  padding: 15px 40px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+.btp-page .cta-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(251, 156, 8, 0.4);
+}

@@ -1,0 +1,22 @@
+{
+    "nav": {
+      "home": "Startseite",
+      "engineering": "Ingenieurwesen",
+      "solutions": "Lösungen",
+      "trainings": "Schulungen",
+      "products": "Produkte",
+      "projects": "Projekte",
+      "news": "Nachrichten",
+      "contact": "Kontakt"
+    },
+    "auth": {
+      "register": "Registrieren",
+      "login": "Anmelden",
+      "logout": "Abmelden",
+      "account": "Dein Konto",
+      "profile": "Profil",
+      "orders": "Meine Bestellungen",
+      "myProducts": "Meine Produkte",
+      "myTrainings": "Meine Schulungen"
+    }
+  }

@@ -1,0 +1,49 @@
+# Production-ready Dockerfile: PHP-FPM + Nginx + Supervisor
+# Multi-stage: build composer/vendor, build frontend assets, final image runs php-fpm + nginx via supervisor
+
+# Stage: composer dependencies
+FROM composer:2 AS composer
+WORKDIR /app
+COPY composer.json composer.lock* ./
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+
+# Stage: node build frontend assets
+FROM node:18 AS node
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci --silent
+COPY . .
+# Build assets (Vite + laravel-vite-plugin will output to public/build)
+RUN npm run build
+
+# Final image: php-fpm + nginx + supervisor
+FROM php:8.2-fpm-bullseye AS runtime
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nginx supervisor git unzip libpng-dev libonig-dev libxml2-dev libzip-dev curl ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# PHP extensions
+RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd zip
+
+WORKDIR /var/www/html
+
+# Copy vendor from composer stage
+COPY --from=composer /app/vendor ./vendor
+
+# Copy built frontend assets from node stage
+COPY --from=node /app/public ./public
+
+# Copy application
+COPY . .
+
+# Copy nginx and supervisor config
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Create storage dirs & permissions
+RUN chown -R www-data:www-data storage bootstrap/cache public || true
+
+EXPOSE 10000
+
+# Entrypoint: run migrations (optional) then supervisor
+CMD bash -lc "php -v; php artisan migrate --force || true; php artisan config:cache || true; /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf"

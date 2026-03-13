@@ -1,0 +1,70 @@
+/* Conteneur principal */
+.edit-profile {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 25px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    font-family: "Segoe UI", sans-serif;
+  }
+  
+  /* Titre */
+  .edit-profile h2 {
+    font-size: 1.8rem;
+    color: #080F70;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  /* Formulaire */
+  .edit-profile .form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  /* Labels */
+  .edit-profile label {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+  }
+  
+  /* Inputs */
+  .edit-profile input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+  }
+  
+  .edit-profile input:focus {
+    border-color: #080F70;
+    outline: none;
+  }
+  
+  /* Bouton principal */
+  .edit-profile .btn-primary {
+    background: #080F70;
+    color: #fff;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .edit-profile .btn-primary:hover {
+    background: #0a13a0;
+  }
+  
+  /* Message d'erreur */
+  .edit-profile .error {
+    color: #d9534f;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+  }

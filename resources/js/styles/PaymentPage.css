@@ -1,0 +1,283 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap');
+
+/* ─── Variables ─── */
+:root {
+  --navy: #172243;
+  --orange: #fb9c08;
+  --white: #ffffff;
+  --soft: #f5f6fa;
+  --muted: #8a93b0;
+  --shadow: 0 8px 40px rgba(23, 34, 67, 0.12);
+}
+
+/* ─── Fond général BLANC ─── */
+.payment-page {
+  min-height: 100vh;
+  background-color: var(--white);
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(251, 156, 8, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(23, 34, 67, 0.06) 0%, transparent 50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'DM Sans', sans-serif;
+  padding: 20px;
+  padding-top: 100px;
+}
+
+/* ─── Conteneur ─── */
+.payment-container {
+  width: 100%;
+  max-width: 480px;
+}
+
+/* ─── Bandeau titre en haut ─── */
+.payment-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.payment-header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  color: var(--navy);
+  margin: 0;
+  letter-spacing: -0.3px;
+  position: relative;
+  display: inline-block;
+}
+
+.payment-header h1::after {
+  content: '';
+  display: block;
+  width: 50px;
+  height: 3px;
+  background: var(--orange);
+  border-radius: 2px;
+  margin: 8px auto 0;
+}
+
+/* ─── Carte principale BLANCHE ─── */
+.payment-card {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 36px 32px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(23, 34, 67, 0.08);
+  position: relative;
+  overflow: hidden;
+  color: var(--navy);
+}
+
+/* Accent barre haut de carte */
+.payment-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--orange), #ffbb45);
+}
+
+/* ─── Titre formation ─── */
+.payment-card h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  color: var(--navy);
+  margin: 0 0 20px 0;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(23, 34, 67, 0.1);
+}
+
+/* ─── Infos formation ─── */
+.formation-info {
+  background-color: var(--soft);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 0 0 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.formation-info p {
+  margin: 0;
+  font-size: 14px;
+  color: #4a5578;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.formation-info strong {
+  color: var(--navy);
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Prix mis en valeur */
+.formation-info p:last-child {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(23, 34, 67, 0.15);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--orange);
+}
+
+.formation-info p:last-child strong {
+  color: var(--navy);
+}
+
+/* ─── Messages ─── */
+.message {
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  font-weight: 500;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.message p {
+  margin: 0;
+}
+
+.message.success {
+  background-color: rgba(251, 156, 8, 0.1);
+  border: 1px solid rgba(251, 156, 8, 0.4);
+  color: #c57800;
+}
+
+.message.error {
+  background-color: rgba(220, 53, 69, 0.07);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  color: #b02a37;
+}
+
+/* ─── Bouton Payer ─── */
+.btn-pay {
+  width: 100%;
+  padding: 14px;
+  margin-top: 4px;
+  background: var(--orange);
+  color: var(--white);
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 16px rgba(251, 156, 8, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-pay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+}
+
+.btn-pay:hover::after {
+  transform: translateX(100%);
+}
+
+.btn-pay:hover {
+  background: #e88c00;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(251, 156, 8, 0.45);
+}
+
+.btn-pay:active {
+  transform: translateY(0);
+}
+
+.btn-pay:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ─── Bouton Retour ─── */
+.btn-cancel {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  background-color: transparent;
+  color: var(--navy);
+  border: 1.5px solid rgba(23, 34, 67, 0.2);
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.btn-cancel:hover {
+  background-color: var(--soft);
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
+/* ─── Sécurité mention ─── */
+.payment-card::after {
+  content: '🔒 Paiement sécurisé via FedaPay';
+  display: block;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 18px;
+  letter-spacing: 0.3px;
+}
+
+/* ─── Loading ─── */
+.loading-container {
+  height: 100vh;
+  background-color: var(--white);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: var(--navy);
+  gap: 14px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.loading-container p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(23, 34, 67, 0.1);
+  border-top: 3px solid var(--orange);
+  border-radius: 50%;
+  animation: spin 0.85s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 520px) {
+  .payment-card {
+    padding: 28px 20px;
+  }
+  .payment-header h1 {
+    font-size: 22px;
+  }
+}

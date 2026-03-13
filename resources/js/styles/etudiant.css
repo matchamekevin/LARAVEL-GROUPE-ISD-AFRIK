@@ -1,0 +1,215 @@
+.etudiant-page {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f5f7fa;
+  color: #172243;
+  padding-top: 80px;
+}
+
+/* Hero */
+.etudiant-hero {
+  background: #172243;
+  padding: 80px 20px;
+  text-align: center;
+  color: white;
+}
+
+.etudiant-hero h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+  color: #fb9c08;
+}
+
+.etudiant-hero p {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+}
+
+/* Bouton de retour */
+.btn-retour {
+  background-color: #fb9c08;
+  color: #172243;
+  border: 2px solid #fb9c08;
+  padding: 12px 30px;
+  margin-top: 20px;
+  font-weight: bold;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-retour:hover {
+  background-color: white;
+  color: #172243;
+  border-color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(251, 156, 8, 0.3);
+}
+
+.btn-retour i {
+  font-size: 1rem;
+  transition: transform 0.3s ease;
+}
+
+.btn-retour:hover i {
+  transform: translateX(-5px);
+}
+
+/* Grid - 4 colonnes */
+.etudiant-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 25px;
+  padding: 40px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.etudiant-card {
+  background-color: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.etudiant-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(251, 156, 8, 0.2);
+}
+
+/* Image de la carte */
+.etudiant-card-image {
+  height: 200px;
+  overflow: hidden;
+  background-color: #f0f0f0;
+}
+
+.etudiant-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.etudiant-card:hover .etudiant-card-image img {
+  transform: scale(1.05);
+}
+
+.etudiant-card-body {
+  padding: 20px;
+}
+
+.etudiant-card-body h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: #172243;
+  min-height: 50px;
+}
+
+.etudiant-card-body p {
+  margin: 6px 0;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+/* Boutons */
+.etudiant-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.btn-inscrire {
+  flex: 1;
+  background-color: #fb9c08;
+  color: #172243;
+  border: none;
+  padding: 10px 20px;
+  font-weight: bold;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-inscrire:hover {
+  background-color: #172243;
+  color: #fb9c08;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(23, 34, 67, 0.2);
+}
+
+.btn-details {
+  flex: 1;
+  background: #172243;
+  color: #fff;
+  border: 2px solid #172243;
+  padding: 10px 20px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-details:hover {
+  background: #fb9c08;
+  color: #172243;
+  border-color: #fb9c08;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(251, 156, 8, 0.2);
+}
+
+/* Responsive - 3 colonnes sur tablette */
+@media (max-width: 1200px) {
+  .etudiant-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Responsive - 2 colonnes sur mobile large */
+@media (max-width: 900px) {
+  .etudiant-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .etudiant-hero h1 {
+    font-size: 2.5rem;
+  }
+
+  .etudiant-hero p {
+    font-size: 1.1rem;
+  }
+}
+
+/* Responsive - 1 colonne sur mobile */
+@media (max-width: 600px) {
+  .etudiant-grid {
+    grid-template-columns: 1fr;
+    padding: 20px 15px;
+  }
+
+  .etudiant-hero {
+    padding: 60px 15px;
+  }
+
+  .etudiant-hero h1 {
+    font-size: 2rem;
+  }
+
+  .etudiant-hero p {
+    font-size: 1rem;
+  }
+
+  .etudiant-card-body h3 {
+    min-height: auto;
+  }
+}

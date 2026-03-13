@@ -1,0 +1,205 @@
+/* =====================================================
+   PRODUIT LIST — CSS ISOLÉ
+   Préfixe : .pl-
+   Composant réutilisable sur toutes les pages
+   ===================================================== */
+
+   .pl-section {
+    padding: 48px 0;
+  }
+  
+  /* ── Variantes de couleur selon le mode ─────────────── */
+  .pl-section--vedette  { background: #fff; }
+  .pl-section--nouveaux { background: #f8f9fa; }
+  .pl-section--promo    { background: #fff8ee; }
+  .pl-section--all      { background: #fff; }
+  
+  /* ── En-tête ────────────────────────────────────────── */
+  .pl-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    max-width: 1400px;
+    margin: 0 auto 28px;
+    padding: 0 20px;
+    gap: 16px;
+  }
+  
+  .pl-header-text { flex: 1; }
+  
+  .pl-titre {
+    font-size: clamp(22px, 3vw, 32px);
+    font-weight: 800;
+    color: #172243;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+    position: relative;
+    display: inline-block;
+  }
+  
+  /* Soulignement orange sous le titre */
+  .pl-titre::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background: #fb9c08;
+    border-radius: 2px;
+  }
+  
+  .pl-sous-titre {
+    font-size: 14px;
+    color: #6c757d;
+    margin-top: 12px;
+  }
+  
+  /* Lien "Voir tout" */
+  .pl-voir-plus {
+    color: #fb9c08;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    border: 2px solid #fb9c08;
+    padding: 8px 18px;
+    border-radius: 50px;
+    transition: all 0.25s;
+  }
+  
+  .pl-voir-plus:hover {
+    background: #fb9c08;
+    color: #fff;
+  }
+  
+  /* ── Grille ─────────────────────────────────────────── */
+  .pl-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  
+  /* Layout horizontal (scroll) */
+  .pl-grid--horizontal {
+    display: flex;
+    overflow-x: auto;
+    gap: 16px;
+    padding: 0 20px 16px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    scrollbar-color: #fb9c08 #f0f0f0;
+  }
+  
+  .pl-grid--horizontal::-webkit-scrollbar        { height: 6px; }
+  .pl-grid--horizontal::-webkit-scrollbar-track  { background: #f0f0f0; border-radius: 3px; }
+  .pl-grid--horizontal::-webkit-scrollbar-thumb  { background: #fb9c08; border-radius: 3px; }
+  
+  .pl-grid--horizontal > * {
+    flex-shrink: 0;
+    width: 220px;
+    scroll-snap-align: start;
+  }
+  
+  /* ── Skeleton loading ───────────────────────────────── */
+  .pl-skeleton {
+    height: 340px;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: pl-shimmer 1.4s infinite;
+  }
+  
+  @keyframes pl-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  
+  /* ── Erreur ─────────────────────────────────────────── */
+  .pl-erreur {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    color: #dc3545;
+  }
+  
+  .pl-erreur span  { font-size: 36px; }
+  .pl-erreur p     { font-size: 14px; }
+  
+  .pl-erreur button {
+    background: #172243;
+    color: #fff;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .pl-erreur button:hover { background: #fb9c08; }
+  
+  /* ── Vide ───────────────────────────────────────────── */
+  .pl-vide {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 60px 20px;
+    text-align: center;
+    color: #adb5bd;
+  }
+  
+  .pl-vide span { font-size: 48px; }
+  .pl-vide p    { font-size: 15px; }
+  
+  /* ── Footer bouton ──────────────────────────────────── */
+  .pl-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 32px;
+    padding: 0 20px;
+  }
+  
+  .pl-btn-voir-plus {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #172243;
+    color: #fff;
+    text-decoration: none;
+    padding: 13px 36px;
+    border-radius: 50px;
+    font-size: 15px;
+    font-weight: 700;
+    transition: background 0.25s, transform 0.2s;
+    box-shadow: 0 4px 16px rgba(23,34,67,0.2);
+  }
+  
+  .pl-btn-voir-plus:hover {
+    background: #fb9c08;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(251,156,8,0.3);
+  }
+  
+  /* ── Responsive ─────────────────────────────────────── */
+  @media (max-width: 1024px) {
+    .pl-grid { grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); }
+  }
+  
+  @media (max-width: 768px) {
+    .pl-section         { padding: 36px 0; }
+    .pl-header          { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .pl-grid            { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+  }
+  
+  @media (max-width: 480px) {
+    .pl-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  }

@@ -1,0 +1,431 @@
+/* ===== INNOVATION PAGE ===== */
+
+:root {
+  --inn-primary: #172243;
+  --inn-accent: #0ea5e9;
+  --inn-accent-warm: #fb9c08;
+  --inn-bg: #f8fafc;
+  --inn-text: #334155;
+  --inn-border: #e2e8f0;
+}
+
+.innovation-page {
+  background: linear-gradient(135deg, var(--inn-bg) 0%, #f1f5f9 100%);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+
+/* HERO SECTION */
+.innovation-hero {
+  max-width: 900px;
+  margin: 0 auto 3rem;
+  text-align: center;
+  animation: fadeIn 0.6s ease-out;
+  position: relative;
+}
+
+.innovation-hero::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(251, 156, 8, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.innovation-hero h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--inn-primary);
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .innovation-hero h1 {
+    font-size: 2rem;
+  }
+}
+
+.innovation-hero p {
+  font-size: 1.125rem;
+  color: var(--inn-text);
+  line-height: 1.7;
+  max-width: 700px;
+  margin: 0 auto 2rem;
+}
+
+/* FEATURES SECTION */
+.innovation-features {
+  max-width: 1000px;
+  margin: 0 auto 3rem;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* FEATURE CARD */
+.feature-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--inn-border);
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(251, 156, 8, 0.08) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.feature-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--inn-accent) 0%, var(--inn-accent-warm) 100%);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--inn-accent);
+  box-shadow: 0 12px 35px rgba(251, 156, 8, 0.15);
+}
+
+.feature-card:hover::before {
+  opacity: 1;
+}
+
+.feature-card:hover::after {
+  transform: scaleX(1);
+}
+
+.feature-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--inn-accent) 0%, #0284c7 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.feature-card:hover .feature-icon {
+  transform: scale(1.15) rotate(-10deg);
+}
+
+.feature-card h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--inn-primary);
+  margin-bottom: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.feature-card p {
+  font-size: 0.9rem;
+  color: var(--inn-text);
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+  margin: 0;
+}
+
+/* STAGGER ANIMATIONS */
+.feature-card {
+  animation: slideUp 0.6s ease-out backwards;
+}
+
+.features-grid .feature-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.features-grid .feature-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.features-grid .feature-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.features-grid .feature-card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+/* DESCRIPTION SECTION */
+.innovation-description {
+  max-width: 900px;
+  margin: 0 auto 3rem;
+  padding: 2.5rem;
+  background: white;
+  border: 1px solid var(--inn-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  animation: slideDown 0.7s ease-out;
+}
+
+.innovation-description h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--inn-primary);
+  margin-bottom: 1.5rem;
+}
+
+.innovation-description h2::after {
+  content: '';
+  display: block;
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--inn-accent) 0%, var(--inn-accent-warm) 100%);
+  margin: 0.75rem 0 0;
+  border-radius: 2px;
+}
+
+.innovation-description p {
+  font-size: 1rem;
+  color: var(--inn-text);
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+.innovation-description p:last-child {
+  margin-bottom: 0;
+}
+
+/* HIGHLIGHTS */
+.innovation-highlights {
+  max-width: 1000px;
+  margin: 0 auto 3rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .innovation-highlights {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .innovation-highlights {
+    grid-template-columns: 1fr;
+  }
+}
+
+.highlight-item {
+  text-align: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #f8fafc 100%);
+  border-radius: 12px;
+  border: 1px solid var(--inn-border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideUp 0.6s ease-out backwards;
+}
+
+.innovation-highlights .highlight-item:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.innovation-highlights .highlight-item:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.innovation-highlights .highlight-item:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.innovation-highlights .highlight-item:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.highlight-item:hover {
+  transform: translateY(-4px);
+  border-color: var(--inn-accent);
+  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.1);
+}
+
+.highlight-number {
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--inn-accent) 0%, var(--inn-accent-warm) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+
+.highlight-label {
+  font-size: 0.95rem;
+  color: var(--inn-text);
+  font-weight: 500;
+  margin: 0;
+}
+
+/* CTA SECTION */
+.innovation-cta {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, var(--inn-primary) 0%, #1e3a5f 100%);
+  border-radius: 12px;
+  color: white;
+  animation: fadeIn 1s ease-out 0.8s both;
+  position: relative;
+  overflow: hidden;
+}
+
+.innovation-cta::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(251, 156, 8, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.innovation-cta h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.innovation-cta p {
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 1;
+  line-height: 1.6;
+}
+
+.innovation-cta-btn {
+  display: inline-block;
+  padding: 0.75rem 2.5rem;
+  background: var(--inn-accent-warm);
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.innovation-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(251, 156, 8, 0.3);
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 480px) {
+  .innovation-hero h1 {
+    font-size: 1.5rem;
+  }
+
+  .innovation-hero p {
+    font-size: 0.9rem;
+  }
+
+  .feature-card {
+    padding: 1.5rem 1rem;
+  }
+
+  .feature-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+
+  .innovation-description {
+    padding: 1.5rem;
+  }
+
+  .innovation-cta h2 {
+    font-size: 1.5rem;
+  }
+}

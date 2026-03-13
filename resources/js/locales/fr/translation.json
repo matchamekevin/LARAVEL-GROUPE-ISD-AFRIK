@@ -1,0 +1,23 @@
+{
+    "nav": {
+      "home": "Accueil",
+      "engineering": "Ingénierie",
+      "solutions": "Solutions",
+      "trainings": "Formations",
+      "products": "Produits",
+      "projects": "Projets",
+      "news": "Actualités",
+      "contact": "Contact"
+    },
+    "auth": {
+      "register": "Inscription",
+      "login": "Connexion",
+      "logout": "Déconnexion",
+      "account": "Votre compte",
+      "profile": "Profil",
+      "orders": "Mes commandes",
+      "myProducts": "Mes produits",
+      "myTrainings": "Mes formations"
+    }
+    
+  }

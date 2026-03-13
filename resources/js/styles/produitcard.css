@@ -1,0 +1,228 @@
+/* =====================================================
+   PRODUIT CARD — CSS ISOLÉ
+   Préfixe : .pc-
+   ===================================================== */
+
+   .pc-card {
+    position: relative;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e9ecef;
+  }
+  
+  .pc-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 35px rgba(23,34,67,0.15);
+    border-color: #fb9c08;
+  }
+  
+  .pc-card--rupture {
+    opacity: 0.75;
+  }
+  
+  /* ── Badges ─────────────────────────────────────────── */
+  .pc-badges {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 3;
+  }
+  
+  .pc-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .pc-badge--nouveau  { background: #172243; color: #fff; }
+  .pc-badge--promo    { background: #fb9c08; color: #fff; }
+  .pc-badge--rupture  { background: #dc3545; color: #fff; }
+  .pc-badge--vedette  { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+  
+  /* ── Bouton favori ──────────────────────────────────── */
+  .pc-favori {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 3;
+    background: rgba(255,255,255,0.9);
+    border: none;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transition: transform 0.2s ease, background 0.2s;
+    backdrop-filter: blur(4px);
+  }
+  
+  .pc-favori:hover         { transform: scale(1.15); background: #fff; }
+  .pc-favori--actif        { background: #fff0f0; }
+  
+  /* ── Image ──────────────────────────────────────────── */
+  .pc-image-link    { display: block; text-decoration: none; }
+  
+  .pc-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    background: #f8f9fa;
+  }
+  
+  .pc-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 10px;
+    transition: transform 0.4s ease;
+  }
+  
+  .pc-card:hover .pc-image { transform: scale(1.06); }
+  
+  .pc-overlay-rupture {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+  }
+  
+  /* ── Corps ──────────────────────────────────────────── */
+  .pc-body {
+    padding: 14px 16px 10px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .pc-marque {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #fb9c08;
+  }
+  
+  .pc-titre-link  { text-decoration: none; }
+  
+  .pc-titre {
+    font-size: 14px;
+    font-weight: 600;
+    color: #172243;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color 0.2s;
+  }
+  
+  .pc-titre-link:hover .pc-titre { color: #fb9c08; }
+  
+  /* Note */
+  .pc-note         { display: flex; align-items: center; gap: 3px; }
+  .pc-etoile       { font-size: 13px; color: #dee2e6; }
+  .pc-etoile--pleine { color: #fb9c08; }
+  .pc-note-count   { font-size: 11px; color: #6c757d; margin-left: 4px; }
+  
+  /* Prix */
+  .pc-prix         { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  
+  .pc-prix-final {
+    font-size: 17px;
+    font-weight: 800;
+    color: #172243;
+  }
+  
+  .pc-prix-barre {
+    font-size: 13px;
+    color: #adb5bd;
+    text-decoration: line-through;
+  }
+  
+  .pc-stock-alerte {
+    font-size: 11px;
+    color: #dc3545;
+    font-weight: 600;
+  }
+  
+  /* ── Actions ────────────────────────────────────────── */
+  .pc-actions {
+    padding: 10px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .pc-btn-panier {
+    width: 100%;
+    background: #172243;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.25s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  
+  .pc-btn-panier:hover:not(:disabled) {
+    background: #fb9c08;
+    transform: scale(1.02);
+  }
+  
+  .pc-btn-panier--ok  { background: #28a745 !important; }
+  .pc-btn-panier:disabled { cursor: not-allowed; opacity: 0.6; }
+  
+  .pc-btn-detail {
+    width: 100%;
+    text-align: center;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #172243;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  
+  .pc-btn-detail:hover {
+    background: #e9ecef;
+    border-color: #172243;
+  }
+  
+  /* ── Responsive ─────────────────────────────────────── */
+  @media (max-width: 480px) {
+    .pc-image-wrapper { height: 170px; }
+    .pc-prix-final    { font-size: 15px; }
+  }

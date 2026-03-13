@@ -1,0 +1,439 @@
+/* ==========================================
+   FOOTER ISD AFRIK - Design Moderne & Chic
+   TAILLES AUGMENTÉES POUR MEILLEURE LISIBILITÉ
+   ========================================== */
+
+   .footer {
+    background: linear-gradient(135deg, #0f1a2e 0%, #172243 100%);
+    color: #ffffff;
+    padding: 70px 0 0; /* Augmenté de 60px à 70px */
+    /*margin-top: 80px;*/
+    position: relative;
+  
+  }
+  
+  .footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #fb9c08 0%, #ff6b35 100%);
+  }
+  
+  .footer-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 40px;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr 1fr;
+    gap: 50px;
+  }
+  
+  /* ==========================================
+     SECTION 1 : LOGO + À PROPOS
+     ========================================== */
+  
+  .footer-about {
+    max-width: 380px; /* Augmenté de 350px à 380px */
+  }
+  
+  .footer-logo {
+    height: 85px; /* Augmenté de 70px à 85px */
+    margin-bottom: 24px; /* Augmenté de 20px à 24px */
+    border-radius: 8px;
+    filter: brightness(1.1);
+    transition: transform 0.3s ease;
+  }
+  
+  .footer-logo:hover {
+    transform: scale(1.05);
+  }
+  
+  .footer-description {
+    color: #b8c1d9;
+    line-height: 1.8; /* Augmenté de 1.7 à 1.8 */
+    font-size: 1.05rem; /* Augmenté de 0.95rem à 1.05rem */
+    margin-bottom: 24px; /* Augmenté de 20px à 24px */
+  }
+  
+  .footer-contact p {
+    color: #b8c1d9;
+    margin: 12px 0; /* Augmenté de 10px à 12px */
+    font-size: 1rem; /* Augmenté de 0.9rem à 1rem */
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Augmenté de 10px à 12px */
+  }
+  
+  .footer-contact i {
+    color: #fb9c08;
+    font-size: 1.15rem; /* Augmenté de 1rem à 1.15rem */
+  }
+  
+  /* ==========================================
+     SECTION 2 : NOS SERVICES
+     ========================================== */
+  
+  .footer-section h4 {
+    color: #fb9c08;
+    font-size: 1.4rem; /* Augmenté de 1.2rem à 1.4rem */
+    font-weight: 700;
+    margin-bottom: 28px; /* Augmenté de 25px à 28px */
+    position: relative;
+    padding-bottom: 12px; /* Augmenté de 10px à 12px */
+  }
+  
+  .footer-section h4::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 45px; /* Augmenté de 40px à 45px */
+    height: 3px;
+    background: #fb9c08;
+    border-radius: 2px;
+  }
+  
+  .footer-services {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .footer-services li {
+    margin: 14px 0; /* Augmenté de 12px à 14px */
+  }
+  
+  .service-link {
+    color: #b8c1d9;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px; /* Augmenté de 10px à 12px */
+    font-size: 1.05rem; /* Augmenté de 0.9rem à 1.05rem */
+    transition: all 0.3s ease;
+    padding-left: 5px;
+    text-decoration: none;
+  }
+  
+  .service-link:hover {
+    color: #ffffff;
+    padding-left: 10px;
+  }
+  
+  .service-link i {
+    color: #fb9c08;
+    font-size: 1.05rem; /* Augmenté de 0.9rem à 1.05rem */
+    margin-top: 3px;
+    min-width: 18px; /* Augmenté de 16px à 18px */
+  }
+  
+  /* ==========================================
+     SECTION 3 : NOS PAYS
+     ========================================== */
+  
+  .footer-countries {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .country-item {
+    display: flex;
+    align-items: center;
+    gap: 14px; /* Augmenté de 12px à 14px */
+    margin: 16px 0; /* Augmenté de 15px à 16px */
+    padding: 12px; /* Augmenté de 10px à 12px */
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+  }
+  
+  .country-item:hover {
+    background: rgba(251, 156, 8, 0.1);
+    border-left-color: #fb9c08;
+    transform: translateX(5px);
+  }
+  
+  .country-flag {
+    width: 38px; /* Augmenté de 32px à 38px */
+    height: 28px; /* Augmenté de 24px à 28px */
+    border-radius: 4px;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .country-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px; /* Augmenté de 2px à 3px */
+  }
+  
+  .country-name {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1.05rem; /* Augmenté de 0.95rem à 1.05rem */
+  }
+  
+  .country-phone {
+    color: #b8c1d9;
+    font-size: 0.95rem; /* Augmenté de 0.85rem à 0.95rem */
+  }
+  
+  /* ==========================================
+     SECTION 4 : NEWSLETTER + RÉSEAUX SOCIAUX
+     ========================================== */
+  
+  .footer-newsletter {
+    margin-bottom: 32px; /* Augmenté de 30px à 32px */
+  }
+  
+  .newsletter-text {
+    color: #b8c1d9;
+    font-size: 1.05rem; /* Augmenté de 0.9rem à 1.05rem */
+    margin-bottom: 14px; /* Augmenté de 12px à 14px */
+  }
+  
+  .newsletter-form {
+    display: flex;
+    gap: 10px; /* Augmenté de 8px à 10px */
+    margin-bottom: 12px; /* Augmenté de 10px à 12px */
+  }
+  
+  .newsletter-input {
+    flex: 1;
+    padding: 14px 16px; /* Augmenté de 12px 15px à 14px 16px */
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 1rem; /* Augmenté de 0.9rem à 1rem */
+    transition: all 0.3s ease;
+  }
+  
+  .newsletter-input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #fb9c08;
+  }
+  
+  .newsletter-input::placeholder {
+    color: #7a8aa3;
+  }
+  
+  .newsletter-btn {
+    padding: 14px 22px; /* Augmenté de 12px 20px à 14px 22px */
+    background: linear-gradient(135deg, #fb9c08 0%, #ff6b35 100%);
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.1rem; /* Augmenté de 1rem à 1.1rem */
+  }
+  
+  .newsletter-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(251, 156, 8, 0.3);
+  }
+  
+  .newsletter-success {
+    color: #4ade80;
+    font-size: 0.95rem; /* Augmenté de 0.85rem à 0.95rem */
+    margin-top: 6px; /* Augmenté de 5px à 6px */
+    animation: fadeIn 0.3s ease;
+  }
+
+  .newsletter-error {
+    color: #ff6b6b;
+    font-size: 0.95rem; /* Augmenté de 0.85rem à 0.95rem */
+    margin-top: 6px; /* Augmenté de 5px à 6px */
+    animation: fadeIn 0.3s ease;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* RÉSEAUX SOCIAUX */
+  
+  .footer-social {
+    margin-top: 24px; /* Augmenté de 20px à 24px */
+  }
+  
+  .social-text {
+    color: #b8c1d9;
+    font-size: 1.05rem; /* Augmenté de 0.9rem à 1.05rem */
+    margin-bottom: 16px; /* Augmenté de 15px à 16px */
+  }
+  
+  .social-icons {
+    display: flex;
+    gap: 14px; /* Augmenté de 12px à 14px */
+    flex-wrap: wrap;
+  }
+  
+  .social-link {
+    width: 48px; /* Augmenté de 42px à 48px */
+    height: 48px; /* Augmenté de 42px à 48px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    color: #ffffff;
+    font-size: 1.3rem; /* Augmenté de 1.1rem à 1.3rem */
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    text-decoration: none; /* supprime le soulignement */
+  }
+  
+  .social-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--social-color);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .social-link i {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .social-link:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  }
+  
+  .social-link:hover::before {
+    opacity: 1;
+  }
+  
+  /* ==========================================
+     FOOTER BOTTOM : COPYRIGHT + LIENS LÉGAUX
+     ========================================== */
+  
+  .footer-bottom {
+    background: rgba(0, 0, 0, 0.2);
+    margin-top: 55px; /* Augmenté de 50px à 55px */
+    padding: 28px 0; /* Augmenté de 25px à 28px */
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .footer-bottom-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  
+  .footer-copyright {
+    color: #b8c1d9;
+    font-size: 1rem; /* Augmenté de 0.9rem à 1rem */
+    margin: 0;
+  }
+  
+  .footer-legal {
+    display: flex;
+    align-items: center;
+    gap: 16px; /* Augmenté de 15px à 16px */
+  }
+  
+  .footer-legal a {
+    color: #b8c1d9;
+    text-decoration: none;
+    font-size: 1rem; /* Augmenté de 0.9rem à 1rem */
+    transition: color 0.3s ease;
+  }
+  
+  .footer-legal a:hover {
+    color: #fb9c08;
+  }
+  
+  .separator {
+    color: #4a5568;
+    font-size: 0.9rem; /* Augmenté de 0.8rem à 0.9rem */
+  }
+  
+  /* ==========================================
+     RESPONSIVE DESIGN
+     ========================================== */
+  
+  @media (max-width: 1200px) {
+    .footer-container {
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .footer {
+      padding: 40px 0 0;
+      margin-top: 60px;
+    }
+  
+    .footer-container {
+      grid-template-columns: 1fr;
+      padding: 0 20px;
+      gap: 35px;
+    }
+  
+    .footer-about {
+      max-width: 100%;
+    }
+
+    /* Maintien des tailles augmentées sur mobile */
+    .footer-section h4 {
+      font-size: 1.3rem;
+    }
+
+    .footer-description,
+    .newsletter-text,
+    .social-text {
+      font-size: 1rem;
+    }
+
+    .service-link,
+    .country-name,
+    .footer-contact p {
+      font-size: 1rem;
+    }
+  
+    .footer-bottom-content {
+      flex-direction: column;
+      text-align: center;
+      padding: 0 20px;
+    }
+  
+    .footer-legal {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .newsletter-form {
+      flex-direction: column;
+    }
+  
+    .newsletter-btn {
+      width: 100%;
+    }
+  
+    .social-icons {
+      justify-content: center;
+    }
+  }

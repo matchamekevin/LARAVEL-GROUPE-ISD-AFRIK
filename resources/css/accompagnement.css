@@ -1,0 +1,516 @@
+/* ===== ACCOMPAGNEMENT PAGE ===== */
+
+:root {
+  --acc-primary: #172243;
+  --acc-accent: #0ea5e9;
+  --acc-accent-warm: #fb9c08;
+  --acc-bg: #f8fafc;
+  --acc-text: #334155;
+  --acc-border: #e2e8f0;
+}
+
+.accompagnement-page {
+  background: linear-gradient(135deg, var(--acc-bg) 0%, #f1f5f9 100%);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+
+/* HERO SECTION */
+.accompagnement-hero {
+  max-width: 900px;
+  margin: 0 auto 3rem;
+  text-align: center;
+  animation: fadeIn 0.6s ease-out;
+  position: relative;
+}
+
+.accompagnement-hero::after {
+  content: '';
+  position: absolute;
+  top: -150px;
+  right: -80px;
+  width: 270px;
+  height: 270px;
+  background: radial-gradient(circle, rgba(251, 156, 8, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.accompagnement-hero h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--acc-primary);
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .accompagnement-hero h1 {
+    font-size: 2rem;
+  }
+}
+
+.accompagnement-hero p {
+  font-size: 1.125rem;
+  color: var(--acc-text);
+  line-height: 1.7;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* SUPPORT PROCESS SECTION */
+.accompaniment-process {
+  max-width: 1100px;
+  margin: 0 auto 3rem;
+}
+
+.process-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--acc-primary);
+  text-align: center;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.process-title::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--acc-accent) 0%, var(--acc-accent-warm) 100%);
+  margin: 1rem auto 0;
+  border-radius: 2px;
+}
+
+.process-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  position: relative;
+}
+
+@media (max-width: 968px) {
+  .process-steps {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .process-steps {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+/* STEP CARD */
+.process-step {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--acc-border);
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.process-step::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--acc-accent) 0%, var(--acc-accent-warm) 100%);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.process-step::after {
+  content: '';
+  position: absolute;
+  bottom: -150%;
+  right: -150%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.process-step:hover {
+  transform: translateY(-6px);
+  border-color: var(--acc-accent);
+  box-shadow: 0 12px 35px rgba(14, 165, 233, 0.12);
+}
+
+.process-step:hover::before {
+  transform: scaleX(1);
+}
+
+.process-step:hover::after {
+  bottom: -50%;
+  right: -50%;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--acc-accent) 0%, #0284c7 100%);
+  color: white;
+  font-weight: 700;
+  font-size: 1.25rem;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.process-step:hover .step-number {
+  transform: scale(1.15);
+}
+
+.step-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--acc-primary);
+  margin-bottom: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.step-description {
+  font-size: 0.9rem;
+  color: var(--acc-text);
+  line-height: 1.6;
+  position: relative;
+  z-index: 1;
+  margin: 0;
+}
+
+/* STAGGER ANIMATIONS */
+.process-step {
+  animation: slideUp 0.6s ease-out backwards;
+}
+
+.process-steps .process-step:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.process-steps .process-step:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.process-steps .process-step:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.process-steps .process-step:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+/* SUPPORT TEAMS SECTION */
+.accompaniment-teams {
+  max-width: 1000px;
+  margin: 0 auto 3rem;
+}
+
+.teams-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--acc-primary);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.teams-title::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--acc-accent) 0%, var(--acc-accent-warm) 100%);
+  margin: 1rem auto 0;
+  border-radius: 2px;
+}
+
+.teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .teams-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* TEAM CARD */
+.team-card {
+  background: linear-gradient(135deg, #f0f9ff 0%, white 100%);
+  border: 1px solid var(--acc-border);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.team-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(251, 156, 8, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.team-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--acc-accent);
+  box-shadow: 0 8px 25px rgba(14, 165, 233, 0.1);
+}
+
+.team-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--acc-accent) 0%, #0284c7 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.75rem;
+  margin: 0 auto 1rem;
+  transition: transform 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.team-card:hover .team-icon {
+  transform: scale(1.1);
+}
+
+.team-name {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--acc-primary);
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.team-role {
+  font-size: 0.85rem;
+  color: var(--acc-accent);
+  font-weight: 500;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.team-description {
+  font-size: 0.9rem;
+  color: var(--acc-text);
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+}
+
+/* AVAILABILITY SECTION */
+.accompaniment-availability {
+  max-width: 900px;
+  margin: 0 auto 3rem;
+  padding: 2.5rem;
+  background: white;
+  border: 1px solid var(--acc-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  animation: slideDown 0.7s ease-out;
+}
+
+@media (max-width: 768px) {
+  .accompaniment-availability {
+    padding: 1.5rem;
+  }
+}
+
+.availability-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--acc-primary);
+  margin-bottom: 1.5rem;
+  position: relative;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--acc-accent);
+}
+
+.availability-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.availability-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #f8fafc 100%);
+  border-radius: 8px;
+  border-left: 3px solid var(--acc-accent);
+}
+
+.availability-item::before {
+  content: '✓';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, var(--acc-accent) 0%, #0284c7 100%);
+  border-radius: 50%;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.availability-text {
+  font-size: 0.95rem;
+  color: var(--acc-text);
+  font-weight: 500;
+}
+
+/* CTA SECTION */
+.accompaniment-cta {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, var(--acc-primary) 0%, #1e3a5f 100%);
+  border-radius: 12px;
+  color: white;
+  animation: fadeIn 1s ease-out 0.8s both;
+  position: relative;
+  overflow: hidden;
+}
+
+.accompaniment-cta::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(251, 156, 8, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.accompaniment-cta h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.accompaniment-cta p {
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 1;
+  line-height: 1.6;
+}
+
+.accompaniment-cta-btn {
+  display: inline-block;
+  padding: 0.75rem 2.5rem;
+  background: var(--acc-accent-warm);
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.accompaniment-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(251, 156, 8, 0.3);
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 480px) {
+  .accompagnement-hero h1 {
+    font-size: 1.5rem;
+  }
+
+  .accompagnement-hero p {
+    font-size: 0.9rem;
+  }
+
+  .process-step {
+    padding: 1.5rem 1rem;
+  }
+
+  .team-card {
+    padding: 1.5rem 1rem;
+  }
+
+  .accompaniment-availability {
+    padding: 1.5rem;
+  }
+
+  .accompaniment-cta h2 {
+    font-size: 1.5rem;
+  }
+}

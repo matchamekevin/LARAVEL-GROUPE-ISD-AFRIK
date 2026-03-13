@@ -1,0 +1,242 @@
+:root {
+    --orange: #fb9c08;
+    --blue: #172243;
+    --text: #1e2633;
+    --muted: #6b778c;
+    --bg: #f5f7fb;
+    --white: #ffffff;
+    --shadow: 0 8px 20px rgba(23, 34, 67, 0.1);
+  }
+  
+  .entreprise-page {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', sans-serif;
+    padding-bottom: 80px;
+  }
+  
+  .entreprise-page .hero-section {
+    background: linear-gradient(135deg, var(--blue), #1f2d57);
+    color: var(--white);
+    min-height: 400px; /* hauteur minimum */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* centre verticalement */
+    align-items: center;     /* centre horizontalement */
+    text-align: center;
+    padding: 60px 20px; /* espace interne plus équilibré */
+  }
+  
+  .entreprise-page .hero-title {
+    font-size: 2.8rem;
+    margin-bottom: 16px;
+  }
+  
+  .entreprise-page .hero-subtitle {
+    font-size: 1.1rem;
+    max-width: 800px;
+    margin: 0 auto 32px;
+    color: #e0e6f0;
+  }
+  
+  .entreprise-page .cta-button {
+    background: var(--orange);
+    color: var(--blue);
+    border: none;
+    padding: 14px 28px;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s ease;
+  }
+  
+  .entreprise-page .cta-button:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* Pourquoi choisir */
+  .entreprise-page .details-section {
+    background: var(--white);
+    margin: 60px auto;
+    padding: 40px 24px;
+    max-width: 1080px;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+  }
+  
+  .entreprise-page .details-section h2 {
+    color: var(--blue);
+    margin-bottom: 24px;
+    font-size: 1.8rem;
+    text-align: center;
+  }
+  
+  .entreprise-page .details-section ul {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  
+  .entreprise-page .details-section li {
+    background: #fefefe;
+    border-left: 5px solid var(--orange);
+    padding: 16px 20px;
+    border-radius: 12px;
+    color: var(--muted);
+    font-size: 1rem;
+  }
+  
+  /* Navigation par mois */
+  .entreprise-page .mois-nav {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 0 24px;
+    margin: 40px 0;
+    justify-content: center;
+  }
+  
+  .entreprise-page .mois-chip {
+    background: var(--white);
+    border: 1px solid #dbe3f0;
+    color: var(--blue);
+    padding: 10px 18px;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  
+  .entreprise-page .mois-chip.active {
+    background: var(--orange);
+    color: var(--blue);
+    border-color: var(--orange);
+  }
+  
+  /* Section formations */
+  .entreprise-page .formations-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  
+  .entreprise-page .mois-title {
+    font-size: 2rem;
+    color: var(--blue);
+    margin: 60px 0 30px;
+    border-bottom: 3px solid var(--orange);
+    display: inline-block;
+    padding-bottom: 8px;
+  }
+  
+  /* Grid */
+  .entreprise-page .formations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 32px;
+  }
+  
+  /* Card */
+  .entreprise-page .formation-card {
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease;
+  }
+  
+  .entreprise-page .formation-card:hover {
+    transform: translateY(-4px);
+  }
+  
+  .entreprise-page .formation-image img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+  
+  .entreprise-page .formation-body {
+    padding: 24px;
+  }
+  
+  .entreprise-page .formation-title {
+    font-size: 1.3rem;
+    color: var(--blue);
+    margin-bottom: 12px;
+  }
+  
+  .entreprise-page .formation-desc {
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  
+  .entreprise-page .meta-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  
+  .entreprise-page .meta-badge {
+    background: #fff8ef;
+    color: var(--blue);
+    border: 1px solid #ffe3b9;
+    border-radius: 16px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  
+  /* Boutons */
+  .entreprise-page .card-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .entreprise-page .btn-primary {
+    background: #fb9c08;
+    color: #ffffff;
+    border: none;
+    padding: 15px 15px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+    transition: background 0.2s ease;
+  }
+  
+  .entreprise-page .btn-primary:hover {
+    background: #172243;
+  }
+  
+  .entreprise-page .btn-secondary {
+    background: #ffffff;
+    color: #172243;
+    border: 2px solid #172243;
+    padding: 5px 5px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+  
+  .entreprise-page .btn-secondary:hover {
+    color: #fb9c08;
+    border-color: #fff;
+  }
+  

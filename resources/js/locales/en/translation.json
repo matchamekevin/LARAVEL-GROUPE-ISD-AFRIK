@@ -1,0 +1,22 @@
+{
+    "nav": {
+      "home": "Home",
+      "engineering": "Engineering",
+      "solutions": "Solutions",
+      "trainings": "Trainings",
+      "products": "Products",
+      "projects": "Projects",
+      "news": "News",
+      "contact": "Contact"
+    },
+    "auth": {
+      "register": "Register",
+      "login": "Login",
+      "logout": "Logout",
+      "account": "Your account",
+      "profile": "Profile",
+      "orders": "My orders",
+      "myProducts": "My products",
+      "myTrainings": "My trainings"
+    }
+  }
