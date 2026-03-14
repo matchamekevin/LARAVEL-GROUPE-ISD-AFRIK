@@ -5,10 +5,8 @@
 FROM composer:2 AS composer
 WORKDIR /app
 COPY composer.json composer.lock* ./
-RUN apt-get update && apt-get install -y --no-install-recommends libicu-dev && \
-    docker-php-ext-install intl || true && \
-    rm -rf /var/lib/apt/lists/* && \
-    composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+# Run composer without requiring ext-intl at build time; ext-intl will be installed in the runtime image
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts --ignore-platform-req=ext-intl
 
 # Stage: node build frontend assets
 FROM node:18 AS node
