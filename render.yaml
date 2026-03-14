@@ -3,7 +3,7 @@ services:
     name: isd-afrik-backend
     env: docker
     plan: free
-    repo: https://github.com/your-username/your-repo
+    repo: https://github.com/matchamekevin/LARAVEL-GROUPE-ISD-AFRIK.git
     branch: main
     dockerfilePath: Dockerfile.prod
     buildCommand: ''
@@ -16,7 +16,17 @@ services:
       - key: APP_KEY
         value: ''
       - key: APP_URL
+        value: 'https://isd-afrik-backend.onrender.com'
+      - key: DATABASE_URL
         value: ''
   - type: postgres
     name: isd-afrik-db
     plan: free
+  - type: cron
+    name: isd-afrik-keepalive
+    schedule: "*/9 * * * *"
+    command: "curl -fsS $APP_URL || true"
+    env: docker
+    envVars:
+      - key: APP_URL
+        value: 'https://isd-afrik-backend.onrender.com'
