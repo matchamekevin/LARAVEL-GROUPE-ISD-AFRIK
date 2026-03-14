@@ -5,7 +5,10 @@
 FROM composer:2 AS composer
 WORKDIR /app
 COPY composer.json composer.lock* ./
-RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+RUN apt-get update && apt-get install -y --no-install-recommends libicu-dev && \
+    docker-php-ext-install intl || true && \
+    rm -rf /var/lib/apt/lists/* && \
+    composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
 # Stage: node build frontend assets
 FROM node:18 AS node
@@ -20,10 +23,10 @@ RUN npm run build
 FROM php:8.2-fpm-bullseye AS runtime
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    nginx supervisor git unzip libpng-dev libonig-dev libxml2-dev libzip-dev curl ca-certificates && rm -rf /var/lib/apt/lists/*
+    nginx supervisor git unzip libpng-dev libonig-dev libxml2-dev libzip-dev libicu-dev curl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # PHP extensions
-RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd zip
+RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd zip intl || true
 
 WORKDIR /var/www/html
 
