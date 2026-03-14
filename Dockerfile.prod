@@ -7,7 +7,8 @@ WORKDIR /app
 COPY composer.json composer.lock* ./
 # Ensure Composer resolves dependencies for PHP 8.2 during build, and ignore ext-intl requirement
 RUN composer config platform.php 8.2 && \
-    composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts --ignore-platform-req=ext-intl
+    composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts \
+        --ignore-platform-req=ext-intl --ignore-platform-req=php
 
 # Stage: node build frontend assets
 FROM node:18 AS node
