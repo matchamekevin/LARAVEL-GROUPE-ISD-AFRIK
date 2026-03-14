@@ -196,7 +196,7 @@ export default function Geovision() {
             ) : (
               visibleProducts.map((p) => (
                 <article key={p.id} className="pp-card">
-                  <a className="pp-image-wrap" href={`#/geovision/produit/${p.id}`} onClick={(e) => { e.preventDefault(); navigate(`/geovision/produit/${p.id}`); }}>
+                  <a className="pp-image-wrap" href={`#/geovision/catalogue/${encodeURIComponent(p.type)}`} onClick={(e) => { e.preventDefault(); navigate(`/geovision/catalogue/${encodeURIComponent(p.type)}`); }}>
                     <img alt={p.nom} className="pp-image" loading="lazy" src={p.image} onError={(e) => { e.target.src = "/images/geovision/cam1.png"; }} />
                     <div className="pp-image-overlay"></div>
                     <span className="pp-badge pp-badge--neuf">{p.type}</span>
@@ -204,7 +204,7 @@ export default function Geovision() {
                       <button className="pp-icon-btn pp-icon-btn--fav" type="button" aria-label="Ajouter aux favoris" onClick={(e) => e.preventDefault()}>
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
                       </button>
-                      <button className="pp-icon-btn pp-icon-btn--view" type="button" aria-label="Aperçu rapide" onClick={(e) => { e.preventDefault(); navigate(`/geovision/produit/${p.id}`); }}>
+                      <button className="pp-icon-btn pp-icon-btn--view" type="button" aria-label="Aperçu rapide" onClick={(e) => { e.preventDefault(); navigate(`/geovision/catalogue/${encodeURIComponent(p.type)}`); }}>
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg>
                       </button>
                     </div>
@@ -213,7 +213,7 @@ export default function Geovision() {
                     <h3 className="pp-title">{p.nom}</h3>
                     <p className="pp-desc">{p.description}</p>
                     <div className="pp-footer-row">
-                      <button className="pp-add-btn" onClick={() => navigate(`/geovision/produit/${p.id}`)}>Voir →</button>
+                      <button className="pp-add-btn" onClick={() => navigate(`/geovision/catalogue/${encodeURIComponent(p.type)}`)}>Voir →</button>
                     </div>
                   </div>
                 </article>

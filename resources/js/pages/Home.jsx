@@ -250,9 +250,10 @@ export default function Home() {
 
   const collaborators = [
     { img: "/images/collaborateur/col1.jpg", name: "DEV 1" },
-    { img: "/images/collaborateur/col2.jpg", name: "DEV 2" },
-    { img: "/images/collaborateur/col3.jpg", name: "DEV 3" },
-    { img: "/images/collaborateur/col4.jpg", name: "DEV 4" },
+    { img: "/images/collaborateur/col2.jpeg", name: "DEV 2" },
+    { img: "/images/collaborateur/col3.jpeg", name: "DEV 3" },
+    { img: "/images/collaborateur/col4.jpeg", name: "DEV 4" },
+    //{ img: "/images/collaborateur/col5.jpeg", name: "DEV 5" },
   ];
 
   const testimonials = [
@@ -759,10 +760,12 @@ export default function Home() {
         <div className="collaborators-grid">
           {collaborators.map((collab, i) => (
             <div key={i} className="collaborator-card">
-              <img src={collab.img} alt={collab.name} />
-              <div className="collaborator-overlay">
-                <span>{collab.name}</span>
-              </div>
+              <img
+                src={collab.img}
+                alt={collab.name}
+                className="collaborator-image"
+                style={collab.img && collab.img.includes('col2') ? { objectPosition: 'center 0%' } : {}}
+              />
             </div>
           ))}
         </div>

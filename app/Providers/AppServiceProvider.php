@@ -12,10 +12,10 @@ class AppServiceProvider extends ServiceProvider
         // Configuration du morph map pour les relations polymorphiques
         Relation::enforceMorphMap([
             'utilisateur' => 'App\Models\Utilisateur',
-            'formation' => 'App\Models\Formation',
-            'produit' => 'App\Models\Produit',
+            'FORMATION' => 'App\Models\Formation',
+            'PRODUIT' => 'App\Models\Produit',
             'commande' => 'App\Models\Commande',
-            'blog' => 'App\Models\Blog',
+            'BLOG' => 'App\Models\Blog',
             'user' => 'App\Models\User',
             
             // Ajoutez d'autres modèles si nécessaire
