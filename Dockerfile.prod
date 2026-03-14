@@ -23,7 +23,7 @@ RUN npm run build
 FROM php:8.2-fpm-bullseye AS runtime
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    nginx supervisor git unzip libpng-dev libonig-dev libxml2-dev libzip-dev libicu-dev curl ca-certificates && rm -rf /var/lib/apt/lists/*
+    nginx supervisor git unzip libpng-dev libonig-dev libxml2-dev libzip-dev libicu-dev libpq-dev curl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # PHP extensions
 RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd zip intl || true
