@@ -15,6 +15,9 @@ sed -i "s/listen \[::\]:10000;/listen [::]:$PORT;/" /etc/nginx/conf.d/default.co
 mkdir -p /var/log/php-fpm /var/log/nginx /var/log/supervisor /var/run/nginx /var/run/php-fpm
 chown -R www-data:www-data /var/log /var/run || true
 
+# Crée les répertoires d'application nécessaires et assure les permissions
+mkdir -p storage bootstrap/cache public
+chown -R www-data:www-data storage bootstrap/cache public || true
 # Teste la configuration Nginx pour capturer les erreurs tôt
 echo "Testing nginx configuration..."
 if ! nginx -t 2>/tmp/nginx_test.err; then
