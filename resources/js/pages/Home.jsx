@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/home.css";
 import "../styles/why-cards-grid.css";
+import "../styles/offers-cards.css";
 import "../styles/geovision-categories.css";
 import { getCategories, getProduits } from "../services/ProduitService";
 import ProduitCard from "../components/ProduitCard";
@@ -439,7 +440,6 @@ export default function Home() {
               <div className="card-image">
                 <img src={o.img} alt={o.title} onError={(e) => { e.target.src = "/images/offers/offre1.jpg"; }} />
               </div>
-              <div className="icon-badge"><i className={o.icon}></i></div>
               <div className="card-body">
                 <h3>{o.title}</h3>
                 <p>{o.desc}</p>
