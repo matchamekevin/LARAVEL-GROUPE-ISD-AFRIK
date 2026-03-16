@@ -60,6 +60,7 @@ const MentionsLegales = lazy(() => import("./pages/MentionsLegales"));
 const Confidentialite = lazy(() => import("./pages/Confidentialite"));
 const Cgv = lazy(() => import("./pages/Cgv"));
 const Geovision = lazy(() => import("./pages/Geovision"));
+const GeovisionCatalogue = lazy(() => import("./pages/GeovisionCatalogue"));
 const GeovisionCategorie = lazy(() => import("./pages/GeovisionCategorie"));
 const GeovisionProduitDetail = lazy(() => import("./pages/GeovisionProduitDetail"));
 
@@ -118,6 +119,7 @@ function App() {
 
                     {/* Geovision */}
                     <Route path="/geovision" element={<Geovision />} />
+                    <Route path="/geovision/catalogue/:typeId" element={<GeovisionCatalogue />} />
                     <Route path="/geovision/categorie/:id" element={<GeovisionCategorie />} />
                     <Route path="/geovision/produit/:id" element={<GeovisionProduitDetail />} />
 

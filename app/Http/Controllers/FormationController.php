@@ -15,19 +15,13 @@ class FormationController extends Controller
     /** Liste toutes les formations */
     public function index()
     {
-        $formations = Formation::with(['pays'])->get();
+        $formations = Formation::with(['pays', 'images'])->get();
 
-        // Charger les images manuellement
+        // Ajouter l'URL complète pour les images
         foreach ($formations as $formation) {
-            $images = Image::where('imageable_id', $formation->id_formation)
-                ->where('imageable_type', 'Formation')
-                ->get();
-
-            foreach ($images as $img) {
+            foreach ($formation->images as $img) {
                 $img->url = asset($img->url);
             }
-
-            $formation->images = $images;
         }
 
         return response()->json($formations, 200);
@@ -61,18 +55,12 @@ class FormationController extends Controller
             ], 400);
         }
 
-        $formation = Formation::with(['pays'])->findOrFail((int)$id);
+        $formation = Formation::with(['pays', 'images'])->findOrFail((int)$id);
 
-        // Charger les images manuellement
-        $images = Image::where('imageable_id', $formation->id_formation)
-            ->where('imageable_type', 'Formation')
-            ->get();
-
-        foreach ($images as $img) {
+        // Ajouter l'URL complète pour les images
+        foreach ($formation->images as $img) {
             $img->url = asset($img->url);
         }
-
-        $formation->images = $images;
 
         return response()->json($formation, 200);
     }
@@ -108,20 +96,15 @@ class FormationController extends Controller
     /** Filtrer par type (particulier, étudiant, entreprise) */
     public function getByType($type)
     {
-        $formations = Formation::with(['pays'])
+        $formations = Formation::with(['pays', 'images'])
             ->where('categorie', $type)
             ->get();
 
+        // Ajouter l'URL complète pour les images
         foreach ($formations as $formation) {
-            $images = Image::where('imageable_id', $formation->id_formation)
-                ->where('imageable_type', 'Formation')
-                ->get();
-
-            foreach ($images as $img) {
+            foreach ($formation->images as $img) {
                 $img->url = asset($img->url);
             }
-
-            $formation->images = $images;
         }
 
         return response()->json($formations, 200);
@@ -313,7 +296,7 @@ class FormationController extends Controller
                     'url' => $request->input('image.url'),
                     'path' => $request->input('image.url'),
                     'alt' => $request->input('image.alt'),
-                    'imageable_type' => 'Formation',
+                    'imageable_type' => 'FORMATION',
                     'imageable_id' => $formation->id_formation
                 ]);
             }

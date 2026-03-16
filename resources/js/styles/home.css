@@ -8,20 +8,39 @@
 }
 .review-form input,
 .review-form textarea,
-.review-form select {
-  margin-bottom: 1rem;
-}
-.review-form textarea {
-  resize: vertical;
-}
-.review-form .rating-select {
-  margin-bottom: 1.2rem;
-  display: flex;
+.home .collaborators-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 25px;
+  max-width: 1200px;
+  margin: 0 auto;
   align-items: center;
-  gap: 0.7rem;
-  border-bottom: none !important;
-  box-shadow: none !important;
 }
+
+.home .collaborator-card {
+  height: 240px; /* fixed card height */
+  overflow: hidden;
+  border-radius: 12px;
+  display: flex;
+  align-items: center; /* center horizontally if image smaller */
+  justify-content: center;
+  background: #fff;
+}
+
+.home .collaborator-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover; /* crop to fill the card */
+  object-position: center top; /* keep top (head) visible */
+  border-radius: 12px;
+  transition: transform 0.28s, box-shadow 0.28s;
+}
+
+.home .collaborator-card:hover .collaborator-image {
+  transform: scale(1.06);
+}
+ 
 .review-form .form-actions {
   display: flex;
   gap: 1.1rem;
@@ -1663,54 +1682,22 @@ body.modal-open {
   gap: 25px;
   max-width: 1200px;
   margin: 0 auto;
+  align-items: center;
 }
 
-.home .collaborator-card {
-  position: relative;
-  height: 150px;
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s;
-  cursor: pointer;
-}
-
-.home .collaborator-card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.home .collaborator-card img {
+.home .collaborator-image {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s;
 }
 
-.home .collaborator-card:hover img {
-  transform: scale(1.1);
-}
-
-.home .collaborator-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(23, 34, 67, 0.9), transparent);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 15px;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.home .collaborator-card:hover .collaborator-overlay {
-  opacity: 1;
-}
-
-.home .collaborator-overlay span {
-  color: #fff;
-  font-weight: 600;
-  font-size: 1rem;
+.home .collaborator-image:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 /* ===========================

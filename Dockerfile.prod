@@ -5,10 +5,7 @@
 FROM composer:2 AS composer
 WORKDIR /app
 COPY composer.json composer.lock* ./
-# Ensure Composer resolves dependencies for PHP 8.2 during build, and ignore ext-intl requirement
-RUN composer config platform.php 8.2 && \
-    composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts \
-        --ignore-platform-req=ext-intl --ignore-platform-req=php
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
 # Stage: node build frontend assets
 FROM node:18 AS node
@@ -23,10 +20,10 @@ RUN npm run build
 FROM php:8.2-fpm-bullseye AS runtime
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    nginx supervisor git unzip libpng-dev libonig-dev libxml2-dev libzip-dev libicu-dev libpq-dev curl ca-certificates && rm -rf /var/lib/apt/lists/*
+    nginx supervisor git unzip libpng-dev libonig-dev libxml2-dev libzip-dev curl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # PHP extensions
-RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd zip intl || true
+RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd zip
 
 WORKDIR /var/www/html
 
@@ -43,14 +40,10 @@ COPY . .
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Copy entrypoint script
-COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
 # Create storage dirs & permissions
 RUN chown -R www-data:www-data storage bootstrap/cache public || true
 
 EXPOSE 10000
 
-# Entrypoint: use script that handles missing DATABASE_URL gracefully
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+# Entrypoint: run migrations (optional) then supervisor
+CMD bash -lc "php -v; php artisan migrate --force || true; php artisan config:cache || true; /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf"

@@ -1,11 +1,13 @@
 services:
   - type: web
     name: isd-afrik-backend
-    runtime: docker
+    env: docker
     plan: free
-    repo: https://github.com/matchamekevin/LARAVEL-GROUPE-ISD-AFRIK.git
+    repo: https://github.com/your-username/your-repo
     branch: main
     dockerfilePath: Dockerfile.prod
+    buildCommand: ''
+    startCommand: ''
     envVars:
       - key: APP_ENV
         value: production
@@ -14,6 +16,7 @@ services:
       - key: APP_KEY
         value: ''
       - key: APP_URL
-        value: 'https://isd-afrik-backend.onrender.com'
-      - key: DATABASE_URL
         value: ''
+  - type: postgres
+    name: isd-afrik-db
+    plan: free

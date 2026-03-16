@@ -256,7 +256,6 @@ export default function Home() {
     //{ img: "/images/collaborateur/col5.jpeg", name: "DEV 5" },
   ];
 
-    // ✅ Les Avis 
   const testimonials = [
   { 
     name: "Plateforme Industrielle d’Adétikopé (PIA)", 
@@ -308,8 +307,6 @@ export default function Home() {
   }
 ];
 
-
-  // ✅ Nos partenaire
   const partners = [
     { img: "/images/partenaire/pat1.jpg", name: "vvavesoft" },
     { img: "/images/partenaire/pat2.jpg", name: "asterbox" },
