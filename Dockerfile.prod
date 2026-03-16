@@ -46,7 +46,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd zip intl
 
 # Ensure runtime directories are writable by www-data
-RUN mkdir -p /var/run /var/log && \
+RUN mkdir -p /var/run /var/run/nginx /var/run/php-fpm /var/log /var/log/nginx /var/log/php-fpm /var/log/supervisord && \
     chown -R www-data:www-data /var/run /var/log
 
 WORKDIR /var/www/html
