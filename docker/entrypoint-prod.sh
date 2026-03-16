@@ -18,6 +18,13 @@ chown -R www-data:www-data /var/log /var/run || true
 # Crée les répertoires d'application nécessaires et assure les permissions
 mkdir -p storage bootstrap/cache public
 chown -R www-data:www-data storage bootstrap/cache public || true
+
+# Rendre les dossiers de cache/writes tolérants pour les environnements de déploiement
+# (temporaire/diagnostique) — permet d'éviter les erreurs de chemin de cache Laravel
+## Assure l'existence des sous-dossiers attendus par Laravel
+mkdir -p storage/framework/views storage/logs
+chown -R www-data:www-data storage bootstrap/cache public storage/framework storage/logs || true
+chmod -R 0777 storage bootstrap/cache public storage/framework storage/logs || true
 # Teste la configuration Nginx pour capturer les erreurs tôt
 echo "Testing nginx configuration..."
 if ! nginx -t 2>/tmp/nginx_test.err; then
@@ -28,8 +35,15 @@ if ! nginx -t 2>/tmp/nginx_test.err; then
 	exit 1
 fi
 
-# Exécute les migrations et cache clearing
-php artisan migrate --force || true
+# Exécute les migrations seulement si explicitement demandé (par sécurité en prod)
+if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
+	echo "Running migrations because RUN_MIGRATIONS=true"
+	php artisan migrate --force || true
+else
+	echo "Skipping migrations (set RUN_MIGRATIONS=true to enable)"
+fi
+
+# Cache configuration and views (safe to run)
 php artisan config:cache || true
 php artisan view:cache || true
 
