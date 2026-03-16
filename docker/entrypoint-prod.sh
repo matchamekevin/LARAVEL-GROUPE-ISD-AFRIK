@@ -15,6 +15,16 @@ sed -i "s/listen \[::\]:10000;/listen [::]:$PORT;/" /etc/nginx/conf.d/default.co
 mkdir -p /var/log/php-fpm /var/log/nginx /var/log/supervisor /var/run/nginx /var/run/php-fpm
 chown -R www-data:www-data /var/log /var/run || true
 
+# Teste la configuration Nginx pour capturer les erreurs tôt
+echo "Testing nginx configuration..."
+if ! nginx -t 2>/tmp/nginx_test.err; then
+	echo "Nginx configuration test failed:" >&2
+	cat /tmp/nginx_test.err >&2 || true
+	echo "--- nginx.conf (for debugging) ---" >&2
+	sed -n '1,200p' /etc/nginx/conf.d/default.conf >&2 || true
+	exit 1
+fi
+
 # Exécute les migrations et cache clearing
 php artisan migrate --force || true
 php artisan config:cache || true
