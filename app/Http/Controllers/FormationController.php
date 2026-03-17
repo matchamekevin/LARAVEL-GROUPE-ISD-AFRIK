@@ -17,10 +17,12 @@ class FormationController extends Controller
     {
         $formations = Formation::with(['pays', 'images'])->get();
 
-        // Ajouter l'URL complète pour les images
+        // Retourner le chemin tel qu'il est stocké en base (relatif, p.ex. /uploads/...) afin
+        // que le front puisse choisir comment résoudre l'URL (préfixe dev/prod).
         foreach ($formations as $formation) {
             foreach ($formation->images as $img) {
-                $img->url = asset($img->url);
+                // s'assurer que l'url commence par une slash
+                $img->url = strpos($img->url, '/') === 0 ? $img->url : '/' . ltrim($img->url, '/');
             }
         }
 
@@ -57,9 +59,9 @@ class FormationController extends Controller
 
         $formation = Formation::with(['pays', 'images'])->findOrFail((int)$id);
 
-        // Ajouter l'URL complète pour les images
+        // Fournir le chemin relatif stocké en base (p.ex. /uploads/...) — le front décidera du host
         foreach ($formation->images as $img) {
-            $img->url = asset($img->url);
+            $img->url = strpos($img->url, '/') === 0 ? $img->url : '/' . ltrim($img->url, '/');
         }
 
         return response()->json($formation, 200);
@@ -100,10 +102,10 @@ class FormationController extends Controller
             ->where('categorie', $type)
             ->get();
 
-        // Ajouter l'URL complète pour les images
+        // Retourner le chemin tel qu'il est stocké en base (relatif)
         foreach ($formations as $formation) {
             foreach ($formation->images as $img) {
-                $img->url = asset($img->url);
+                $img->url = strpos($img->url, '/') === 0 ? $img->url : '/' . ltrim($img->url, '/');
             }
         }
 
@@ -303,4 +305,17 @@ class FormationController extends Controller
     
             return response()->json($formation->load(['pays']), 201);
         }
+
+    /** Récupérer les images des catégories de formation */
+    public function getCategoryImages()
+    {
+        $categoryImages = Image::where('imageable_type', 'CATEGORY')
+            ->get()
+            ->map(function ($image) {
+                $image->url = asset($image->url);
+                return $image;
+            });
+
+        return response()->json($categoryImages, 200);
     }
+}

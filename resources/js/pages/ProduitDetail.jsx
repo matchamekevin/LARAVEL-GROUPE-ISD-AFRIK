@@ -244,6 +244,14 @@ export default function ProduitDetail() {
               </button>
 
               <button
+                className="pd-btn-payer"
+                onClick={() => navigate('/paiement')}
+                disabled={produit.stock === 0}
+              >
+                💳 Payer maintenant
+              </button>
+
+              <button
                 className={`pd-btn-favori ${favori ? "pd-btn-favori--actif" : ""}`}
                 onClick={() => setFavori((f) => !f)}
                 title={favori ? "Retirer des favoris" : "Ajouter aux favoris"}

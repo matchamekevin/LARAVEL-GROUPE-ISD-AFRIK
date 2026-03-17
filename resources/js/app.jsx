@@ -1,4 +1,5 @@
 import React, { lazy, Suspense } from "react";
+import axios from "axios";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
@@ -70,6 +71,17 @@ import "../css/app.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./i18n";
 import "./styles/marketing-premium.css";
+
+// Compat: certaines dépendances attendent un global `process.env`.
+// Vite expose les variables via `import.meta.env`; on crée un shim
+// minimal pour éviter `ReferenceError: process is not defined` en dev.
+if (typeof window !== 'undefined' && typeof window.process === 'undefined') {
+    // eslint-disable-next-line no-undef
+    window.process = { env: import.meta.env };
+}
+
+// Toujours envoyer les cookies avec axios (Sanctum, sessions)
+axios.defaults.withCredentials = true;
 
 function App() {
     return (

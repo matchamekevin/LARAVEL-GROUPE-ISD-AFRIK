@@ -65,6 +65,13 @@ export default function GeovisionCatalogue() {
     return ["Arctic", "Indoor", "IP66 or Above"];
   }, []);
 
+  // Image for the selected type (used as background on the left of the banner)
+  const selectedTypeImage = React.useMemo(() => {
+    if (!selectedType) return null;
+    const found = geovisionTypes.find((t) => (t.title || "").toLowerCase() === String(selectedType).toLowerCase());
+    return found ? found.image : null;
+  }, [selectedType]);
+
   // Apply filters
   useEffect(() => {
     let result = products;
@@ -101,8 +108,24 @@ export default function GeovisionCatalogue() {
   return (
     <main className="main" style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
       {/* Banner avec filtres */}
-      <div className="bannerWrapper wow fadeIn focuspoint" style={{ position: "relative", marginTop: "120px", marginBottom: "40px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
-        <form className="proSelect clearfix hidden-xs" id="proSearch" style={{ padding: "16px 12px", maxWidth: "720px", margin: "0 auto" }}>
+      <div className="bannerWrapper wow fadeIn focuspoint" style={{ position: "relative", marginTop: "90px", marginBottom: "0px", padding: "48px 0", boxShadow: "0 2px 12px rgba(0,0,0,0.12)" }}>
+        {selectedTypeImage && (
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: "40%",
+              backgroundImage: `url(${selectedTypeImage})`,
+              backgroundSize: "cover",
+              backgroundPosition: "left center",
+              opacity: 0.70,
+              zIndex: 0,
+            }}
+          />
+        )}
+        <form className="proSelect clearfix hidden-xs" id="proSearch" style={{ padding: "16px 12px", maxWidth: "720px", margin: "0 auto", position: "relative", left: "220px", zIndex: 2 }}>
           <div className="titleh2" style={{ fontSize: "28px", fontWeight: "700", marginBottom: "20px", color: "#333" }}>Filtrer les produits</div>
           <div className="form-group select clearfix" style={{ display: "flex", gap: "15px", flexWrap: "wrap", marginBottom: "15px" }}>
             <select
@@ -217,7 +240,7 @@ export default function GeovisionCatalogue() {
       </div>
 
       {/* Barre de recherche */}
-      <div style={{ padding: "30px 20px", textAlign: "center", backgroundColor: "#ffffff", borderBottom: "1px solid #e0e0e0", marginBottom: "40px" }}>
+      <div style={{ padding: "30px 20px", textAlign: "center", backgroundColor: "rgb(248, 249, 250)", borderBottom: "1px solid rgb(248, 249, 250)", marginBottom: "40px" }}>
         <div style={{ maxWidth: "600px", margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", border: "2px solid #ddd", borderRadius: "30px", backgroundColor: "#fff", padding: "0 15px", transition: "all 0.3s" }}>
             <svg style={{ width: "20px", height: "20px", color: "#999", marginRight: "10px" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

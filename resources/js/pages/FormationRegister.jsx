@@ -27,7 +27,7 @@ const FormationRegister = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     axios
-      .get(`http://localhost:8000/api/formations/${id}`, {
+      .get(`http://127.0.0.1:8000/api/formations/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setFormation(res.data))
@@ -77,7 +77,7 @@ const FormationRegister = () => {
 
     try {
       const res = await axios.post(
-        `http://localhost:8000/api/formations/${id}/register`,
+        `http://127.0.0.1:8000/api/formations/${id}/register`,
         { ...formData, id_utilisateur: user.id_utilisateur },
         { headers: { Authorization: `Bearer ${token}` } }
       );

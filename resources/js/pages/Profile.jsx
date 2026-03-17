@@ -6,7 +6,17 @@ import "../styles/profile.css";
 export default function Profile() {
   const [utilisateur, setUtilisateur] = useState(null);
   const [preview, setPreview] = useState(null);
-  const API_BASE = "http://localhost:8000";
+  const API_BASE = (() => {
+    if (typeof window !== "undefined") {
+      const { protocol, hostname } = window.location;
+      if (["localhost", "127.0.0.1"].includes(hostname)) {
+        return `${protocol}//${hostname}:8000`;
+      }
+      if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
+      return window.location.origin;
+    }
+    return import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+  })();
   const navigate = useNavigate();
 
   useEffect(() => {

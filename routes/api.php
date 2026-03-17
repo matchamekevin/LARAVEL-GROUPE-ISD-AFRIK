@@ -112,6 +112,7 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
 // 📚 FORMATIONS
 // ======================================================
 Route::get('formations/type/{type}',              [FormationController::class, 'getByType']);
+Route::get('formations/categories/images',        [FormationController::class, 'getCategoryImages']);
 Route::post('formations/full',                    [FormationController::class, 'storeWithRelations']);
 Route::post('formations/{id}/register',           [FormationController::class, 'registerUser']);
 Route::post('formations/{id}/images',             [FormationController::class, 'addImage']);

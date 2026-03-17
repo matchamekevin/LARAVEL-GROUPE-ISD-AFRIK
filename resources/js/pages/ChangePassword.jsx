@@ -11,7 +11,17 @@ export default function ChangePassword() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const API_BASE = "http://localhost:8000";
+  const API_BASE = (() => {
+    if (typeof window !== "undefined") {
+      const { protocol, hostname } = window.location;
+      if (["localhost", "127.0.0.1"].includes(hostname)) {
+        return `${protocol}//${hostname}:8000`;
+      }
+      if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
+      return window.location.origin;
+    }
+    return import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+  })();
 
   const handleSubmit = async (e) => {
     e.preventDefault();

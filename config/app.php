@@ -163,7 +163,14 @@ return [
 
  
 'aliases' => [
-    // ...
+    // Framework aliases (add any missing facades here)
+    'Route' => Illuminate\Support\Facades\Route::class,
+    'URL' => Illuminate\Support\Facades\URL::class,
+    'View' => Illuminate\Support\Facades\View::class,
+    'Config' => Illuminate\Support\Facades\Config::class,
+    'Auth' => Illuminate\Support\Facades\Auth::class,
+    'Schema' => Illuminate\Support\Facades\Schema::class,
+    'DB' => Illuminate\Support\Facades\DB::class,
     'Pdf' => Barryvdh\DomPDF\Facade\Pdf::class,
 ],
 

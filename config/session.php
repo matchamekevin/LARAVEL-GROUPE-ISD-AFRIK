@@ -169,7 +169,6 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
 
     /*
     |--------------------------------------------------------------------------
@@ -199,7 +198,10 @@ return [
     |
     */
 
-    'same_site' => env('SESSION_SAME_SITE', 'lax'),
+    // For cross-site dev workflows (vite localhost) and for legitimate cross-site
+    // usage (CDN, different backend host), set defaults that allow credentials
+    // when explicitly configured in environment. Default to true for secure.
+    'secure' => env('SESSION_SECURE_COOKIE', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -212,11 +214,9 @@ return [
     |
     */
 
+    // In local HTTP dev, SameSite=None without Secure is rejected by browsers.
+    // So when secure cookies are disabled, fallback to lax by default.
+    'same_site' => env('SESSION_SAME_SITE', env('SESSION_SECURE_COOKIE', true) ? 'none' : 'lax'),
+
     'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
-
-
-    // default session driver redix
-
-    'driver' => env('SESSION_DRIVER', 'redis'),
-
 ];

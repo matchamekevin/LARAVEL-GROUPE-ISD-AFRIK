@@ -2,7 +2,17 @@ import React, { useState } from "react";
 import axios from "axios";
 
 export default function ForgotPassword() {
-  const API_BASE = "http://localhost:8000";
+  const API_BASE = (() => {
+    if (typeof window !== "undefined") {
+      const { protocol, hostname } = window.location;
+      if (["localhost", "127.0.0.1"].includes(hostname)) {
+        return `${protocol}//${hostname}:8000`;
+      }
+      if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
+      return window.location.origin;
+    }
+    return import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+  })();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");

@@ -290,6 +290,27 @@
   
   .pd-btn-panier--ok  { background: #28a745 !important; }
   .pd-btn-panier:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .pd-btn-payer {
+    flex: 1;
+    min-width: 160px;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.25s, transform 0.2s;
+  }
+
+  .pd-btn-payer:hover:not(:disabled) {
+    background: linear-gradient(90deg, #20c997, #17a2b8);
+    transform: scale(1.02);
+  }
+
+  .pd-btn-payer:disabled { opacity: 0.5; cursor: not-allowed; }
   
   .pd-btn-favori {
     width: 46px;
@@ -307,6 +328,7 @@
 
   /* Accessibilité: focus visible */
   .pd-btn-panier:focus-visible,
+  .pd-btn-payer:focus-visible,
   .pd-btn-favori:focus-visible,
   .pd-thumb:focus-visible,
   .pd-onglet-btn:focus-visible { outline: 3px solid rgba(251,156,8,0.18); outline-offset: 3px; }

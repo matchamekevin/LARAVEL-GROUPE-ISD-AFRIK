@@ -3,6 +3,15 @@
         Options -MultiViews -Indexes
     </IfModule>
 
+    # Allow cross-origin loading of built assets (CSS/JS/fonts) when served
+    # from a different origin (useful for CDN / external deployments).
+    <IfModule mod_headers.c>
+        <FilesMatch "\.(?:ttf|ttc|otf|eot|woff|woff2|css|js)$">
+            Header set Access-Control-Allow-Origin "*"
+            Header set Access-Control-Allow-Methods "GET, OPTIONS"
+        </FilesMatch>
+    </IfModule>
+
     RewriteEngine On
 
     # Handle Authorization Header

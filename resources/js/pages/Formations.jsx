@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/formation.css';
 
@@ -100,19 +100,58 @@ const SparklesIcon = () => (
 const Formations = () => {
   const navigate = useNavigate();
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [categoryImages, setCategoryImages] = useState({});
+
+  // Charger les images de catégories depuis l'API
+  useEffect(() => {
+    const fetchCategoryImages = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/formations/categories/images');
+        const images = await response.json();
+
+        // Organiser les images par imageable_id
+        const imagesMap = {};
+        // si l'API retourne des chemins relatifs (p.ex. '/uploads/...'),
+        // préfixer avec l'URL backend (configurable via env) pour éviter
+        // des requêtes inconsistantes en dev.
+        const backendBase = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
+        images.forEach(img => {
+          let url = img.url;
+          if (url && url.startsWith('/')) {
+            url = backendBase + url;
+          } else if (url && /^https?:\/\//i.test(url)) {
+            try {
+              const parsed = new URL(url);
+              url = backendBase + parsed.pathname;
+            } catch (_) {
+              // keep original URL if parsing fails
+            }
+          }
+          if (img.imageable_id === 1) imagesMap.etudiant = url;
+          if (img.imageable_id === 2) imagesMap.particulier = url;
+          if (img.imageable_id === 3) imagesMap.entreprise = url;
+        });
+
+        setCategoryImages(imagesMap);
+      } catch (error) {
+        console.error('Erreur chargement images catégories:', error);
+      }
+    };
+
+    fetchCategoryImages();
+  }, []);
 
   const categories = [
     {
       key: "etudiant",
       label: "Étudiants",
       icon: GraduationCapIcon,
-      image: "/images/home/hero-13.jpg",
+      image: categoryImages.etudiant || "/images/home/hero-13.jpg",
       alt: "Formations pour étudiants",
       description: "Préparez votre avenir professionnel avec des formations certifiantes reconnues et valorisées par les entreprises du monde entier",
       highlights: [
         "Certifications internationales reconnues",
         "Stages pratiques en entreprise inclus",
-       
         "Accès illimité aux ressources 24/7",
         "Aide à l'insertion professionnelle"
       ],
@@ -122,13 +161,12 @@ const Formations = () => {
       key: "particulier",
       label: "Particuliers",
       icon: UsersIcon,
-      image: "/images/home/hero-13.jpg",
+      image: categoryImages.particulier || "/images/home/hero-13.jpg",
       alt: "Formations pour particuliers",
       description: "Développez vos compétences professionnelles et personnelles à votre rythme avec un accompagnement sur mesure et adapté",
       highlights: [
         "Horaires ultra-flexibles adaptés à votre emploi du temps",
         "Apprentissage 100% pratique et opérationnel",
-      
         "Certification professionnelle à la clé"
       ],
       stats: { courses: "40+", success: "94%" }
@@ -137,15 +175,13 @@ const Formations = () => {
       key: "entreprise",
       label: "Entreprises",
       icon: BuildingIcon,
-      image: "/images/home/hero-13.jpg",
+      image: categoryImages.entreprise || "/images/home/hero-13.jpg",
       alt: "Formations pour entreprises",
       description: "Boostez la performance et la productivité de vos équipes avec des solutions de formation innovantes, sur mesure et adaptées à vos enjeux",
       highlights: [
         "Formations intra-entreprise personnalisées",
         "Programmes 100% adaptés à vos besoins spécifiques",
-        
-        "Certification collective de vos collaborateurs",
-      
+        "Certification collective de vos collaborateurs"
       ],
       stats: { courses: "60+", success: "98%" }
     }

@@ -49,8 +49,18 @@ class PaiementController extends Controller
             return response()->json(['message' => 'Nom ou prénom manquant ❌'], 422);
         }
 
-        FedaPay::setApiKey(config('services.fedapay.secret'));
-        FedaPay::setEnvironment(config('services.fedapay.env'));
+        $fedapaySecret = config('services.fedapay.secret');
+        $fedapayEnv = config('services.fedapay.env');
+
+        if (empty($fedapaySecret) || empty($fedapayEnv)) {
+            Log::error('FedaPay credentials missing', ['secret' => $fedapaySecret, 'env' => $fedapayEnv]);
+            return response()->json([
+                'message' => 'FedaPay credentials manquantes. Vérifiez FEDAPAY_SECRET_KEY et FEDAPAY_ENVIRONMENT dans .env'
+            ], 500);
+        }
+
+        FedaPay::setApiKey($fedapaySecret);
+        FedaPay::setEnvironment($fedapayEnv);
 
         try {
             $callbackUrl = env('FEDAPAY_CALLBACK_URL');

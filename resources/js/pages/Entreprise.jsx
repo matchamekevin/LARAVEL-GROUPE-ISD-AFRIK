@@ -11,10 +11,8 @@ const Entreprise = () => {
   // Charger les formations de type "entreprise"
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/formations/type/entreprise")
+      .get(`${import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000'}/api/formations/type/entreprise`)
       .then((res) => {
-        // Debug: afficher la réponse dans la console navigateur
-        console.debug('API /api/formations/type/entreprise response:', res);
         setFormations(res.data || []);
       })
       .catch((err) => {
@@ -61,9 +59,22 @@ const Entreprise = () => {
     if (!activeMonth && moisList.length > 0) setActiveMonth(moisList[0]);
   }, [moisList, activeMonth]);
 
-  // Image principale (fallback)
-  const getImageUrl = (f) =>
-    f?.images?.[0]?.url || "http://localhost:8000/images/default.jpg";
+  // ✅ Fonction pour obtenir l'URL de l'image depuis la base de données
+  const getImageUrl = (f) => {
+    const raw = f?.images?.[0]?.url;
+    const backendBase = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
+    if (!raw) return `${backendBase}/images/default.jpg`;
+    if (raw.startsWith('/')) return backendBase + raw;
+    if (/^https?:\/\//i.test(raw)) {
+      try {
+        const parsed = new URL(raw);
+        return backendBase + parsed.pathname;
+      } catch (_) {
+        return raw;
+      }
+    }
+    return raw;
+  };
 
   return (
     <div className="entreprise-page">
@@ -79,11 +90,6 @@ const Entreprise = () => {
           </button>
         </div>
       </section>
-
-      {/* Debug: nombre de formations chargées (temporaire) */}
-      <div style={{ padding: 12, background: '#fff8', margin: '12px 16px', borderRadius: 8 }}>
-        <strong>Debug:</strong> {formations.length} formation(s) chargée(s)
-      </div>
 
       {/* Pourquoi choisir */}
       <section className="details-section">
@@ -129,7 +135,7 @@ const Entreprise = () => {
                       src={getImageUrl(f)}
                       alt={f.titre}
                       onError={(e) => {
-                        e.currentTarget.src = "http://localhost:8000/images/default.jpg";
+                        e.currentTarget.src = `${import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000'}/images/default.jpg`;
                       }}
                     />
                   </div>

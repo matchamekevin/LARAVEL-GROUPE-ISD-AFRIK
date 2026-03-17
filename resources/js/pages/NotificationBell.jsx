@@ -8,7 +8,7 @@ export default function NotificationBell() {
   useEffect(() => {
     if (token) {
       axios
-        .get("http://localhost:8000/api/notifications", {
+        .get("http://127.0.0.1:8000/api/notifications", {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",

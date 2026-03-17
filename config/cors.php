@@ -1,7 +1,9 @@
 <?php
 
 return [
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    // Autoriser aussi l'endpoint de logs du navigateur utilisé par le "browser logger" (_boost)
+    // Allow API routes, all sanctum endpoints, and the browser logger path
+    'paths' => ['api/*', 'sanctum/*', '_boost/*'],
     
     'allowed_methods' => ['*'],
 
@@ -15,7 +17,7 @@ return [
     | Si vide ou égal à "*" alors on autorise toutes les origines (pas recommandé).
     */
     'allowed_origins' => (function () {
-        $raw = env('CORS_ALLOWED_ORIGINS', '*');
+        $raw = env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174');
         if ($raw === '*' || $raw === '') {
             return ['*'];
         }
@@ -30,6 +32,7 @@ return [
     
     'max_age' => 0,
     
+    // We need credentials for session/csrf cookies (login, sanctum). Keep enabled.
     'supports_credentials' => true,
 ];
 

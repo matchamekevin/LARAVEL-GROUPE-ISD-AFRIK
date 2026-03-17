@@ -18,7 +18,35 @@ const statusClass = (statut) => {
   if (statut === "rupture") return "pp-badge pp-badge--rupture";
   return "pp-badge pp-badge--neuf";
 };
+const getProductImage = (produit) => {
+  const titre = produit.titre?.toLowerCase() || "";
+  const categorie = produit.categorie?.nom?.toLowerCase() || "";
 
+  // Mapping basé sur le titre ou la catégorie
+  if (titre.includes("drone") || categorie.includes("drone")) {
+    return "/images/produits/drone.jpeg";
+  }
+  if (titre.includes("tpe") || categorie.includes("tpe")) {
+    return "/images/produits/tpe.jpeg";
+  }
+  if (titre.includes("instrumentation") || titre.includes("int")) {
+    return "/images/produits/int.jpeg";
+  }
+  if (titre.includes("maintenance") || titre.includes("ond")) {
+    return "/images/produits/ond.jpeg";
+  }
+  if (titre.includes("étude") || titre.includes("conseil") || titre.includes("proj")) {
+    return "/images/produits/proj.jpeg";
+  }
+
+  // Images par défaut selon l'ID pour éviter les répétitions
+  const images = [
+    "/images/produits/drone1.jpeg",
+    "/images/produits/tpe1.jpeg",
+    "/images/produits/tpe2.jpeg"
+  ];
+  return images[produit.id_produit % images.length] || "/images/produits/drone.jpeg";
+};
 const readSpecs = (specifications) => {
   if (!specifications) return [];
 
@@ -443,7 +471,7 @@ export default function Produits() {
             <article key={produit.id_produit} className="pp-card">
               <Link to={`/produits/${produit.id_produit}`} className="pp-image-wrap">
                 <img
-                  src={produit.image_url || "/placeholder.png"}
+                  src={getProductImage(produit)}
                   alt={produit.titre}
                   className="pp-image"
                   loading="lazy"

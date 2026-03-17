@@ -3,6 +3,18 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/etudiant.css";
 
+const API_BASE = (() => {
+  if (typeof window !== "undefined") {
+    const { protocol, hostname } = window.location;
+    if (["localhost", "127.0.0.1"].includes(hostname)) {
+      return `${protocol}//${hostname}:8000`;
+    }
+    if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
+    return window.location.origin;
+  }
+  return import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+})();
+
 const Particulier = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -12,8 +24,9 @@ const Particulier = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      fetch("http://localhost:8000/api/auth/profile", {
+      fetch(`${API_BASE}/api/auth/profile`, {
         headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       })
         .then((res) => res.json())
         .then((data) => {
@@ -30,7 +43,7 @@ const Particulier = () => {
 
   // ⚡ Charger uniquement les formations de type "particulier"
   useEffect(() => {
-    axios.get("http://localhost:8000/api/formations/type/etudiant")
+    axios.get(`${API_BASE}/api/formations/type/etudiant`)
       .then((res) => {
         console.log("Formations reçues:", res.data); // 🔍 Pour déboguer
         setFormations(res.data);
@@ -53,12 +66,21 @@ const Particulier = () => {
     navigate(`/formations/${id_formation}/details`);
   };
 
-  // ✅ Fonction pour obtenir l'URL de l'image
+  // ✅ Fonction pour obtenir l'URL de l'image depuis la base de données (préfixe backend si chemin relatif)
   const getImageUrl = (formation) => {
-    if (formation.images && formation.images.length > 0) {
-      return formation.images[0].url;
+    const raw = formation?.images?.[0]?.url;
+    const backendBase = API_BASE;
+    if (!raw) return `${backendBase}/images/default.jpg`;
+    if (raw.startsWith('/')) return backendBase + raw;
+    if (/^https?:\/\//i.test(raw)) {
+      try {
+        const parsed = new URL(raw);
+        return backendBase + parsed.pathname;
+      } catch (_) {
+        return raw;
+      }
     }
-    return "http://localhost:8000/images/default-formation.jpg";
+    return raw;
   };
 
   return (
@@ -85,7 +107,7 @@ const Particulier = () => {
                 alt={f.titre}
                 onError={(e) => {
                   console.error('Erreur de chargement image:', e.target.src);
-                  e.target.src = 'http://localhost:8000/images/default.jpg';
+                  e.target.src = `${API_BASE}/images/default.jpg`;
                 }}
               />
             </div>

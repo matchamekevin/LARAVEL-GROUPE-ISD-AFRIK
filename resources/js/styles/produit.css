@@ -241,8 +241,8 @@
 
 .pp-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .pp-card {
@@ -552,7 +552,7 @@
 
 @media (min-width: 1024px) {
   .pp-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .pp-filters-mobile {
@@ -571,5 +571,11 @@
 
   .pp-filter-icon {
     color: var(--pp-muted);
+  }
+}
+
+@media (min-width: 1400px) {
+  .pp-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

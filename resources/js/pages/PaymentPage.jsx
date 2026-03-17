@@ -25,7 +25,7 @@ const PaymentPage = () => {
     try {
       // ✅ Appel vers la route payFormation avec l'idFormation
       const res = await axios.post(
-        `http://localhost:8000/api/formations/${formation.id_formation}/paiement`,
+        `http://127.0.0.1:8000/api/formations/${formation.id_formation}/paiement`,
   {},
   { headers: { Authorization: `Bearer ${token}` } }
 

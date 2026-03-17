@@ -29,16 +29,16 @@
 
 .home .collaborator-image {
   width: 100%;
-  height: 100%;
+  height: auto;
   display: block;
-  object-fit: cover; /* crop to fill the card */
-  object-position: center top; /* keep top (head) visible */
+  object-fit: contain;
+  object-position: center top;
   border-radius: 12px;
-  transition: transform 0.28s, box-shadow 0.28s;
+  transition: box-shadow 0.28s;
 }
 
 .home .collaborator-card:hover .collaborator-image {
-  transform: scale(1.06);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
  
 .review-form .form-actions {
@@ -913,7 +913,7 @@ body.modal-open {
 }
 
 .home .offer-card:hover .card-image img {
-  transform: scale(1.1) rotate(2deg);
+  transform: scale(1.1);
 }
 
 .home .icon-badge {
@@ -951,10 +951,10 @@ body.modal-open {
 }
 
 .home .price-tag {
-  font-size: 1.8rem;
-  font-weight: 800;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: #fb9c08;
-  margin-bottom: 25px;
+  margin-bottom: 12px;
 }
 
 /* ===========================
@@ -1690,13 +1690,13 @@ body.modal-open {
   height: auto;
   display: block;
   object-fit: contain;
+  object-position: center 0%;
   border-radius: 15px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s;
+  transition: box-shadow 0.3s;
 }
 
 .home .collaborator-image:hover {
-  transform: scale(1.08);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 

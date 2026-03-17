@@ -15,7 +15,18 @@ export default function Login() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const API_BASE = "http://localhost:8000";
+  const API_BASE = (() => {
+    if (typeof window !== "undefined") {
+      const { protocol, hostname } = window.location;
+      if (["localhost", "127.0.0.1"].includes(hostname)) {
+        // In local dev, always stick to the current host to avoid localhost/127 cross-site issues.
+        return `${protocol}//${hostname}:8000`;
+      }
+      if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
+      return window.location.origin;
+    }
+    return import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+  })();
 
   useEffect(() => {
     if (location.state?.success) {
