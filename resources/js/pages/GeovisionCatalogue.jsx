@@ -101,7 +101,7 @@ export default function GeovisionCatalogue() {
   return (
     <main className="main" style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
       {/* Banner avec filtres */}
-      <div className="bannerWrapper wow fadeIn focuspoint" style={{ position: "relative", marginBottom: "40px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+      <div className="bannerWrapper wow fadeIn focuspoint" style={{ position: "relative", marginTop: "120px", marginBottom: "40px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
         <form className="proSelect clearfix hidden-xs" id="proSearch" style={{ padding: "16px 12px", maxWidth: "720px", margin: "0 auto" }}>
           <div className="titleh2" style={{ fontSize: "28px", fontWeight: "700", marginBottom: "20px", color: "#333" }}>Filtrer les produits</div>
           <div className="form-group select clearfix" style={{ display: "flex", gap: "15px", flexWrap: "wrap", marginBottom: "15px" }}>
@@ -214,117 +214,6 @@ export default function GeovisionCatalogue() {
             </select>
           </div>
         </form>
-
-        {/* Banner mobile */}
-        <form className="proSelect clearfix visible-xs" id="proSearch2" style={{ padding: "14px 10px", textAlign: "center" }}>
-          <h2 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "20px", color: "#333" }}>Filtrer les produits</h2>
-          <div className="form-group select clearfix" style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "15px" }}>
-            <select
-              className="form-control select gradient w45"
-              value={selectedType}
-              onChange={(e) => handleTypeChange(e.target.value)}
-              name="type"
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "6px",
-                border: "1px solid #ddd",
-                backgroundColor: "#fff",
-              }}
-            >
-              <option value="">Tous les types</option>
-              {geovisionTypes.map((t) => (
-                <option key={t.id || t.title} value={t.title}>
-                  {t.title}
-                </option>
-              ))}
-            </select>
-            <select
-              className="form-control select gradient w45 categoryItem"
-              name="category"
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "6px",
-                border: "1px solid #ddd",
-                backgroundColor: "#fff",
-              }}
-            >
-              <option value="">Toutes les catégories</option>
-              {availableCategories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group select clearfix" id="moreDetail2" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <select
-              className="form-control gradient w30"
-              name="res"
-              value={selectedResolution}
-              onChange={(e) => setSelectedResolution(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "6px",
-                border: "1px solid #ddd",
-                backgroundColor: "#fff",
-              }}
-            >
-              <option value="">Résolution</option>
-              {availableResolutions.map((res) => (
-                <option key={res} value={res}>
-                  {res}
-                </option>
-              ))}
-            </select>
-            <select
-              className="form-control gradient w30"
-              name="lens"
-              value={selectedLens}
-              onChange={(e) => setSelectedLens(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "6px",
-                border: "1px solid #ddd",
-                backgroundColor: "#fff",
-              }}
-            >
-              <option value="">Type d'objectif</option>
-              {availableLens.map((lens) => (
-                <option key={lens} value={lens}>
-                  {lens}
-                </option>
-              ))}
-            </select>
-            <select
-              className="form-control gradient w30"
-              name="environment"
-              value={selectedEnvironment}
-              onChange={(e) => setSelectedEnvironment(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "6px",
-                border: "1px solid #ddd",
-                backgroundColor: "#fff",
-              }}
-            >
-              <option value="">Environnement</option>
-              {availableEnvironments.map((env) => (
-                <option key={env} value={env}>
-                  {env}
-                </option>
-              ))}
-            </select>
-          </div>
-        </form>
-
-        <img src="/images/geovision/banner-default.jpg" alt="Geovision Banner" style={{ top: "0px", left: "0%", width: "100%", height: "auto", display: "block" }} />
       </div>
 
       {/* Barre de recherche */}
