@@ -3,7 +3,16 @@ import axios from "axios";
 const getBaseUrl = () => {
   // Prioritise the older `VITE_API_BASE` (used in some builds), then the newer `VITE_API_BASE_URL`.
   if (import.meta.env.VITE_API_BASE) {
-    return import.meta.env.VITE_API_BASE.replace(/\/$/, '') + '/api';
+    const envBase = import.meta.env.VITE_API_BASE.replace(/\/$/, '');
+    if (typeof window !== "undefined") {
+      const hostIsLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+      const envLooksLocal = /localhost|127\.0\.0\.1/i.test(envBase);
+      if (!envLooksLocal || hostIsLocal) {
+        return envBase + '/api';
+      }
+    } else {
+      return envBase + '/api';
+    }
   }
 
   if (import.meta.env.VITE_API_BASE_URL) {
@@ -20,7 +29,7 @@ const getBaseUrl = () => {
     return `${window.location.origin}/api`;
   }
 
-  return "http://127.0.0.1:8000/api";
+  return (typeof window !== "undefined" ? `${window.location.origin}/api` : "/api");
 };
 
 const api = axios.create({

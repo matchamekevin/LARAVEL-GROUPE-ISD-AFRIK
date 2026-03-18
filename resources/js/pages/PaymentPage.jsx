@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/PaymentPage.css";
+import { getApiBase } from "../utils/apiBase";
 
 const PaymentPage = () => {
   const location = useLocation();
@@ -24,7 +25,7 @@ const PaymentPage = () => {
 
     try {
       // ✅ Appel vers la route payFormation avec l'idFormation
-      const backendBase = import.meta.env.VITE_API_BASE || '';
+      const backendBase = getApiBase();
       const res = await axios.post(
         `${backendBase}/api/formations/${formation.id_formation}/paiement`,
         {},

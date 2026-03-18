@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { getApiBase } from "../utils/apiBase";
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
@@ -7,7 +8,7 @@ export default function NotificationBell() {
 
   useEffect(() => {
     if (token) {
-      const backendBase = import.meta.env.VITE_API_BASE || '';
+      const backendBase = getApiBase();
       axios
         .get(`${backendBase}/api/notifications`, {
           headers: {

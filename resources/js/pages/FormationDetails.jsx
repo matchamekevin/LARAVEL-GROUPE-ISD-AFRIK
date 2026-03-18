@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/formationDetails.css";
+import { getApiBase } from "../utils/apiBase";
 
 const FormationDetails = () => {
   const { id } = useParams();
@@ -12,7 +13,7 @@ const FormationDetails = () => {
 
   useEffect(() => {
     setLoading(true);
-    const backendBase = import.meta.env.VITE_API_BASE || '';
+    const backendBase = getApiBase();
     axios
       .get(`${backendBase}/api/formations/${id}`)
       .then((res) => {
@@ -38,7 +39,7 @@ const FormationDetails = () => {
   // ✅ Fonction pour obtenir l'URL de l'image depuis la base de données (préfixe backend si chemin relatif)
   const getImageUrl = () => {
     const raw = formation?.images?.[0]?.url;
-    const backendBase = import.meta.env.VITE_API_BASE || '';
+    const backendBase = getApiBase();
     if (!raw) return `${backendBase}/images/default.jpg`;
     return raw.startsWith('/') ? backendBase + raw : raw;
   };
@@ -78,7 +79,7 @@ const FormationDetails = () => {
               alt={formation.titre}
               className="formation-details-image"
               onError={(e) => {
-                const backendBase = import.meta.env.VITE_API_BASE || '';
+                const backendBase = getApiBase();
                 e.target.src = `${backendBase}/images/default-formation.jpg`;
               }}
             />

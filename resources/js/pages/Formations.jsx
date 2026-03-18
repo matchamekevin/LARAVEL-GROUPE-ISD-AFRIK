@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/formation.css';
+import { getApiBase } from '../utils/apiBase';
 
 // Icônes SVG
 const GraduationCapIcon = () => (
@@ -106,7 +107,7 @@ const Formations = () => {
   useEffect(() => {
     const fetchCategoryImages = async () => {
       try {
-        const backendBase = import.meta.env.VITE_API_BASE || '';
+        const backendBase = getApiBase();
         const response = await fetch(`${backendBase}/api/formations/categories/images`);
         const images = await response.json();
 

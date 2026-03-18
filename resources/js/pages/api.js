@@ -1,9 +1,25 @@
 import axios from "axios";
 
+const apiBase = (() => {
+  if (typeof window !== "undefined") {
+    const { protocol, hostname } = window.location;
+    if (import.meta.env.VITE_API_BASE) {
+      const envBase = import.meta.env.VITE_API_BASE.replace(/\/$/, "");
+      const envLooksLocal = /localhost|127\.0\.0\.1/i.test(envBase);
+      const hostIsLocal = ["localhost", "127.0.0.1"].includes(hostname);
+      if (!envLooksLocal || hostIsLocal) return envBase;
+    }
+    if (["localhost", "127.0.0.1"].includes(hostname)) return `${protocol}//${hostname}:8000`;
+    return window.location.origin;
+  }
+  if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE.replace(/\/$/, "");
+  return "";
+})();
+
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api/auth",
+  baseURL: `${apiBase}/api/auth`,
   headers: {
-    Authorization: `Bearer ${localStorage.getItem("token")}`,
+    Authorization: `Bearer ${typeof window !== "undefined" ? localStorage.getItem("token") : ""}`,
   },
 });
 

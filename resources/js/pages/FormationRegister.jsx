@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/FormationRegister.css";
+import { getApiBase } from "../utils/apiBase";
 
 const FormationRegister = () => {
   const { id } = useParams();
@@ -26,7 +27,7 @@ const FormationRegister = () => {
   // Charger la formation
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const backendBase = import.meta.env.VITE_API_BASE || '';
+    const backendBase = getApiBase();
     axios
       .get(`${backendBase}/api/formations/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -77,7 +78,7 @@ const FormationRegister = () => {
     const user = JSON.parse(localStorage.getItem("user"));
 
     try {
-      const backendBase = import.meta.env.VITE_API_BASE || '';
+      const backendBase = getApiBase();
       const res = await axios.post(
         `${backendBase}/api/formations/${id}/register`,
         { ...formData, id_utilisateur: user.id_utilisateur },

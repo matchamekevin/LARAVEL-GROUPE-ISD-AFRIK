@@ -3,6 +3,23 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/entreprise.css";
 
+const API_BASE = (() => {
+  if (typeof window !== "undefined") {
+    const { protocol, hostname } = window.location;
+    if (import.meta.env.VITE_API_BASE) {
+      const envBase = import.meta.env.VITE_API_BASE.replace(/\/$/, "");
+      const envLooksLocal = /localhost|127\.0\.0\.1/i.test(envBase);
+      const hostIsLocal = ["localhost", "127.0.0.1"].includes(hostname);
+      if (!envLooksLocal || hostIsLocal) return envBase;
+    }
+    if (["localhost", "127.0.0.1"].includes(hostname)) {
+      return `${protocol}//${hostname}:8000`;
+    }
+    return window.location.origin;
+  }
+  return "";
+})();
+
 const Entreprise = () => {
   const navigate = useNavigate();
   const [formations, setFormations] = useState([]);
@@ -11,7 +28,7 @@ const Entreprise = () => {
   // Charger les formations de type "entreprise"
   useEffect(() => {
     axios
-      .get(`${import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000'}/api/formations/type/entreprise`)
+      .get(`${API_BASE}/api/formations/type/entreprise`)
       .then((res) => {
         setFormations(res.data || []);
       })
@@ -62,7 +79,7 @@ const Entreprise = () => {
   // ✅ Fonction pour obtenir l'URL de l'image depuis la base de données
   const getImageUrl = (f) => {
     const raw = f?.images?.[0]?.url;
-    const backendBase = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
+    const backendBase = API_BASE;
     if (!raw) return `${backendBase}/images/default.jpg`;
     if (raw.startsWith('/')) return backendBase + raw;
     if (/^https?:\/\//i.test(raw)) {
@@ -135,7 +152,7 @@ const Entreprise = () => {
                       src={getImageUrl(f)}
                       alt={f.titre}
                       onError={(e) => {
-                        e.currentTarget.src = `${import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000'}/images/default.jpg`;
+                        e.currentTarget.src = `${API_BASE}/images/default.jpg`;
                       }}
                     />
                   </div>

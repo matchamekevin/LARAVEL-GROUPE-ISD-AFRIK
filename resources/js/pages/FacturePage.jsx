@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import jsPDF from "jspdf";
 import "../styles/facture.css";
+import { getApiBase } from "../utils/apiBase";
 
 // Formater la date en français
 function formatDate(dateString) {
@@ -24,7 +25,7 @@ function FacturePage() {
   useEffect(() => {
     // ✅ Token d'authentification ajouté
     const token = localStorage.getItem("token");
-    const backendBase = import.meta.env.VITE_API_BASE || '';
+    const backendBase = getApiBase();
 
     axios
       .get(`${backendBase}/api/paiement/${id}`, {
