@@ -78,14 +78,14 @@ class UtilisateurController extends Controller
             if ($user->two_factor_enabled) {
                 $user->generateTwoFactorCode();
                 try {
-                    \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\TwoFactorCodeMail($user));
+                    Mail::to($user->email)->send(new TwoFactorCodeMail($user));
                 } catch (\Throwable $mailEx) {
-                    \Log::warning('Envoi OTP inscription échoué: ' . $mailEx->getMessage());
+                    Log::warning('Envoi OTP inscription échoué: ' . $mailEx->getMessage());
                 }
             }
         } catch (\Throwable $e) {
             // Ne pas bloquer l'inscription si génération/ envoi OTP échoue
-            \Log::error('Erreur génération/envoi OTP après inscription: ' . $e->getMessage());
+            Log::error('Erreur génération/envoi OTP après inscription: ' . $e->getMessage());
         }
 
         return response()->json([
@@ -110,19 +110,19 @@ class UtilisateurController extends Controller
 
         // Not-null violation (Postgres 23502) — log and return friendly message
         if ($code == '23502') {
-            \Log::error('QueryException 23502 lors inscription: ' . $e->getMessage());
+            Log::error('QueryException 23502 lors inscription: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Impossible de créer le compte pour le moment. Données manquantes ou format incorrect.'
             ], 400);
         }
 
         // Autres erreurs SQL — log et message générique
-        \Log::error('QueryException lors inscription: ' . $e->getMessage());
+        Log::error('QueryException lors inscription: ' . $e->getMessage());
         return response()->json([
             'message' => 'Erreur serveur lors de l\'inscription.'
         ], 500);
     } catch (\Throwable $e) {
-        \Log::error('Exception inattendue lors inscription: ' . $e->getMessage());
+        Log::error('Exception inattendue lors inscription: ' . $e->getMessage());
         return response()->json([
             'message' => 'Erreur serveur. Veuillez réessayer plus tard.'
         ], 500);
@@ -164,10 +164,10 @@ class UtilisateurController extends Controller
 
                 // Envoyer l'email immédiatement (évite la dépendance au worker en dev)
                 try {
-                    \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\TwoFactorCodeMail($user));
+                    Mail::to($user->email)->send(new TwoFactorCodeMail($user));
                 } catch (\Throwable $e) {
                     // Ne pas interrompre la connexion si l'envoi échoue; loggons
-                    \Illuminate\Support\Facades\Log::error('Erreur envoi 2FA: ' . $e->getMessage());
+                    Log::error('Erreur envoi 2FA: ' . $e->getMessage());
                 }
 
                 $payload = [
@@ -258,7 +258,7 @@ class UtilisateurController extends Controller
                 'requires_2fa' => false
             ], 200);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Erreur de validation',
                 'errors'  => $e->errors()
@@ -293,9 +293,9 @@ class UtilisateurController extends Controller
             $user->generateTwoFactorCode();
 
             try {
-                \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\TwoFactorCodeMail($user));
+                Mail::to($user->email)->send(new TwoFactorCodeMail($user));
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Erreur envoi resend2FA: ' . $e->getMessage());
+                Log::error('Erreur envoi resend2FA: ' . $e->getMessage());
             }
 
             $payload = ['message' => 'Nouveau code envoyé'];

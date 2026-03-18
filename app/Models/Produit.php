@@ -59,6 +59,8 @@ class Produit extends Model
         'est_en_vedette' => 'boolean',
         'est_nouveau'    => 'boolean',
         'en_promo'       => 'boolean',
+        'stock'          => 'integer',
+        'stock_alerte'   => 'integer',
         'date_creation'  => 'datetime',
         'promo_debut'    => 'datetime',
         'promo_fin'      => 'datetime',

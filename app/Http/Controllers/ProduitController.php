@@ -359,14 +359,14 @@ class ProduitController extends Controller
             return response()->json(['message' => 'Produit introuvable'], 404);
         }
 
-        $data = ['stock' => $request->stock];
+        $data = ['stock' => $request->input('stock')];
 
         if ($request->has('stock_alerte')) {
-            $data['stock_alerte'] = $request->stock_alerte;
+            $data['stock_alerte'] = $request->input('stock_alerte');
         }
 
         // Mettre le statut à "rupture" si stock = 0
-        if ($request->stock === 0) {
+        if ($request->input('stock') === 0) {
             $data['statut'] = 'rupture';
         } elseif ($produit->statut === 'rupture') {
             $data['statut'] = 'disponible';
