@@ -26,8 +26,9 @@ const FormationRegister = () => {
   // Charger la formation
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const backendBase = import.meta.env.VITE_API_BASE || '';
     axios
-      .get(`http://127.0.0.1:8000/api/formations/${id}`, {
+      .get(`${backendBase}/api/formations/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setFormation(res.data))
@@ -76,8 +77,9 @@ const FormationRegister = () => {
     const user = JSON.parse(localStorage.getItem("user"));
 
     try {
+      const backendBase = import.meta.env.VITE_API_BASE || '';
       const res = await axios.post(
-        `http://127.0.0.1:8000/api/formations/${id}/register`,
+        `${backendBase}/api/formations/${id}/register`,
         { ...formData, id_utilisateur: user.id_utilisateur },
         { headers: { Authorization: `Bearer ${token}` } }
       );

@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import path from 'path';
 import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
 
@@ -20,6 +21,13 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    resolve: {
+        alias: {
+            react: path.resolve(__dirname, 'node_modules/react'),
+            'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+        },
+        dedupe: ['react', 'react-dom'],
+    },
     build: {
         sourcemap: false,
         chunkSizeWarningLimit: 700,

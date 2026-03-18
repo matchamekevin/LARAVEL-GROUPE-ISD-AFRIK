@@ -7,8 +7,9 @@ export default function NotificationBell() {
 
   useEffect(() => {
     if (token) {
+      const backendBase = import.meta.env.VITE_API_BASE || '';
       axios
-        .get("http://127.0.0.1:8000/api/notifications", {
+        .get(`${backendBase}/api/notifications`, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",

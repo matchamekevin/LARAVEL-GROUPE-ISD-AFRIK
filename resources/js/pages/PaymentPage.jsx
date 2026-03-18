@@ -24,11 +24,11 @@ const PaymentPage = () => {
 
     try {
       // ✅ Appel vers la route payFormation avec l'idFormation
+      const backendBase = import.meta.env.VITE_API_BASE || '';
       const res = await axios.post(
-        `http://127.0.0.1:8000/api/formations/${formation.id_formation}/paiement`,
-  {},
-  { headers: { Authorization: `Bearer ${token}` } }
-
+        `${backendBase}/api/formations/${formation.id_formation}/paiement`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       console.log("✅ Paiement initié:", res.data);

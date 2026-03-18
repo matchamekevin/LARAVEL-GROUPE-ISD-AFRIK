@@ -24,9 +24,10 @@ function FacturePage() {
   useEffect(() => {
     // ✅ Token d'authentification ajouté
     const token = localStorage.getItem("token");
+    const backendBase = import.meta.env.VITE_API_BASE || '';
 
     axios
-      .get(`http://127.0.0.1:8000/api/paiement/${id}`, {
+      .get(`${backendBase}/api/paiement/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {

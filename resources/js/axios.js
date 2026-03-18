@@ -1,8 +1,13 @@
 import axios from "axios";
 
 const getBaseUrl = () => {
+  // Prioritise the older `VITE_API_BASE` (used in some builds), then the newer `VITE_API_BASE_URL`.
+  if (import.meta.env.VITE_API_BASE) {
+    return import.meta.env.VITE_API_BASE.replace(/\/$/, '') + '/api';
+  }
+
   if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
+    return import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '');
   }
 
   if (typeof window !== "undefined") {

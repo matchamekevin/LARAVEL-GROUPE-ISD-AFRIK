@@ -12,8 +12,9 @@ const FormationDetails = () => {
 
   useEffect(() => {
     setLoading(true);
+    const backendBase = import.meta.env.VITE_API_BASE || '';
     axios
-      .get(`http://127.0.0.1:8000/api/formations/${id}`)
+      .get(`${backendBase}/api/formations/${id}`)
       .then((res) => {
         console.log("Formation reçue:", res.data);
         setFormation(res.data);
@@ -37,8 +38,9 @@ const FormationDetails = () => {
   // ✅ Fonction pour obtenir l'URL de l'image depuis la base de données (préfixe backend si chemin relatif)
   const getImageUrl = () => {
     const raw = formation?.images?.[0]?.url;
-    if (!raw) return "http://127.0.0.1:8000/images/default.jpg";
-    return raw.startsWith('/') ? (import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000') + raw : raw;
+    const backendBase = import.meta.env.VITE_API_BASE || '';
+    if (!raw) return `${backendBase}/images/default.jpg`;
+    return raw.startsWith('/') ? backendBase + raw : raw;
   };
 
   if (loading) {
@@ -76,7 +78,8 @@ const FormationDetails = () => {
               alt={formation.titre}
               className="formation-details-image"
               onError={(e) => {
-                e.target.src = 'http://127.0.0.1:8000/images/default-formation.jpg';
+                const backendBase = import.meta.env.VITE_API_BASE || '';
+                e.target.src = `${backendBase}/images/default-formation.jpg`;
               }}
             />
           </div>

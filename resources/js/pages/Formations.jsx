@@ -106,7 +106,8 @@ const Formations = () => {
   useEffect(() => {
     const fetchCategoryImages = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/formations/categories/images');
+        const backendBase = import.meta.env.VITE_API_BASE || '';
+        const response = await fetch(`${backendBase}/api/formations/categories/images`);
         const images = await response.json();
 
         // Organiser les images par imageable_id
@@ -114,7 +115,6 @@ const Formations = () => {
         // si l'API retourne des chemins relatifs (p.ex. '/uploads/...'),
         // préfixer avec l'URL backend (configurable via env) pour éviter
         // des requêtes inconsistantes en dev.
-        const backendBase = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
         images.forEach(img => {
           let url = img.url;
           if (url && url.startsWith('/')) {
