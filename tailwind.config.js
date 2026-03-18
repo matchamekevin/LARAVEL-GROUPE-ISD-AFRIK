@@ -7,6 +7,7 @@ export default {
     './resources/views/**/*.blade.php',   // Blade templates
     './resources/js/**/*.js',             // React JS
     './resources/js/**/*.jsx',            // React JSX
+    './resources/js/**/*.css',            // CSS files used by admin frontend
     './resources/js/**/*.tsx',            // React TSX
     './app/Filament/**/*.php',            // Filament classes
     './resources/filament/**/*.php',      // Filament resources
@@ -23,4 +24,19 @@ export default {
     },
   },
   plugins: [forms],
+  safelist: [
+    { pattern: /^bg-/ },
+    { pattern: /^text-/ },
+    { pattern: /^w-/ },
+    { pattern: /^min-h-/ },
+    { pattern: /^p-/ },
+    { pattern: /^rounded/ },
+    { pattern: /^shadow/ },
+    { pattern: /^flex$/ },
+    { pattern: /^items-/ },
+    { pattern: /^justify-/ },
+    { pattern: /^hidden$/ },
+    { pattern: /^block$/ },
+    { pattern: /^space-y-/ },
+  ],
 }

@@ -206,6 +206,22 @@ class ProduitController extends Controller
     // ================================================================
 
     /**
+     * GET /api/admin/produits
+     * Liste admin complète des produits (sans pagination front catalogue)
+     */
+    public function adminIndex(): JsonResponse
+    {
+        $produits = Produit::query()
+            ->with(['pays', 'categorie', 'images'])
+            ->orderByDesc('date_creation')
+            ->get();
+
+        return response()->json([
+            'data' => ProduitResource::collection($produits),
+        ]);
+    }
+
+    /**
      * POST /api/produits
      * Créer un nouveau produit
      */

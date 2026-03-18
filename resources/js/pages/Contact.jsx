@@ -1,12 +1,44 @@
 import React from "react";
 import "../../js/styles/home.css";
 import usePageMeta from "../hooks/usePageMeta";
+import { submitContactMessage } from "../admin/api";
 
 export default function Contact() {
     usePageMeta(
         "Contact | Groupe ISD AFRIK",
         "Contactez le Groupe ISD AFRIK pour vos besoins en solutions technologiques, securite electronique et transformation digitale."
     );
+
+    const [form, setForm] = React.useState({
+        nom_complet: "",
+        email: "",
+        telephone: "",
+        sujet: "",
+        message: "",
+    });
+    const [sending, setSending] = React.useState(false);
+    const [feedback, setFeedback] = React.useState(null);
+
+    const onChange = (key) => (e) => {
+        setForm((prev) => ({ ...prev, [key]: e.target.value }));
+    };
+
+    const onSubmit = async (e) => {
+        e.preventDefault();
+        setSending(true);
+        setFeedback(null);
+
+        try {
+            await submitContactMessage(form);
+            setForm({ nom_complet: "", email: "", telephone: "", sujet: "", message: "" });
+            setFeedback({ type: "success", text: "Message envoyé. Nous vous répondrons rapidement." });
+        } catch (err) {
+            const msg = err?.response?.data?.message || "Impossible d'envoyer le message pour le moment.";
+            setFeedback({ type: "error", text: msg });
+        } finally {
+            setSending(false);
+        }
+    };
 
     return (
         <div className="home contact-page premium-page">
@@ -49,34 +81,39 @@ export default function Contact() {
                     <div className="contact-form-card">
                         <h3>Envoyez un message</h3>
                         <p className="contact-form-subtitle">Nous vous recontactons sous 24-48h.</p>
-                        <form className="contact-form" onSubmit={(e) => e.preventDefault()}>
+                        <form className="contact-form" onSubmit={onSubmit}>
                             <div className="contact-form-row">
                                 <div className="contact-field">
                                     <label htmlFor="contact-name">Nom complet</label>
-                                    <input id="contact-name" type="text" placeholder="Votre nom" required />
+                                    <input id="contact-name" type="text" placeholder="Votre nom" value={form.nom_complet} onChange={onChange("nom_complet")} required />
                                 </div>
                                 <div className="contact-field">
                                     <label htmlFor="contact-email">Email</label>
-                                    <input id="contact-email" type="email" placeholder="Votre email" required />
+                                    <input id="contact-email" type="email" placeholder="Votre email" value={form.email} onChange={onChange("email")} required />
                                 </div>
                             </div>
                             <div className="contact-form-row">
                                 <div className="contact-field">
                                     <label htmlFor="contact-phone">Telephone</label>
-                                    <input id="contact-phone" type="tel" placeholder="Votre numero" />
+                                    <input id="contact-phone" type="tel" placeholder="Votre numero" value={form.telephone} onChange={onChange("telephone")} />
                                 </div>
                                 <div className="contact-field">
                                     <label htmlFor="contact-subject">Sujet</label>
-                                    <input id="contact-subject" type="text" placeholder="Sujet" />
+                                    <input id="contact-subject" type="text" placeholder="Sujet" value={form.sujet} onChange={onChange("sujet")} />
                                 </div>
                             </div>
                             <div className="contact-field">
                                 <label htmlFor="contact-message">Message</label>
-                                <textarea id="contact-message" rows="5" placeholder="Decrivez votre besoin" required />
+                                <textarea id="contact-message" rows="5" placeholder="Decrivez votre besoin" value={form.message} onChange={onChange("message")} required />
                             </div>
+                            {feedback && (
+                                <p style={{ color: feedback.type === "success" ? "#166534" : "#b91c1c", marginBottom: "0.75rem" }}>
+                                    {feedback.text}
+                                </p>
+                            )}
                             <div className="contact-form-actions">
-                                <button className="btn-primary" type="submit">
-                                    <i className="fas fa-paper-plane"></i> Envoyer
+                                <button className="btn-primary" type="submit" disabled={sending}>
+                                    <i className="fas fa-paper-plane"></i> {sending ? "Envoi..." : "Envoyer"}
                                 </button>
                             </div>
                         </form>

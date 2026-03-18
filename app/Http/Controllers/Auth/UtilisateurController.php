@@ -145,7 +145,7 @@ class UtilisateurController extends Controller
 
             if (!$user || !Hash::check($credentials['mot_de_passe'], $user->mot_de_passe)) {
                 return response()->json([
-                    'message' => 'Identifiants invalides'
+                    'message' => __('auth.failed')
                 ], 401);
             }
 

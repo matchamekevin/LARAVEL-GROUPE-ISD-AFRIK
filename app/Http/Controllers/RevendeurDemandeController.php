@@ -7,6 +7,24 @@ use Illuminate\Http\Request;
 
 class RevendeurDemandeController extends Controller
 {
+    public function index()
+    {
+        return response()->json(
+            RevendeurDemande::query()->latest()->get()
+        );
+    }
+
+    public function show(int $id)
+    {
+        $demande = RevendeurDemande::find($id);
+
+        if (!$demande) {
+            return response()->json(['message' => 'Demande introuvable'], 404);
+        }
+
+        return response()->json($demande);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -45,5 +63,39 @@ class RevendeurDemandeController extends Controller
             'message' => 'Votre demande revendeur a ete enregistree avec succes.',
             'id' => $demande->id,
         ], 201);
+    }
+
+    public function updateStatus(Request $request, int $id)
+    {
+        $data = $request->validate([
+            'statut' => 'required|string|max:40',
+        ]);
+
+        $demande = RevendeurDemande::find($id);
+
+        if (!$demande) {
+            return response()->json(['message' => 'Demande introuvable'], 404);
+        }
+
+        $demande->statut = $data['statut'];
+        $demande->save();
+
+        return response()->json([
+            'message' => 'Statut mis à jour',
+            'data' => $demande,
+        ]);
+    }
+
+    public function destroy(int $id)
+    {
+        $demande = RevendeurDemande::find($id);
+
+        if (!$demande) {
+            return response()->json(['message' => 'Demande introuvable'], 404);
+        }
+
+        $demande->delete();
+
+        return response()->json(['message' => 'Demande supprimée']);
     }
 }

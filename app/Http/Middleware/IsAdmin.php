@@ -16,11 +16,12 @@ class IsAdmin
 
         $user = $request->user();
 
-        // ✅ Vérifie plusieurs cas possibles
-        if (
-            !$user->is_admin && 
-            !in_array($user->role, ['admin', 'super_admin'])
-        ) {
+        // Accepte les anciens et nouveaux rôles admin pour éviter les blocages.
+        $adminRoles = ['admin', 'super_admin', 'admin_pays', 'admin_national', 'superadmin'];
+        $isAdminFlag = filter_var($user->is_admin, FILTER_VALIDATE_BOOLEAN);
+        $hasAdminRole = in_array((string) $user->role, $adminRoles, true);
+
+        if (!$isAdminFlag && !$hasAdminRole) {
             return response()->json(['message' => 'Accès réservé aux administrateurs'], 403);
         }
 

@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\CategorieProduit;
+use App\Models\Pays;
 
 /**
  * ProduitRequest
@@ -69,6 +71,25 @@ class ProduitRequest extends FormRequest
         'slug'               => 'nullable|string|max:255',
     ];
 }
+
+    protected function prepareForValidation(): void
+    {
+        $idCategorie = $this->input('id_categorie');
+        $idPays = $this->input('id_pays');
+
+        if (empty($idCategorie)) {
+            $idCategorie = CategorieProduit::query()->value('id_categorie');
+        }
+
+        if (empty($idPays)) {
+            $idPays = Pays::query()->value('id_pays');
+        }
+
+        $this->merge([
+            'id_categorie' => $idCategorie,
+            'id_pays' => $idPays,
+        ]);
+    }
 
     /**
      * Messages personnalisés

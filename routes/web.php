@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+// Forcer l'auth admin React au lieu de la page Breeze
+Route::redirect('/login', '/admin/login');
+
 
 // Serve la SPA React à la racine
 Route::view('/', 'app');
@@ -21,6 +24,14 @@ Route::get('/status', function () {
 if (file_exists(__DIR__ . '/auth.php')) {
     require __DIR__ . '/auth.php';
 }
+
+// Front admin React dédié
+Route::view('/admin', 'admin');
+Route::view('/admin/{any}', 'admin')->where('any', '.*');
+
+// Compatibilité ancienne URL temporaire
+Route::redirect('/admin-react', '/admin');
+Route::redirect('/admin-react/{any}', '/admin/{any}')->where('any', '.*');
 
 // Catch-all : laisser la SPA gérer les routes front (ex: /produits, /produits/123)
 Route::view('/{any}', 'app')->where('any', '.*');
