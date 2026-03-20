@@ -71,7 +71,7 @@ export default function Footer() {
         
         {/* SECTION 1 : LOGO + À PROPOS */}
         <div className="footer-section footer-about">
-          <img src="/images/logo.png" alt="ISD AFRIK Logo" className="footer-logo" />
+          <img src="/images/logo.webp" alt="ISD AFRIK Logo" className="footer-logo" />
           <p className="footer-description">
             Leader en solutions informatiques et transformation digitale en Afrique de l'Ouest. 
             Présents dans 5 pays pour accompagner votre croissance.

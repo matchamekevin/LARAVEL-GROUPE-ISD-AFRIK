@@ -47,7 +47,7 @@ function FacturePage() {
     const doc = new jsPDF();
 
     const img = new Image();
-    img.src = "/images/logo.png";
+    img.src = "/images/logo.webp";
 
     // ✅ Fonction qui génère le PDF (avec ou sans logo)
     const buildPDF = () => {
@@ -95,7 +95,7 @@ function FacturePage() {
 
         {/* Header logo + titre */}
         <div className="facture-header">
-          <img src="/images/logo.png" alt="Logo ISD" className="facture-logo" />
+          <img src="/images/logo.webp" alt="Logo ISD" className="facture-logo" />
           <h1 className="facture-title">Facture</h1>
         </div>
 

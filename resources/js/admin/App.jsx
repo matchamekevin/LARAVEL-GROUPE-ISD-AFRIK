@@ -12,6 +12,7 @@ import MarketingAdmin from './pages/MarketingAdmin';
 import AssetsVentesAdmin from './pages/AssetsVentesAdmin';
 import Login from './pages/Login';
 import { useLocation, useNavigate } from 'react-router-dom';
+import Loader from './components/Loader';
 
 function RedirectIfLogin() {
   const location = useLocation();
@@ -41,7 +42,7 @@ export default function App() {
     return () => { mounted = false; };
   }, []);
 
-  if (loading) return <div style={{padding:24}}>Chargement...</div>;
+  if (loading) return <Loader />;
 
   if (!user) {
     return (
@@ -110,7 +111,7 @@ export default function App() {
               margin: '0 0 0.5rem 0',
               fontWeight: 500,
             }}>
-              👤 Connecté
+              <i className="fas fa-user" style={{marginRight: '0.3rem'}}></i>Connecté
             </p>
             <p style={{
               fontSize: '0.95rem',
@@ -152,7 +153,7 @@ export default function App() {
                   e.currentTarget.style.borderLeftColor = 'transparent';
                   e.currentTarget.style.color = '#D1D5DB';
                 }}>
-                  📊 Dashboard
+                  <i className="fas fa-chart-line" style={{marginRight: '0.5rem'}}></i>Dashboard
                 </Link>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
@@ -178,7 +179,7 @@ export default function App() {
                   e.currentTarget.style.borderLeftColor = 'transparent';
                   e.currentTarget.style.color = '#D1D5DB';
                 }}>
-                  👥 Utilisateurs
+                  <i className="fas fa-users" style={{marginRight: '0.5rem'}}></i>Utilisateurs
                 </Link>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
@@ -204,7 +205,7 @@ export default function App() {
                   e.currentTarget.style.borderLeftColor = 'transparent';
                   e.currentTarget.style.color = '#D1D5DB';
                 }}>
-                  📦 Produits
+                  <i className="fas fa-box" style={{marginRight: '0.5rem'}}></i>Produits
                 </Link>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
@@ -230,7 +231,7 @@ export default function App() {
                   e.currentTarget.style.borderLeftColor = 'transparent';
                   e.currentTarget.style.color = '#D1D5DB';
                 }}>
-                  🛒 Commandes
+                  <i className="fas fa-shopping-cart" style={{marginRight: '0.5rem'}}></i>Commandes
                 </Link>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
@@ -256,7 +257,7 @@ export default function App() {
                   e.currentTarget.style.borderLeftColor = 'transparent';
                   e.currentTarget.style.color = '#D1D5DB';
                 }}>
-                  🎓 Formations
+                  <i className="fas fa-graduation-cap" style={{marginRight: '0.5rem'}}></i>Formations
                 </Link>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
@@ -282,7 +283,7 @@ export default function App() {
                   e.currentTarget.style.borderLeftColor = 'transparent';
                   e.currentTarget.style.color = '#D1D5DB';
                 }}>
-                  ✉️ Messages
+                  <i className="fas fa-envelope" style={{marginRight: '0.5rem'}}></i>Messages
                 </Link>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
@@ -308,7 +309,7 @@ export default function App() {
                   e.currentTarget.style.borderLeftColor = 'transparent';
                   e.currentTarget.style.color = '#D1D5DB';
                 }}>
-                  🧩 Catalogue
+                  <i className="fas fa-puzzle-piece" style={{marginRight: '0.5rem'}}></i>Catalogue
                 </Link>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
@@ -334,7 +335,7 @@ export default function App() {
                   e.currentTarget.style.borderLeftColor = 'transparent';
                   e.currentTarget.style.color = '#D1D5DB';
                 }}>
-                  💰 Ventes & Assets
+                  <i className="fas fa-money-bill" style={{marginRight: '0.5rem'}}></i>Ventes & Assets
                 </Link>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
@@ -360,7 +361,7 @@ export default function App() {
                   e.currentTarget.style.borderLeftColor = 'transparent';
                   e.currentTarget.style.color = '#D1D5DB';
                 }}>
-                  📣 Marketing
+                  <i className="fas fa-bullhorn" style={{marginRight: '0.5rem'}}></i>Marketing
                 </Link>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
@@ -386,7 +387,7 @@ export default function App() {
                   e.currentTarget.style.borderLeftColor = 'transparent';
                   e.currentTarget.style.color = '#D1D5DB';
                 }}>
-                  ⚙️ Paramètres
+                  <i className="fas fa-gear" style={{marginRight: '0.5rem'}}></i>Paramètres
                 </Link>
               </li>
             </ul>
@@ -422,7 +423,7 @@ export default function App() {
                 e.target.style.borderColor = '#D1D5DB';
               }}
             >
-              🚪 Se déconnecter
+              <i className="fas fa-sign-out-alt" style={{marginRight: '0.3rem'}}></i>Se déconnecter
             </button>
           </div>
         </aside>

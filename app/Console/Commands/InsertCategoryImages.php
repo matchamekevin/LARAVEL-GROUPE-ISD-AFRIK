@@ -27,15 +27,15 @@ class InsertCategoryImages extends Command
      */
     protected $categoryImages = [
         'etudiant' => [
-            'image' => 'gestion-projets.jpg', // Image académique/organisation
+            'image' => 'gestion-projets.webp', // Image académique/organisation
             'alt' => 'Formations pour étudiants - Préparez votre avenir professionnel'
         ],
         'particulier' => [
-            'image' => 'leadership-rh.jpg', // Image développement personnel
+            'image' => 'leadership-rh.webp', // Image développement personnel
             'alt' => 'Formations pour particuliers - Développez vos compétences'
         ],
         'entreprise' => [
-            'image' => 'gestion-entreprise.jpg', // Image business/professionnelle
+            'image' => 'gestion-entreprise.webp', // Image business/professionnelle
             'alt' => 'Formations pour entreprises - Boostez vos équipes'
         ]
     ];

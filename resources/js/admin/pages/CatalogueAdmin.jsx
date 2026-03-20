@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getCategories, createCategory, updateCategory, deleteCategory } from '../api';
+import Loader from '../components/Loader';
 
 export default function CatalogueAdmin() {
   const [categories, setCategories] = useState([]);
@@ -71,7 +72,7 @@ export default function CatalogueAdmin() {
 
       <div className="card">
         {loading ? (
-          <div>Chargement...</div>
+          <Loader />
         ) : categories.length === 0 ? (
           <div>Aucune catégorie.</div>
         ) : (

@@ -28,58 +28,45 @@ class ResetFormationImages extends Command
      */
     protected $formationImageMapping = [
         // Étudiants - formations académiques
-        'gestion commerciale et stock' => 'gestion-commerciale-stock.jpg',
-        'comptabilité générale' => 'comptabilite-gestion-projets.jpg',
-        'microsoft excel avancé' => 'excel-avance.jpg',
-        'videosurveillance' => 'video-surveillance.jpg',
-        'drones' => 'assistant-direction.jpg', // image disponible la plus proche
-        'extincteurs' => 'gestion-entreprise.jpg', // image sécurité
+        'gestion commerciale et stock' => 'gestion-commerciale-stock.webp',
+        'comptabilité générale' => 'comptabilite-gestion-projets.webp',
+        'microsoft excel avancé' => 'excel-avance.webp',
+        'videosurveillance' => 'video-surveillance.webp',
+        'drones' => 'assistant-direction.webp', // image disponible la plus proche
+        'extincteurs' => 'gestion-entreprise.webp', // image sécurité
 
         // Particuliers - formations professionnelles
-        'transformation digitale' => 'big-data.jpg',
-        'solutions cloud' => 'dev-application-api.jpg',
-        'web mobile' => 'web-wordpress.jpg',
-        'marketing digital' => 'seo-referencement.jpg',
-        'gestion de projet' => 'gestion-projets.jpg',
-        'communication professionnelle' => 'leadership-rh.jpg',
-        'anglais professionnel' => 'community-management.jpg',
+        'transformation digitale' => 'big-data.webp',
+        'solutions cloud' => 'dev-application-api.webp',
+        'web mobile' => 'web-wordpress.webp',
+        'marketing digital' => 'seo-referencement.webp',
+        'gestion de projet' => 'gestion-projets.webp',
+        'communication professionnelle' => 'leadership-rh.webp',
+        'anglais professionnel' => 'community-management.webp',
 
         // Entreprises - formations business
-        'ressources humaines' => 'leadership-rh.jpg',
-        'comptabilité' => 'comptabilite-immobilisations.jpg',
-        'gestion' => 'gestion-entreprise.jpg',
-        'informatique' => 'dev-application-debutant.jpg',
-        'commerce' => 'coaching-commercial.jpg',
-        'finance' => 'paie-rh.jpg',
-        'droit' => 'syscohada-comptabilite.jpg',
-        'marketing' => 'community-management.jpg',
-        'communication' => 'multimedia.jpg',
-        'qualité' => 'gpec.jpg',
-        'sécurité' => 'video-surveillance.jpg',
-        'environnement' => 'gestion-entreprise.jpg',
-        'logistique' => 'gestion-commerciale-stock.jpg',
-        'transport' => 'hotellerie-restauration.jpg',
-        'tourisme' => 'hotellerie-restauration.jpg',
-        'immobilier' => 'comptabilite-immobilisations.jpg',
-        'agriculture' => 'gestion-entreprise.jpg',
-        'industrie' => 'gestion-entreprise.jpg',
-        'artisanat' => 'multimedia.jpg',
-        'services' => 'leadership-rh.jpg',
+        'ressources humaines' => 'leadership-rh.webp',
+        'comptabilité' => 'comptabilite-immobilisations.webp',
+        'gestion' => 'gestion-entreprise.webp',
+        'informatique' => 'dev-application-debutant.webp',
+        'commerce' => 'coaching-commercial.webp',
+        'finance' => 'paie-rh.webp',
+        'droit' => 'syscohada-comptabilite.webp',
+        'marketing' => 'community-management.webp',
+        'communication' => 'multimedia.webp',
+        'qualité' => 'gpec.webp',
+        'sécurité' => 'video-surveillance.webp',
+        'environnement' => 'gestion-entreprise.webp',
+        'logistique' => 'gestion-commerciale-stock.webp',
+        'transport' => 'hotellerie-restauration.webp',
+        'tourisme' => 'hotellerie-restauration.webp',
+        'immobilier' => 'comptabilite-immobilisations.webp',
+        'agriculture' => 'gestion-entreprise.webp',
+        'industrie' => 'gestion-entreprise.webp',
+        'artisanat' => 'multimedia.webp',
+        'services' => 'leadership-rh.webp',
     ];
 
-    /**
-     * Images par défaut pour les formations non mappées
-     */
-    protected $defaultImages = [
-        'big-data.jpg',
-        'coaching-commercial.jpg',
-        'community-management.jpg',
-        'gestion-projets.jpg',
-        'leadership-rh.jpg',
-        'gestion-entreprise.jpg',
-        'dev-application-api.jpg',
-        'seo-referencement.jpg',
-    ];
 
     /**
      * Execute the console command.
@@ -169,10 +156,7 @@ class ResetFormationImages extends Command
             }
         }
 
-        // Image par défaut basée sur l'ID de formation
-        $defaultImage = $this->defaultImages[$formation->id_formation % count($this->defaultImages)];
-        $fullPath = public_path("uploads/formations/{$defaultImage}");
-
-        return file_exists($fullPath) ? $defaultImage : null;
+        // Aucun fallback: si aucune image mappée trouvée, ne pas assigner d'image par défaut
+        return null;
     }
 }

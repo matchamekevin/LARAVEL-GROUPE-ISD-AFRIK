@@ -103,7 +103,7 @@ export default function Profile() {
     preview ||
     (utilisateur.avatar
       ? `${API_BASE}/storage/${utilisateur.avatar}`
-      : "/default-avatar.png");
+      : "/default-avatar.webp");
 
   return (
     <div className="profile-container">

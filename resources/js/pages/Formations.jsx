@@ -147,7 +147,7 @@ const Formations = () => {
       key: "etudiant",
       label: "Étudiants",
       icon: GraduationCapIcon,
-      image: categoryImages.etudiant || "/images/home/hero-13.jpg",
+      image: categoryImages.etudiant || "/images/home/hero-13.webp",
       alt: "Formations pour étudiants",
       description: "Préparez votre avenir professionnel avec des formations certifiantes reconnues et valorisées par les entreprises du monde entier",
       highlights: [
@@ -162,7 +162,7 @@ const Formations = () => {
       key: "particulier",
       label: "Particuliers",
       icon: UsersIcon,
-      image: categoryImages.particulier || "/images/home/hero-13.jpg",
+      image: categoryImages.particulier || "/images/home/hero-13.webp",
       alt: "Formations pour particuliers",
       description: "Développez vos compétences professionnelles et personnelles à votre rythme avec un accompagnement sur mesure et adapté",
       highlights: [
@@ -176,7 +176,7 @@ const Formations = () => {
       key: "entreprise",
       label: "Entreprises",
       icon: BuildingIcon,
-      image: categoryImages.entreprise || "/images/home/hero-13.jpg",
+      image: categoryImages.entreprise || "/images/home/hero-13.webp",
       alt: "Formations pour entreprises",
       description: "Boostez la performance et la productivité de vos équipes avec des solutions de formation innovantes, sur mesure et adaptées à vos enjeux",
       highlights: [

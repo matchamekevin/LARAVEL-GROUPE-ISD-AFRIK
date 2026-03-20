@@ -32,7 +32,7 @@ export default function Settings(){
           color: '#172243',
           margin: '0 0 0.5rem 0',
         }}>
-          ⚙️ Paramètres
+          <i className="fas fa-gear" style={{marginRight: '0.5rem'}}></i>Paramètres
         </h1>
         <p style={{
           color: '#6B7280',
@@ -193,7 +193,7 @@ export default function Settings(){
                 color: '#374151',
                 fontSize: '0.95rem',
               }}>
-                🔔 Notifications
+                <i className="fas fa-bell" style={{marginRight: '0.5rem'}}></i>Notifications
               </label>
               <input 
                 type="checkbox"
@@ -227,7 +227,7 @@ export default function Settings(){
                 color: '#374151',
                 fontSize: '0.95rem',
               }}>
-                🌙 Mode sombre
+                <i className="fas fa-moon" style={{marginRight: '0.5rem'}}></i>Mode sombre
               </label>
               <input 
                 type="checkbox"
@@ -267,7 +267,7 @@ export default function Settings(){
             fontWeight: 600,
             fontSize: '0.95rem',
           }}>
-            ✓ Paramètres enregistrés
+            <i className="fas fa-check" style={{marginRight: '0.3rem'}}></i>Paramètres enregistrés
           </div>
         )}
         <button 
@@ -287,7 +287,7 @@ export default function Settings(){
           onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
           onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
         >
-          💾 Enregistrer
+          <i className="fas fa-save" style={{marginRight: '0.3rem'}}></i>Enregistrer
         </button>
       </div>
     </div>

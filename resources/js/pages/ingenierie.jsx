@@ -13,17 +13,17 @@ export default function Ingenierie() {
         {
             title: "Architecture et urbanisation SI",
             text: "Conception de systemes evolutifs, securises et alignes avec les objectifs des entreprises et institutions.",
-            image: "/images/solutions/im3.jpg"
+            image: "/images/solutions/im3.webp"
         },
         {
             title: "Developpement applicatif",
             text: "Applications web, mobile et API metier sur mesure avec des standards eleves de qualite logicielle.",
-            image: "/images/solutions/im2.jpg"
+            image: "/images/solutions/im2.webp"
         },
         {
             title: "Integration de systemes",
             text: "Connexion ERP, CRM, outils metier et services tiers pour fluidifier les operations et les flux de donnees.",
-            image: "/images/solutions/im1.jpg"
+            image: "/images/solutions/im1.webp"
         }
     ];
 

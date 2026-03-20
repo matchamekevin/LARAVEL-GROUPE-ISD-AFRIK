@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "../styles/register.css";
 
 export default function Register() {
@@ -194,7 +194,7 @@ export default function Register() {
 
         <div className="login-redirect">
           Vous avez déjà un compte ?{" "}
-          <a href="/login" className="login-link">Connectez-vous ici</a>
+          <Link to="/login" className="login-link">Connectez-vous ici</Link>
         </div>
 
         {success && <div className="success-msg">✅ {success}</div>}

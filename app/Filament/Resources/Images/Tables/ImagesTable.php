@@ -27,7 +27,7 @@ class ImagesTable
                     ->height(60)
                     ->width(60)
                     ->disk('public')  // ✅ Ajout du disque
-                    ->defaultImageUrl('/images/placeholder.png'), // ✅ Image par défaut si manquante
+                    ->defaultImageUrl('/images/placeholder.webp'), // ✅ Image par défaut si manquante
 
                 TextColumn::make('alt')
                     ->label('Texte alternatif')

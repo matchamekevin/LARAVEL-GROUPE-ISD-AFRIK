@@ -34,7 +34,7 @@
 .register-form {
   display: flex;                /* disposition en flexbox */
   flex-direction: column;       /* éléments en colonne */
-  gap: 1.05rem;                 /* espace entre les champs */
+  gap: 1rem;                 /* espace entre les champs */
 }
 
 @media (max-width: 768px) {
@@ -51,17 +51,19 @@
 /* ✏️ Champs de saisie */
 .input {
   width: 100%;                  /* occupe toute la largeur */
-  border: 1px solid #d1d5db;    /* bord gris clair */
-  border-radius: 0.375rem;      /* coins arrondis */
-  padding: 0.5rem 0.75rem;      /* espace intérieur */
-  font-size: 1rem;              /* taille du texte */
+  border: none;                 /* border gérée par .input-group */
+  border-radius: 0;             /* évite le double arrondi */
+  padding: 0.15rem 0;           /* espace intérieur compact */
+  font-size: 0.98rem;           /* taille du texte */
+  font-weight: 600;
+  color: #172243;
+  background: transparent;
   outline: none;                /* supprime le contour par défaut */
 }
 
 /* 🎯 Effet focus sur les champs */
 .input:focus {
-  border-color: #080F70;        /* bord bleu foncé */
-  box-shadow: 0 0 0 2px rgba(8, 15, 112, 0.2); /* halo bleu léger */
+  box-shadow: none;
 }
 
 /* 🔘 Bouton d'inscription */
@@ -128,19 +130,44 @@
 
 .input-group {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 32px;
+  border: 1.8px solid #e5e7eb;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  padding: 0.35rem 0.7rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.register-form .input-group {
+  margin-bottom: 0; /* évite un double espacement avec gap */
+}
+
+.input-group:hover {
+  border-color: #cfd8e3;
+  background: linear-gradient(180deg, #ffffff 0%, #f6f9fc 100%);
+}
+
+.input-group:focus-within {
+  border-color: #172243;
+  box-shadow: 0 0 0 4px rgba(23, 34, 67, 0.1);
 }
 
 .input-group .icon {
-  position: absolute;
-  top: 50%;
-  left: 0.75rem;
-  transform: translateY(-50%);
-  color: #080F70;
+  color: #8ea0b8;
   font-size: 1rem;
+  flex-shrink: 0;
+  transition: color 0.25s ease;
 }
 
 .input-group .input {
-  padding-left: 2.5rem; /* espace pour l’icône */
+  padding-left: 0;
+}
+
+.input-group:focus-within .icon {
+  color: #172243;
 }
 
 /* Overlay de succès */
@@ -173,11 +200,16 @@
 
 /* Icône toggle mot de passe */
 .toggle-icon {
-  position: absolute;
-  top: 50%;
-  right: 0.75rem;
-  transform: translateY(-50%);
+  margin-left: auto;
+  position: static;
+  transform: none;
   cursor: pointer;
-  color: #080F70;
+  color: #8ea0b8;
   font-size: 1rem;
+  padding: 0.2rem;
+  transition: color 0.2s ease;
+}
+
+.toggle-icon:hover {
+  color: #172243;
 }

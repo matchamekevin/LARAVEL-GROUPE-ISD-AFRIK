@@ -71,6 +71,7 @@ import "../css/app.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./i18n";
 import "./styles/marketing-premium.css";
+import "./styles/auth.css";
 
 // Compat: certaines dépendances attendent un global `process.env`.
 // Vite expose les variables via `import.meta.env`; on crée un shim

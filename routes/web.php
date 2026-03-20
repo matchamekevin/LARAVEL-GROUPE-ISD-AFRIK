@@ -4,8 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-// Forcer l'auth admin React au lieu de la page Breeze
-Route::redirect('/login', '/admin/login');
+// Note: removed forcing redirect of '/login' to admin login to allow front SPA login
 
 
 // Serve la SPA React à la racine

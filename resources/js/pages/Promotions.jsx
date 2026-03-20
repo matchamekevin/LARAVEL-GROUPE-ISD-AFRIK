@@ -14,16 +14,16 @@ export default function Promotions() {
   const inscriptionLink = "/inscription";
 
   const promoImages = [
-    { src: "/images/promotions/promo1.jpeg", link: "/formations" },
-    { src: "/images/promotions/promo2.jpeg", link: "/formations" },
-    { src: "/images/promotions/promo3.jpeg", link: "/formations" },
-    { src: "/images/promotions/promo4.jpeg", link: "/promotions/promo-4" },
-    { src: "/images/promotions/promo5.jpeg", link: "/produits?categories=drone-formation,fourniture-tpe" },
-    { src: "/images/promotions/promo6.jpeg", link: "/produits?categories=drone-formation,fourniture-tpe" },
-    { src: "/images/promotions/promo7.jpeg", link: "/promotions/promo-7" },
-    { src: "/images/promotions/promo8.jpeg", link: "/promotions/promo-8" },
-    { src: "/images/promotions/promo9.jpeg", link: "/promotions/promo-9" },
-    { src: "/images/promotions/promo10.jpeg", link: "/promotions/promo-10" }
+    { src: "/images/promotions/promo1.webp", link: "/formations" },
+    { src: "/images/promotions/promo2.webp", link: "/formations" },
+    { src: "/images/promotions/promo3.webp", link: "/formations" },
+    { src: "/images/promotions/promo4.webp", link: "/promotions/promo-4" },
+    { src: "/images/promotions/promo5.webp", link: "/produits?categories=drone-formation,fourniture-tpe" },
+    { src: "/images/promotions/promo6.webp", link: "/produits?categories=drone-formation,fourniture-tpe" },
+    { src: "/images/promotions/promo7.webp", link: "/promotions/promo-7" },
+    { src: "/images/promotions/promo8.webp", link: "/promotions/promo-8" },
+    { src: "/images/promotions/promo9.webp", link: "/promotions/promo-9" },
+    { src: "/images/promotions/promo10.webp", link: "/promotions/promo-10" }
   ];
 
   // Noms des mois en français

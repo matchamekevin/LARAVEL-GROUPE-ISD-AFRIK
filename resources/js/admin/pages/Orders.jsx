@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getOrders, getOrder, updateOrderStatus } from '../api';
+import Loader from '../components/Loader';
 
 export default function Orders(){
   const [orders,setOrders] = useState([]);
@@ -58,13 +59,7 @@ export default function Orders(){
       </div>
 
       {loading ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '3rem',
-          color: '#6B7280',
-        }}>
-          ⏳ Chargement des commandes...
-        </div>
+        <Loader text="Chargement des commandes..." />
       ) : orders.length === 0 ? (
         <div style={{
           background: '#ffffff',
@@ -74,7 +69,8 @@ export default function Orders(){
           textAlign: 'center',
           color: '#6B7280',
         }}>
-          📦 Aucune commande trouvée
+          <i className="fas fa-inbox" style={{fontSize: '3rem', marginBottom: '1rem', display: 'block', color: '#D1D5DB'}}></i>
+          Aucune commande trouvée
         </div>
       ) : (
         <>
@@ -170,7 +166,7 @@ export default function Orders(){
                             transition: 'all 0.3s ease',
                           }}
                         >
-                          👁 Détails
+                          <i className="fas fa-eye" style={{marginRight: '0.3rem'}}></i>Détails
                         </button>
                         <button className="btn-secondary" onClick={()=>handleStatus(o.id,'en_attente')}>En attente</button>
                         <button className="btn-secondary" onClick={()=>handleStatus(o.id,'payee')}>Payée</button>
@@ -218,7 +214,7 @@ export default function Orders(){
                     fontWeight: 600,
                   }}
                 >
-                  ✕ Fermer
+                  <i className="fas fa-times" style={{marginRight: '0.3rem'}}></i>Fermer
                 </button>
               </div>
               <pre style={{

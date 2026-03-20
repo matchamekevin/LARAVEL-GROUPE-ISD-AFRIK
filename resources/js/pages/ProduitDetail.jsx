@@ -95,7 +95,7 @@ export default function ProduitDetail() {
 
   const images = produit.images?.length
     ? produit.images.map((img) => img.url || img.path)
-    : [produit.image_url || "/placeholder.png"];
+    : [produit.image_url || "/placeholder.webp"];
 
   const prixFinal   = produit.prix_promo ?? produit.prix;
   const reduction   = produit.prix_promo

@@ -5,7 +5,7 @@ export const DETAIL_TYPES = {
       "expertise-savoir-faire": {
         title: "Expertise et savoir-faire technologique en Afrique",
         subtitle: "Une experience solide dans l'integration de solutions technologiques et de securite",
-        image: "/images/why/im1.png",
+        image: "/images/why/im1.webp",
         highlights: [
           "Integration de solutions IT et de securite electronique",
           "Maitrise des technologies modernes",
@@ -21,7 +21,7 @@ export const DETAIL_TYPES = {
       "solutions-sur-mesure": {
         title: "Solutions technologiques sur mesure",
         subtitle: "Des solutions personnalisees selon vos objectifs, votre secteur et votre budget",
-        image: "/images/why/im2.png",
+        image: "/images/why/im2.webp",
         highlights: [
           "Amelioration de la productivite",
           "Renforcement de la securite",
@@ -37,7 +37,7 @@ export const DETAIL_TYPES = {
       "large-gamme-services": {
         title: "Large gamme de produits et services",
         subtitle: "Un partenaire unique pour couvrir toute votre chaine technologique",
-        image: "/images/why/im3.png",
+        image: "/images/why/im3.webp",
         highlights: [
           "Videosurveillance IP et securite electronique",
           "Logiciels professionnels et solutions numeriques",
@@ -53,7 +53,7 @@ export const DETAIL_TYPES = {
       "presence-reactivite": {
         title: "Presence regionale en Afrique de l'Ouest",
         subtitle: "Proximite, reactivite et assistance rapide dans plusieurs pays",
-        image: "/images/why/im4.png",
+        image: "/images/why/im4.webp",
         highlights: [
           "Bénin, Togo, Niger",
           "Cote d'Ivoire, Burkina Faso",
@@ -69,7 +69,7 @@ export const DETAIL_TYPES = {
       "engagement-formation": {
         title: "Engagement fort dans la formation technologique",
         subtitle: "Montee en competences continue des professionnels africains",
-        image: "/images/why/im5.png",
+        image: "/images/why/im5.webp",
         highlights: [
           "Formations en securite electronique",
           "Technologies numeriques et logiciels professionnels",
@@ -85,7 +85,7 @@ export const DETAIL_TYPES = {
       "fiabilite-qualite": {
         title: "Fiabilite, qualite et performance",
         subtitle: "Des technologies selectionnees pour durer et securiser vos operations",
-        image: "/images/why/im6.png",
+        image: "/images/why/im6.webp",
         highlights: [
           "Solutions robustes et reconnues",
           "Securite des infrastructures",
@@ -101,7 +101,7 @@ export const DETAIL_TYPES = {
       "accompagnement-personnalise": {
         title: "Accompagnement personnalise des clients",
         subtitle: "Un suivi de bout en bout: conseil, deploiement, formation et maintenance",
-        image: "/images/why/im7.png",
+        image: "/images/why/im7.webp",
         highlights: [
           "Analyse des besoins et conseil strategique",
           "Installation et deploiement",
@@ -117,7 +117,7 @@ export const DETAIL_TYPES = {
       "innovation-continue": {
         title: "Innovation technologique continue",
         subtitle: "Un partenaire tourne vers l'avenir de la transformation digitale en Afrique",
-        image: "/images/why/im8.png",
+        image: "/images/why/im8.webp",
         highlights: [
           "Nouvelles solutions digitales",
           "Technologies de securite avancees",
@@ -138,7 +138,7 @@ export const DETAIL_TYPES = {
       "ingenierie-informatique-industrielle": {
         title: "Ingenierie informatique et industrielle",
         subtitle: "Developpement, architecture systeme et automatisation",
-        image: "/images/solutions/im3.jpg",
+        image: "/images/solutions/im3.webp",
         highlights: [
           "Conception d'architectures robustes",
           "Automatisation des processus metiers",
@@ -154,7 +154,7 @@ export const DETAIL_TYPES = {
       "solutions-gestion-entreprise": {
         title: "Solutions de gestion d'entreprise",
         subtitle: "ERP, CRM, BI et workflows adaptes a votre activite",
-        image: "/images/solutions/im1.jpg",
+        image: "/images/solutions/im1.webp",
         highlights: [
           "Pilotage achat, vente, stock et finance",
           "Tableaux de bord decisionnels",
@@ -170,7 +170,7 @@ export const DETAIL_TYPES = {
       "formation-professionnelle": {
         title: "Formation professionnelle",
         subtitle: "Programmes certifiants et accompagnement personnalise",
-        image: "/images/offers/offre1.jpg",
+        image: "/images/offers/offre1.webp",
         highlights: [
           "Formations techniques et metiers",
           "Accompagnement pratique des equipes",
@@ -186,7 +186,7 @@ export const DETAIL_TYPES = {
       "communication-publicite": {
         title: "Communication et publicite",
         subtitle: "Solutions de communication et dispositifs digitaux performants",
-        image: "/images/home/hero-4.png",
+        image: "/images/home/hero-4.webp",
         highlights: [
           "Strategie de marque et visibilite",
           "Campagnes digitales ciblees",
@@ -202,7 +202,7 @@ export const DETAIL_TYPES = {
       "drones-pilotage": {
         title: "Fourniture de drone et formation en pilotage de drones",
         subtitle: "Equipements professionnels et formation complete",
-        image: "/images/solutions/im4.png",
+        image: "/images/solutions/im4.webp",
         highlights: [
           "Fourniture de drones adaptes aux usages",
           "Formation operationnelle des pilotes",
@@ -218,7 +218,7 @@ export const DETAIL_TYPES = {
       "developpement-application": {
         title: "Developpement d'application",
         subtitle: "Sites web, applications mobiles et solutions cloud",
-        image: "/images/solutions/im2.jpg",
+        image: "/images/solutions/im2.webp",
         highlights: [
           "Conception UX/UI et developpement",
           "Applications metiers sur mesure",
@@ -234,7 +234,7 @@ export const DETAIL_TYPES = {
       "fourniture-tpe": {
         title: "Fourniture de TPE",
         subtitle: "Securiser les transactions et faciliter la gestion des encaissements",
-        image: "/images/home/hero-7.png",
+        image: "/images/home/hero-7.webp",
         highlights: [
           "Terminaux modernes et securises",
           "Installation et parametrage",
@@ -250,7 +250,7 @@ export const DETAIL_TYPES = {
       "btp-industrie": {
         title: "BTP et Industrie",
         subtitle: "Solutions pour le secteur du batiment et de l'industrie",
-        image: "/images/home/hero-8.png",
+        image: "/images/home/hero-8.webp",
         highlights: [
           "Suivi d'execution et coordination terrain",
           "Digitalisation des operations BTP",
@@ -271,7 +271,7 @@ export const DETAIL_TYPES = {
       "produit-gestion-entreprise": {
         title: "Solutions de gestion d'entreprise",
         subtitle: "Des outils logiciels sur mesure pour piloter la performance",
-        image: "/images/solutions/im1.jpg",
+        image: "/images/solutions/im1.webp",
         highlights: [
           "ERP et CRM adaptes a votre activite",
           "Tableaux de bord de pilotage",
@@ -287,7 +287,7 @@ export const DETAIL_TYPES = {
       "produit-formation-professionnelle": {
         title: "Formation professionnelle",
         subtitle: "Certifications et parcours de montee en competences",
-        image: "/images/solutions/im2.jpg",
+        image: "/images/solutions/im2.webp",
         highlights: [
           "Programmes certifiants",
           "Cas pratiques metier",
@@ -303,7 +303,7 @@ export const DETAIL_TYPES = {
       "produit-ingenierie-informatique": {
         title: "Ingenierie informatique et industrielle",
         subtitle: "Expertise IT pour des systemes robustes et evolutifs",
-        image: "/images/solutions/im3.jpg",
+        image: "/images/solutions/im3.webp",
         highlights: [
           "Architecture et urbanisation SI",
           "Developpement et integration",
@@ -319,7 +319,7 @@ export const DETAIL_TYPES = {
       "produit-drone-pro": {
         title: "Fourniture et formation en pilotage de drones",
         subtitle: "Drone Pro: equipements et accompagnement complet",
-        image: "/images/solutions/im4.png",
+        image: "/images/solutions/im4.webp",
         highlights: [
           "Selection de drones professionnels",
           "Formation complete au pilotage",

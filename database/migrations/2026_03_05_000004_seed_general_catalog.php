@@ -14,31 +14,31 @@ return new class extends Migration {
             [
                 'nom' => 'Informatique',
                 'description' => 'Ordinateurs, peripheriques et accessoires professionnels.',
-                'image' => '/images/solutions/im1.jpg',
+                'image' => '/images/solutions/im1.webp',
                 'segment' => 'general',
             ],
             [
                 'nom' => 'Drones',
                 'description' => 'Drones professionnels, capteurs et formations associees.',
-                'image' => '/images/solutions/im4.png',
+                'image' => '/images/solutions/im4.webp',
                 'segment' => 'general',
             ],
             [
                 'nom' => 'Imprimantes',
                 'description' => 'Imprimantes laser, consommables et maintenance.',
-                'image' => '/images/solutions/im2.jpg',
+                'image' => '/images/solutions/im2.webp',
                 'segment' => 'general',
             ],
             [
                 'nom' => 'Reseaux & Telecom',
                 'description' => 'Routeurs, switches, wifi entreprise et telecom.',
-                'image' => '/images/solutions/im3.jpg',
+                'image' => '/images/solutions/im3.webp',
                 'segment' => 'general',
             ],
             [
                 'nom' => 'Accessoires IT',
                 'description' => 'Cables, hubs, onduleurs et accessoires essentiels.',
-                'image' => '/images/offers/offre1.jpg',
+                'image' => '/images/offers/offre1.webp',
                 'segment' => 'general',
             ],
         ];
@@ -117,7 +117,7 @@ return new class extends Migration {
 
                 $productId = DB::table('produits')->where('slug', $slug)->value('id_produit');
                 if ($productId) {
-                    $imageUrl = '/images/home/hero-5.png';
+                    $imageUrl = '/images/home/hero-5.webp';
                     DB::table('images')->updateOrInsert(
                         [
                             'imageable_type' => 'PRODUIT',

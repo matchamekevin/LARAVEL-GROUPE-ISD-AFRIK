@@ -16,14 +16,14 @@ export default function Home() {
   const navigate = useNavigate();
   
   const heroSlides = [
-    { src: "/images/home/hero-1.png", alt: "Ingénierie et innovation ISD AFRIK" },
-    { src: "/images/home/hero-2.png", alt: "Solutions sur mesure pour entreprises" },
-    { src: "/images/home/hero-3.png", alt: "Formation et accompagnement" },
-    { src: "/images/home/hero-4.png", alt: "Technologies avancées" },
-    { src: "/images/home/hero-5.png", alt: "Nos produits" },
-    { src: "/images/home/hero-6.png", alt: "Solutions digitales" },
-    { src: "/images/home/hero-7.png", alt: "Innovation continue" },
-    { src: "/images/home/hero-8.png", alt: "Expertise professionnelle" },
+    { src: "/images/home/hero-1.webp", alt: "Ingénierie et innovation ISD AFRIK" },
+    { src: "/images/home/hero-2.webp", alt: "Solutions sur mesure pour entreprises" },
+    { src: "/images/home/hero-3.webp", alt: "Formation et accompagnement" },
+    { src: "/images/home/hero-4.webp", alt: "Technologies avancées" },
+    { src: "/images/home/hero-5.webp", alt: "Nos produits" },
+    { src: "/images/home/hero-6.webp", alt: "Solutions digitales" },
+    { src: "/images/home/hero-7.webp", alt: "Innovation continue" },
+    { src: "/images/home/hero-8.webp", alt: "Expertise professionnelle" },
   ];
   const heroTexts = [
     { title: "Expertise et savoir-faire technologique", subtitle: "Des experts qualifiés et une parfaite maîtrise du marché africain." },
@@ -45,14 +45,14 @@ export default function Home() {
   }, []);
 
   const whyUs = [
-    { img: "/images/why/im1.png", title: "Expertise et savoir-faire", link: "/details/why/expertise-savoir-faire" },
-    { img: "/images/why/im2.png", title: "Solutions sur mesure", link: "/details/why/solutions-sur-mesure" },
-    { img: "/images/why/im3.png", title: "Large gamme de services", link: "/details/why/large-gamme-services" },
-    { img: "/images/why/im4.png", title: "Présence régionale et réactivité", link: "/details/why/presence-reactivite" },
-    { img: "/images/why/im5.png", title: "Engagement envers la formation", link: "/details/why/engagement-formation" },
-    { img: "/images/why/im6.png", title: "Fiabilité et qualité", link: "/details/why/fiabilite-qualite" },
-    { img: "/images/why/im7.png", title: "Accompagnement personnalisé", link: "/details/why/accompagnement-personnalise" },
-    { img: "/images/why/im8.png", title: "Innovation continue", link: "/details/why/innovation-continue" },
+    { img: "/images/why/im1.webp", title: "Expertise et savoir-faire", link: "/details/why/expertise-savoir-faire" },
+    { img: "/images/why/im2.webp", title: "Solutions sur mesure", link: "/details/why/solutions-sur-mesure" },
+    { img: "/images/why/im3.webp", title: "Large gamme de services", link: "/details/why/large-gamme-services" },
+    { img: "/images/why/im4.webp", title: "Présence régionale et réactivité", link: "/details/why/presence-reactivite" },
+    { img: "/images/why/im5.webp", title: "Engagement envers la formation", link: "/details/why/engagement-formation" },
+    { img: "/images/why/im6.webp", title: "Fiabilité et qualité", link: "/details/why/fiabilite-qualite" },
+    { img: "/images/why/im7.webp", title: "Accompagnement personnalisé", link: "/details/why/accompagnement-personnalise" },
+    { img: "/images/why/im8.webp", title: "Innovation continue", link: "/details/why/innovation-continue" },
   ];
 
   const offers = [
@@ -61,21 +61,21 @@ export default function Home() {
       desc: "Motivation de l'équipe commerciale dans l'atteinte des objectifs.",
       price: "Inscription ouverte",
       icon: "fas fa-chart-line",
-      img: "/images/offers/offre1.jpg"
+      img: "/images/offers/offre1.webp"
     },
     {
       title: "Organisation administrative et financiere",
       desc: "Conformité au SYSCOHADA révisé et meilleure organisation administrative.",
       price: "Inscription ouverte",
       icon: "fas fa-calculator",
-      img: "/images/offers/offre2.jpg"
+      img: "/images/offers/offre2.webp"
     },
     {
       title: "Paie et ressources humaines",
       desc: "Maîtrise des outils RH, optimisation du personnel et conformité sociale.",
       price: "Inscription ouverte",
       icon: "fas fa-users-cog",
-      img: "/images/offers/offre3.jpg"
+      img: "/images/offers/offre3.webp"
     },
   ];
 
@@ -158,14 +158,14 @@ export default function Home() {
   const promotions = promotionsParMois[moisActuel];
   // Images for promotions with per-promo links (place your files in public/images/promotions/)
   const promoImages = [
-    { src: "/images/promotions/promo9.jpeg", link: "/produits?categories=ingenierie" },
-    { src: "/images/promotions/promo10.jpeg", link: "/solutions" },
-    { src: "/images/promotions/promo6.jpeg", link: "/produits?categories=drone-formation" },
-    { src: "/images/promotions/promo4.jpeg", link: "/promotions/promo-4" },
-    { src: "/images/promotions/promo5.jpeg", link: "/promotions/promo-5" },
-    { src: "/images/promotions/promo6.jpeg", link: "/promotions/promo-6" },
-    { src: "/images/promotions/promo7.jpeg", link: "/promotions/promo-7" },
-    { src: "/images/promotions/promo8.jpeg", link: "/promotions/promo-8" },
+    { src: "/images/promotions/promo9.webp", link: "/produits?categories=ingenierie" },
+    { src: "/images/promotions/promo10.webp", link: "/solutions" },
+    { src: "/images/promotions/promo6.webp", link: "/produits?categories=drone-formation" },
+    { src: "/images/promotions/promo4.webp", link: "/promotions/promo-4" },
+    { src: "/images/promotions/promo5.webp", link: "/promotions/promo-5" },
+    { src: "/images/promotions/promo6.webp", link: "/promotions/promo-6" },
+    { src: "/images/promotions/promo7.webp", link: "/promotions/promo-7" },
+    { src: "/images/promotions/promo8.webp", link: "/promotions/promo-8" },
   ];
 
   const [promoModalIndex, setPromoModalIndex] = useState(null);
@@ -232,10 +232,10 @@ export default function Home() {
 
   // GeoVision : catégories principales pour la présentation (séparées)
   const geovisionCategories = [
-    { title: "Caméras", desc: "Caméras professionnelles pour la surveillance et l'analyse vidéo.", image: "/images/geovision/cam1.png", link: "/geovision?filter=cameras-ip-thermiques" },
-    { title: "Contrôleur d'accès", desc: "Contrôleurs et lecteurs pour la gestion des accès sécurisés.", image: "/images/geovision/controleur1.png", link: "/geovision?filter=controle-d-acces" },
-    { title: "Enregistreurs", desc: "Enregistreurs (NVR/DVR) et solutions d'archivage pour la gestion vidéo.", image: "/images/geovision/nvr1.png", link: "/geovision?filter=enregistreurs-nvr" },
-    { title: "Solutions", desc: "Logiciels et services GeoVision : VMS, analytics et intégration.", image: "/images/geovision/solution1.png", link: "/geovision?filter=vms-analytics" },
+    { title: "Caméras", desc: "Caméras professionnelles pour la surveillance et l'analyse vidéo.", image: "/images/geovision/cam1.webp", link: "/geovision?filter=cameras-ip-thermiques" },
+    { title: "Contrôleur d'accès", desc: "Contrôleurs et lecteurs pour la gestion des accès sécurisés.", image: "/images/geovision/controleur1.webp", link: "/geovision?filter=controle-d-acces" },
+    { title: "Enregistreurs", desc: "Enregistreurs (NVR/DVR) et solutions d'archivage pour la gestion vidéo.", image: "/images/geovision/nvr1.webp", link: "/geovision?filter=enregistreurs-nvr" },
+    { title: "Solutions", desc: "Logiciels et services GeoVision : VMS, analytics et intégration.", image: "/images/geovision/solution1.webp", link: "/geovision?filter=vms-analytics" },
   ];
 
   const sectors = [
@@ -250,11 +250,11 @@ export default function Home() {
   ];
 
   const collaborators = [
-    { img: "/images/collaborateur/col1.jpg", name: "DEV 1" },
-    { img: "/images/collaborateur/col2.jpeg", name: "DEV 2" },
-    { img: "/images/collaborateur/col3.jpeg", name: "DEV 3" },
-    { img: "/images/collaborateur/col4.jpeg", name: "DEV 4" },
-    //{ img: "/images/collaborateur/col5.jpeg", name: "DEV 5" },
+    { img: "/images/collaborateur/col1.webp", name: "DEV 1" },
+    { img: "/images/collaborateur/col2.webp", name: "DEV 2" },
+    { img: "/images/collaborateur/col3.webp", name: "DEV 3" },
+    { img: "/images/collaborateur/col4.webp", name: "DEV 4" },
+    //{ img: "/images/collaborateur/col5.webp", name: "DEV 5" },
   ];
 
   const testimonials = [
@@ -263,7 +263,7 @@ export default function Home() {
     role: "Direction Générale", 
     text: "Nous avons choisi ISD AFRIK pour accompagner notre développement industriel. Leur expertise digitale nous a permis de fluidifier nos processus et de renforcer notre compétitivité.", 
     rating: 5, 
-    avatar: "/images/avis/pia.jpg",
+    avatar: "/images/avis/pia.webp",
     company: "PIA"
   },
   { 
@@ -271,7 +271,7 @@ export default function Home() {
     role: "Direction Technique", 
     text: "ISD AFRIK est un partenaire fiable qui comprend nos enjeux. Grâce à leurs solutions, nous avons amélioré l’expérience de nos abonnés et optimisé nos opérations internes.", 
     rating: 5, 
-    avatar: "/images/avis/canal.jpg",
+    avatar: "/images/avis/canal.webp",
     company: "CANAL+"
   },
   { 
@@ -279,7 +279,7 @@ export default function Home() {
     role: "Direction Hôtelière", 
     text: "Avec ISD AFRIK, nous avons modernisé notre gestion et renforcé la satisfaction de nos clients. Leur accompagnement est un vrai atout pour l’hôtellerie.", 
     rating: 4, 
-    avatar: "/images/avis/sarakawa.jpg",
+    avatar: "/images/avis/sarakawa.webp",
     company: "Hôtel Sarakawa"
   },
   { 
@@ -287,7 +287,7 @@ export default function Home() {
     role: "Direction des Opérations", 
     text: "ISD AFRIK nous aide à digitaliser nos processus et à offrir un meilleur service à nos passagers. Leur expertise est un levier stratégique pour notre croissance panafricaine.", 
     rating: 5, 
-    avatar: "/images/avis/asky.jpg",
+    avatar: "/images/avis/asky.webp",
     company: "ASKY"
   },
   { 
@@ -295,7 +295,7 @@ export default function Home() {
     role: "Direction Commerciale", 
     text: "Nous faisons confiance à ISD AFRIK pour la gestion de nos données et la digitalisation de nos services. Leur professionnalisme nous accompagne dans notre expansion.", 
     rating: 5, 
-    avatar: "/images/avis/oryx.jpg",
+    avatar: "/images/avis/oryx.webp",
     company: "ORYX Energies"
   },
   { 
@@ -303,31 +303,31 @@ export default function Home() {
     role: "Direction Générale", 
     text: "ISD AFRIK est un partenaire stratégique qui nous apporte des solutions fiables et sécurisées. Leur expertise renforce notre efficacité et la confiance de nos clients.", 
     rating: 5, 
-    avatar: "/images/avis/sunu.jpg",
+    avatar: "/images/avis/sunu.webp",
     company: "SUNU Bank"
   }
 ];
 
   const partners = [
-    { img: "/images/partenaire/pat1.jpg", name: "vvavesoft" },
-    { img: "/images/partenaire/pat2.jpg", name: "asterbox" },
-    { img: "/images/partenaire/pat3.jpg", name: "gynod" },
-    { img: "/images/partenaire/pat4.jpg", name: "dip afrique" },
-    { img: "/images/partenaire/pat5.jpg", name: "dylog" },
-    { img: "/images/partenaire/pat6.jpg", name: "lacsoft" },
-    { img: "/images/partenaire/pat7.jpg", name: "orchestra" },
-    { img: "/images/partenaire/pat8.jpg", name: "sage" },
-    { img: "/images/partenaire/pat9.jpg", name: "sensoft" },
-    { img: "/images/partenaire/pat10.jpg", name: "show box" },
+    { img: "/images/partenaire/pat1.webp", name: "vvavesoft" },
+    { img: "/images/partenaire/pat2.webp", name: "asterbox" },
+    { img: "/images/partenaire/pat3.webp", name: "gynod" },
+    { img: "/images/partenaire/pat4.webp", name: "dip afrique" },
+    { img: "/images/partenaire/pat5.webp", name: "dylog" },
+    { img: "/images/partenaire/pat6.webp", name: "lacsoft" },
+    { img: "/images/partenaire/pat7.webp", name: "orchestra" },
+    { img: "/images/partenaire/pat8.webp", name: "sage" },
+    { img: "/images/partenaire/pat9.webp", name: "sensoft" },
+    { img: "/images/partenaire/pat10.webp", name: "show box" },
     
   ];
 
   // ✅ CORRIGÉ : Produits phares redirigent tous vers /solutions (page produits)
   const featuredProducts = [
-    { title: "Solutions de gestion d'entreprise", price: "Sur mesure", img: "/images/solutions/im1.jpg", category: "Logiciels", link: "/solutions" },
-    { title: "Formation professionnelle", price: "Certifications", img: "/images/solutions/im2.jpg", category: "Formation", link: "/formations" },
-    { title: "Ingénierie informatique et industrielle", price: "Expertise IT", img: "/images/solutions/im3.jpg", category: "Ingénierie", link: "/solutions" },
-    { title: "Fourniture et formation en pilotage de drones", price: "Drone Pro", img: "/images/solutions/im4.png", category: "Drone", link: "/produits?categories=drone-formation" },
+    { title: "Solutions de gestion d'entreprise", price: "Sur mesure", img: "/images/solutions/im1.webp", category: "Logiciels", link: "/solutions" },
+    { title: "Formation professionnelle", price: "Certifications", img: "/images/solutions/im2.webp", category: "Formation", link: "/formations" },
+    { title: "Ingénierie informatique et industrielle", price: "Expertise IT", img: "/images/solutions/im3.webp", category: "Ingénierie", link: "/solutions" },
+    { title: "Fourniture et formation en pilotage de drones", price: "Drone Pro", img: "/images/solutions/im4.webp", category: "Drone", link: "/produits?categories=drone-formation" },
   ];
 
   const stats = [
@@ -438,7 +438,7 @@ export default function Home() {
           {offers.map((o, idx) => (
             <div key={idx} className="card offer-card">
               <div className="card-image">
-                <img src={o.img} alt={o.title} onError={(e) => { e.target.src = "/images/offers/offre1.jpg"; }} />
+                <img src={o.img} alt={o.title} onError={(e) => { e.target.src = "/images/offers/offre1.webp"; }} />
               </div>
               <div className="card-body">
                 <h3>{o.title}</h3>
@@ -571,7 +571,7 @@ export default function Home() {
 
       {/* Devenir vendeur */}
       <section className="seller">
-        <img src="/images/vendeur/vendeur.png" alt="Devenir vendeur" className="seller-bg" />
+        <img src="/images/vendeur/vendeur.webp" alt="Devenir vendeur" className="seller-bg" />
         <div className="seller-overlay" />
         <div className="seller-content">
          
@@ -586,7 +586,7 @@ export default function Home() {
         {/* GeoVision Presentation */}
         <div className="geovision-presentation">
           <div className="geovision-logo-section">
-            <img src="/images/geovision/logo (GEOVISION).png" alt="GeoVision Logo" className="geovision-logo" />
+            <img src="/images/geovision/logo (GEOVISION).webp" alt="GeoVision Logo" className="geovision-logo" />
           </div>
           <div className="geovision-intro">
             <h2>Représentant officiel de GeoVision en Afrique de l'Ouest</h2>

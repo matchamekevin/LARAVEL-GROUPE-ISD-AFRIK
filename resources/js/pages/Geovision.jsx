@@ -197,7 +197,7 @@ export default function Geovision() {
               visibleProducts.map((p) => (
                 <article key={p.id} className="pp-card">
                   <a className="pp-image-wrap" href={`#/geovision/catalogue/${encodeURIComponent(p.type)}`} onClick={(e) => { e.preventDefault(); navigate(`/geovision/catalogue/${encodeURIComponent(p.type)}`); }}>
-                    <img alt={p.nom} className="pp-image" loading="lazy" src={p.image} onError={(e) => { e.target.src = "/images/geovision/cam1.png"; }} />
+                    <img alt={p.nom} className="pp-image" loading="lazy" src={p.image} onError={(e) => { e.target.src = "/images/geovision/cam1.webp"; }} />
                     <div className="pp-image-overlay"></div>
                     <span className="pp-badge pp-badge--neuf">{p.type}</span>
                     <div className="pp-img-actions">

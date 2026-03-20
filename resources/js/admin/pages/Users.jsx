@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getUsers, deleteUser } from '../api';
+import Loader from '../components/Loader';
 
 export default function Users(){
   const [users,setUsers] = useState([]);
@@ -48,13 +49,7 @@ export default function Users(){
       </div>
 
       {loading ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '3rem',
-          color: '#6B7280',
-        }}>
-          ⏳ Chargement des utilisateurs...
-        </div>
+        <Loader text="Chargement des utilisateurs..." />
       ) : users.length === 0 ? (
         <div style={{
           background: '#ffffff',
@@ -64,7 +59,8 @@ export default function Users(){
           textAlign: 'center',
           color: '#6B7280',
         }}>
-          👥 Aucun utilisateur trouvé
+          <i className="fas fa-users" style={{fontSize: '3rem', marginBottom: '1rem', display: 'block', color: '#D1D5DB'}}></i>
+          Aucun utilisateur trouvé
         </div>
       ) : (
         <div style={{
@@ -149,7 +145,7 @@ export default function Users(){
                       onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
                       onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
                     >
-                      🗑 Supprimer
+                      <i className="fas fa-trash" style={{marginRight: '0.3rem'}}></i>Supprimer
                     </button>
                   </td>
                 </tr>

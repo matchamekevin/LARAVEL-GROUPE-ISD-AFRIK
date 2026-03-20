@@ -24,28 +24,28 @@ const getProductImage = (produit) => {
 
   // Mapping basé sur le titre ou la catégorie
   if (titre.includes("drone") || categorie.includes("drone")) {
-    return "/images/produits/drone.jpeg";
+    return "/images/produits/drone.webp";
   }
   if (titre.includes("tpe") || categorie.includes("tpe")) {
-    return "/images/produits/tpe.jpeg";
+    return "/images/produits/tpe.webp";
   }
   if (titre.includes("instrumentation") || titre.includes("int")) {
-    return "/images/produits/int.jpeg";
+    return "/images/produits/int.webp";
   }
   if (titre.includes("maintenance") || titre.includes("ond")) {
-    return "/images/produits/ond.jpeg";
+    return "/images/produits/ond.webp";
   }
   if (titre.includes("étude") || titre.includes("conseil") || titre.includes("proj")) {
-    return "/images/produits/proj.jpeg";
+    return "/images/produits/proj.webp";
   }
 
   // Images par défaut selon l'ID pour éviter les répétitions
   const images = [
-    "/images/produits/drone1.jpeg",
-    "/images/produits/tpe1.jpeg",
-    "/images/produits/tpe2.jpeg"
+    "/images/produits/drone1.webp",
+    "/images/produits/tpe1.webp",
+    "/images/produits/tpe2.webp"
   ];
-  return images[produit.id_produit % images.length] || "/images/produits/drone.jpeg";
+  return images[produit.id_produit % images.length] || "/images/produits/drone.webp";
 };
 const readSpecs = (specifications) => {
   if (!specifications) return [];

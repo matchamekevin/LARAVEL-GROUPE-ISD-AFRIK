@@ -92,6 +92,10 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.login-form .input-group {
+  margin-bottom: 1.2rem; /* espace entre les champs */
+}
+
 .input-group:focus-within {
   border-color: var(--login-accent);
   background: #f8fbff;
@@ -329,75 +333,7 @@
     font-size: 16px; /* Prevent zoom on iOS */
   }
 }
- 
-.success-msg {
-  margin-top: 0.75rem;
-  padding: 0.75rem;
-  background-color: #ecfdf5;
-  color: #065f46;
-  border-radius: 8px;
-  font-size: 0.95rem;
-}
-
-.error-msg {
-  margin-top: 0.75rem;
-  padding: 0.75rem;
-  background-color: #fff1f2;
-  color: #7f1d1d;
-  border-radius: 8px;
-  font-size: 0.95rem;
-}
-
-.forgot-row {
-  margin-top: 0.55rem;
-  text-align: right;
-}
-
-.forgot-link {
-  font-size: 0.82rem;
-  color: #172243;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.register-row {
-  margin-top: 0.45rem;
-  text-align: right;
-}
-
-.register-link {
-  font-size: 0.82rem;
-  color: #172243;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.register-link:hover {
-  text-decoration: underline;
-}
-
-.input-group {
-  position: relative;
-}
-
-.input-group .icon {
-  position: absolute;
-  top: 50%;
-  left: 0.8rem;
-  transform: translateY(-50%);
-  color: #9aa4b2;
-  font-size: 0.95rem;
-  pointer-events: none;
-}
-
-.input-group .input {
-  padding-left: 2.6rem; /* espace pour l’icône */
-}
-
-/* Remove focus outline on the input itself to avoid double contour; focus ring shown on .input-group via :focus-within */
-.input:focus-visible { outline: none; }
-
-.forgot-link i { margin-right: 0.4rem; }
+/* End of login.css */
 
 .forgot-link:hover { text-decoration: underline; }
 

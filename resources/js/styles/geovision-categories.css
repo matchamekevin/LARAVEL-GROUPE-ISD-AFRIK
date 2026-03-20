@@ -326,10 +326,11 @@
 
 /* Search */
 .pp-search-wrap {
-  margin-bottom: 28px;
+  margin-bottom: 32px;
   width: 100%;
   display: flex;
   justify-content: center;
+  animation: fadeInUp 0.6s ease-out;
 }
 
 .pp-search {
@@ -343,10 +344,10 @@
 
 .pp-search-icon {
   position: absolute;
-  left: 16px;
+  left: 18px;
   width: 20px;
   height: 20px;
-  color: #94a3b8;
+  color: rgba(107, 114, 128, 0.7);
   stroke: currentColor;
   stroke-width: 2.5;
   fill: none;
@@ -354,41 +355,71 @@
   stroke-linejoin: round;
   pointer-events: none;
   z-index: 1;
+  transition: color 0.25s ease;
 }
 
 .pp-search-input {
   width: 100%;
-  max-width: 340px;
-  padding: 12px 16px 12px 44px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
+  max-width: 380px;
+  padding: 14px 18px 14px 50px;
+  border: 2px solid rgba(251, 156, 8, 0.15);
+  border-radius: 14px;
   font-size: 0.95rem;
-  color: #1e293b;
+  color: #172243;
   font-weight: 500;
-  transition: all 0.25s ease;
-  background: white;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+.pp-search-input:hover {
+  border-color: rgba(251, 156, 8, 0.35);
+  box-shadow: 0 12px 32px rgba(251, 156, 8, 0.12),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transform: translateY(-2px);
 }
 
 .pp-search-input:focus {
   outline: none;
   border-color: #fb9c08;
-  box-shadow: 0 0 0 3px rgba(251, 156, 8, 0.1), 0 2px 6px rgba(251, 156, 8, 0.15);
+  box-shadow: 0 14px 36px rgba(251, 156, 8, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transform: translateY(-2px);
+}
+
+.pp-search-input:focus ~ .pp-search-icon {
+  color: #fb9c08;
 }
 
 .pp-search-input::placeholder {
-  color: #cbd5e1;
+  color: rgba(107, 114, 128, 0.6);
+  font-weight: 500;
 }
 
 .pp-search-btn {
-  padding: 12px 28px;
+  padding: 14px 32px;
   font-size: 0.95rem;
   font-weight: 600;
-  border-radius: 10px;
+  border-radius: 12px;
   border: none;
   cursor: pointer;
-  transition: all 0.25s ease;
-  white-space: nowrap;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, #fb9c08 0%, #d87f06 100%);
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(251, 156, 8, 0.3);
+}
+
+.pp-search-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(251, 156, 8, 0.4);
+  filter: brightness(1.05);
+}
+
+.pp-search-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(251, 156, 8, 0.2);
 }
 
 /* Filters */
@@ -1013,3 +1044,12 @@
     font-size: 0.9rem;
   }
 }
+
+/* Animation keyframes */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+
+}
+
+/* EOF: close any unclosed blocks (fixed missing brace) */

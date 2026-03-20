@@ -194,7 +194,7 @@ export default function Login({ onLogin }){
             borderRadius: '0.5rem',
             fontSize: '0.9rem',
             fontWeight: 500,
-          }}>⚠️ {error}</div>}
+          }}><i className="fas fa-exclamation-circle" style={{marginRight: '0.3rem'}}></i>{error}</div>}
 
           {info && <div style={{
             color: '#15803D',
@@ -204,7 +204,7 @@ export default function Login({ onLogin }){
             borderRadius: '0.5rem',
             fontSize: '0.9rem',
             fontWeight: 500,
-          }}>✓ {info}</div>}
+          }}><i className="fas fa-check-circle" style={{marginRight: '0.3rem'}}></i>{info}</div>}
 
           {!requires2fa && (
             <button 
@@ -282,7 +282,7 @@ export default function Login({ onLogin }){
           fontSize: '0.8rem',
           color: '#6B7280',
         }}>
-          💻 ISD AFRIK Admin © 2026
+          <i className="fas fa-building" style={{marginRight: '0.3rem'}}></i>ISD AFRIK Admin © 2026
         </div>
       </div>
     </div>

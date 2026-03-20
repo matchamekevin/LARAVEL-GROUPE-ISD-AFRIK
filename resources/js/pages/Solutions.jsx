@@ -14,19 +14,19 @@ export default function Solutions() {
         {
             title: "Solutions de gestion d'entreprise",
             description: "ERP, CRM, achat, vente, stock et finance dans une plateforme unique et evolutive.",
-            image: "/images/solutions/im1.jpg",
+            image: "/images/solutions/im1.webp",
             points: ["Suivi des operations", "Tableaux de bord temps reel", "Workflows de validation"]
         },
         {
             title: "Solutions de securite electronique",
             description: "Videosurveillance IP, controle d'acces et protection des infrastructures.",
-            image: "/images/solutions/im2.jpg",
+            image: "/images/solutions/im2.webp",
             points: ["Protection des sites", "Supervision intelligente", "Securite operationnelle"]
         },
         {
             title: "Solutions numeriques et digitales",
             description: "Applications et outils numeriques pour accelerer la transformation digitale.",
-            image: "/images/solutions/im3.jpg",
+            image: "/images/solutions/im3.webp",
             points: ["Applications metiers", "Plateformes digitales", "Integration technologique"]
         }
     ];

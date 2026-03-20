@@ -7,6 +7,7 @@ import {
   getCommentairesAdmin,
   deleteCommentaireAdmin,
 } from '../api';
+import Loader from '../components/Loader';
 
 export default function MarketingAdmin() {
   const [newsletter, setNewsletter] = useState([]);
@@ -76,7 +77,7 @@ export default function MarketingAdmin() {
           <button className="btn-primary" type="submit">Ajouter</button>
         </form>
 
-        {loading ? <div>Chargement...</div> : (
+        {loading ? <Loader /> : (
           <table>
             <thead>
               <tr><th>ID</th><th>Email</th><th>Actions</th></tr>
@@ -112,7 +113,7 @@ export default function MarketingAdmin() {
 
       <div className="card">
         <h2 style={{ marginBottom: '0.75rem' }}>Commentaires</h2>
-        {loading ? <div>Chargement...</div> : (
+        {loading ? <Loader /> : (
           <table>
             <thead>
               <tr><th>ID</th><th>Contenu</th><th>Actions</th></tr>

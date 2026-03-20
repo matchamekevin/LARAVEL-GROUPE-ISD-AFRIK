@@ -10,7 +10,7 @@ class UpdateProduitImagesSeeder extends Seeder
     public function run(): void
     {
         // Set a sensible default image for existing products missing an image_url
-        $default = '/images/default.jpg';
+        $default = '/images/default.webp';
 
         Produit::query()
             ->whereNull('image_url')

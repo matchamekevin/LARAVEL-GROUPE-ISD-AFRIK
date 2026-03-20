@@ -80,7 +80,7 @@ const Entreprise = () => {
   const getImageUrl = (f) => {
     const raw = f?.images?.[0]?.url;
     const backendBase = API_BASE;
-    if (!raw) return `${backendBase}/images/default.jpg`;
+    if (!raw) return null;
     if (raw.startsWith('/')) return backendBase + raw;
     if (/^https?:\/\//i.test(raw)) {
       try {
@@ -147,15 +147,11 @@ const Entreprise = () => {
               {(formationsParMois[activeMonth] || []).map((f) => (
                 <article key={f.id_formation} className="formation-card">
                   <div className="card-header-accent" />
-                  <div className="formation-image">
-                    <img
-                      src={getImageUrl(f)}
-                      alt={f.titre}
-                      onError={(e) => {
-                        e.currentTarget.src = `${API_BASE}/images/default.jpg`;
-                      }}
-                    />
-                  </div>
+                  {getImageUrl(f) && (
+                    <div className="formation-image">
+                      <img src={getImageUrl(f)} alt={f.titre} />
+                    </div>
+                  )}
                   <div className="formation-body">
                     <h3 className="formation-title">{f.titre}</h3>
                     <p className="formation-desc">{f.description}</p>

@@ -49,7 +49,7 @@ class ProduitResource extends JsonResource
             'categorie'     => new CategorieProduitResource($this->whenLoaded('categorie')),
             'images'        => ImageResource::collection($this->whenLoaded('images')),
             'commentaires'  => CommentaireResource::collection($this->whenLoaded('commentaires')),
-            'image_url'     => $this->images->first()?->url ?? '/images/default.jpg',
+            'image_url'     => $this->images->first()?->url ?? '/images/default.webp',
         ];
     }
 }

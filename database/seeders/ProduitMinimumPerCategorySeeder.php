@@ -46,12 +46,12 @@ class ProduitMinimumPerCategorySeeder extends Seeder
                     $colors = ['noir', 'gris', 'blanc'];
                     $connectivity = ['Wi-Fi', 'Ethernet', 'USB-C'];
                     $imagePool = [
-                        '/images/home/hero-1.png',
-                        '/images/promotions/promo1.jpeg',
-                        '/images/solutions/im1.jpg',
-                        '/images/geovision/cam/cam1.png',
-                        '/images/geovision/nvr/nvr1.png',
-                        '/images/default.jpg',
+                        '/images/home/hero-1.webp',
+                        '/images/promotions/promo1.webp',
+                        '/images/solutions/im1.webp',
+                        '/images/geovision/cam/cam1.webp',
+                        '/images/geovision/nvr/nvr1.webp',
+                        '/images/default.webp',
                     ];
 
                     Produit::create([

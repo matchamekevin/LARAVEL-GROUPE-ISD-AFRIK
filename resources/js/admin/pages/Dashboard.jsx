@@ -2,9 +2,9 @@ import React from 'react';
 
 export default function Dashboard(){
   const stats = [
-    { label: 'Chiffre d\'affaires', value: '250,000 FCFA', icon: '💰', color: '#667eea' },
-    { label: 'Utilisateurs', value: '1,342', icon: '👥', color: '#764ba2' },
-    { label: 'Commandes', value: '847', icon: '📦', color: '#f093fb' },
+    { label: 'Chiffre d\'affaires', value: '250,000 FCFA', icon: 'fa-money-bill', color: '#667eea' },
+    { label: 'Utilisateurs', value: '1,342', icon: 'fa-users', color: '#764ba2' },
+    { label: 'Commandes', value: '847', icon: 'fa-box', color: '#f093fb' },
   ];
 
   return (
@@ -56,8 +56,9 @@ export default function Dashboard(){
             <div style={{
               fontSize: '2rem',
               marginBottom: '0.5rem',
+              color: stat.color,
             }}>
-              {stat.icon}
+              <i className={`fas ${stat.icon}`}></i>
             </div>
             <p style={{
               color: '#6B7280',
@@ -93,7 +94,7 @@ export default function Dashboard(){
           borderBottom: '2px solid #667eea',
           paddingBottom: '0.75rem',
         }}>
-          📊 Activité récente
+          <i className="fas fa-chart-line" style={{marginRight: '0.5rem'}}></i>Activité récente
         </h2>
         <div style={{
           color: '#6B7280',

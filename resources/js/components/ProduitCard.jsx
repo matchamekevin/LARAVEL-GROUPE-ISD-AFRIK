@@ -55,7 +55,7 @@ export default function ProduitCard({ produit, from }) {
       <Link to={`/produits/${produit.id_produit}`} className="pc-image-link" state={{ from: back }}>
         <div className="pc-image-wrapper">
           <img
-            src={produit.image_url || "/placeholder.png"}
+            src={produit.image_url || "/placeholder.webp"}
             alt={produit.titre}
             className="pc-image"
             loading="lazy"

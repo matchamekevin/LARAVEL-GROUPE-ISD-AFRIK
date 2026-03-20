@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { getPaiements, getImagesAdmin, deleteImageAdmin, updateOrderStatus, getOrders } from '../api';
+import Loader from '../components/Loader';
 
 export default function AssetsVentesAdmin() {
   const [paiements, setPaiements] = useState([]);
@@ -52,7 +53,7 @@ export default function AssetsVentesAdmin() {
 
       <div className="card" style={{ marginBottom: '1rem' }}>
         <h2 style={{ marginBottom: '0.5rem' }}>Résumé ventes</h2>
-        {loading ? <div>Chargement...</div> : (
+        {loading ? <Loader /> : (
           <div>
             <p><strong>Total paiements:</strong> {paiements.length}</p>
             <p><strong>Montant cumulé:</strong> {totalVentes.toLocaleString()} FCFA</p>
@@ -62,7 +63,7 @@ export default function AssetsVentesAdmin() {
 
       <div className="card" style={{ marginBottom: '1rem' }}>
         <h2 style={{ marginBottom: '0.75rem' }}>Commandes (statuts)</h2>
-        {loading ? <div>Chargement...</div> : (
+        {loading ? <Loader /> : (
           <table>
             <thead>
               <tr><th>ID</th><th>Client</th><th>Total</th><th>Statut</th><th>Actions</th></tr>
@@ -88,7 +89,7 @@ export default function AssetsVentesAdmin() {
 
       <div className="card">
         <h2 style={{ marginBottom: '0.75rem' }}>Images plateforme</h2>
-        {loading ? <div>Chargement...</div> : (
+        {loading ? <Loader /> : (
           <table>
             <thead>
               <tr><th>ID</th><th>URL</th><th>Type</th><th>Actions</th></tr>

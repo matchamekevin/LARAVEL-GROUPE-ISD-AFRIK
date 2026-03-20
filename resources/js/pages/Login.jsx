@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import "../styles/login.css";
+// Styles imported globally in app.jsx
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -105,7 +105,7 @@ export default function Login() {
   };
 
   return (
-    <main className="login-page" role="main">
+    <div className="login-page" role="main">
       <div className="login-panel" aria-labelledby="login-heading">
         <section className="login-box" aria-label="Formulaire de connexion">
           <h1 id="login-heading" className="login-title">Connexion</h1>
@@ -166,7 +166,7 @@ export default function Login() {
           </form>
 
           <div className="forgot-row">
-            <a href="/forgot-password" className="forgot-link">Mot de passe oublié ?</a>
+            <Link to="/forgot-password" className="forgot-link">Mot de passe oublié ?</Link>
           </div>
 
           <div className="register-row">
@@ -180,6 +180,6 @@ export default function Login() {
           )}
         </section>
       </div>
-    </main>
+    </div>
   );
 }

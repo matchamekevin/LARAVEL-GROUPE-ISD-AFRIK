@@ -40,7 +40,7 @@ const FormationDetails = () => {
   const getImageUrl = () => {
     const raw = formation?.images?.[0]?.url;
     const backendBase = getApiBase();
-    if (!raw) return `${backendBase}/images/default.jpg`;
+    if (!raw) return null;
     return raw.startsWith('/') ? backendBase + raw : raw;
   };
 
@@ -73,17 +73,15 @@ const FormationDetails = () => {
         </button>
 
         <div className="formation-details-header">
-          <div className="formation-details-image-container">
-            <img
-              src={getImageUrl()}
-              alt={formation.titre}
-              className="formation-details-image"
-              onError={(e) => {
-                const backendBase = getApiBase();
-                e.target.src = `${backendBase}/images/default-formation.jpg`;
-              }}
-            />
-          </div>
+          {getImageUrl() && (
+            <div className="formation-details-image-container">
+              <img
+                src={getImageUrl()}
+                alt={formation.titre}
+                className="formation-details-image"
+              />
+            </div>
+          )}
           <div className="formation-details-info">
             <h1>{formation.titre}</h1>
             <div className="formation-meta">

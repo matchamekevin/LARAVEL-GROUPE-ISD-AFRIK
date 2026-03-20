@@ -71,7 +71,7 @@ function Header() {
     <header className="header">
       <div className="logo">
         <Link to="/">
-          <img src="/images/logo.png" alt="ISD AFRIK Logo" className="logo-img" />
+          <img src="/images/logo.webp" alt="ISD AFRIK Logo" className="logo-img" />
         </Link>
       </div>
 

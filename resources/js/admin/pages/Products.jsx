@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getProducts, createProduct, deleteProduct, updateProduct } from '../api';
+import Loader from '../components/Loader';
 
 export default function Products(){
   const [items,setItems] = useState([]);
@@ -200,13 +201,7 @@ export default function Products(){
       </div>
 
       {loading ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '3rem',
-          color: '#6B7280',
-        }}>
-          ⏳ Chargement des produits...
-        </div>
+        <Loader text="Chargement des produits..." />
       ) : items.length === 0 ? (
         <div style={{
           background: '#ffffff',
@@ -216,7 +211,8 @@ export default function Products(){
           textAlign: 'center',
           color: '#6B7280',
         }}>
-          📭 Aucun produit. Créez-en un !
+          <i className="fas fa-inbox" style={{fontSize: '3rem', marginBottom: '1rem', display: 'block', color: '#D1D5DB'}}></i>
+          Aucun produit. Créez-en un !
         </div>
       ) : (
         <div style={{

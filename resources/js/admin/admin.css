@@ -1,3 +1,6 @@
+/* Font Awesome */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
 /* Reset & Base Styles */
 :root {
   --primary-dark: #172243;
@@ -360,6 +363,33 @@ tr:hover {
   }
 }
 
+/* Loader & Spinner */
+.loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 5px solid var(--gray-200);
+  border-top: 5px solid var(--primary-blue);
+  border-right: 5px solid var(--primary-purple);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinner-text {
+  font-size: 1.1rem;
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from {
@@ -381,6 +411,11 @@ tr:hover {
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .fade-in {

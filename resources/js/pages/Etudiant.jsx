@@ -75,7 +75,7 @@ const Etudiant = () => {
   const getImageUrl = (formation) => {
     const raw = formation?.images?.[0]?.url;
     const backendBase = API_BASE;
-    if (!raw) return `${backendBase}/images/default.jpg`;
+    if (!raw) return null;
     if (raw.startsWith('/')) return backendBase + raw;
     if (/^https?:\/\//i.test(raw)) {
       try {
@@ -106,16 +106,11 @@ const Etudiant = () => {
       <section className="etudiant-grid">
         {formations.map((f) => (
           <div key={f.id_formation} className="etudiant-card">
-            <div className="etudiant-card-image">
-              <img 
-                src={getImageUrl(f)} 
-                alt={f.titre}
-                onError={(e) => {
-                  console.error('Erreur de chargement image:', e.target.src);
-                  e.target.src = `${API_BASE}/images/default.jpg`;
-                }}
-              />
-            </div>
+            {getImageUrl(f) && (
+              <div className="etudiant-card-image">
+                <img src={getImageUrl(f)} alt={f.titre} />
+              </div>
+            )}
             <div className="etudiant-card-body">
               <h3>{f.titre}</h3>
               <p><strong>Durée :</strong> {f.duree}h</p>

@@ -313,11 +313,11 @@ export default function GeovisionCatalogue() {
                 >
                   <div style={{ width: "100%", height: "180px", backgroundColor: "#f5f5f5", overflow: "hidden", position: "relative" }}>
                     <img
-                      src={p.image || "/images/geovision/cam1.png"}
+                      src={p.image || "/images/geovision/cam1.webp"}
                       alt={p.nom}
                       style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       onError={(e) => {
-                        e.target.src = "/images/geovision/cam1.png";
+                        e.target.src = "/images/geovision/cam1.webp";
                       }}
                     />
                     <div style={{ position: "absolute", top: "10px", right: "10px", backgroundColor: "#ff9800", color: "#fff", padding: "4px 12px", borderRadius: "20px", fontSize: "11px", fontWeight: "600" }}>
