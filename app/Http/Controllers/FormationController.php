@@ -98,8 +98,30 @@ class FormationController extends Controller
     /** Filtrer par type (particulier, étudiant, entreprise) */
     public function getByType($type)
     {
+        $normalizedType = Str::of((string) $type)
+            ->trim()
+            ->lower()
+            ->replace(['é', 'è', 'ê', 'ë'], 'e')
+            ->toString();
+
+        $aliases = [
+            'etudiant' => ['etudiant', 'etudiants', 'étudiant', 'étudiants'],
+            'particulier' => ['particulier', 'particuliers'],
+            'entreprise' => ['entreprise', 'entreprises'],
+        ];
+
+        $rawValues = $aliases[$normalizedType] ?? [(string) $type];
+        $matchValues = collect($rawValues)
+            ->map(fn($value) => Str::lower(trim((string) $value)))
+            ->unique()
+            ->values();
+
         $formations = Formation::with(['pays', 'images'])
-            ->where('categorie', $type)
+            ->where(function ($query) use ($matchValues) {
+                foreach ($matchValues as $value) {
+                    $query->orWhereRaw('LOWER(TRIM(categorie)) = ?', [$value]);
+                }
+            })
             ->get();
 
         // Retourner le chemin tel qu'il est stocké en base (relatif)

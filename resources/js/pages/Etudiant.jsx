@@ -20,7 +20,7 @@ const API_BASE = (() => {
   return "";
 })();
 
-const Particulier = () => {
+const Etudiant = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [formations, setFormations] = useState([]);
@@ -145,4 +145,4 @@ const Particulier = () => {
   );
 };
 
-export default Particulier;
+export default Etudiant;

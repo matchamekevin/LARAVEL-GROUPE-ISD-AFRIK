@@ -23,11 +23,18 @@ class ProduitService
             $query->where('id_pays', $filters['id_pays']);
         }
 
-        if (!empty($filters['statut'])) {
+        if (!empty($filters['statuts']) && is_array($filters['statuts'])) {
+            $query->whereIn('statut', $filters['statuts']);
+        } elseif (!empty($filters['statut'])) {
             $query->where('statut', $filters['statut']);
+        } else {
+            // Valeur par défaut tolérante: certains jeux de données utilisent "actif" au lieu de "disponible".
+            $query->whereIn('statut', ['disponible', 'actif']);
         }
 
-        if (!empty($filters['id_categorie'])) {
+        if (!empty($filters['id_categories']) && is_array($filters['id_categories'])) {
+            $query->whereIn('id_categorie', $filters['id_categories']);
+        } elseif (!empty($filters['id_categorie'])) {
             $query->where('id_categorie', $filters['id_categorie']);
         }
 

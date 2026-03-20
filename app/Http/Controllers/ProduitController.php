@@ -38,10 +38,26 @@ class ProduitController extends Controller
             $excludeList = array_values(array_filter(array_map('intval', explode(',', $excludeIds))));
         }
 
+        $categoryFilter = $request->query('id_categorie');
+        $categoryList = [];
+        if (is_string($categoryFilter) && $categoryFilter !== '') {
+            $categoryList = array_values(array_filter(array_map('intval', explode(',', $categoryFilter))));
+        } elseif (is_array($categoryFilter)) {
+            $categoryList = array_values(array_filter(array_map('intval', $categoryFilter)));
+        }
+
+        $statusFilter = $request->query('statut');
+        $statusList = [];
+        if (is_string($statusFilter) && $statusFilter !== '') {
+            $statusList = array_values(array_filter(array_map('trim', explode(',', $statusFilter))));
+        }
+
         $filters = [
             'id_pays'      => $request->query('id_pays'),
             'id_categorie' => $request->query('id_categorie'),
-            'statut'       => $request->query('statut', 'disponible'),
+            'id_categories' => $categoryList,
+            'statut'       => $statusFilter,
+            'statuts'      => $statusList,
             'prix_min'     => $request->query('prix_min'),
             'prix_max'     => $request->query('prix_max'),
             'marque'       => $request->query('marque'),
