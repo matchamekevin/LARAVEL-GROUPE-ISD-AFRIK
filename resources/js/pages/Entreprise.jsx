@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/entreprise.css";
+import { resolveFormationImageUrl } from "../utils/mediaUrl";
 
 const API_BASE = (() => {
   if (typeof window !== "undefined") {
@@ -76,21 +77,8 @@ const Entreprise = () => {
     if (!activeMonth && moisList.length > 0) setActiveMonth(moisList[0]);
   }, [moisList, activeMonth]);
 
-  // ✅ Fonction pour obtenir l'URL de l'image depuis la base de données
   const getImageUrl = (f) => {
-    const raw = f?.images?.[0]?.url;
-    const backendBase = API_BASE;
-    if (!raw) return null;
-    if (raw.startsWith('/')) return backendBase + raw;
-    if (/^https?:\/\//i.test(raw)) {
-      try {
-        const parsed = new URL(raw);
-        return backendBase + parsed.pathname;
-      } catch (_) {
-        return raw;
-      }
-    }
-    return raw;
+    return resolveFormationImageUrl(f?.images?.[0]?.url, API_BASE);
   };
 
   return (

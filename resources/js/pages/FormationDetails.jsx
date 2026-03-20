@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/formationDetails.css";
 import { getApiBase } from "../utils/apiBase";
+import { resolveFormationImageUrl } from "../utils/mediaUrl";
 
 const FormationDetails = () => {
   const { id } = useParams();
@@ -36,12 +37,8 @@ const FormationDetails = () => {
     }
   };
 
-  // ✅ Fonction pour obtenir l'URL de l'image depuis la base de données (préfixe backend si chemin relatif)
   const getImageUrl = () => {
-    const raw = formation?.images?.[0]?.url;
-    const backendBase = getApiBase();
-    if (!raw) return null;
-    return raw.startsWith('/') ? backendBase + raw : raw;
+    return resolveFormationImageUrl(formation?.images?.[0]?.url, getApiBase());
   };
 
   if (loading) {
