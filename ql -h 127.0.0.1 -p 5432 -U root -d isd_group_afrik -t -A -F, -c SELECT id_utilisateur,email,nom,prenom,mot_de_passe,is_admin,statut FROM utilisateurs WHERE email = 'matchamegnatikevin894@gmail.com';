@@ -1,5 +1,0 @@
- id_utilisateur |              email              |  nom  | prenom |                         mot_de_passe                         | is_admin | statut 
-----------------+---------------------------------+-------+--------+--------------------------------------------------------------+----------+--------
-              2 | matchamegnatikevin894@gmail.com | GNATI | Kev    | $2y$12$sCzFegFuR.eukMaPtHZwWOHbQuzSGRxjWfXAdwnDrbeCufMa0F6la | f        | actif
-(1 row)
-

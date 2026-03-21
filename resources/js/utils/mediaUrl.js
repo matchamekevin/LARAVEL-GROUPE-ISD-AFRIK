@@ -16,23 +16,18 @@ export function resolveFormationImageUrl(rawUrl, apiBase = getApiBase()) {
 
   const normalizedPath = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
 
-  if (typeof window !== "undefined") {
-    const hostIsLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-    if (!hostIsLocal) {
-      const origin = window.location.origin.replace(/\/$/, "");
-        try {
-          return encodeURI(`${origin}${normalizedPath}`);
-        } catch (e) {
-          return `${origin}${normalizedPath}`;
-        }
-    }
-  }
-
+  // En production, le frontend peut être servi sur un domaine différent du backend.
+  // On doit donc toujours privilégier la base API pour les chemins relatifs.
   const base = (apiBase || "").replace(/\/$/, "");
-    try {
-      const final = base ? `${base}${normalizedPath}` : normalizedPath;
-      return encodeURI(final);
-    } catch (e) {
-      return base ? `${base}${normalizedPath}` : normalizedPath;
-    }
+  const fallbackOrigin = typeof window !== "undefined"
+    ? window.location.origin.replace(/\/$/, "")
+    : "";
+  const finalBase = base || fallbackOrigin;
+  const finalUrl = finalBase ? `${finalBase}${normalizedPath}` : normalizedPath;
+
+  try {
+    return encodeURI(finalUrl);
+  } catch (e) {
+    return finalUrl;
+  }
 }
