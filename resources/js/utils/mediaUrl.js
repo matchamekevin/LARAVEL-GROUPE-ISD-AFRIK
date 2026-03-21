@@ -7,7 +7,11 @@ export function resolveFormationImageUrl(rawUrl, apiBase = getApiBase()) {
   if (!trimmed) return null;
 
   if (/^https?:\/\//i.test(trimmed)) {
-    return trimmed;
+      try {
+        return encodeURI(trimmed);
+      } catch (e) {
+        return trimmed;
+      }
   }
 
   const normalizedPath = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
@@ -16,10 +20,19 @@ export function resolveFormationImageUrl(rawUrl, apiBase = getApiBase()) {
     const hostIsLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
     if (!hostIsLocal) {
       const origin = window.location.origin.replace(/\/$/, "");
-      return `${origin}${normalizedPath}`;
+        try {
+          return encodeURI(`${origin}${normalizedPath}`);
+        } catch (e) {
+          return `${origin}${normalizedPath}`;
+        }
     }
   }
 
   const base = (apiBase || "").replace(/\/$/, "");
-  return base ? `${base}${normalizedPath}` : normalizedPath;
+    try {
+      const final = base ? `${base}${normalizedPath}` : normalizedPath;
+      return encodeURI(final);
+    } catch (e) {
+      return base ? `${base}${normalizedPath}` : normalizedPath;
+    }
 }
