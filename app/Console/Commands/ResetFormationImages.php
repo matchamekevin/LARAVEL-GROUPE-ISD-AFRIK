@@ -38,6 +38,7 @@ class ResetFormationImages extends Command
         // Particuliers - formations professionnelles
         'transformation digitale' => 'big-data.webp',
         'solutions cloud' => 'dev-application-api.webp',
+        'web & mobile' => 'web-wordpress.webp',
         'web mobile' => 'web-wordpress.webp',
         'marketing digital' => 'seo-referencement.webp',
         'gestion de projet' => 'gestion-projets.webp',
