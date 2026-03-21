@@ -62,12 +62,26 @@ class InsertCategoryImages extends Command
                 $imagePath = "uploads/categories/{$categoryData['image']}";
                 $imageUrl = "/{$imagePath}";
 
-                // Vérifier si l'image existe déjà pour cette catégorie
-                $existingImage = Image::where('imageable_type', 'CATEGORY')
+                // Vérifier si l'image existe déjà pour cette catégorie (inclure soft-deleted)
+                $existingImage = Image::withTrashed()
+                    ->where('imageable_type', 'CATEGORY')
                     ->where('imageable_id', $this->getCategoryId($categoryKey))
                     ->first();
 
                 if ($existingImage) {
+                    if (method_exists($existingImage, 'trashed') && $existingImage->trashed()) {
+                        $this->warn("⚠️  Image trouvée mais soft-deleted pour la catégorie: {$categoryKey}");
+                        if (!$dryRun) {
+                            $existingImage->restore();
+                            $this->info("♻️  Image restaurée pour la catégorie: {$categoryKey}");
+                            $inserted++;
+                        } else {
+                            $this->info("🔍 Dry-run: restaurerait l'image soft-deleted pour: {$categoryKey}");
+                            $skipped++;
+                        }
+                        continue;
+                    }
+
                     $this->warn("⏭️  Image déjà existante pour la catégorie: {$categoryKey}");
                     $skipped++;
                     continue;
