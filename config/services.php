@@ -39,6 +39,7 @@ return [
     'secret' => env('FEDAPAY_SECRET_KEY'),
     'public' => env('FEDAPAY_PUBLIC_KEY'),
     'env'    => env('FEDAPAY_ENVIRONMENT'),
+    'webhook_secret' => env('FEDAPAY_WEBHOOK_SECRET'),
 ],
 
 

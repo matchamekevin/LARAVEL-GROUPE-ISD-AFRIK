@@ -3,8 +3,13 @@ import { getApiBase } from "./apiBase";
 export function resolveFormationImageUrl(rawUrl, apiBase = getApiBase()) {
   if (!rawUrl || typeof rawUrl !== "string") return null;
 
-  const trimmed = rawUrl.trim();
+  let trimmed = rawUrl.trim();
   if (!trimmed) return null;
+
+  // Defensive fix for legacy malformed URLs like '/http://...'
+  if (/^\/+https?:\/\//i.test(trimmed)) {
+    trimmed = trimmed.replace(/^\/+/, "");
+  }
 
   if (/^https?:\/\//i.test(trimmed)) {
       try {

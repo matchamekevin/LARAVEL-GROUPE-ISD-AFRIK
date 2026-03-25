@@ -1,0 +1,344 @@
+/* ========================================
+   MARKETING ADMIN PAGE STYLES
+   ======================================== */
+
+.admin-marketing-page {
+  padding: var(--spacing-3xl);
+  display: grid;
+  gap: var(--spacing-xl);
+}
+
+.admin-marketing-hero {
+  background: var(--gradient-marketing);
+  color: var(--color-white);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-xl) var(--spacing-2xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.admin-marketing-hero h1 {
+  margin: 0;
+  font-size: var(--font-size-3xl);
+  font-weight: 800;
+}
+
+.admin-marketing-hero p {
+  margin: var(--spacing-sm) 0 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Container */
+.admin-marketing-container {
+  background: var(--color-white);
+  border: var(--border-light);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-lg);
+}
+
+/* Form */
+.admin-marketing-form {
+  display: grid;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+  border-bottom: var(--border-light);
+}
+
+.admin-marketing-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-lg);
+}
+
+.admin-marketing-form-grid-full {
+  grid-column: span 2;
+}
+
+.admin-marketing-form-field {
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+.admin-marketing-form-field label {
+  font-weight: 700;
+  font-size: var(--font-size-base);
+  color: var(--color-gray-900);
+}
+
+.admin-marketing-form-field input,
+.admin-marketing-form-field textarea,
+.admin-marketing-form-field select {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 2px solid #d1d5db;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.admin-marketing-form-field input:focus,
+.admin-marketing-form-field textarea:focus,
+.admin-marketing-form-field select:focus {
+  outline: none;
+  border-color: var(--color-info);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  background: rgba(59, 130, 246, 0.02);
+}
+
+.admin-marketing-form-field input:focus,
+.admin-marketing-form-field textarea:focus,
+.admin-marketing-form-field select:focus {
+  outline: none;
+  border-color: var(--color-marketing);
+  box-shadow: 0 0 0 3px rgba(214, 74, 142, 0.1);
+}
+
+.admin-marketing-form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.admin-marketing-form-image-preview {
+  margin: var(--spacing-md) 0 0;
+  max-width: 200px;
+}
+
+.admin-marketing-form-image-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.admin-marketing-form-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+}
+
+.admin-marketing-form-btn {
+  padding: var(--spacing-sm) var(--spacing-xl);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-marketing-form-btn.primary {
+  background: var(--gradient-marketing);
+  color: var(--color-white);
+}
+
+.admin-marketing-form-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(214, 74, 142, 0.3);
+}
+
+.admin-marketing-form-btn.secondary {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  color: var(--color-gray-700);
+}
+
+.admin-marketing-form-btn.secondary:hover {
+  background: var(--color-gray-50);
+}
+
+/* Grid */
+.admin-marketing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.admin-marketing-card {
+  background: var(--color-gray-50);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-marketing-card:hover {
+  border-color: var(--color-marketing);
+  box-shadow: 0 8px 20px rgba(214, 74, 142, 0.15);
+  transform: translateY(-4px);
+}
+
+.admin-marketing-card-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.admin-marketing-card-content {
+  padding: var(--spacing-lg);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.admin-marketing-card-title {
+  font-weight: 700;
+  font-size: var(--font-size-lg);
+  color: var(--color-gray-900);
+}
+
+.admin-marketing-card-description {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-700);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.admin-marketing-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.admin-marketing-card-badge.active {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.admin-marketing-card-badge.inactive {
+  background: rgba(107, 114, 128, 0.1);
+  color: #4b5563;
+}
+
+.admin-marketing-card-meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
+  display: grid;
+  gap: var(--spacing-xs);
+}
+
+.admin-marketing-card-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: auto;
+  padding-top: var(--spacing-lg);
+  border-top: var(--border-light);
+}
+
+.admin-marketing-btn {
+  flex: 1;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: none;
+  border-radius: 6px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-marketing-btn.edit {
+  background: var(--color-info);
+  color: var(--color-white);
+}
+
+.admin-marketing-btn.delete {
+  background: var(--color-danger);
+  color: var(--color-white);
+}
+
+/* Preview */
+.admin-marketing-preview {
+  margin: var(--spacing-xl) 0 0;
+  padding: var(--spacing-xl);
+  background: var(--color-gray-50);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.admin-marketing-preview-title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-gray-900);
+  margin-bottom: var(--spacing-md);
+}
+
+.admin-marketing-preview-card {
+  background: var(--color-white);
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-marketing-preview-card-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.admin-marketing-preview-card-content {
+  padding: var(--spacing-lg);
+}
+
+.admin-marketing-preview-card-badge {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-marketing);
+  margin-bottom: var(--spacing-sm);
+}
+
+.admin-marketing-preview-card-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-gray-900);
+  margin: 0 0 var(--spacing-sm);
+}
+
+.admin-marketing-preview-card-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+  margin: 0;
+}
+
+/* Empty */
+.admin-marketing-empty {
+  padding: var(--spacing-3xl) var(--spacing-xl);
+  text-align: center;
+  color: var(--color-gray-600);
+}
+
+.admin-marketing-empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-marketing-page {
+    padding: var(--spacing-lg);
+  }
+
+  .admin-marketing-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-marketing-form-grid-full {
+    grid-column: span 1;
+  }
+
+  .admin-marketing-grid {
+    grid-template-columns: 1fr;
+  }
+}

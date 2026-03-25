@@ -31,4 +31,21 @@ class CategorieProduit extends Model
     {
         return $this->hasMany(Produit::class, 'id_categorie', 'id_categorie');
     }
+
+    public function parent()
+    {
+        return $this->belongsTo(self::class, 'parent_id', 'id_categorie');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(self::class, 'parent_id', 'id_categorie')
+            ->orderBy('ordre')
+            ->orderBy('nom');
+    }
+
+    public function childrenRecursive()
+    {
+        return $this->children()->with('childrenRecursive');
+    }
 }

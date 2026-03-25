@@ -5,8 +5,19 @@ import "../styles/why-cards-grid.css";
 import "../styles/offers-cards.css";
 import "../styles/geovision-categories.css";
 import { getCategories, getProduits } from "../services/ProduitService";
+import { getHomeMarketingCards } from "../services/HomeMarketingService";
+import { getHomeTestimonials } from "../services/HomeTestimonialsService";
+import { getHomeCollaborators } from "../services/HomeCollaboratorsService";
+import { getHomePartners } from "../services/HomePartnersService";
 import ProduitCard from "../components/ProduitCard";
 import usePageMeta from "../hooks/usePageMeta";
+import {
+  HOME_MARKETING_SECTIONS,
+  mapFeaturedProductCard,
+  mapOfferCard,
+  mapPromotionCard,
+  openMarketingTarget,
+} from "../utils/homeMarketingCards";
 
 export default function Home() {
   usePageMeta(
@@ -14,6 +25,83 @@ export default function Home() {
     "Expert en solutions technologiques, securite electronique, logiciels professionnels et transformation digitale en Afrique de l'Ouest."
   );
   const navigate = useNavigate();
+
+  function getFallbackCollaborators() {
+    return [
+      { img: "/images/collaborateur/col1.webp", name: "DEV 1" },
+      { img: "/images/collaborateur/col2.webp", name: "DEV 2", objectPosition: 'center 0%' },
+      { img: "/images/collaborateur/col3.webp", name: "DEV 3" },
+      { img: "/images/collaborateur/col4.webp", name: "DEV 4" },
+    ];
+  }
+
+  function getFallbackTestimonials() {
+    return [
+      {
+        name: "Plateforme Industrielle d’Adétikopé (PIA)",
+        role: "Direction Générale",
+        text: "Nous avons choisi ISD AFRIK pour accompagner notre développement industriel. Leur expertise digitale nous a permis de fluidifier nos processus et de renforcer notre compétitivité.",
+        rating: 5,
+        avatar: "/images/avis/pia.webp",
+        company: "PIA"
+      },
+      {
+        name: "CANAL+",
+        role: "Direction Technique",
+        text: "ISD AFRIK est un partenaire fiable qui comprend nos enjeux. Grâce à leurs solutions, nous avons amélioré l’expérience de nos abonnés et optimisé nos opérations internes.",
+        rating: 5,
+        avatar: "/images/avis/canal.webp",
+        company: "CANAL+"
+      },
+      {
+        name: "Hôtel Sarakawa",
+        role: "Direction Hôtelière",
+        text: "Avec ISD AFRIK, nous avons modernisé notre gestion et renforcé la satisfaction de nos clients. Leur accompagnement est un vrai atout pour l’hôtellerie.",
+        rating: 4,
+        avatar: "/images/avis/sarakawa.webp",
+        company: "Hôtel Sarakawa"
+      },
+      {
+        name: "ASKY Airlines",
+        role: "Direction des Opérations",
+        text: "ISD AFRIK nous aide à digitaliser nos processus et à offrir un meilleur service à nos passagers. Leur expertise est un levier stratégique pour notre croissance panafricaine.",
+        rating: 5,
+        avatar: "/images/avis/asky.webp",
+        company: "ASKY"
+      },
+      {
+        name: "ORYX Energies",
+        role: "Direction Commerciale",
+        text: "Nous faisons confiance à ISD AFRIK pour la gestion de nos données et la digitalisation de nos services. Leur professionnalisme nous accompagne dans notre expansion.",
+        rating: 5,
+        avatar: "/images/avis/oryx.webp",
+        company: "ORYX Energies"
+      },
+      {
+        name: "SUNU Bank",
+        role: "Direction Générale",
+        text: "ISD AFRIK est un partenaire stratégique qui nous apporte des solutions fiables et sécurisées. Leur expertise renforce notre efficacité et la confiance de nos clients.",
+        rating: 5,
+        avatar: "/images/avis/sunu.webp",
+        company: "SUNU Bank"
+      }
+    ];
+  }
+
+  function getFallbackPartners() {
+    return [
+      { img: "/images/partenaire/pat1.webp", name: "vvavesoft" },
+      { img: "/images/partenaire/pat2.webp", name: "asterbox" },
+      { img: "/images/partenaire/pat3.webp", name: "gynod" },
+      { img: "/images/partenaire/pat4.webp", name: "dip afrique" },
+      { img: "/images/partenaire/pat5.webp", name: "dylog" },
+      { img: "/images/partenaire/pat6.webp", name: "lacsoft" },
+      { img: "/images/partenaire/pat7.webp", name: "orchestra" },
+      { img: "/images/partenaire/pat8.webp", name: "sage" },
+      { img: "/images/partenaire/pat9.webp", name: "sensoft" },
+      { img: "/images/partenaire/pat10.webp", name: "show box" },
+    ];
+  }
   
   const heroSlides = [
     { src: "/images/home/hero-1.webp", alt: "Ingénierie et innovation ISD AFRIK" },
@@ -55,29 +143,193 @@ export default function Home() {
     { img: "/images/why/im8.webp", title: "Innovation continue", link: "/details/why/innovation-continue" },
   ];
 
-  const offers = [
+  const fallbackOffers = [
     {
       title: "Gestion commerciale",
       desc: "Motivation de l'équipe commerciale dans l'atteinte des objectifs.",
       price: "Inscription ouverte",
       icon: "fas fa-chart-line",
-      img: "/images/offers/offre1.webp"
+      img: "/images/offers/offre1.webp",
+      link: "/formations",
+      ctaLabel: "Je profite",
     },
     {
       title: "Organisation administrative et financiere",
       desc: "Conformité au SYSCOHADA révisé et meilleure organisation administrative.",
       price: "Inscription ouverte",
       icon: "fas fa-calculator",
-      img: "/images/offers/offre2.webp"
+      img: "/images/offers/offre2.webp",
+      link: "/formations",
+      ctaLabel: "Je profite",
     },
     {
       title: "Paie et ressources humaines",
       desc: "Maîtrise des outils RH, optimisation du personnel et conformité sociale.",
       price: "Inscription ouverte",
       icon: "fas fa-users-cog",
-      img: "/images/offers/offre3.webp"
+      img: "/images/offers/offre3.webp",
+      link: "/formations",
+      ctaLabel: "Je profite",
     },
   ];
+
+  const fallbackFeaturedProducts = [
+    { title: "Solutions de gestion d'entreprise", price: "Sur mesure", img: "/images/solutions/im1.webp", category: "Logiciels", link: "/solutions", ctaLabel: "En savoir plus" },
+    { title: "Formation professionnelle", price: "Certifications", img: "/images/solutions/im2.webp", category: "Formation", link: "/formations", ctaLabel: "En savoir plus" },
+    { title: "Ingénierie informatique et industrielle", price: "Expertise IT", img: "/images/solutions/im3.webp", category: "Ingénierie", link: "/solutions", ctaLabel: "En savoir plus" },
+    { title: "Fourniture et formation en pilotage de drones", price: "Drone Pro", img: "/images/solutions/im4.webp", category: "Drone", link: "/produits?categories=drone-formation", ctaLabel: "En savoir plus" },
+  ];
+
+  const fallbackHomePromotions = [
+    { title: "Promotion Ingenierie", src: "/images/promotions/promo9.webp", link: "/produits?categories=ingenierie", ctaLabel: "Decouvrir" },
+    { title: "Promotion Solutions", src: "/images/promotions/promo10.webp", link: "/solutions", ctaLabel: "Decouvrir" },
+    { title: "Promotion Drone", src: "/images/promotions/promo6.webp", link: "/produits?categories=drone-formation", ctaLabel: "Decouvrir" },
+  ];
+
+  const [offers, setOffers] = useState(fallbackOffers);
+  const [featuredProducts, setFeaturedProducts] = useState(fallbackFeaturedProducts);
+  const [homePromotions, setHomePromotions] = useState(fallbackHomePromotions);
+  const [collaborators, setCollaborators] = useState(() => getFallbackCollaborators());
+  const [testimonials, setTestimonials] = useState(() => getFallbackTestimonials());
+  const [partners, setPartners] = useState(() => getFallbackPartners());
+
+  const applyMarketingCards = (items) => {
+    const list = Array.isArray(items) ? items : [];
+
+    const mappedOffers = list
+      .filter((item) => item.section === HOME_MARKETING_SECTIONS.OFFER)
+      .map(mapOfferCard);
+
+    const mappedProducts = list
+      .filter((item) => item.section === HOME_MARKETING_SECTIONS.FEATURED_PRODUCT)
+      .map(mapFeaturedProductCard);
+
+    const mappedHomePromotions = list
+      .filter((item) => item.section === HOME_MARKETING_SECTIONS.HOME_PROMOTION)
+      .map((item) => mapPromotionCard(item, "/images/promotions/promo9.webp"));
+
+    const mappedPromotionPage = list
+      .filter((item) => item.section === HOME_MARKETING_SECTIONS.PROMOTION_PAGE)
+      .map((item) => mapPromotionCard(item, "/images/promotions/promo1.webp"));
+
+    if (mappedOffers.length > 0) setOffers(mappedOffers);
+    if (mappedProducts.length > 0) setFeaturedProducts(mappedProducts);
+    if (mappedHomePromotions.length > 0) {
+      setHomePromotions(mappedHomePromotions);
+    } else if (mappedPromotionPage.length > 0) {
+      setHomePromotions(mappedPromotionPage);
+    }
+  };
+
+  const refreshMarketingCards = () => {
+    return getHomeMarketingCards()
+      .then(applyMarketingCards)
+      .catch((err) => {
+        console.error("Erreur chargement home marketing cards", err);
+      });
+  };
+
+  const refreshCollaborators = () => {
+    return getHomeCollaborators()
+      .then((items) => {
+        const mapped = (Array.isArray(items) ? items : [])
+          .map((item) => ({
+            id: item.id,
+            name: item.name || '',
+            img: item.image_url || item.image_path || '/images/collaborateur/col1.webp',
+            objectPosition: item.object_position || '',
+          }))
+          .filter((item) => item.name && item.img);
+
+        if (mapped.length > 0) {
+          setCollaborators(mapped);
+        }
+      })
+      .catch((err) => {
+        console.error('Erreur chargement home collaborators', err);
+      });
+  };
+
+  const refreshTestimonials = () => {
+    return getHomeTestimonials()
+      .then((items) => {
+        const mapped = (Array.isArray(items) ? items : [])
+          .map((item) => ({
+            id: item.id,
+            name: item.name || '',
+            role: item.role || '',
+            company: item.company || '',
+            text: item.text || '',
+            rating: Math.max(1, Math.min(5, Number(item.rating || 5))),
+            avatar: item.avatar_url || item.avatar_path || '/images/avis/pia.webp',
+          }))
+          .filter((item) => item.name && item.text);
+
+        if (mapped.length > 0) {
+          setTestimonials(mapped);
+        }
+      })
+      .catch((err) => {
+        console.error('Erreur chargement home testimonials', err);
+      });
+  };
+
+  const refreshPartners = () => {
+    return getHomePartners()
+      .then((items) => {
+        const mapped = (Array.isArray(items) ? items : [])
+          .map((item) => ({
+            id: item.id,
+            name: item.name || '',
+            img: item.image_url || item.image_path || '/images/partenaire/pat1.webp',
+          }))
+          .filter((item) => item.name && item.img);
+
+        if (mapped.length > 0) {
+          setPartners(mapped);
+        }
+      })
+      .catch((err) => {
+        console.error('Erreur chargement home partners', err);
+      });
+  };
+
+  useEffect(() => {
+    refreshMarketingCards();
+    refreshCollaborators();
+    refreshTestimonials();
+    refreshPartners();
+  }, []);
+
+  useEffect(() => {
+    const refreshAllDynamicSections = () => {
+      refreshMarketingCards();
+      refreshCollaborators();
+      refreshTestimonials();
+      refreshPartners();
+    };
+
+    const intervalId = window.setInterval(refreshAllDynamicSections, 30000);
+
+    const handleFocus = () => {
+      refreshAllDynamicSections();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshAllDynamicSections();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   const inscriptionLink = "/inscription";
   const formationLink = "/formations";
@@ -90,83 +342,6 @@ export default function Home() {
   const moisActuel = new Date().getMonth(); // 0-11
   const nomMois = moisNoms[moisActuel];
   const dernierJour = new Date(new Date().getFullYear(), moisActuel + 1, 0).getDate();
-
-  // Promotions dynamiques par mois
-  const promotionsParMois = {
-    0: [ // Janvier
-      { title: "Promo Nouvel An ERP", desc: "Commencez l'année avec -30% sur nos solutions ERP", icon: "fas fa-gift", badge: "-30%" },
-      { title: "Formation Rentrée", desc: "Formations professionnelles à -35% pour bien démarrer", icon: "fas fa-book-open", badge: "-35%" },
-      { title: "Pack Support Janvier", desc: "3 mois de support technique offerts pour tout nouveau contrat", icon: "fas fa-handshake", badge: "3 MOIS OFFERTS" },
-    ],
-    1: [ // Février
-      { title: "Promo Février ERP", desc: "Réduction de 20% sur nos solutions ERP ce mois-ci", icon: "fas fa-gift", badge: "-20%" },
-      { title: "Formation Duo", desc: "Inscrivez-vous à deux et bénéficiez de -50%", icon: "fas fa-book-open", badge: "-50% DUO" },
-      { title: "Pack Support Février", desc: "1 mois de support technique offert pour tout contrat", icon: "fas fa-handshake", badge: "1 MOIS OFFERT" },
-    ],
-    2: [ // Mars
-      { title: "Promo Mars ERP", desc: "Réduction de 25% sur nos solutions ERP pour toute souscription en mars", icon: "fas fa-gift", badge: "-25%" },
-      { title: "Mars Formation Étudiants", desc: "Formations professionnelles à -40% pour les étudiants", icon: "fas fa-book-open", badge: "-40%" },
-      { title: "Pack Support Mars", desc: "2 mois de support technique offerts pour tout nouveau contrat", icon: "fas fa-handshake", badge: "2 MOIS OFFERTS" },
-    ],
-    3: [ // Avril
-      { title: "Promo Printemps ERP", desc: "Offre de printemps : -20% sur toutes nos solutions ERP", icon: "fas fa-gift", badge: "-20%" },
-      { title: "Formation Express Avril", desc: "Formations accélérées à -30% ce mois-ci", icon: "fas fa-book-open", badge: "-30%" },
-      { title: "Pack Support Avril", desc: "2 mois de maintenance offerts sur tout projet", icon: "fas fa-handshake", badge: "2 MOIS OFFERTS" },
-    ],
-    4: [ // Mai
-      { title: "Promo Mai ERP", desc: "Solutions ERP à -35% pour booster votre productivité", icon: "fas fa-gift", badge: "-35%" },
-      { title: "Mai Formation Pro", desc: "Certifications professionnelles à -25%", icon: "fas fa-book-open", badge: "-25%" },
-      { title: "Pack Support Mai", desc: "Support premium offert pendant 3 mois", icon: "fas fa-handshake", badge: "3 MOIS OFFERTS" },
-    ],
-    5: [ // Juin
-      { title: "Promo Été ERP", desc: "Préparez l'été avec -30% sur nos solutions ERP", icon: "fas fa-gift", badge: "-30%" },
-      { title: "Formation Été Étudiants", desc: "Formations d'été à -45% pour les étudiants", icon: "fas fa-book-open", badge: "-45%" },
-      { title: "Pack Support Juin", desc: "1 mois de support offert + audit gratuit", icon: "fas fa-handshake", badge: "AUDIT OFFERT" },
-    ],
-    6: [ // Juillet
-      { title: "Promo Juillet ERP", desc: "Soldes d'été : -40% sur nos solutions ERP", icon: "fas fa-gift", badge: "-40%" },
-      { title: "Formation Vacances", desc: "Formez-vous pendant les vacances à -35%", icon: "fas fa-book-open", badge: "-35%" },
-      { title: "Pack Support Juillet", desc: "Support technique illimité pendant 2 mois", icon: "fas fa-handshake", badge: "2 MOIS OFFERTS" },
-    ],
-    7: [ // Août
-      { title: "Promo Août Rentrée", desc: "Anticipez la rentrée avec -25% sur nos ERP", icon: "fas fa-gift", badge: "-25%" },
-      { title: "Formation Pré-Rentrée", desc: "Préparez votre rentrée avec -30% sur les formations", icon: "fas fa-book-open", badge: "-30%" },
-      { title: "Pack Support Août", desc: "3 mois de support offerts pour les nouveaux clients", icon: "fas fa-handshake", badge: "3 MOIS OFFERTS" },
-    ],
-    8: [ // Septembre
-      { title: "Promo Rentrée ERP", desc: "Offre de rentrée : -30% sur toutes nos solutions", icon: "fas fa-gift", badge: "-30%" },
-      { title: "Formation Rentrée Pro", desc: "Formations certifiantes à -40% pour la rentrée", icon: "fas fa-book-open", badge: "-40%" },
-      { title: "Pack Support Septembre", desc: "2 mois de support premium offerts", icon: "fas fa-handshake", badge: "2 MOIS OFFERTS" },
-    ],
-    9: [ // Octobre
-      { title: "Promo Octobre ERP", desc: "Solutions ERP à -20% pour optimiser votre fin d'année", icon: "fas fa-gift", badge: "-20%" },
-      { title: "Formation Automne", desc: "Formations professionnelles à -35% en octobre", icon: "fas fa-book-open", badge: "-35%" },
-      { title: "Pack Support Octobre", desc: "1 mois de support offert + consultation gratuite", icon: "fas fa-handshake", badge: "CONSULT OFFERTE" },
-    ],
-    10: [ // Novembre
-      { title: "Promo Black Friday ERP", desc: "Offre exceptionnelle : -50% sur nos solutions ERP", icon: "fas fa-gift", badge: "-50%" },
-      { title: "Formation Black Friday", desc: "Toutes les formations à -45% ce mois-ci", icon: "fas fa-book-open", badge: "-45%" },
-      { title: "Pack Support Novembre", desc: "4 mois de support technique offerts", icon: "fas fa-handshake", badge: "4 MOIS OFFERTS" },
-    ],
-    11: [ // Décembre
-      { title: "Promo Fin d'Année ERP", desc: "Terminez l'année en beauté avec -35% sur nos ERP", icon: "fas fa-gift", badge: "-35%" },
-      { title: "Formation Noël", desc: "Offrez-vous une formation à -40% pour les fêtes", icon: "fas fa-book-open", badge: "-40%" },
-      { title: "Pack Support Décembre", desc: "3 mois de support offerts + bilan annuel gratuit", icon: "fas fa-handshake", badge: "BILAN OFFERT" },
-    ],
-  };
-
-  const promotions = promotionsParMois[moisActuel];
-  // Images for promotions with per-promo links (place your files in public/images/promotions/)
-  const promoImages = [
-    { src: "/images/promotions/promo9.webp", link: "/produits?categories=ingenierie" },
-    { src: "/images/promotions/promo10.webp", link: "/solutions" },
-    { src: "/images/promotions/promo6.webp", link: "/produits?categories=drone-formation" },
-    { src: "/images/promotions/promo4.webp", link: "/promotions/promo-4" },
-    { src: "/images/promotions/promo5.webp", link: "/promotions/promo-5" },
-    { src: "/images/promotions/promo6.webp", link: "/promotions/promo-6" },
-    { src: "/images/promotions/promo7.webp", link: "/promotions/promo-7" },
-    { src: "/images/promotions/promo8.webp", link: "/promotions/promo-8" },
-  ];
 
   const [promoModalIndex, setPromoModalIndex] = useState(null);
 
@@ -196,7 +371,7 @@ export default function Home() {
 
   useEffect(() => {
     let active = true;
-    getCategories()
+    getCategories({ segment: "geovision", tree: 1, parent_id: "null" })
       .then(async (res) => {
         const cats = res.data?.data || res.data || [];
         const filtered = cats.filter((c) => {
@@ -213,10 +388,9 @@ export default function Home() {
         });
         const ids = filtered.map((c) => c.id_categorie || c.id).filter(Boolean);
         if (ids.length > 0) {
-          const resProd = await getProduits({ tri: "recent", par_page: 24 });
+          const resProd = await getProduits({ segment: "geovision", tri: "recent", par_page: 24 });
           const items = resProd.data?.data || [];
-          const filteredProducts = items.filter((p) => ids.includes(p.id_categorie));
-          if (active) setGeovisionProducts(filteredProducts.slice(0, 6));
+          if (active) setGeovisionProducts(items.slice(0, 6));
         }
       })
       .catch(() => {
@@ -232,10 +406,10 @@ export default function Home() {
 
   // GeoVision : catégories principales pour la présentation (séparées)
   const geovisionCategories = [
-    { title: "Caméras", desc: "Caméras professionnelles pour la surveillance et l'analyse vidéo.", image: "/images/geovision/cam1.webp", link: "/geovision?filter=cameras-ip-thermiques" },
-    { title: "Contrôleur d'accès", desc: "Contrôleurs et lecteurs pour la gestion des accès sécurisés.", image: "/images/geovision/controleur1.webp", link: "/geovision?filter=controle-d-acces" },
-    { title: "Enregistreurs", desc: "Enregistreurs (NVR/DVR) et solutions d'archivage pour la gestion vidéo.", image: "/images/geovision/nvr1.webp", link: "/geovision?filter=enregistreurs-nvr" },
-    { title: "Solutions", desc: "Logiciels et services GeoVision : VMS, analytics et intégration.", image: "/images/geovision/solution1.webp", link: "/geovision?filter=vms-analytics" },
+    { title: "Caméras", desc: "Caméras professionnelles pour la surveillance et l'analyse vidéo.", image: "/images/geovision/cam1.webp", link: "/geovision?famille=geovision-cameras" },
+    { title: "Contrôle d'accès", desc: "Contrôleurs et lecteurs pour la gestion des accès sécurisés.", image: "/images/geovision/controleur1.webp", link: "/geovision?famille=geovision-controle-acces" },
+    { title: "Enregistreurs", desc: "Enregistreurs (NVR/DVR) et solutions d'archivage pour la gestion vidéo.", image: "/images/geovision/nvr1.webp", link: "/geovision?famille=geovision-enregistreurs-nvr" },
+    { title: "Solutions", desc: "Logiciels et services GeoVision : VMS, analytics et intégration.", image: "/images/geovision/solution1.webp", link: "/geovision?famille=geovision-vms-analytics" },
   ];
 
   const sectors = [
@@ -249,86 +423,15 @@ export default function Home() {
     { title: "BTP & Industrie", desc: "Solutions pour le secteur du bâtiment et de l'industrie", icon: "fas fa-hard-hat", link: "/details/sectors/btp-industrie" },
   ];
 
-  const collaborators = [
-    { img: "/images/collaborateur/col1.webp", name: "DEV 1" },
-    { img: "/images/collaborateur/col2.webp", name: "DEV 2" },
-    { img: "/images/collaborateur/col3.webp", name: "DEV 3" },
-    { img: "/images/collaborateur/col4.webp", name: "DEV 4" },
-    //{ img: "/images/collaborateur/col5.webp", name: "DEV 5" },
-  ];
+  const fallbackCollaborators = getFallbackCollaborators();
 
-  const testimonials = [
-  { 
-    name: "Plateforme Industrielle d’Adétikopé (PIA)", 
-    role: "Direction Générale", 
-    text: "Nous avons choisi ISD AFRIK pour accompagner notre développement industriel. Leur expertise digitale nous a permis de fluidifier nos processus et de renforcer notre compétitivité.", 
-    rating: 5, 
-    avatar: "/images/avis/pia.webp",
-    company: "PIA"
-  },
-  { 
-    name: "CANAL+", 
-    role: "Direction Technique", 
-    text: "ISD AFRIK est un partenaire fiable qui comprend nos enjeux. Grâce à leurs solutions, nous avons amélioré l’expérience de nos abonnés et optimisé nos opérations internes.", 
-    rating: 5, 
-    avatar: "/images/avis/canal.webp",
-    company: "CANAL+"
-  },
-  { 
-    name: "Hôtel Sarakawa", 
-    role: "Direction Hôtelière", 
-    text: "Avec ISD AFRIK, nous avons modernisé notre gestion et renforcé la satisfaction de nos clients. Leur accompagnement est un vrai atout pour l’hôtellerie.", 
-    rating: 4, 
-    avatar: "/images/avis/sarakawa.webp",
-    company: "Hôtel Sarakawa"
-  },
-  { 
-    name: "ASKY Airlines", 
-    role: "Direction des Opérations", 
-    text: "ISD AFRIK nous aide à digitaliser nos processus et à offrir un meilleur service à nos passagers. Leur expertise est un levier stratégique pour notre croissance panafricaine.", 
-    rating: 5, 
-    avatar: "/images/avis/asky.webp",
-    company: "ASKY"
-  },
-  { 
-    name: "ORYX Energies", 
-    role: "Direction Commerciale", 
-    text: "Nous faisons confiance à ISD AFRIK pour la gestion de nos données et la digitalisation de nos services. Leur professionnalisme nous accompagne dans notre expansion.", 
-    rating: 5, 
-    avatar: "/images/avis/oryx.webp",
-    company: "ORYX Energies"
-  },
-  { 
-    name: "SUNU Bank", 
-    role: "Direction Générale", 
-    text: "ISD AFRIK est un partenaire stratégique qui nous apporte des solutions fiables et sécurisées. Leur expertise renforce notre efficacité et la confiance de nos clients.", 
-    rating: 5, 
-    avatar: "/images/avis/sunu.webp",
-    company: "SUNU Bank"
-  }
-];
 
-  const partners = [
-    { img: "/images/partenaire/pat1.webp", name: "vvavesoft" },
-    { img: "/images/partenaire/pat2.webp", name: "asterbox" },
-    { img: "/images/partenaire/pat3.webp", name: "gynod" },
-    { img: "/images/partenaire/pat4.webp", name: "dip afrique" },
-    { img: "/images/partenaire/pat5.webp", name: "dylog" },
-    { img: "/images/partenaire/pat6.webp", name: "lacsoft" },
-    { img: "/images/partenaire/pat7.webp", name: "orchestra" },
-    { img: "/images/partenaire/pat8.webp", name: "sage" },
-    { img: "/images/partenaire/pat9.webp", name: "sensoft" },
-    { img: "/images/partenaire/pat10.webp", name: "show box" },
-    
-  ];
+  const fallbackTestimonials = getFallbackTestimonials();
 
-  // ✅ CORRIGÉ : Produits phares redirigent tous vers /solutions (page produits)
-  const featuredProducts = [
-    { title: "Solutions de gestion d'entreprise", price: "Sur mesure", img: "/images/solutions/im1.webp", category: "Logiciels", link: "/solutions" },
-    { title: "Formation professionnelle", price: "Certifications", img: "/images/solutions/im2.webp", category: "Formation", link: "/formations" },
-    { title: "Ingénierie informatique et industrielle", price: "Expertise IT", img: "/images/solutions/im3.webp", category: "Ingénierie", link: "/solutions" },
-    { title: "Fourniture et formation en pilotage de drones", price: "Drone Pro", img: "/images/solutions/im4.webp", category: "Drone", link: "/produits?categories=drone-formation" },
-  ];
+
+  const fallbackPartners = getFallbackPartners();
+
+  // ✅ Produits phares dynamiques (DB) avec fallback local
 
   const stats = [
     { number: "300+", label: "Clients satisfaits" },
@@ -444,8 +547,8 @@ export default function Home() {
                 <h3>{o.title}</h3>
                 <p>{o.desc}</p>
                 <div className="price-tag">{o.price}</div>
-                <button className="btn-primary" onClick={() => navigate(formationLink)}>
-                  Je profite
+                <button className="btn-primary" onClick={() => openMarketingTarget(navigate, o.link, formationLink)}>
+                  {o.ctaLabel || "Je profite"}
                 </button>
               </div>
             </div>
@@ -460,17 +563,17 @@ export default function Home() {
           <p>Offres exclusives valables jusqu'au {dernierJour} {nomMois.toLowerCase()}</p>
         </div>
         <div className="promo-gallery">
-          {promoImages.slice(0, 3).map((item, idx) => (
+          {homePromotions.slice(0, 3).map((item, idx) => (
             <button
               key={idx}
               type="button"
               className="promo-image-item"
               onClick={() => { setPromoModalIndex(idx); }}
-              aria-label={`Voir la promotion ${idx + 1}`}
+              aria-label={`Voir la promotion ${item.title || idx + 1}`}
             >
                 <img
                 src={item.src}
-                alt={`Promo ${idx + 1}`}
+                alt={item.title || `Promo ${idx + 1}`}
                 className="promo-image"
                 onError={(e)=>{e.target.style.background='#eee'; e.target.src=''}}
               />
@@ -502,8 +605,8 @@ export default function Home() {
 
               <div className="modal-promo-figure">
                 <img
-                  src={promoImages[promoModalIndex]?.src}
-                  alt={`Promo ${promoModalIndex+1}`}
+                  src={homePromotions[promoModalIndex]?.src}
+                  alt={homePromotions[promoModalIndex]?.title || `Promo ${promoModalIndex+1}`}
                   className="modal-promo-img"
                   onError={(e)=>{e.target.style.background='#eee'; e.target.src=''}}
                 />
@@ -512,9 +615,9 @@ export default function Home() {
               <div className="modal-promo-actions">
                 <button
                   className="btn-primary"
-                  onClick={() => navigate(promoImages[promoModalIndex]?.link || inscriptionLink)}
+                  onClick={() => openMarketingTarget(navigate, homePromotions[promoModalIndex]?.link, inscriptionLink)}
                 >
-                  <i className="fas fa-check"></i> Souscrire
+                  <i className="fas fa-check"></i> {homePromotions[promoModalIndex]?.ctaLabel || "Decouvrir"}
                 </button>
               </div>
             </div>
@@ -559,8 +662,8 @@ export default function Home() {
                 <h3>{p.title}</h3>
                 <div className="price">{p.price}</div>
                 <div className="actions">
-                  <button className="btn-primary" onClick={() => navigate(p.link)}>
-                    <i className="fas fa-info-circle"></i> En savoir plus
+                  <button className="btn-primary" onClick={() => openMarketingTarget(navigate, p.link, "/solutions")}>
+                    <i className="fas fa-info-circle"></i> {p.ctaLabel || "En savoir plus"}
                   </button>
                 </div>
               </div>
@@ -635,7 +738,7 @@ export default function Home() {
         </div>
         <div className="testimonials-grid">
           {testimonials.map((t, i) => (
-            <div key={i} className="testimonial-card-new">
+            <div key={t.id || i} className="testimonial-card-new">
               <div className="testimonial-header">
                 <img src={t.avatar} alt={t.name} className="testimonial-avatar" />
                 <div className="testimonial-info">
@@ -759,12 +862,12 @@ export default function Home() {
         </div>
         <div className="collaborators-grid">
           {collaborators.map((collab, i) => (
-            <div key={i} className="collaborator-card">
+            <div key={collab.id || i} className="collaborator-card">
               <img
                 src={collab.img}
                 alt={collab.name}
                 className="collaborator-image"
-                style={collab.img && collab.img.includes('col2') ? { objectPosition: 'center 0%' } : {}}
+                style={collab.objectPosition ? { objectPosition: collab.objectPosition } : {}}
               />
             </div>
           ))}

@@ -27,6 +27,10 @@ class ProduitMinimumPerCategorySeeder extends Seeder
             ->orderBy('id_categorie')
             ->get()
             ->each(function (CategorieProduit $categorie) use ($brands, $defaultPaysId, $defaultUserId) {
+                if (($categorie->segment ?? null) === 'geovision') {
+                    return;
+                }
+
                 $existingCount = Produit::query()
                     ->where('id_categorie', $categorie->id_categorie)
                     ->count();

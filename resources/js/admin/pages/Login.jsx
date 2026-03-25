@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { login, verify2FA, resend2FA } from '../api';
+import { login, verify2FA, resend2FA, setAdminToken } from '../api';
 
 function normalizeAuthMessage(err, fallback) {
   const status = err?.response?.status;
@@ -16,8 +16,8 @@ function normalizeAuthMessage(err, fallback) {
 }
 
 export default function Login({ onLogin }){
-  const [email, setEmail] = useState('matchamegnatikevin894@gmail.com');
-  const [password, setPassword] = useState('motdep@sse2003');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [requires2fa, setRequires2fa] = useState(false);
@@ -30,7 +30,7 @@ export default function Login({ onLogin }){
     setLoading(true); setError(null);
     try{
       // Le backend attend `mot_de_passe` comme nom de champ
-      const res = await login({ email, mot_de_passe: password });
+      const res = await login({ email, mot_de_passe: password, portal: 'admin' });
       const data = res.data || {};
       if (data.requires_2fa) {
         setRequires2fa(true);
@@ -38,7 +38,7 @@ export default function Login({ onLogin }){
         setInfo('Code 2FA envoyé par e-mail.');
       } else {
         // connexion réussie sans 2FA
-        if (data.token) localStorage.setItem('admin_token', data.token);
+        if (data.token) setAdminToken(data.token);
         if (onLogin) onLogin();
       }
     }catch(err){
@@ -50,9 +50,9 @@ export default function Login({ onLogin }){
     e.preventDefault();
     setLoading(true); setError(null); setInfo(null);
     try{
-      const res = await verify2FA({ user_id: userId, code });
+      const res = await verify2FA({ user_id: userId, code, portal: 'admin' });
       const data = res.data || {};
-      if (data.token) localStorage.setItem('admin_token', data.token);
+      if (data.token) setAdminToken(data.token);
       if (onLogin) onLogin();
     }catch(err){
       setError(normalizeAuthMessage(err, 'Code invalide'));
@@ -62,9 +62,8 @@ export default function Login({ onLogin }){
   async function handleResend(){
     setLoading(true); setError(null); setInfo(null);
     try{
-      const res = await resend2FA({ user_id: userId });
+      const res = await resend2FA({ user_id: userId, portal: 'admin' });
       setInfo(res.data?.message || 'Nouveau code envoyé');
-      if (res.data?.code) setInfo(`Code en debug: ${res.data.code}`);
     }catch(err){
       setError(normalizeAuthMessage(err, 'Erreur en renvoi du code'));
     }finally{ setLoading(false); }

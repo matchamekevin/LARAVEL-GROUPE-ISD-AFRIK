@@ -9,6 +9,7 @@ use App\Models\Formation;
 use Barryvdh\DomPDF\Facade\Pdf;
 use FedaPay\FedaPay;
 use FedaPay\Transaction;
+use FedaPay\Webhook;
 use FedaPay\Error\Base as FedaPayError;
 
 class PaiementController extends Controller
@@ -23,6 +24,107 @@ class PaiementController extends Controller
             ->get();
 
         return response()->json($paiements);
+    }
+
+    private function configureFedaPay(): bool
+    {
+        $secret = config('services.fedapay.secret');
+        $environment = config('services.fedapay.env');
+
+        if (empty($secret) || empty($environment)) {
+            Log::error('FedaPay credentials missing');
+            return false;
+        }
+
+        FedaPay::setApiKey($secret);
+        FedaPay::setEnvironment($environment);
+
+        return true;
+    }
+
+    private function frontendRedirect(string $path): string
+    {
+        $base = rtrim((string) env('APP_FRONTEND_URL', env('APP_URL', 'http://127.0.0.1:8000')), '/');
+
+        return $base . '/' . ltrim($path, '/');
+    }
+
+    private function canAccessPayment(Request $request, Paiement $paiement): bool
+    {
+        $user = $request->user();
+
+        return $user !== null
+            && ((int) $paiement->id_utilisateur === (int) $user->getKey() || (bool) $user->is_admin);
+    }
+
+    private function verifyWebhookSignature(Request $request): bool
+    {
+        $secret = config('services.fedapay.webhook_secret');
+        if (!$secret) {
+            return true;
+        }
+
+        $signature = $request->headers->get('x-fedapay-signature')
+            ?? $request->headers->get('fedapay-signature')
+            ?? $request->headers->get('signature');
+
+        if (!$signature) {
+            Log::warning('FedaPay webhook rejected: missing signature header');
+            return false;
+        }
+
+        try {
+            Webhook::constructEvent($request->getContent(), $signature, $secret);
+            return true;
+        } catch (\Throwable $exception) {
+            Log::warning('FedaPay webhook rejected: invalid signature', [
+                'message' => $exception->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    private function fetchRemoteTransaction(string|int $transactionId): ?Transaction
+    {
+        if (!$this->configureFedaPay()) {
+            return null;
+        }
+
+        try {
+            return Transaction::retrieve($transactionId);
+        } catch (\Throwable $exception) {
+            Log::error('Unable to retrieve FedaPay transaction', [
+                'transaction_id' => $transactionId,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    private function syncPaymentStatusFromTransaction(Paiement $paiement, Transaction $transaction): void
+    {
+        $remoteStatus = (string) ($transaction->status ?? '');
+
+        if ($transaction->wasPaid()) {
+            $paiement->update([
+                'statut_paiement' => 'réussi',
+                'date_paiement' => now(),
+            ]);
+            return;
+        }
+
+        if (in_array($remoteStatus, ['canceled', 'declined', 'failed', 'expired'], true)) {
+            $paiement->update([
+                'statut_paiement' => 'échoué',
+                'date_paiement' => now(),
+            ]);
+            return;
+        }
+
+        $paiement->update([
+            'statut_paiement' => 'en_attente',
+        ]);
     }
 
     /**
@@ -49,21 +151,14 @@ class PaiementController extends Controller
             return response()->json(['message' => 'Nom ou prénom manquant ❌'], 422);
         }
 
-        $fedapaySecret = config('services.fedapay.secret');
-        $fedapayEnv = config('services.fedapay.env');
-
-        if (empty($fedapaySecret) || empty($fedapayEnv)) {
-            Log::error('FedaPay credentials missing', ['secret' => $fedapaySecret, 'env' => $fedapayEnv]);
+        if (!$this->configureFedaPay()) {
             return response()->json([
-                'message' => 'FedaPay credentials manquantes. Vérifiez FEDAPAY_SECRET_KEY et FEDAPAY_ENVIRONMENT dans .env'
+                'message' => 'Configuration paiement indisponible.'
             ], 500);
         }
 
-        FedaPay::setApiKey($fedapaySecret);
-        FedaPay::setEnvironment($fedapayEnv);
-
         try {
-            $callbackUrl = env('FEDAPAY_CALLBACK_URL');
+            $callbackUrl = env('FEDAPAY_CALLBACK_URL', route('paiement.callback'));
 
             $transaction = Transaction::create([
                 "description"  => "Paiement formation: " . $formation->titre,
@@ -107,8 +202,7 @@ class PaiementController extends Controller
                 'trace'   => $e->getTraceAsString()
             ]);
             return response()->json([
-                'message' => 'Erreur FedaPay ❌',
-                'error'   => $e->getMessage()
+                'message' => 'Erreur lors de l\'initialisation du paiement.'
             ], 500);
 
         } catch (\Exception $e) {
@@ -117,8 +211,7 @@ class PaiementController extends Controller
                 'trace'   => $e->getTraceAsString()
             ]);
             return response()->json([
-                'message' => 'Erreur lors de la création de la transaction ❌',
-                'error'   => $e->getMessage()
+                'message' => 'Erreur lors de la création de la transaction.'
             ], 500);
         }
     }
@@ -126,9 +219,15 @@ class PaiementController extends Controller
     /**
      * Récupérer un paiement avec sa formation — utilisé par FacturePage React
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $paiement = Paiement::with('formation')->findOrFail($id);
+        $paiement = Paiement::with(['formation', 'utilisateur'])->findOrFail($id);
+
+        if (!$this->canAccessPayment($request, $paiement)) {
+            return response()->json([
+                'message' => 'Accès interdit à ce paiement.'
+            ], 403);
+        }
 
         return response()->json([
             'paiement' => $paiement
@@ -140,11 +239,14 @@ class PaiementController extends Controller
      */
     public function callback(Request $request)
     {
+        if (!$this->verifyWebhookSignature($request)) {
+            return response()->json(['message' => 'Signature webhook invalide.'], 400);
+        }
+
         $payload = $request->all();
         Log::info('FedaPay callback POST reçu', $payload);
 
         $transactionId = $payload['transaction']['id'] ?? $payload['id'] ?? null;
-        $status        = $payload['transaction']['status'] ?? $payload['status'] ?? null;
 
         if (!$transactionId) {
             return response()->json(['message' => 'Transaction ID manquant ❌'], 400);
@@ -156,17 +258,12 @@ class PaiementController extends Controller
             return response()->json(['message' => 'Transaction introuvable ❌'], 404);
         }
 
-        if ($status === 'approved') {
-            $paiement->update([
-                'statut_paiement' => 'réussi',
-                'date_paiement'   => now(),
-            ]);
-        } elseif (in_array($status, ['canceled', 'declined'])) {
-            $paiement->update([
-                'statut_paiement' => 'échoué',
-                'date_paiement'   => now(),
-            ]);
+        $transaction = $this->fetchRemoteTransaction($transactionId);
+        if (!$transaction) {
+            return response()->json(['message' => 'Impossible de vérifier la transaction.'], 502);
         }
+
+        $this->syncPaymentStatusFromTransaction($paiement, $transaction);
 
         return response()->json(['message' => 'Callback traité ✅']);
     }
@@ -178,15 +275,14 @@ class PaiementController extends Controller
     public function callbackReturn(Request $request)
     {
         $transactionId = $request->query('id');
-        $status        = $request->query('status');
 
         Log::info('FedaPay callback GET reçu', [
             'id'     => $transactionId,
-            'status' => $status
+            'status' => $request->query('status')
         ]);
 
         if (!$transactionId) {
-            return redirect()->to(env('APP_FRONTEND_URL') . "/paiement-echec");
+            return redirect()->to($this->frontendRedirect('/paiement-echec'));
         }
 
         $paiement = Paiement::with(['formation', 'utilisateur'])
@@ -194,33 +290,35 @@ class PaiementController extends Controller
             ->first();
 
         if (!$paiement) {
-            return redirect()->to(env('APP_FRONTEND_URL') . "/paiement-echec");
+            return redirect()->to($this->frontendRedirect('/paiement-echec'));
         }
 
-        if ($status === 'approved') {
-            $paiement->update([
-                'statut_paiement' => 'réussi',
-                'date_paiement'   => now(),
-            ]);
-
-            // ✅ Redirection vers la FacturePage React
-            return redirect()->to(env('APP_FRONTEND_URL') . "/facture/" . $paiement->id_paiement);
+        $transaction = $this->fetchRemoteTransaction($transactionId);
+        if (!$transaction) {
+            return redirect()->to($this->frontendRedirect('/paiement-echec'));
         }
 
-        $paiement->update([
-            'statut_paiement' => 'échoué',
-            'date_paiement'   => now(),
-        ]);
+        $this->syncPaymentStatusFromTransaction($paiement, $transaction);
 
-        return redirect()->to(env('APP_FRONTEND_URL') . "/paiement-echec");
+        if ($paiement->statut_paiement === 'réussi') {
+            return redirect()->to($this->frontendRedirect('/facture/' . $paiement->id_paiement));
+        }
+
+        return redirect()->to($this->frontendRedirect('/paiement-echec'));
     }
 
     /**
      * Générer un reçu PDF
      */
-    public function genererRecu($idPaiement)
+    public function facture(Request $request, $idPaiement)
     {
         $paiement = Paiement::with(['formation', 'utilisateur'])->findOrFail($idPaiement);
+
+        if (!$this->canAccessPayment($request, $paiement)) {
+            return response()->json([
+                'message' => 'Accès interdit à cette facture.'
+            ], 403);
+        }
 
         if ($paiement->statut_paiement !== 'réussi') {
             return response()->json([
@@ -231,5 +329,17 @@ class PaiementController extends Controller
         $pdf = Pdf::loadView('recu-paiement', compact('paiement'));
 
         return $pdf->download('recu-paiement-' . $paiement->id_paiement . '.pdf');
+    }
+
+    public function genererRecu(Request $request, $idPaiement)
+    {
+        return $this->facture($request, $idPaiement);
+    }
+
+    public function testPaiement()
+    {
+        return response()->json([
+            'message' => 'Endpoint de test désactivé.'
+        ], 403);
     }
 }

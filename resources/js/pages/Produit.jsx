@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getCategories, getProduits } from "../services/ProduitService";
+import { isFavorite, subscribeStoreUpdates, toggleFavorite } from "../utils/shopStorage";
 import "../styles/produit.css";
 
 const formatPrice = (value) => Number(value || 0).toLocaleString("fr-FR");
@@ -104,6 +105,7 @@ export default function Produits() {
   const [page, setPage] = useState(1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [favoriteIds, setFavoriteIds] = useState(() => new Set());
 
   // Détection dynamique de la hauteur de la navigation pour centrer le hero
   useEffect(() => {
@@ -139,11 +141,27 @@ export default function Produits() {
 
   const location = useLocation();
 
+  useEffect(() => {
+    const refreshFavorites = () => {
+      const next = new Set();
+      produits.forEach((item) => {
+        const id = Number(item.id_produit || item.id);
+        if (id && isFavorite(id)) {
+          next.add(id);
+        }
+      });
+      setFavoriteIds(next);
+    };
+
+    refreshFavorites();
+    return subscribeStoreUpdates(refreshFavorites);
+  }, [produits]);
+
 
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const res = await getCategories();
+        const res = await getCategories({ segment: "general" });
         // L'API retourne un tableau direct; gérer les deux formats (data.data ou data)
         setCategories(res.data?.data || res.data || []);
       } catch {
@@ -228,6 +246,7 @@ export default function Produits() {
           par_page: 12,
           page,
           tri: filtres.tri,
+          segment: "general",
         };
 
         if (filtres.id_categorie !== "all") {
@@ -466,6 +485,7 @@ export default function Produits() {
           const prixFinal = produit.prix_promo ?? produit.prix;
           const specs = readSpecs(produit.specifications);
           const shortDescription = produit.description_courte || produit.description;
+          const isFav = favoriteIds.has(Number(produit.id_produit));
 
           return (
             <article key={produit.id_produit} className="pp-card">
@@ -480,7 +500,15 @@ export default function Produits() {
                 <span className={statusClass(produit.statut)}>{statusLabel(produit.statut)}</span>
               </Link>
 
-              <button className="pp-icon-btn pp-icon-btn--fav" type="button" aria-label="Ajouter aux favoris">
+              <button
+                className={`pp-icon-btn pp-icon-btn--fav ${isFav ? "is-active" : ""}`}
+                type="button"
+                aria-label={isFav ? "Retirer des favoris" : "Ajouter aux favoris"}
+                title={isFav ? "Retirer des favoris" : "Ajouter aux favoris"}
+                onClick={() => {
+                  toggleFavorite(produit);
+                }}
+              >
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
               </button>
 

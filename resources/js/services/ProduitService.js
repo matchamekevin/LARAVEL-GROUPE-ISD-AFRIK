@@ -33,8 +33,11 @@ export const getMarques = (id_pays) =>
   api.get("/produits/marques", { params: { id_pays } });
 
 // ── Catégories ────────────────────────────────────────────
-export const getCategories = () =>
-  api.get("/categories-produits");
+export const getCategories = (params = {}) =>
+  api.get("/categories-produits", { params });
 
-export const getCategorie = (id) =>
-  api.get(`/categories-produits/${id}`);
+export const getCategorie = (id, params = {}) =>
+  api.get(`/categories-produits/${id}`, { params });
+
+export const getCategorieBySlug = (slug, params = {}) =>
+  api.get(`/categories-produits/slug/${slug}`, { params });

@@ -6,6 +6,7 @@ use App\Http\Requests\ProduitRequest;
 use App\Http\Resources\ProduitResource;
 use App\Models\Produit;
 use App\Services\ProduitService;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -56,6 +57,9 @@ class ProduitController extends Controller
             'id_pays'      => $request->query('id_pays'),
             'id_categorie' => $request->query('id_categorie'),
             'id_categories' => $categoryList,
+            'segment'      => $request->query('segment'),
+            'category_slug'=> $request->query('category_slug'),
+            'include_descendants' => $request->boolean('include_descendants'),
             'statut'       => $statusFilter,
             'statuts'      => $statusList,
             'prix_min'     => $request->query('prix_min'),
@@ -225,10 +229,27 @@ class ProduitController extends Controller
      * GET /api/admin/produits
      * Liste admin complète des produits (sans pagination front catalogue)
      */
-    public function adminIndex(): JsonResponse
+    public function adminIndex(Request $request): JsonResponse
     {
+        $segment = $request->query('segment', 'general');
+
         $produits = Produit::query()
-            ->with(['pays', 'categorie', 'images'])
+            ->with(['pays', 'categorie.parent', 'images'])
+            ->whereHas('categorie', fn ($categorieQuery) => $categorieQuery->where('segment', $segment))
+            ->when($request->filled('id_categorie'), function ($query) use ($request) {
+                $query->where('id_categorie', $request->query('id_categorie'));
+            })
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $terme = $request->query('q');
+                $query->where(function ($nestedQuery) use ($terme) {
+                    $nestedQuery->where('titre', 'LIKE', "%{$terme}%")
+                        ->orWhere('description', 'LIKE', "%{$terme}%")
+                        ->orWhere('marque', 'LIKE', "%{$terme}%")
+                        ->orWhere('reference', 'LIKE', "%{$terme}%")
+                        ->orWhere('modele', 'LIKE', "%{$terme}%")
+                        ->orWhere('slug', 'LIKE', "%{$terme}%");
+                });
+            })
             ->orderByDesc('date_creation')
             ->get();
 
@@ -243,7 +264,20 @@ class ProduitController extends Controller
      */
     public function store(ProduitRequest $request): JsonResponse
     {
-        $produit = $this->service->create($request->validated());
+        try {
+            $produit = $this->service->create($request->validated());
+        } catch (QueryException $exception) {
+            if ($this->isUniqueViolation($exception, 'produits_reference_unique')) {
+                return response()->json([
+                    'message' => 'Validation échouée',
+                    'errors' => [
+                        'reference' => ['Cette référence produit existe déjà.'],
+                    ],
+                ], 422);
+            }
+
+            throw $exception;
+        }
 
         return response()->json([
             'message' => 'Produit créé avec succès',
@@ -263,7 +297,20 @@ class ProduitController extends Controller
             return response()->json(['message' => 'Produit introuvable'], 404);
         }
 
-        $updated = $this->service->update($produit, $request->validated());
+        try {
+            $updated = $this->service->update($produit, $request->validated());
+        } catch (QueryException $exception) {
+            if ($this->isUniqueViolation($exception, 'produits_reference_unique')) {
+                return response()->json([
+                    'message' => 'Validation échouée',
+                    'errors' => [
+                        'reference' => ['Cette référence produit existe déjà.'],
+                    ],
+                ], 422);
+            }
+
+            throw $exception;
+        }
 
         return response()->json([
             'message' => 'Produit mis à jour avec succès',
@@ -310,6 +357,14 @@ class ProduitController extends Controller
             'message' => 'Produit restauré avec succès',
             'data'    => new ProduitResource($produit),
         ]);
+    }
+
+    private function isUniqueViolation(QueryException $exception, string $constraint): bool
+    {
+        $sqlState = (string) ($exception->errorInfo[0] ?? '');
+        $message = (string) $exception->getMessage();
+
+        return $sqlState === '23505' || str_contains($message, $constraint);
     }
 
     /**

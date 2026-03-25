@@ -1,24 +1,115 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { me, updateMyProfile, changeMyPassword } from '../api';
+import '../styles/admin-shared.css';
+import './settings.css';
 
-export default function Settings(){
-  const [settings, setSettings] = useState({
-    siteName: 'ISD AFRIK',
-    email: 'admin@isdafrik.com',
-    phone: '+221 77 000 0000',
-    notification: true,
-    darkMode: false,
-  });
+const INITIAL_PROFILE = {
+  nom: '',
+  prenom: '',
+  email: '',
+  telephone: '',
+};
 
-  const [saved, setSaved] = useState(false);
+const INITIAL_PASSWORD = {
+  current_password: '',
+  new_password: '',
+  new_password_confirmation: '',
+};
 
-  const handleChange = (key, value) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-    setSaved(false);
+export default function Settings() {
+  const [profile, setProfile] = useState(INITIAL_PROFILE);
+  const [password, setPassword] = useState(INITIAL_PASSWORD);
+  const [loading, setLoading] = useState(true);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [profileMessage, setProfileMessage] = useState('');
+  const [passwordMessage, setPasswordMessage] = useState('');
+
+  const fullNamePreview = useMemo(
+    () => [profile.prenom, profile.nom].filter(Boolean).join(' ').trim(),
+    [profile.prenom, profile.nom]
+  );
+
+  useEffect(() => {
+    let mounted = true;
+
+    me()
+      .then((res) => {
+        if (!mounted) return;
+        const data = res?.data || {};
+        setProfile({
+          nom: data.nom || '',
+          prenom: data.prenom || '',
+          email: data.email || '',
+          telephone: data.telephone || '',
+        });
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setProfile(INITIAL_PROFILE);
+        setProfileMessage('Impossible de charger le profil.');
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleProfileChange = (key, value) => {
+    setProfile((prev) => ({ ...prev, [key]: value }));
+    setProfileMessage('');
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  const handlePasswordChange = (key, value) => {
+    setPassword((prev) => ({ ...prev, [key]: value }));
+    setPasswordMessage('');
+  };
+
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    setProfileMessage('');
+    try {
+      await updateMyProfile({
+        nom: profile.nom,
+        prenom: profile.prenom,
+        email: profile.email,
+        telephone: profile.telephone,
+      });
+      setProfileMessage('Profil mis a jour avec succes.');
+    } catch (err) {
+      const msg = err?.response?.data?.message || 'Erreur lors de la mise a jour du profil.';
+      setProfileMessage(msg);
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleSavePassword = async () => {
+    if (!password.current_password || !password.new_password || !password.new_password_confirmation) {
+      setPasswordMessage('Veuillez remplir tous les champs de mot de passe.');
+      return;
+    }
+
+    if (password.new_password !== password.new_password_confirmation) {
+      setPasswordMessage('La confirmation du mot de passe ne correspond pas.');
+      return;
+    }
+
+    setSavingPassword(true);
+    setPasswordMessage('');
+    try {
+      await changeMyPassword(password);
+      setPasswordMessage('Mot de passe modifie avec succes.');
+      setPassword(INITIAL_PASSWORD);
+    } catch (err) {
+      const msg = err?.response?.data?.message || 'Erreur lors du changement de mot de passe.';
+      setPasswordMessage(msg);
+    } finally {
+      setSavingPassword(false);
+    }
   };
 
   return (
@@ -34,12 +125,8 @@ export default function Settings(){
         }}>
           <i className="fas fa-gear" style={{marginRight: '0.5rem'}}></i>Paramètres
         </h1>
-        <p style={{
-          color: '#6B7280',
-          fontSize: '0.95rem',
-          margin: 0,
-        }}>
-          Configurez los paramètres généraux de votre administration
+        <p style={{ color: '#6B7280', fontSize: '0.95rem', margin: 0 }}>
+          Gere ton profil connecte et ton mot de passe en base de donnees.
         </p>
       </div>
 
@@ -48,7 +135,6 @@ export default function Settings(){
         gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
         gap: '1.5rem',
       }}>
-        {/* Général */}
         <div style={{
           background: '#ffffff',
           borderRadius: '0.75rem',
@@ -62,8 +148,16 @@ export default function Settings(){
             color: '#172243',
             marginBottom: '1.5rem',
           }}>
-            Informations Générales
+            Profil du compte
           </h2>
+
+          {loading ? (
+            <p style={{ color: '#6B7280', marginTop: 0 }}>Chargement du profil...</p>
+          ) : null}
+
+          <div style={{ marginBottom: '1rem', color: '#374151', fontSize: '0.9rem' }}>
+            <strong>Nom complet:</strong> {fullNamePreview || 'Non renseigne'}
+          </div>
           
           <div style={{marginBottom: '1rem'}}>
             <label style={{
@@ -73,12 +167,12 @@ export default function Settings(){
               color: '#374151',
               fontSize: '0.9rem',
             }}>
-              Nom du site
+              Nom
             </label>
             <input 
               type="text"
-              value={settings.siteName}
-              onChange={(e) => handleChange('siteName', e.target.value)}
+              value={profile.nom}
+              onChange={(e) => handleProfileChange('nom', e.target.value)}
               style={{
                 width: '100%',
                 padding: '0.75rem',
@@ -106,12 +200,36 @@ export default function Settings(){
               color: '#374151',
               fontSize: '0.9rem',
             }}>
+              Prenom
+            </label>
+            <input
+              type="text"
+              value={profile.prenom}
+              onChange={(e) => handleProfileChange('prenom', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '1px solid #D1D5DB',
+                borderRadius: '0.5rem',
+                fontSize: '1rem',
+              }}
+            />
+          </div>
+
+          <div style={{marginBottom: '1rem'}}>
+            <label style={{
+              display: 'block',
+              marginBottom: '0.5rem',
+              fontWeight: 600,
+              color: '#374151',
+              fontSize: '0.9rem',
+            }}>
               Email
             </label>
             <input 
               type="email"
-              value={settings.email}
-              onChange={(e) => handleChange('email', e.target.value)}
+              value={profile.email}
+              onChange={(e) => handleProfileChange('email', e.target.value)}
               style={{
                 width: '100%',
                 padding: '0.75rem',
@@ -143,8 +261,8 @@ export default function Settings(){
             </label>
             <input 
               type="tel"
-              value={settings.phone}
-              onChange={(e) => handleChange('phone', e.target.value)}
+              value={profile.telephone}
+              onChange={(e) => handleProfileChange('telephone', e.target.value)}
               style={{
                 width: '100%',
                 padding: '0.75rem',
@@ -163,9 +281,31 @@ export default function Settings(){
               }}
             />
           </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+            <span style={{ color: profileMessage.includes('succes') ? '#15803D' : '#6B7280', fontSize: '0.9rem' }}>
+              {profileMessage}
+            </span>
+            <button
+              onClick={handleSaveProfile}
+              disabled={loading || savingProfile}
+              style={{
+                padding: '0.75rem 1.25rem',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '0.5rem',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                cursor: loading || savingProfile ? 'not-allowed' : 'pointer',
+                opacity: loading || savingProfile ? 0.7 : 1,
+              }}
+            >
+              {savingProfile ? 'Enregistrement...' : 'Enregistrer profil'}
+            </button>
+          </div>
         </div>
 
-        {/* Préférences */}
         <div style={{
           background: '#ffffff',
           borderRadius: '0.75rem',
@@ -179,116 +319,68 @@ export default function Settings(){
             color: '#172243',
             marginBottom: '1.5rem',
           }}>
-            Préférences
+            Changer le mot de passe
           </h2>
           
-          <div style={{marginBottom: '1.5rem'}}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}>
-              <label style={{
-                fontWeight: 600,
-                color: '#374151',
-                fontSize: '0.95rem',
-              }}>
-                <i className="fas fa-bell" style={{marginRight: '0.5rem'}}></i>Notifications
-              </label>
-              <input 
-                type="checkbox"
-                checked={settings.notification}
-                onChange={(e) => handleChange('notification', e.target.checked)}
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  cursor: 'pointer',
-                  accentColor: '#667eea',
-                }}
-              />
-            </div>
-            <p style={{
-              fontSize: '0.85rem',
-              color: '#6B7280',
-              margin: '0.5rem 0 0 0',
-            }}>
-              Recevez des notifications importantes
-            </p>
+          <div style={{marginBottom: '1rem'}}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151', fontSize: '0.9rem' }}>
+              Mot de passe actuel
+            </label>
+            <input
+              type="password"
+              value={password.current_password}
+              onChange={(e) => handlePasswordChange('current_password', e.target.value)}
+              style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '0.5rem', fontSize: '1rem' }}
+            />
           </div>
 
-          <div style={{marginBottom: '0'}}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}>
-              <label style={{
-                fontWeight: 600,
-                color: '#374151',
+          <div style={{marginBottom: '1rem'}}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151', fontSize: '0.9rem' }}>
+              Nouveau mot de passe
+            </label>
+            <input
+              type="password"
+              value={password.new_password}
+              onChange={(e) => handlePasswordChange('new_password', e.target.value)}
+              style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '0.5rem', fontSize: '1rem' }}
+            />
+          </div>
+
+          <div style={{marginBottom: '1rem'}}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151', fontSize: '0.9rem' }}>
+              Confirmer le nouveau mot de passe
+            </label>
+            <input
+              type="password"
+              value={password.new_password_confirmation}
+              onChange={(e) => handlePasswordChange('new_password_confirmation', e.target.value)}
+              style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '0.5rem', fontSize: '1rem' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+            <span style={{ color: passwordMessage.includes('succes') ? '#15803D' : '#6B7280', fontSize: '0.9rem' }}>
+              {passwordMessage}
+            </span>
+            <button
+              onClick={handleSavePassword}
+              disabled={savingPassword}
+              style={{
+                padding: '0.75rem 1.25rem',
+                background: 'linear-gradient(135deg, #172243 0%, #0f1621 100%)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '0.5rem',
                 fontSize: '0.95rem',
-              }}>
-                <i className="fas fa-moon" style={{marginRight: '0.5rem'}}></i>Mode sombre
-              </label>
-              <input 
-                type="checkbox"
-                checked={settings.darkMode}
-                onChange={(e) => handleChange('darkMode', e.target.checked)}
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  cursor: 'pointer',
-                  accentColor: '#667eea',
-                }}
-              />
-            </div>
-            <p style={{
-              fontSize: '0.85rem',
-              color: '#6B7280',
-              margin: '0.5rem 0 0 0',
-            }}>
-              Activer le mode sombre (à venir)
-            </p>
+                fontWeight: 700,
+                cursor: savingPassword ? 'not-allowed' : 'pointer',
+                opacity: savingPassword ? 0.7 : 1,
+              }}
+            >
+              {savingPassword ? 'Mise a jour...' : 'Changer le mot de passe'}
+            </button>
           </div>
         </div>
-      </div>
-
-      <div style={{
-        marginTop: '2rem',
-        display: 'flex',
-        gap: '1rem',
-        justifyContent: 'flex-end',
-      }}>
-        {saved && (
-          <div style={{
-            color: '#15803D',
-            padding: '0.75rem 1.5rem',
-            background: '#DCFCE7',
-            borderRadius: '0.5rem',
-            fontWeight: 600,
-            fontSize: '0.95rem',
-          }}>
-            <i className="fas fa-check" style={{marginRight: '0.3rem'}}></i>Paramètres enregistrés
-          </div>
-        )}
-        <button 
-          onClick={handleSave}
-          style={{
-            padding: '0.75rem 2rem',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '0.5rem',
-            fontSize: '1rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
-            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
-          }}
-          onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
-          onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
-        >
-          <i className="fas fa-save" style={{marginRight: '0.3rem'}}></i>Enregistrer
-        </button>
       </div>
     </div>
   );

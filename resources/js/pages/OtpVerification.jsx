@@ -17,6 +17,7 @@ export default function OtpVerification() {
   const location = useLocation();
   const user_id = location.state?.user_id;
   const email = location.state?.email;
+  const portal = location.state?.portal || "client";
 
   const API_BASE = (() => {
     if (typeof window !== "undefined") {
@@ -59,7 +60,7 @@ export default function OtpVerification() {
     try {
       const res = await axios.post(
         `${API_BASE}/api/auth/verify-2fa`,
-        { user_id, code },
+        { user_id, code, portal },
         { withCredentials: true }
       );
 
@@ -97,7 +98,7 @@ export default function OtpVerification() {
     try {
       const res = await axios.post(
         `${API_BASE}/api/auth/resend-2fa`,
-        { user_id },
+        { user_id, portal },
         { withCredentials: true }
       );
       setSuccess(res.data.message || "Code renvoyé avec succès");

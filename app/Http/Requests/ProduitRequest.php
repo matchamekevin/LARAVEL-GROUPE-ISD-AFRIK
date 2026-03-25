@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Models\CategorieProduit;
 use App\Models\Pays;
+use Illuminate\Validation\Rule;
 
 /**
  * ProduitRequest
@@ -43,8 +44,23 @@ class ProduitRequest extends FormRequest
      */
     public function rules(): array
 {
+        $segment = $this->input('segment');
+        $produitId = $this->route('id');
+
+        $categoryRule = Rule::exists('categories_produits', 'id_categorie');
+        if (!empty($segment)) {
+            $categoryRule = $categoryRule->where(fn ($query) => $query->where('segment', $segment));
+        }
+
+        $referenceRules = ['nullable', 'string', 'max:100'];
+        $slugRules = ['nullable', 'string', 'max:255'];
+
+        $referenceRules[] = Rule::unique('produits', 'reference')->ignore($produitId, 'id_produit');
+        $slugRules[] = Rule::unique('produits', 'slug')->ignore($produitId, 'id_produit');
+
     return [
         'titre'              => 'required|string|max:200',
+        'reference'          => $referenceRules,
         'description'        => 'nullable|string',
         'description_courte' => 'nullable|string',
         'prix'               => 'required|numeric|min:0',
@@ -53,11 +69,12 @@ class ProduitRequest extends FormRequest
         'promo_fin'          => 'nullable|date',
         'stock'              => 'nullable|integer|min:0',
         'stock_alerte'       => 'nullable|integer|min:0',
-        'statut'             => 'nullable|string|in:disponible,indisponible',
+        'statut'             => 'nullable|string|in:disponible,indisponible,rupture,actif',
         'date_creation'      => 'nullable|date',
-        'id_categorie'       => 'required|integer|exists:categories_produits,id_categorie',
+        'id_categorie'       => ['required', 'integer', $categoryRule],
         'id_pays'            => 'required|integer|exists:pays,id_pays',
         'id_utilisateur'     => 'nullable|integer|exists:utilisateurs,id_utilisateur',
+        'segment'            => 'nullable|string|in:general,geovision',
 
         // Champs qui posaient problème
         'marque'             => 'nullable|string|max:255',
@@ -68,7 +85,29 @@ class ProduitRequest extends FormRequest
         'est_en_vedette'     => 'boolean',
         'est_nouveau'        => 'boolean',
         'en_promo'           => 'boolean',
-        'slug'               => 'nullable|string|max:255',
+        'slug'               => $slugRules,
+        'image_urls'         => 'nullable|array',
+        'image_urls.*'       => 'nullable|string|max:255',
+        'specifications.overview' => 'nullable|string',
+        'specifications.tags' => 'nullable|array',
+        'specifications.tags.*' => 'nullable|string|max:255',
+        'specifications.features' => 'nullable|array',
+        'specifications.features.*' => 'nullable|string|max:255',
+        'specifications.platforms' => 'nullable|array',
+        'specifications.platforms.*' => 'nullable|string|max:255',
+        'specifications.use_cases' => 'nullable|array',
+        'specifications.use_cases.*' => 'nullable|string|max:500',
+        'specifications.detail_notes' => 'nullable|array',
+        'specifications.detail_notes.*' => 'nullable|string|max:1000',
+        'specifications.source_url' => 'nullable|string|max:1000',
+        'specifications.technical_specs' => 'nullable|array',
+        'specifications.technical_specs.*.label' => 'nullable|string|max:255',
+        'specifications.technical_specs.*.value' => 'nullable|string|max:500',
+        'specifications.taxonomy' => 'nullable|array',
+        'specifications.taxonomy.family' => 'nullable|string|max:255',
+        'specifications.taxonomy.category' => 'nullable|string|max:255',
+        'specifications.taxonomy.subcategory' => 'nullable|string|max:255',
+        'specifications.taxonomy.series' => 'nullable|string|max:255',
     ];
 }
 
@@ -109,6 +148,9 @@ class ProduitRequest extends FormRequest
             'id_pays.required'   => 'Le pays est obligatoire.',
             'id_pays.integer'    => 'Le pays doit être un entier valide.',
             'id_pays.exists'     => 'Le pays spécifié est introuvable.',
+            'id_categorie.exists' => 'La catégorie sélectionnée ne correspond pas au segment du catalogue.',
+            'reference.unique'   => 'Cette référence produit existe déjà.',
+            'slug.unique'        => 'Ce slug produit existe déjà.',
         ];
     }
 }

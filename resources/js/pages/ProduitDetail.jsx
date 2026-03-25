@@ -1,11 +1,55 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
+import api from "../axios";
 import { getProduit, getCategorie } from "../services/ProduitService";
+import { addToCart, isFavorite, subscribeStoreUpdates, toggleFavorite } from "../utils/shopStorage";
 import "../styles/produitdetail.css";
+
+function toReadableSpecValue(value) {
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
+
+  if (Array.isArray(value)) {
+    const flat = value
+      .map((item) => toReadableSpecValue(item))
+      .filter((item) => item !== "-");
+
+    return flat.length > 0 ? flat.join(", ") : "-";
+  }
+
+  if (typeof value === "object") {
+    const nestedEntries = Object.entries(value)
+      .map(([k, v]) => `${k}: ${toReadableSpecValue(v)}`)
+      .filter((item) => !item.endsWith(": -"));
+
+    return nestedEntries.length > 0 ? nestedEntries.join(" | ") : "-";
+  }
+
+  return String(value);
+}
+
+function toSpecificationsObject(specifications) {
+  if (!specifications) {
+    return {};
+  }
+
+  if (typeof specifications === "string") {
+    try {
+      const parsed = JSON.parse(specifications);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  return typeof specifications === "object" ? specifications : {};
+}
 
 export default function ProduitDetail() {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const [produit,       setProduit]       = useState(null);
   const [loading,       setLoading]       = useState(true);
   const [imageActive,   setImageActive]   = useState(0);
@@ -14,9 +58,28 @@ export default function ProduitDetail() {
   const [favori,        setFavori]        = useState(false);
   const [onglet,        setOnglet]        = useState("description");
   const [categorieInfo, setCategorieInfo] = useState(null);
+  const [avisForm, setAvisForm] = useState({ note: 0, contenu: "" });
+  const [hoverNote, setHoverNote] = useState(0);
+  const [avisSubmitting, setAvisSubmitting] = useState(false);
+  const [avisMessage, setAvisMessage] = useState("");
+  const [avisError, setAvisError] = useState("");
+
+  const getCurrentUserId = () => {
+    try {
+      const stored = localStorage.getItem("user");
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      return parsed?.id_utilisateur || parsed?.id || null;
+    } catch {
+      return null;
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
+    setOnglet("description");
+    setAvisMessage("");
+    setAvisError("");
     getProduit(id)
       .then((res) => {
         setProduit(res.data.data);
@@ -51,18 +114,45 @@ export default function ProduitDetail() {
   ).toString().toLowerCase();
   const isGeovision = _catCheck.includes("geovision");
 
-  const categoryId = (produit?.categorie?.id_categorie || categorieInfo?.id_categorie || produit?.id_categorie);
-  const geovisionLink = categoryId ? `/geovision/categorie/${categoryId}/produits/${produit?.id_produit || produit?.id}` : "/geovision";
+  const categorySlug = (produit?.categorie?.slug || categorieInfo?.slug || "");
+  const geovisionLink = categorySlug ? `/geovision/categorie/${categorySlug}` : "/geovision";
 
   useEffect(() => {
     if (!produit) return;
     console.debug("ProduitDetail: categorie embed:", produit.categorie, "fetched:", categorieInfo, "_catCheck:", _catCheck, "isGeovision:", isGeovision);
   }, [produit, categorieInfo, _catCheck, isGeovision]);
 
+  useEffect(() => {
+    if (!produit?.id_produit) {
+      setFavori(false);
+      return;
+    }
+
+    const refreshFavoriteState = () => {
+      setFavori(isFavorite(produit.id_produit));
+    };
+
+    refreshFavoriteState();
+    return subscribeStoreUpdates(refreshFavoriteState);
+  }, [produit?.id_produit]);
+
   const handlePanier = () => {
+    if (!produit || produit.stock === 0) {
+      return;
+    }
+
+    addToCart(produit, quantite);
     setAjouteAuPanier(true);
-    // TODO: dispatch vers contexte panier avec quantite
     setTimeout(() => setAjouteAuPanier(false), 2000);
+  };
+
+  const handleFavori = () => {
+    if (!produit) {
+      return;
+    }
+
+    const result = toggleFavorite(produit);
+    setFavori(Boolean(result?.isFavorite));
   };
 
   if (loading) {
@@ -101,6 +191,9 @@ export default function ProduitDetail() {
   const reduction   = produit.prix_promo
     ? Math.round(((produit.prix - produit.prix_promo) / produit.prix) * 100)
     : null;
+  const avisCount = Number(produit.nombre_avis || 0) || (Array.isArray(produit.commentaires) ? produit.commentaires.length : 0);
+  const specsObject = toSpecificationsObject(produit.specifications);
+  const specsEntries = Object.entries(specsObject);
 
   return (
     <div className="pd-page">
@@ -253,7 +346,7 @@ export default function ProduitDetail() {
 
               <button
                 className={`pd-btn-favori ${favori ? "pd-btn-favori--actif" : ""}`}
-                onClick={() => setFavori((f) => !f)}
+                onClick={handleFavori}
                 title={favori ? "Retirer des favoris" : "Ajouter aux favoris"}
               >
                 {favori ? "❤️" : "🤍"}
@@ -271,23 +364,28 @@ export default function ProduitDetail() {
 
         {/* ── Onglets ──────────────────────────────── */}
         <div className="pd-onglets">
-          <div className="pd-onglets-nav">
+          <div className="pd-onglets-nav" role="tablist" aria-label="Informations produit">
             {["description", "specifications", "avis"].map((o) => (
               <button
                 key={o}
+                type="button"
+                role="tab"
+                aria-selected={onglet === o}
+                aria-controls={`pd-tab-panel-${o}`}
+                id={`pd-tab-${o}`}
                 className={`pd-onglet-btn ${onglet === o ? "pd-onglet-btn--actif" : ""}`}
                 onClick={() => setOnglet(o)}
               >
                 {o === "description"   && "📝 Description"}
                 {o === "specifications" && "⚙️ Spécifications"}
-                {o === "avis"           && `⭐ Avis (${produit.nombre_avis})`}
+                {o === "avis"           && `⭐ Avis (${avisCount})`}
               </button>
             ))}
           </div>
 
           <div className="pd-onglet-contenu">
             {onglet === "description" && (
-              <div className="pd-description">
+              <div className="pd-description" role="tabpanel" id="pd-tab-panel-description" aria-labelledby="pd-tab-description">
                 {produit.description
                   ? <p>{produit.description}</p>
                   : <p className="pd-vide">Aucune description disponible.</p>
@@ -296,14 +394,14 @@ export default function ProduitDetail() {
             )}
 
             {onglet === "specifications" && (
-              <div className="pd-specs">
-                {produit.specifications && Object.keys(produit.specifications).length > 0 ? (
+              <div className="pd-specs" role="tabpanel" id="pd-tab-panel-specifications" aria-labelledby="pd-tab-specifications">
+                {specsEntries.length > 0 ? (
                   <table className="pd-specs-table">
                     <tbody>
-                      {Object.entries(produit.specifications).map(([k, v]) => (
+                      {specsEntries.map(([k, v]) => (
                         <tr key={k}>
                           <td className="pd-specs-key">{k}</td>
-                          <td className="pd-specs-val">{v}</td>
+                          <td className="pd-specs-val">{toReadableSpecValue(v)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -315,13 +413,105 @@ export default function ProduitDetail() {
             )}
 
             {onglet === "avis" && (
-              <div className="pd-avis">
+              <div className="pd-avis" role="tabpanel" id="pd-tab-panel-avis" aria-labelledby="pd-tab-avis">
+                <form
+                  className="pd-avis-item"
+                  onSubmit={async (event) => {
+                    event.preventDefault();
+                    setAvisMessage("");
+                    setAvisError("");
+
+                    const userId = getCurrentUserId();
+                    if (!userId) {
+                      setAvisError("Connectez-vous pour publier un avis.");
+                      return;
+                    }
+
+                    if (!avisForm.note || avisForm.note < 1) {
+                      setAvisError("Sélectionnez une note avec les étoiles.");
+                      return;
+                    }
+
+                    if (String(avisForm.contenu || "").trim().length < 3) {
+                      setAvisError("Votre avis doit contenir au moins 3 caractères.");
+                      return;
+                    }
+
+                    setAvisSubmitting(true);
+                    try {
+                      await api.post("/commentaires", {
+                        contenu: String(avisForm.contenu || "").trim(),
+                        note: Number(avisForm.note),
+                        commentable_type: "PRODUIT",
+                        commentable_id: Number(produit.id_produit),
+                        id_utilisateur: Number(userId),
+                      });
+
+                      const refreshed = await getProduit(id);
+                      setProduit(refreshed.data?.data || produit);
+                      setAvisForm({ note: 0, contenu: "" });
+                      setHoverNote(0);
+                      setAvisMessage("Avis publié avec succès.");
+                    } catch (error) {
+                      const backendMessage =
+                        error?.response?.data?.message ||
+                        error?.response?.data?.errors?.contenu?.[0] ||
+                        error?.response?.data?.errors?.note?.[0] ||
+                        "Impossible d'envoyer l'avis pour le moment.";
+                      setAvisError(backendMessage);
+                    } finally {
+                      setAvisSubmitting(false);
+                    }
+                  }}
+                >
+                  <div className="pd-avis-header" style={{ marginBottom: "0.6rem" }}>
+                    <span className="pd-avis-auteur">Laisser un avis</span>
+                  </div>
+
+                  <div className="pd-avis-note" aria-label="Sélection de la note">
+                    {[1, 2, 3, 4, 5].map((star) => {
+                      const isActive = star <= (hoverNote || avisForm.note);
+                      return (
+                        <button
+                          key={`rate-${star}`}
+                          type="button"
+                          className="pd-note-btn"
+                          aria-label={`${star} étoile${star > 1 ? "s" : ""}`}
+                          onMouseEnter={() => setHoverNote(star)}
+                          onMouseLeave={() => setHoverNote(0)}
+                          onClick={() => setAvisForm((prev) => ({ ...prev, note: star }))}
+                        >
+                          <span className={`pd-etoile ${isActive ? "pd-etoile--pleine" : ""}`}>★</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <textarea
+                    className="pd-avis-input"
+                    rows={4}
+                    placeholder="Partagez votre retour sur ce produit..."
+                    value={avisForm.contenu}
+                    onChange={(event) => setAvisForm((prev) => ({ ...prev, contenu: event.target.value }))}
+                    disabled={avisSubmitting}
+                  />
+
+                  <div className="pd-avis-actions">
+                    <button type="submit" className="pd-btn-panier" disabled={avisSubmitting}>
+                      {avisSubmitting ? "Envoi..." : "Publier mon avis"}
+                    </button>
+                  </div>
+
+                  {avisError && <p className="pd-vide" style={{ color: "#b91c1c", marginTop: "0.6rem" }}>{avisError}</p>}
+                  {avisMessage && <p style={{ color: "#15803d", marginTop: "0.6rem", fontSize: "0.92rem", fontWeight: 600 }}>{avisMessage}</p>}
+                </form>
+
                 {produit.commentaires?.length > 0 ? (
                   produit.commentaires.map((c, i) => (
                     <div key={i} className="pd-avis-item">
                       <div className="pd-avis-header">
-                        <span className="pd-avis-auteur">{c.auteur || "Anonyme"}</span>
-                        <span className="pd-avis-date">{new Date(c.created_at).toLocaleDateString("fr-FR")}</span>
+                        <span className="pd-avis-auteur">{c.utilisateur?.nom || c.auteur || "Anonyme"}</span>
+                        <span className="pd-avis-date">{new Date(c.created_at || c.date || Date.now()).toLocaleDateString("fr-FR")}</span>
                       </div>
                       {c.note && (
                         <div className="pd-avis-note">

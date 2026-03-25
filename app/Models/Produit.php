@@ -99,14 +99,20 @@ class Produit extends Model
         });
 
         static::deleting(function ($produit) {
+            $canHandleOrderLines = class_exists(\App\Models\LignesCommande::class);
+
             if ($produit->isForceDeleting()) {
                 $produit->images()->forceDelete();
                 $produit->commentaires()->forceDelete();
-                $produit->lignesCommande()->forceDelete();
+                if ($canHandleOrderLines) {
+                    $produit->lignesCommande()->forceDelete();
+                }
             } else {
                 $produit->images()->delete();
                 $produit->commentaires()->delete();
-                $produit->lignesCommande()->delete();
+                if ($canHandleOrderLines) {
+                    $produit->lignesCommande()->delete();
+                }
             }
         });
     }
@@ -136,7 +142,7 @@ class Produit extends Model
 
     public function lignesCommande()
     {
-        return $this->hasMany(LigneCommande::class, 'id_produit', 'id_produit');
+        return $this->hasMany(LignesCommande::class, 'id_produit', 'id_produit');
     }
 
     // ================================================================

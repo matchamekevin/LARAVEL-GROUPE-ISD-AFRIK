@@ -38,6 +38,9 @@ export default function Login() {
       setSuccess(location.state.success);
       setTimeout(() => setSuccess(null), 3000);
     }
+    if (location.state?.error) {
+      setError(location.state.error);
+    }
   }, [location.state]);
 
   const handleChange = (e) => {
@@ -57,13 +60,16 @@ export default function Login() {
       // Obtenir le cookie CSRF pour les requêtes stateful (Sanctum)
       await axios.get(`${API_BASE}/sanctum/csrf-cookie`, { withCredentials: true });
 
-      const res = await axios.post(`${API_BASE}/api/auth/login`, formData, { withCredentials: true });
+      const res = await axios.post(`${API_BASE}/api/auth/login`, {
+        ...formData,
+        portal: "client",
+      }, { withCredentials: true });
 
       console.log("Réponse login:", res.data); // ✅ debug
 
       // 🔐 Si 2FA est requis, rediriger vers la page OTP
       if (res.data.requires_2fa === true) {
-        navigate("/verify-otp", { state: { user_id: res.data.user_id, email: res.data.email } });
+        navigate("/verify-otp", { state: { user_id: res.data.user_id, email: res.data.email, portal: "client" } });
         return;
       }
 
@@ -74,6 +80,9 @@ export default function Login() {
         const profil = await axios.get(`${API_BASE}/api/auth/profile`, {
           headers: {
             Authorization: `Bearer ${res.data.token}`,
+          },
+          params: {
+            portal: "client",
           },
         });
 

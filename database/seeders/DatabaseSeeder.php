@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             FormationSeeder::class, // Ajout du seeder formations
             ProduitDemoSeeder::class, // Ajout des produits de démonstration
             CategorieProduitSeeder::class, // Ajout des catégories produits
+            GeovisionCatalogSeeder::class, // Arborescence GeoVision DB-driven
             ProduitMinimumPerCategorySeeder::class, // Complète chaque catégorie à 5 produits minimum
         ]);
     }

@@ -2,6 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/promotions.css";
 import usePageMeta from "../hooks/usePageMeta";
+import { getHomeMarketingCards } from "../services/HomeMarketingService";
+import {
+  HOME_MARKETING_SECTIONS,
+  mapPromotionCard,
+  openMarketingTarget,
+} from "../utils/homeMarketingCards";
 
 export default function Promotions() {
   usePageMeta(
@@ -12,19 +18,19 @@ export default function Promotions() {
   const navigate = useNavigate();
   const [promoModalIndex, setPromoModalIndex] = useState(null);
   const inscriptionLink = "/inscription";
-
-  const promoImages = [
-    { src: "/images/promotions/promo1.webp", link: "/formations" },
-    { src: "/images/promotions/promo2.webp", link: "/formations" },
-    { src: "/images/promotions/promo3.webp", link: "/formations" },
-    { src: "/images/promotions/promo4.webp", link: "/promotions/promo-4" },
-    { src: "/images/promotions/promo5.webp", link: "/produits?categories=drone-formation,fourniture-tpe" },
-    { src: "/images/promotions/promo6.webp", link: "/produits?categories=drone-formation,fourniture-tpe" },
-    { src: "/images/promotions/promo7.webp", link: "/promotions/promo-7" },
-    { src: "/images/promotions/promo8.webp", link: "/promotions/promo-8" },
-    { src: "/images/promotions/promo9.webp", link: "/promotions/promo-9" },
-    { src: "/images/promotions/promo10.webp", link: "/promotions/promo-10" }
+  const fallbackPromotions = [
+    { title: "Promotion Formation 1", src: "/images/promotions/promo1.webp", link: "/formations", ctaLabel: "Decouvrir" },
+    { title: "Promotion Formation 2", src: "/images/promotions/promo2.webp", link: "/formations", ctaLabel: "Decouvrir" },
+    { title: "Promotion Formation 3", src: "/images/promotions/promo3.webp", link: "/formations", ctaLabel: "Decouvrir" },
+    { title: "Promotion 4", src: "/images/promotions/promo4.webp", link: "/promotions/promo-4", ctaLabel: "Decouvrir" },
+    { title: "Promotion 5", src: "/images/promotions/promo5.webp", link: "/produits?categories=drone-formation,fourniture-tpe", ctaLabel: "Decouvrir" },
+    { title: "Promotion 6", src: "/images/promotions/promo6.webp", link: "/produits?categories=drone-formation,fourniture-tpe", ctaLabel: "Decouvrir" },
+    { title: "Promotion 7", src: "/images/promotions/promo7.webp", link: "/promotions/promo-7", ctaLabel: "Decouvrir" },
+    { title: "Promotion 8", src: "/images/promotions/promo8.webp", link: "/promotions/promo-8", ctaLabel: "Decouvrir" },
+    { title: "Promotion 9", src: "/images/promotions/promo9.webp", link: "/promotions/promo-9", ctaLabel: "Decouvrir" },
+    { title: "Promotion 10", src: "/images/promotions/promo10.webp", link: "/promotions/promo-10", ctaLabel: "Decouvrir" },
   ];
+  const [promotions, setPromotions] = useState(fallbackPromotions);
 
   // Noms des mois en français
   const moisNoms = [
@@ -44,6 +50,37 @@ export default function Promotions() {
     }
     return () => { document.body.classList.remove('modal-open'); };
   }, [promoModalIndex]);
+
+  useEffect(() => {
+    let active = true;
+
+    getHomeMarketingCards()
+      .then((items) => {
+        if (!active) return;
+
+        const list = Array.isArray(items) ? items : [];
+        const pagePromotions = list
+          .filter((item) => item.section === HOME_MARKETING_SECTIONS.PROMOTION_PAGE)
+          .map((item) => mapPromotionCard(item, "/images/promotions/promo1.webp"));
+
+        const homePromotions = list
+          .filter((item) => item.section === HOME_MARKETING_SECTIONS.HOME_PROMOTION)
+          .map((item) => mapPromotionCard(item, "/images/promotions/promo9.webp"));
+
+        if (pagePromotions.length > 0) {
+          setPromotions(pagePromotions);
+        } else if (homePromotions.length > 0) {
+          setPromotions(homePromotions);
+        }
+      })
+      .catch((err) => {
+        console.error("Erreur chargement promotions", err);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div className="promotions-page">
@@ -65,18 +102,18 @@ export default function Promotions() {
       {/* Galerie complète */}
       <section className="promo-page-gallery">
         <div className="promo-grid">
-          {promoImages.map((item, idx) => (
+          {promotions.map((item, idx) => (
             <button
               key={idx}
               type="button"
               className="promo-card"
               onClick={() => { setPromoModalIndex(idx); }}
-              aria-label={`Voir la promotion ${idx + 1}`}
+              aria-label={`Voir la promotion ${item.title || idx + 1}`}
             >
               <div className="promo-card-image">
                 <img
                   src={item.src}
-                  alt={`Promo ${idx + 1}`}
+                  alt={item.title || `Promo ${idx + 1}`}
                   className="promo-card-img"
                   onError={(e) => { e.target.style.background = '#eee'; e.target.src = ''; }}
                 />
@@ -109,8 +146,8 @@ export default function Promotions() {
 
             <div className="modal-promo-figure">
               <img
-                src={promoImages[promoModalIndex]?.src}
-                alt={`Promo ${promoModalIndex + 1}`}
+                src={promotions[promoModalIndex]?.src}
+                alt={promotions[promoModalIndex]?.title || `Promo ${promoModalIndex + 1}`}
                 className="modal-promo-img"
                 onError={(e) => { e.target.style.background = '#eee'; e.target.src = ''; }}
               />
@@ -119,9 +156,9 @@ export default function Promotions() {
             <div className="modal-promo-actions">
               <button
                 className="btn-primary"
-                onClick={() => navigate(promoImages[promoModalIndex]?.link || inscriptionLink)}
+                onClick={() => openMarketingTarget(navigate, promotions[promoModalIndex]?.link, inscriptionLink)}
               >
-                <i className="fas fa-check"></i> Souscrire
+                <i className="fas fa-check"></i> {promotions[promoModalIndex]?.ctaLabel || "Decouvrir"}
               </button>
             </div>
           </div>

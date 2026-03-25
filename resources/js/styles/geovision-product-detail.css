@@ -151,6 +151,84 @@
   margin: 26px 0 18px;
 }
 
+.gpd-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.gpd-summary-card {
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #f9fbff 0%, #eef4fb 100%);
+  border: 1px solid rgba(23, 34, 67, 0.08);
+}
+
+.gpd-summary-card span {
+  display: block;
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.gpd-summary-card strong {
+  color: #172243;
+}
+
+.gpd-feature-list {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.gpd-feature-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(251, 156, 8, 0.12);
+  color: #9a6100;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.gpd-bullet-list {
+  display: grid;
+  gap: 12px;
+}
+
+.gpd-bullet-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(23, 34, 67, 0.08);
+  background: linear-gradient(180deg, #f9fbff 0%, #eef4fb 100%);
+}
+
+.gpd-bullet-card p {
+  margin: 0;
+  color: #425064;
+  line-height: 1.6;
+}
+
+.gpd-bullet-dot {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fb9c08, #f97316);
+  box-shadow: 0 0 0 5px rgba(251, 156, 8, 0.14);
+}
+
 .gpd-payment-box {
   margin-bottom: 22px;
   padding: 18px;
@@ -386,6 +464,89 @@
   text-align: center;
 }
 
+.gpd-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 72px 24px 24px;
+  background: rgba(9, 15, 28, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.gpd-sheet-modal {
+  width: min(1080px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, #ffffff 0%, #f3f7fc 100%);
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.35);
+}
+
+.gpd-sheet-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  padding: 24px 24px 0;
+}
+
+.gpd-sheet-header h2 {
+  margin: 0;
+  color: #172243;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+}
+
+.gpd-sheet-header p {
+  margin: 10px 0 0;
+  color: #5f6b7a;
+}
+
+.gpd-sheet-close {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(23, 34, 67, 0.08);
+  color: #172243;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gpd-sheet-close:hover {
+  background: rgba(23, 34, 67, 0.14);
+}
+
+.gpd-sheet-content {
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+}
+
+.gpd-sheet-block {
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(23, 34, 67, 0.08);
+}
+
+.gpd-sheet-block h3 {
+  margin: 0 0 14px;
+  color: #172243;
+  font-size: 1.1rem;
+}
+
+.gpd-sheet-block--intro p {
+  margin: 0 0 16px;
+  color: #425064;
+  line-height: 1.7;
+}
+
 @media (max-width: 980px) {
   .gpd-hero,
   .gpd-related-grid,
@@ -393,6 +554,7 @@
     grid-template-columns: 1fr;
   }
 
+  .gpd-summary-grid,
   .gpd-payment-summary {
     grid-template-columns: 1fr;
   }
@@ -427,5 +589,19 @@
   .gpd-btn,
   .gpd-related-link {
     width: 100%;
+  }
+
+  .gpd-sheet-backdrop {
+    padding: 56px 12px 12px;
+  }
+
+  .gpd-sheet-header,
+  .gpd-sheet-content {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .gpd-sheet-header {
+    padding-top: 16px;
   }
 }

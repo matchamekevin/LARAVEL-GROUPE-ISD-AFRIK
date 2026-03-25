@@ -1,50 +1,127 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { getProduit, getProduitBySlug, getProduits } from "../services/ProduitService";
 import {
-  geovisionTypes,
-  getGeovisionProductById,
-  getGeovisionRelatedProducts,
-} from "../data/geovisionCatalog";
+  formatGeovisionPrice,
+  getGeovisionAvailability,
+  getProductGallery,
+  readGeovisionSpecifications,
+  resolveGeovisionImage,
+} from "../utils/geovision";
 import "../styles/geovision-product-detail.css";
 
 export default function GeovisionProduitDetail() {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
-  const produit = getGeovisionProductById(id);
+  const [product, setProduct] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const [activeImage, setActiveImage] = useState(0);
-  const [isPaying, setIsPaying] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState(null);
-  const [paymentReference, setPaymentReference] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("mobile-money");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [manufacturerSheetOpen, setManufacturerSheetOpen] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
+    setLoading(true);
+    setError("");
     setActiveImage(0);
-    setIsPaying(false);
-    setPaymentStatus(null);
-    setPaymentReference("");
-  }, [id]);
 
-  const handleSimulatedPayment = () => {
-    if (!produit || isPaying) return;
+    const request = /^\d+$/.test(String(slug || ""))
+      ? getProduit(slug)
+      : getProduitBySlug(slug);
 
-    setIsPaying(true);
-    setPaymentStatus(null);
+    request
+      .then((response) => {
+        if (!isMounted) return;
+        setProduct(response.data?.data || null);
+      })
+      .catch((requestError) => {
+        if (!isMounted) return;
+        setProduct(null);
+        setError(requestError.response?.data?.message || "Produit GeoVision introuvable.");
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
 
-    window.setTimeout(() => {
-      const reference = `GV-${produit.id}-${Date.now().toString().slice(-6)}`;
-      setPaymentReference(reference);
-      setPaymentStatus("success");
-      setIsPaying(false);
-    }, 1400);
-  };
+    return () => {
+      isMounted = false;
+    };
+  }, [slug]);
 
-  if (!produit) {
+  useEffect(() => {
+    if (!product?.categorie?.slug) {
+      setRelatedProducts([]);
+      return;
+    }
+
+    let isMounted = true;
+    const relatedCategorySlug = product.categorie?.parent?.slug || product.categorie?.slug;
+
+    getProduits({
+      segment: "geovision",
+      category_slug: relatedCategorySlug,
+      include_descendants: 1,
+      par_page: 8,
+      tri: "recent",
+    })
+      .then((response) => {
+        if (!isMounted) return;
+
+        const items = Array.isArray(response.data?.data) ? response.data.data : [];
+        setRelatedProducts(
+          items
+            .filter((item) => item.slug !== product.slug)
+            .slice(0, 4)
+        );
+      })
+      .catch(() => {
+        if (isMounted) setRelatedProducts([]);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [product?.categorie?.slug, product?.categorie?.parent?.slug, product?.slug]);
+
+  useEffect(() => {
+    if (!manufacturerSheetOpen) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setManufacturerSheetOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [manufacturerSheetOpen]);
+
+  if (loading) {
     return (
       <div className="gpd-page">
         <div className="gpd-shell gpd-empty-state">
-          <p className="gpd-kicker">Catalogue Geovision</p>
+          <p className="gpd-kicker">GeoVision</p>
+          <h1>Chargement du modèle...</h1>
+          <p>Nous récupérons les détails complets de cette référence GeoVision.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="gpd-page">
+        <div className="gpd-shell gpd-empty-state">
+          <p className="gpd-kicker">Catalogue GeoVision</p>
           <h1>Produit introuvable</h1>
-          <p>Ce produit n'est pas disponible dans le catalogue Geovision actuel.</p>
+          <p>{error || "Ce produit n'est plus disponible dans le catalogue GeoVision."}</p>
           <div className="gpd-empty-actions">
             <Link to="/geovision" className="gpd-btn gpd-btn--primary">Retour au catalogue</Link>
             <Link to="/contact" className="gpd-btn gpd-btn--ghost">Contacter un expert</Link>
@@ -54,9 +131,21 @@ export default function GeovisionProduitDetail() {
     );
   }
 
-  const category = geovisionTypes.find((item) => item.title.toLowerCase() === produit.type) || null;
-  const relatedProducts = getGeovisionRelatedProducts(produit);
-  const images = produit.images?.length ? produit.images : [produit.image];
+  const specs = readGeovisionSpecifications(product);
+  const images = getProductGallery(product);
+  const availability = getGeovisionAvailability(product);
+  const family = product.categorie?.parent?.parent || product.categorie?.parent || null;
+  const category = product.categorie?.parent || product.categorie || null;
+  const price = formatGeovisionPrice(product.prix_promo || product.prix);
+  const featureCards = (specs.features.length > 0 ? specs.features : specs.tags).slice(0, 6);
+  const detailCards = Array.from(new Set([
+    specs.overview,
+    ...specs.detailNotes,
+    ...specs.technicalSpecs.slice(0, 4).map((item) => `${item.label}: ${item.value}`),
+  ].filter((item) => Boolean(String(item || "").trim())).map((item) => String(item).trim())));
+
+  const openManufacturerSheet = () => setManufacturerSheetOpen(true);
+  const closeManufacturerSheet = () => setManufacturerSheetOpen(false);
 
   return (
     <div className="gpd-page">
@@ -64,23 +153,35 @@ export default function GeovisionProduitDetail() {
         <nav className="gpd-breadcrumb" aria-label="Fil d'Ariane">
           <Link to="/">Accueil</Link>
           <span>/</span>
-          <Link to="/geovision">Geovision</Link>
+          <Link to="/geovision">GeoVision</Link>
+          {family && (
+            <>
+              <span>/</span>
+              <Link to={`/geovision?famille=${family.slug}`}>{family.nom}</Link>
+            </>
+          )}
+          {category && (
+            <>
+              <span>/</span>
+              <Link to={`/geovision/categorie/${category.slug}`}>{category.nom}</Link>
+            </>
+          )}
           <span>/</span>
-          <span>{produit.nom}</span>
+          <span>{product.titre}</span>
         </nav>
 
         <section className="gpd-hero">
           <div className="gpd-gallery-panel">
             <div className="gpd-main-image-wrap">
-              <img src={images[activeImage]} alt={produit.nom} className="gpd-main-image" />
-              <span className="gpd-badge">{produit.badge}</span>
+              <img src={images[activeImage]} alt={product.titre} className="gpd-main-image" />
+              <span className="gpd-badge">{specs.taxonomy.subcategory || category?.nom || "GeoVision"}</span>
             </div>
 
             {images.length > 1 && (
               <div className="gpd-thumbs">
                 {images.map((src, index) => (
                   <button
-                    key={`${produit.id}-${index}`}
+                    key={`${product.slug}-${index}`}
                     type="button"
                     className={`gpd-thumb ${index === activeImage ? "is-active" : ""}`}
                     onClick={() => setActiveImage(index)}
@@ -93,127 +194,288 @@ export default function GeovisionProduitDetail() {
           </div>
 
           <div className="gpd-content">
-            <p className="gpd-kicker">{produit.brand}</p>
-            <h1>{produit.nom}</h1>
-            <p className="gpd-category">{category?.title || produit.type}</p>
-            <p className="gpd-description">{produit.description}</p>
+            <p className="gpd-kicker">{product.marque || "GeoVision"}</p>
+            <h1>{product.titre}</h1>
+            <p className="gpd-category">
+              {[specs.taxonomy.category, specs.taxonomy.subcategory].filter(Boolean).join(" / ") || category?.nom}
+            </p>
+            <p className="gpd-description">{specs.overview || product.description}</p>
 
             <div className="gpd-price-row">
-              <span className="gpd-price">{produit.priceLabel}</span>
-              <span className="gpd-availability">{produit.availability}</span>
+              <span className="gpd-price">{price}</span>
+              <span className="gpd-availability">{availability}</span>
             </div>
 
-            <div className="gpd-payment-box">
-              <div className="gpd-payment-head">
-                <strong>Paiement</strong>
-                <span>Simulation locale en attendant l'intégration backend.</span>
+            <div className="gpd-summary-grid">
+              <div className="gpd-summary-card">
+                <span>Référence</span>
+                <strong>{product.reference || product.modele || product.slug}</strong>
               </div>
-
-              <div className="gpd-payment-methods" role="radiogroup" aria-label="Mode de paiement simulé">
-                <button
-                  type="button"
-                  className={`gpd-method ${paymentMethod === "mobile-money" ? "is-active" : ""}`}
-                  onClick={() => setPaymentMethod("mobile-money")}
-                >
-                  Mobile Money
-                </button>
-                <button
-                  type="button"
-                  className={`gpd-method ${paymentMethod === "carte" ? "is-active" : ""}`}
-                  onClick={() => setPaymentMethod("carte")}
-                >
-                  Carte bancaire
-                </button>
-                <button
-                  type="button"
-                  className={`gpd-method ${paymentMethod === "virement" ? "is-active" : ""}`}
-                  onClick={() => setPaymentMethod("virement")}
-                >
-                  Virement
-                </button>
+              <div className="gpd-summary-card">
+                <span>Série</span>
+                <strong>{specs.taxonomy.series || product.modele || "GeoVision"}</strong>
               </div>
-
-              <div className="gpd-payment-summary">
-                <div>
-                  <span>Montant à payer</span>
-                  <strong>{produit.priceLabel}</strong>
-                </div>
-                <div>
-                  <span>Mode sélectionné</span>
-                  <strong>{paymentMethod === "mobile-money" ? "Mobile Money" : paymentMethod === "carte" ? "Carte bancaire" : "Virement"}</strong>
-                </div>
+              <div className="gpd-summary-card">
+                <span>Garantie</span>
+                <strong>{product.garantie || "Selon projet"}</strong>
               </div>
-
-              {paymentStatus === "success" && (
-                <div className="gpd-payment-feedback gpd-payment-feedback--success">
-                  <strong>Paiement simulé validé</strong>
-                  <span>Référence: {paymentReference}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="gpd-highlights">
-              <div className="gpd-highlight-card">
-                <strong>Déploiement</strong>
-                <span>{produit.deployment}</span>
-              </div>
-              <div className="gpd-highlight-card">
-                <strong>Délai projet</strong>
-                <span>{produit.leadTime}</span>
-              </div>
-              <div className="gpd-highlight-card">
-                <strong>Usage recommandé</strong>
-                <span>{produit.summary}</span>
+              <div className="gpd-summary-card">
+                <span>Catégorie</span>
+                <strong>{category?.nom || specs.taxonomy.category || "Catalogue GeoVision"}</strong>
               </div>
             </div>
+
+            {specs.tags.length > 0 && (
+              <div className="gpd-feature-list">
+                {specs.tags.map((tag) => (
+                  <span key={`${product.slug}-${tag}`} className="gpd-feature-chip">{tag}</span>
+                ))}
+              </div>
+            )}
 
             <div className="gpd-actions">
-              <button type="button" className="gpd-btn gpd-btn--primary" onClick={handleSimulatedPayment} disabled={isPaying}>
-                {isPaying ? "Paiement en cours..." : "Payer maintenant"}
+              <button type="button" className="gpd-btn gpd-btn--primary" onClick={() => navigate("/contact", { state: { subject: product.titre } })}>
+                Demander un devis
               </button>
-              <button type="button" className="gpd-btn gpd-btn--ghost" onClick={() => navigate("/contact", { state: { subject: produit.nom } })}>
-                Contacter un expert
+              {category && (
+                <Link to={`/geovision/categorie/${category.slug}`} className="gpd-btn gpd-btn--ghost">
+                  Voir la catégorie
+                </Link>
+              )}
+              <button type="button" className="gpd-btn gpd-btn--ghost" onClick={openManufacturerSheet}>
+                Fiche constructeur
               </button>
-              <Link to="/geovision" className="gpd-btn gpd-btn--ghost">Retour au catalogue</Link>
+              <Link to="/geovision" className="gpd-btn gpd-btn--ghost">Retour GeoVision</Link>
             </div>
           </div>
         </section>
 
         <section className="gpd-section">
           <div className="gpd-section-head">
-            <h2>Caractéristiques techniques</h2>
-            <p>Configuration indicative pour l'étude et l'intégration du matériel.</p>
+            <h2>Positionnement du modèle</h2>
+            <p>Lecture rapide de la famille produit, de la série et de l’usage principal.</p>
           </div>
           <div className="gpd-spec-grid">
-            {produit.specs.map((spec) => (
-              <article key={`${produit.id}-${spec.label}`} className="gpd-spec-card">
-                <p>{spec.label}</p>
-                <strong>{spec.value}</strong>
-              </article>
-            ))}
+            <article className="gpd-spec-card">
+              <p>Famille</p>
+              <strong>{specs.taxonomy.family || family?.nom || "GeoVision"}</strong>
+            </article>
+            <article className="gpd-spec-card">
+              <p>Catégorie</p>
+              <strong>{specs.taxonomy.category || category?.nom || "Catalogue"}</strong>
+            </article>
+            <article className="gpd-spec-card">
+              <p>Sous-type</p>
+              <strong>{specs.taxonomy.subcategory || product.categorie?.nom || "Modèle"}</strong>
+            </article>
+            <article className="gpd-spec-card">
+              <p>Série</p>
+              <strong>{specs.taxonomy.series || product.modele || "GeoVision"}</strong>
+            </article>
           </div>
         </section>
+
+        {specs.platforms.length > 0 && (
+          <section className="gpd-section">
+            <div className="gpd-section-head">
+              <h2>Plateformes et compatibilité</h2>
+              <p>Informations utiles remontées du catalogue officiel pour les logiciels, appliances et accessoires.</p>
+            </div>
+            <div className="gpd-feature-list">
+              {specs.platforms.map((platform) => (
+                <span key={`${product.slug}-${platform}`} className="gpd-feature-chip">{platform}</span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {specs.features.length > 0 && (
+          <section className="gpd-section">
+            <div className="gpd-section-head">
+              <h2>Points clés</h2>
+              <p>Fonctions et capacités principales de cette référence.</p>
+            </div>
+            <div className="gpd-bullet-list">
+              {specs.features.map((feature) => (
+                <article key={`${product.slug}-${feature}`} className="gpd-bullet-card">
+                  <span className="gpd-bullet-dot"></span>
+                  <p>{feature}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {featureCards.length > 0 && (
+          <section className="gpd-section">
+            <div className="gpd-section-head">
+              <h2>Caractéristiques du modèle</h2>
+              <p>Caractéristiques fournies par la fiche produit enregistrée en base.</p>
+            </div>
+            <div className="gpd-spec-grid">
+              {featureCards.map((item) => (
+                <article key={`${product.slug}-${item}`} className="gpd-spec-card">
+                  <p>{specs.taxonomy.category || category?.nom || "GeoVision"}</p>
+                  <strong>{item}</strong>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {specs.technicalSpecs.length > 0 && (
+          <section className="gpd-section" id="fiche-constructeur">
+            <div className="gpd-section-head">
+              <h2>Fiche constructeur</h2>
+              <p>Détails utiles pour l’étude, le dimensionnement et l’intégration de la référence.</p>
+            </div>
+            <div className="gpd-spec-grid">
+              {specs.technicalSpecs.map((spec) => (
+                <article key={`${product.slug}-${spec.label}`} className="gpd-spec-card">
+                  <p>{spec.label}</p>
+                  <strong>{spec.value}</strong>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {(detailCards.length > 0 || specs.useCases.length > 0) && (
+          <section className="gpd-section">
+            <div className="gpd-section-head">
+              <h2>Plus de détails</h2>
+              <p>Informations détaillées depuis la fiche stockée en base de données.</p>
+            </div>
+            {detailCards.length > 0 && (
+              <div className="gpd-bullet-list">
+                {detailCards.map((detail) => (
+                  <article key={`${product.slug}-detail-${detail}`} className="gpd-bullet-card">
+                    <span className="gpd-bullet-dot"></span>
+                    <p>{detail}</p>
+                  </article>
+                ))}
+              </div>
+            )}
+
+            {specs.useCases.length > 0 && (
+              <div style={{ marginTop: "1rem" }}>
+                <div className="gpd-section-head" style={{ marginBottom: "0.75rem" }}>
+                  <h2>Cas d’usage recommandés</h2>
+                  <p>Contextes dans lesquels ce modèle apporte le plus de valeur.</p>
+                </div>
+                <div className="gpd-feature-list">
+                  {specs.useCases.map((item) => (
+                    <span key={`${product.slug}-usecase-${item}`} className="gpd-feature-chip">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         {relatedProducts.length > 0 && (
           <section className="gpd-section">
             <div className="gpd-section-head">
-              <h2>Produits similaires</h2>
-              <p>Autres références de la même famille Geovision.</p>
+              <h2>Modèles liés</h2>
+              <p>Autres références de la même famille ou de la même catégorie GeoVision.</p>
             </div>
             <div className="gpd-related-grid">
               {relatedProducts.map((item) => (
-                <article key={item.id} className="gpd-related-card">
-                  <img src={item.image} alt={item.nom} className="gpd-related-image" />
+                <article key={item.slug} className="gpd-related-card">
+                  <img src={resolveGeovisionImage(item)} alt={item.titre} className="gpd-related-image" />
                   <div className="gpd-related-body">
-                    <span>{item.type}</span>
-                    <h3>{item.nom}</h3>
-                    <p>{item.description}</p>
-                    <Link to={`/geovision/produit/${item.id}`} className="gpd-related-link">Voir le produit</Link>
+                    <span>{item.categorie?.nom || specs.taxonomy.category || "GeoVision"}</span>
+                    <h3>{item.titre}</h3>
+                    <p>{item.description_courte || item.description}</p>
+                    <Link to={`/geovision/produit/${item.slug}`} className="gpd-related-link">Voir le modèle</Link>
                   </div>
                 </article>
               ))}
             </div>
           </section>
+        )}
+
+        {manufacturerSheetOpen && (
+          <div className="gpd-sheet-backdrop" role="presentation" onClick={closeManufacturerSheet}>
+            <div
+              className="gpd-sheet-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="manufacturer-sheet-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="gpd-sheet-header">
+                <div>
+                  <p className="gpd-kicker">Fiche constructeur</p>
+                  <h2 id="manufacturer-sheet-title">{product.titre}</h2>
+                  <p>{specs.taxonomy.category || category?.nom || "GeoVision"} - {specs.taxonomy.series || product.modele || product.reference}</p>
+                </div>
+                <button type="button" className="gpd-sheet-close" onClick={closeManufacturerSheet} aria-label="Fermer la fiche constructeur">
+                  ×
+                </button>
+              </div>
+
+              <div className="gpd-sheet-content">
+                <div className="gpd-sheet-block gpd-sheet-block--intro">
+                  <h3>Aperçu constructeur</h3>
+                  <p>{specs.overview || product.description}</p>
+                  {specs.useCases.length > 0 && (
+                    <div className="gpd-feature-list">
+                      {specs.useCases.map((item) => (
+                        <span key={`sheet-usecase-${item}`} className="gpd-feature-chip">{item}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="gpd-sheet-block">
+                  <h3>Caractéristiques principales</h3>
+                  {featureCards.length > 0 ? (
+                    <div className="gpd-spec-grid">
+                      {featureCards.map((item) => (
+                        <article key={`sheet-feature-${item}`} className="gpd-spec-card">
+                          <p>{specs.taxonomy.category || category?.nom || "GeoVision"}</p>
+                          <strong>{item}</strong>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="gpd-description">Aucune caractéristique n'est encore renseignée en base.</p>
+                  )}
+                </div>
+
+                <div className="gpd-sheet-block">
+                  <h3>Spécifications techniques</h3>
+                  <div className="gpd-spec-grid">
+                    {specs.technicalSpecs.map((spec) => (
+                      <article key={`sheet-tech-${spec.label}`} className="gpd-spec-card">
+                        <p>{spec.label}</p>
+                        <strong>{spec.value}</strong>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="gpd-sheet-block">
+                  <h3>Plus de détails</h3>
+                  {detailCards.length > 0 ? (
+                    <div className="gpd-bullet-list">
+                      {detailCards.map((detail) => (
+                        <article key={`sheet-detail-${detail}`} className="gpd-bullet-card">
+                          <span className="gpd-bullet-dot"></span>
+                          <p>{detail}</p>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="gpd-description">Aucun détail complémentaire n'est encore renseigné en base.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

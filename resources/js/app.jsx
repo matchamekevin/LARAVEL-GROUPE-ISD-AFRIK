@@ -43,6 +43,8 @@ const Produit = lazy(() => import("./pages/Produit"));
 const ProduitDetail = lazy(() => import("./pages/ProduitDetail"));
 const ProduitRecherche = lazy(() => import("./pages/ProduitRecherche"));
 const Promotions = lazy(() => import("./pages/Promotions"));
+const Favoris = lazy(() => import("./pages/Favoris"));
+const Panier = lazy(() => import("./pages/Panier"));
 
 const MesCommandes = lazy(() => import("./pages/MesCommandes"));
 const ComptabiliteImmobilisations = lazy(() => import("./pages/ComptabiliteImmobilisations"));
@@ -70,6 +72,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import "../css/app.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./i18n";
+import "./styles/global.css";
 import "./styles/marketing-premium.css";
 import "./styles/auth.css";
 
@@ -133,8 +136,8 @@ function App() {
                     {/* Geovision */}
                     <Route path="/geovision" element={<Geovision />} />
                     <Route path="/geovision/catalogue/:typeId" element={<GeovisionCatalogue />} />
-                    <Route path="/geovision/categorie/:id" element={<GeovisionCategorie />} />
-                    <Route path="/geovision/produit/:id" element={<GeovisionProduitDetail />} />
+                    <Route path="/geovision/categorie/:slug" element={<GeovisionCategorie />} />
+                    <Route path="/geovision/produit/:slug" element={<GeovisionProduitDetail />} />
 
                      {/* Pages légales */}
                     <Route path="/mentions-legales" element={<MentionsLegales />} />
@@ -179,6 +182,8 @@ function App() {
                     <Route path="/produits" element={<Produit />} />
                      <Route path="/produits/:id" element={<ProduitDetail />} />
                         <Route path="/produits/recherche" element={<ProduitRecherche />} />
+                          <Route path="/favoris" element={<Favoris />} />
+                          <Route path="/panier" element={<Panier />} />
 
                     {/* Route promotions */}
                     <Route path="/promotions" element={<Promotions />} />

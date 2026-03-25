@@ -17,12 +17,9 @@ class FormationController extends Controller
     {
         $formations = Formation::with(['pays', 'images'])->get();
 
-        // Retourner le chemin tel qu'il est stocké en base (relatif, p.ex. /uploads/...) afin
-        // que le front puisse choisir comment résoudre l'URL (préfixe dev/prod).
         foreach ($formations as $formation) {
             foreach ($formation->images as $img) {
-                // s'assurer que l'url commence par une slash
-                $img->url = strpos($img->url, '/') === 0 ? $img->url : '/' . ltrim($img->url, '/');
+                $img->url = $this->normalizeImageUrl($img->url);
             }
         }
 
@@ -59,9 +56,8 @@ class FormationController extends Controller
 
         $formation = Formation::with(['pays', 'images'])->findOrFail((int)$id);
 
-        // Fournir le chemin relatif stocké en base (p.ex. /uploads/...) — le front décidera du host
         foreach ($formation->images as $img) {
-            $img->url = strpos($img->url, '/') === 0 ? $img->url : '/' . ltrim($img->url, '/');
+            $img->url = $this->normalizeImageUrl($img->url);
         }
 
         return response()->json($formation, 200);
@@ -124,23 +120,50 @@ class FormationController extends Controller
             })
             ->get();
 
-        // Retourner le chemin tel qu'il est stocké en base (relatif)
         foreach ($formations as $formation) {
             foreach ($formation->images as $img) {
-                $img->url = strpos($img->url, '/') === 0 ? $img->url : '/' . ltrim($img->url, '/');
+                $img->url = $this->normalizeImageUrl($img->url);
             }
         }
 
         return response()->json($formations, 200);
     }
 
+    private function normalizeImageUrl(?string $url): ?string
+    {
+        if ($url === null) {
+            return null;
+        }
+
+        $trimmed = trim($url);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        if (preg_match('/^\/+https?:\/\//i', $trimmed)) {
+            return ltrim($trimmed, '/');
+        }
+
+        if (preg_match('/^https?:\/\//i', $trimmed)) {
+            return $trimmed;
+        }
+
+        return '/' . ltrim($trimmed, '/');
+    }
+
 
     public function registerUser(Request $request, $id)
 {
     $formation = Formation::findOrFail($id);
+    $user = $request->user();
+
+    if (!$user) {
+        return response()->json([
+            'message' => 'Authentification requise.'
+        ], 401);
+    }
 
     $data = $request->validate([
-        'id_utilisateur'          => 'required|exists:utilisateurs,id_utilisateur',
         'responsable_nom'         => 'required|string|max:255',
         'responsable_prenom'      => 'required|string|max:255',
         'civilite'                => 'nullable|string|in:Monsieur,Madame,Mademoiselle',
@@ -159,7 +182,7 @@ class FormationController extends Controller
         'facturation'             => 'required|string|in:participant,societe',
     ]);
 
-    $userId = $data['id_utilisateur'];
+    $userId = (int) $user->getKey();
 
     // ✅ BLOCAGE DOUBLON — vérifier avant tout INSERT
     $dejaInscrit = $formation->users()
@@ -237,8 +260,21 @@ class FormationController extends Controller
 }
     public function initPaiement(Request $request, $idPaiement)
     {
+        $authUser = $request->user();
+        if (!$authUser) {
+            return response()->json([
+                'message' => 'Authentification requise.'
+            ], 401);
+        }
+
         // Récupérer le paiement
         $paiement = Paiement::findOrFail($idPaiement);
+
+        if ((int) $paiement->id_utilisateur !== (int) $authUser->getKey() && !$authUser->is_admin) {
+            return response()->json([
+                'message' => 'Accès interdit à ce paiement.'
+            ], 403);
+        }
     
         // Récupérer la formation liée
         $formation = Formation::findOrFail($paiement->id_formation);
@@ -255,8 +291,8 @@ class FormationController extends Controller
         }
     
         // Initialiser FedaPay
-        \FedaPay\FedaPay::setApiKey(env('FEDAPAY_SECRET_KEY'));
-        \FedaPay\FedaPay::setEnvironment(env('FEDAPAY_MODE', 'live'));
+        \FedaPay\FedaPay::setApiKey(config('services.fedapay.secret'));
+        \FedaPay\FedaPay::setEnvironment(config('services.fedapay.env', 'live'));
     
         // Créer la transaction FedaPay
         $transaction = \FedaPay\Transaction::create([
@@ -288,13 +324,24 @@ class FormationController extends Controller
         public function addCommentaire(Request $request, $id)
         {
             $formation = Formation::findOrFail($id);
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json([
+                    'message' => 'Authentification requise.'
+                ], 401);
+            }
     
             $data = $request->validate([
                 'contenu' => 'required|string',
-                'user_id' => 'required|exists:users,id',
+                'note' => 'nullable|integer|min:1|max:5',
             ]);
-    
-            $commentaire = $formation->commentaires()->create($data);
+
+            $commentaire = $formation->commentaires()->create([
+                'contenu' => $data['contenu'],
+                'note' => $data['note'] ?? null,
+                'id_utilisateur' => $user->id_utilisateur,
+            ]);
     
             return response()->json($commentaire, 201);
         }

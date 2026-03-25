@@ -6,6 +6,7 @@ use App\Http\Requests\CommentaireRequest;
 use App\Http\Resources\CommentaireResource;
 use App\Services\CommentaireService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
  * CommentaireController
@@ -28,7 +29,14 @@ class CommentaireController extends Controller
     /** POST /api/commentaires : créer un commentaire */
     public function store(CommentaireRequest $request): JsonResponse
     {
-        $commentaire = $this->commentaireService->create($request->validated());
+        $payload = $request->validated();
+        $user = $request->user();
+
+        if ($user && !(bool) $user->is_admin) {
+            $payload['id_utilisateur'] = $user->id_utilisateur;
+        }
+
+        $commentaire = $this->commentaireService->create($payload);
         return response()->json(new CommentaireResource($commentaire), 201);
     }
 

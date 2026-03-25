@@ -9,7 +9,10 @@ import Formations from './pages/Formations';
 import Messages from './pages/Messages';
 import CatalogueAdmin from './pages/CatalogueAdmin';
 import MarketingAdmin from './pages/MarketingAdmin';
-import AssetsVentesAdmin from './pages/AssetsVentesAdmin';
+import PromotionsAdmin from './pages/PromotionsAdmin';
+import TestimonialsAdmin from './pages/TestimonialsAdmin';
+import CollaboratorsAdmin from './pages/CollaboratorsAdmin';
+import PartnersAdmin from './pages/PartnersAdmin';
 import Login from './pages/Login';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Loader from './components/Loader';
@@ -26,21 +29,73 @@ function RedirectIfLogin() {
 
   return null;
 }
-import { me } from './api';
-import { logout } from './api';
+import { clearAdminToken, logout, me } from './api';
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const handleSessionInvalidated = () => {
+      setUser(null);
+      setLoading(false);
+      if (typeof window !== 'undefined' && window.location.pathname !== '/admin/login') {
+        window.location.href = '/admin/login';
+      }
+    };
+
+    window.addEventListener('admin-session-invalidated', handleSessionInvalidated);
+
     let mounted = true;
     me()
-      .then(res => { if (mounted) setUser(res.data); })
+      .then(res => {
+        if (!mounted) return;
+        const profile = res.data;
+        if (
+          !profile
+          || profile.can_access_admin === false
+          || profile.is_admin === false
+          || String(profile.statut || '').toLowerCase() !== 'actif'
+        ) {
+          setUser(null);
+          return;
+        }
+        setUser(profile);
+      })
       .catch(() => { if (mounted) setUser(null); })
       .finally(() => { if (mounted) setLoading(false); });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+      window.removeEventListener('admin-session-invalidated', handleSessionInvalidated);
+    };
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const intervalId = setInterval(() => {
+      me()
+        .then((res) => {
+          const profile = res.data;
+          if (
+            !profile
+            || profile.can_access_admin === false
+            || profile.is_admin === false
+            || String(profile.statut || '').toLowerCase() !== 'actif'
+          ) {
+            throw new Error('admin-session-revoked');
+          }
+          setUser(profile);
+        })
+        .catch(() => {
+          clearAdminToken();
+          setUser(null);
+          window.location.href = '/admin/login';
+        });
+    }, 10000);
+
+    return () => clearInterval(intervalId);
+  }, [user]);
 
   if (loading) return <Loader />;
 
@@ -86,7 +141,7 @@ export default function App() {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}>
-              ISD AFRIK
+              GROUPE ISD AFRIK
             </h2>
             <p style={{
               fontSize: '0.8rem',
@@ -313,7 +368,7 @@ export default function App() {
                 </Link>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
-                <Link to="/ventes-assets" style={{
+                <Link to="/promotions" style={{
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0.75rem 1rem',
@@ -335,7 +390,7 @@ export default function App() {
                   e.currentTarget.style.borderLeftColor = 'transparent';
                   e.currentTarget.style.color = '#D1D5DB';
                 }}>
-                  <i className="fas fa-money-bill" style={{marginRight: '0.5rem'}}></i>Ventes & Assets
+                  <i className="fas fa-images" style={{marginRight: '0.5rem'}}></i>Promotions
                 </Link>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
@@ -361,7 +416,85 @@ export default function App() {
                   e.currentTarget.style.borderLeftColor = 'transparent';
                   e.currentTarget.style.color = '#D1D5DB';
                 }}>
-                  <i className="fas fa-bullhorn" style={{marginRight: '0.5rem'}}></i>Marketing
+                  <i className="fas fa-bullhorn" style={{marginRight: '0.5rem'}}></i>Marketing Accueil
+                </Link>
+              </li>
+              <li style={{marginBottom: '0.75rem'}}>
+                <Link to="/testimonials" style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0.75rem 1rem',
+                  color: '#D1D5DB',
+                  textDecoration: 'none',
+                  borderRadius: '0.5rem',
+                  transition: 'all 0.3s ease',
+                  borderLeft: '3px solid transparent',
+                  fontSize: '0.95rem',
+                  fontWeight: 500,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
+                  e.currentTarget.style.borderLeftColor = '#667eea';
+                  e.currentTarget.style.color = '#ffffff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.borderLeftColor = 'transparent';
+                  e.currentTarget.style.color = '#D1D5DB';
+                }}>
+                  <i className="fas fa-comments" style={{marginRight: '0.5rem'}}></i>Avis Clients
+                </Link>
+              </li>
+              <li style={{marginBottom: '0.75rem'}}>
+                <Link to="/collaborators" style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0.75rem 1rem',
+                  color: '#D1D5DB',
+                  textDecoration: 'none',
+                  borderRadius: '0.5rem',
+                  transition: 'all 0.3s ease',
+                  borderLeft: '3px solid transparent',
+                  fontSize: '0.95rem',
+                  fontWeight: 500,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
+                  e.currentTarget.style.borderLeftColor = '#667eea';
+                  e.currentTarget.style.color = '#ffffff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.borderLeftColor = 'transparent';
+                  e.currentTarget.style.color = '#D1D5DB';
+                }}>
+                  <i className="fas fa-handshake" style={{marginRight: '0.5rem'}}></i>Collaborateurs
+                </Link>
+              </li>
+              <li style={{marginBottom: '0.75rem'}}>
+                <Link to="/partners" style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0.75rem 1rem',
+                  color: '#D1D5DB',
+                  textDecoration: 'none',
+                  borderRadius: '0.5rem',
+                  transition: 'all 0.3s ease',
+                  borderLeft: '3px solid transparent',
+                  fontSize: '0.95rem',
+                  fontWeight: 500,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
+                  e.currentTarget.style.borderLeftColor = '#667eea';
+                  e.currentTarget.style.color = '#ffffff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.borderLeftColor = 'transparent';
+                  e.currentTarget.style.color = '#D1D5DB';
+                }}>
+                  <i className="fas fa-building" style={{marginRight: '0.5rem'}}></i>Partenaires
                 </Link>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
@@ -399,7 +532,15 @@ export default function App() {
             borderTop: '1px solid rgba(255,255,255,0.1)',
           }}>
             <button 
-              onClick={async ()=>{ await logout(); window.location.reload(); }}
+              onClick={async () => {
+                try {
+                  await logout();
+                } catch (e) {
+                  // On purge quand meme la session locale si l'API logout echoue.
+                }
+                clearAdminToken();
+                window.location.href = '/admin/login';
+              }}
               style={{
                 width: '100%',
                 padding: '0.75rem',
@@ -441,8 +582,12 @@ export default function App() {
             <Route path="/formations" element={<Formations />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/catalogue" element={<CatalogueAdmin />} />
-            <Route path="/ventes-assets" element={<AssetsVentesAdmin />} />
+            <Route path="/ventes-assets" element={<Navigate to="/promotions" replace />} />
+            <Route path="/promotions" element={<PromotionsAdmin />} />
             <Route path="/marketing" element={<MarketingAdmin />} />
+            <Route path="/testimonials" element={<TestimonialsAdmin />} />
+            <Route path="/collaborators" element={<CollaboratorsAdmin />} />
+            <Route path="/partners" element={<PartnersAdmin />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>

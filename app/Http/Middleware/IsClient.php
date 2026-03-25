@@ -11,8 +11,15 @@ class IsClient
     {
         $user = auth()->user();
 
-        if (!$user || $user->role !== 'client') {
-            return response()->json(['message' => 'Accès refusé. Réservé aux clients.'], 403);
+        if (!$user) {
+            return response()->json(['message' => 'Non authentifié'], 401);
+        }
+
+        if (strtolower((string) ($user->statut ?? '')) !== 'actif' || !($user->can_access_client ?? true)) {
+            if ($request->user()?->currentAccessToken()) {
+                $request->user()->currentAccessToken()->delete();
+            }
+            return response()->json(['message' => 'Compte désactivé'], 403);
         }
 
         return $next($request);

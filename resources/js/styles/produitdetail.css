@@ -423,6 +423,37 @@
   .pd-avis-date      { font-size: 12px; color: #adb5bd; }
   .pd-avis-note      { margin-bottom: 8px; }
   .pd-avis-texte     { font-size: 14px; color: #555; line-height: 1.6; }
+  .pd-note-btn {
+    background: transparent;
+    border: none;
+    padding: 0 2px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .pd-note-btn .pd-etoile {
+    font-size: 24px;
+  }
+  .pd-avis-input {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #374151;
+    background: #fff;
+    resize: vertical;
+    min-height: 88px;
+  }
+  .pd-avis-input:focus {
+    outline: none;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+  }
+  .pd-avis-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+  }
   
   .pd-vide { color: #adb5bd; font-style: italic; font-size: 14px; }
   

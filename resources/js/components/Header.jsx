@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, memo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 import CountrySelector from "./CountrySelector";
 import LanguageSelector from "./LanguageSelector";
+import { getCartCount, getFavoritesCount, subscribeStoreUpdates } from "../utils/shopStorage";
 import "../styles/header.css";
 
 // FontAwesome est importé via `@fortawesome/fontawesome-free` dans `resources/js/app.jsx`
@@ -16,8 +17,11 @@ function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [userName, setUserName] = useState(null);
+  const [favoritesCount, setFavoritesCount] = useState(0);
+  const [cartCount, setCartCount] = useState(0);
   const accountRef = useRef();
   const navigate = useNavigate();
+  const location = useLocation();
   const token = localStorage.getItem("token");
 
   const countryMap = {
@@ -58,6 +62,18 @@ function Header() {
   }, []);
 
   useEffect(() => {
+    const refreshCounts = () => {
+      setFavoritesCount(getFavoritesCount());
+      setCartCount(getCartCount());
+    };
+
+    refreshCounts();
+    const unsubscribe = subscribeStoreUpdates(refreshCounts);
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
     const close = (e) => {
       if (accountRef.current && !accountRef.current.contains(e.target)) {
         setAccountOpen(false);
@@ -65,6 +81,32 @@ function Header() {
     };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
+  }, []);
+
+  useEffect(() => {
+    setIsOpen(false);
+    setAccountOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add("menu-open");
+    } else {
+      document.body.classList.remove("menu-open");
+    }
+
+    return () => document.body.classList.remove("menu-open");
+  }, [isOpen]);
+
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth > 1024) {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   return (
@@ -79,7 +121,22 @@ function Header() {
         <i className="fas fa-bars"></i>
       </button>
 
+      <button
+        type="button"
+        className={`nav-overlay ${isOpen ? "open" : ""}`}
+        aria-hidden={!isOpen}
+        tabIndex={isOpen ? 0 : -1}
+        onClick={() => setIsOpen(false)}
+      />
+
       <nav className={`nav ${isOpen ? "open" : ""}`}>
+        <div className="nav-mobile-top">
+          <strong>Navigation</strong>
+          <button type="button" className="nav-close" onClick={() => setIsOpen(false)} aria-label="Fermer le menu">
+            <i className="fas fa-times"></i>
+          </button>
+        </div>
+
         <Link to="/" className="nav-link" onClick={() => setIsOpen(false)}>
           <i className="fas fa-home nav-icon"></i> {t("nav.home")}
         </Link>
@@ -101,6 +158,30 @@ function Header() {
         <Link to="/contact" className="nav-link" onClick={() => setIsOpen(false)}>
           <i className="fas fa-envelope nav-icon"></i> {t("nav.contact")}
         </Link>
+
+        <div className="header-quick-actions">
+          <Link
+            to="/favoris"
+            className="quick-icon-btn"
+            onClick={() => setIsOpen(false)}
+            title="Liste d'envies"
+            aria-label="Liste d'envies"
+          >
+            <i className="fa-regular fa-heart"></i>
+            {favoritesCount > 0 && <span className="quick-badge">{favoritesCount}</span>}
+          </Link>
+
+          <Link
+            to="/panier"
+            className="quick-icon-btn"
+            onClick={() => setIsOpen(false)}
+            title="Panier"
+            aria-label="Panier"
+          >
+            <i className="fa-solid fa-cart-shopping"></i>
+            {cartCount > 0 && <span className="quick-badge">{cartCount}</span>}
+          </Link>
+        </div>
 
         {!token ? (
           <Link to="/login" className="account-btn login-btn" onClick={() => setIsOpen(false)}>
@@ -142,6 +223,11 @@ function Header() {
             )}
           </div>
         )}
+
+        <div className="mobile-selectors">
+          <CountrySelector value={country} onChange={setCountry} />
+          <LanguageSelector value={lang} onChange={setLang} />
+        </div>
       </nav>
 
       <div className="selectors">

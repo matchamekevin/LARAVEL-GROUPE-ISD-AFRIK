@@ -3,6 +3,24 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../styles/profile.css";
 
+function formatDate(value) {
+  if (!value) return "Non disponible";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Non disponible";
+  return date.toLocaleDateString("fr-FR");
+}
+
+function formatDateTime(value) {
+  if (!value) return "Non disponible";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Non disponible";
+  return date.toLocaleString("fr-FR");
+}
+
+function formatMoney(value) {
+  return `${Number(value || 0).toLocaleString("fr-FR")} FCFA`;
+}
+
 export default function Profile() {
   const [utilisateur, setUtilisateur] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -105,66 +123,112 @@ export default function Profile() {
       ? `${API_BASE}/storage/${utilisateur.avatar}`
       : "/default-avatar.webp");
 
+  const formations = Array.isArray(utilisateur.formations) ? utilisateur.formations : [];
+  const produits = Array.isArray(utilisateur.produits) ? utilisateur.produits : [];
+  const commandes = Array.isArray(utilisateur.commandes) ? utilisateur.commandes : [];
+  const totalFormationAmount = formations.reduce((sum, item) => sum + Number(item.prix || 0), 0);
+
   return (
     <div className="profile-container">
-      {/* En-tête */}
-      <div className="profile-header">
-        <div className="avatar-block">
-          <label htmlFor="avatar-upload" className="avatar-label">
-            <img
-              src={avatarSrc}
-              alt="Avatar"
-              className="profile-avatar clickable"
-            />
-            <span className="avatar-edit-hint">Cliquer pour changer</span>
-          </label>
-          <input
-            id="avatar-upload"
-            type="file"
-            name="avatar"
-            accept="image/*"
-            style={{ display: "none" }}
-            onChange={handleAvatarChange}
-          />
-          <button
-            className="btn-primary btn-avatar"
-            onClick={() => document.getElementById("avatar-upload").click()}
-          >
-            Changer la photo
-          </button>
-        </div>
+      <section className="profile-hero">
+        <div className="profile-hero-grid">
+          <div className="profile-hero-main">
+            <div className="avatar-block">
+              <label htmlFor="avatar-upload" className="avatar-label" title="Changer la photo de profil">
+                <img
+                  src={avatarSrc}
+                  alt="Avatar"
+                  className="profile-avatar clickable"
+                />
+                <span className="avatar-edit-hint">Cliquer pour changer</span>
+              </label>
+              <input
+                id="avatar-upload"
+                type="file"
+                name="avatar"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleAvatarChange}
+              />
+              <button
+                className="btn-primary btn-avatar"
+                onClick={() => document.getElementById("avatar-upload").click()}
+              >
+                Changer la photo
+              </button>
+            </div>
 
-        <div className="header-texts">
-          <h1>Mon Profil</h1>
-          <p className="welcome">
-            Bienvenue, <span>{utilisateur.nom} {utilisateur.prenom}</span>
-          </p>
-        </div>
-      </div>
+            <div className="header-texts">
+              <p className="profile-chip">Espace personnel</p>
+              <h1>Mon Profil</h1>
+              <p className="welcome">
+                Bienvenue, <span>{utilisateur.nom} {utilisateur.prenom}</span>
+              </p>
+            </div>
+          </div>
 
-      {/* Infos personnelles */}
-      <div className="profile-card">
-        <h2>Informations personnelles</h2>
+          <div className="profile-hero-metrics">
+            <article className="metric-card">
+              <p>Formations</p>
+              <strong>{formations.length}</strong>
+              <span>Inscriptions actives</span>
+            </article>
+            <article className="metric-card">
+              <p>Produits</p>
+              <strong>{produits.length}</strong>
+              <span>Éléments enregistrés</span>
+            </article>
+            <article className="metric-card">
+              <p>Commandes</p>
+              <strong>{commandes.length}</strong>
+              <span>Historique client</span>
+            </article>
+            <article className="metric-card">
+              <p>Budget formations</p>
+              <strong>{formatMoney(totalFormationAmount)}</strong>
+              <span>Volume total</span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section className="profile-card profile-card--identity">
+        <div className="profile-card-head">
+          <h2>Informations personnelles</h2>
+          <span className="profile-role-badge">{utilisateur.role || "client"}</span>
+        </div>
         <div className="profile-info-grid">
-          <p><strong>Nom :</strong> {utilisateur.nom} {utilisateur.prenom}</p>
-          <p><strong>Email :</strong> {utilisateur.email}</p>
-          <p><strong>Téléphone :</strong> {utilisateur.telephone}</p>
-          {utilisateur.role !== "client" && (
-            <p><strong>Rôle :</strong> {utilisateur.role}</p>
-          )}
-          <p><strong>Date de création :</strong> {new Date(utilisateur.created_at).toLocaleDateString()}</p>
-          {utilisateur.last_login && (
-            <p><strong>Dernière connexion :</strong> {new Date(utilisateur.last_login).toLocaleString()}</p>
-          )}
+          <article className="profile-info-item">
+            <span>Nom complet</span>
+            <strong>{utilisateur.nom} {utilisateur.prenom}</strong>
+          </article>
+          <article className="profile-info-item">
+            <span>Email</span>
+            <strong>{utilisateur.email || "Non disponible"}</strong>
+          </article>
+          <article className="profile-info-item">
+            <span>Téléphone</span>
+            <strong>{utilisateur.telephone || "Non disponible"}</strong>
+          </article>
+          <article className="profile-info-item">
+            <span>Date de création</span>
+            <strong>{formatDate(utilisateur.created_at)}</strong>
+          </article>
+          <article className="profile-info-item">
+            <span>Dernière connexion</span>
+            <strong>{formatDateTime(utilisateur.last_login)}</strong>
+          </article>
         </div>
-      </div>
+      </section>
 
-      {/* Formations */}
-      <div className="profile-card">
-        <h2>Mes Formations 🎓</h2>
-        {Array.isArray(utilisateur.formations) && utilisateur.formations.length > 0 ? (
+      <section className="profile-card">
+        <div className="profile-card-head">
+          <h2>Mes Formations</h2>
+          <span className="section-meta">{formations.length} élément(s)</span>
+        </div>
+        {formations.length > 0 ? (
           <div className="formation-grid">
-            {utilisateur.formations.map((f) => (
+            {formations.map((f) => (
               <div key={f.id_formation} className="formation-box">
                 <div className="formation-header">
                   <i className="fas fa-graduation-cap icon"></i>
@@ -172,9 +236,9 @@ export default function Profile() {
                 </div>
                 <p className="formation-description">{f.description}</p>
                 <div className="formation-details">
-                  <span><strong>📅 Début :</strong> {new Date(f.date_debut).toLocaleDateString()}</span>
+                  <span><strong>Début :</strong> {formatDate(f.date_debut)}</span>
                   <span><strong>⏱ Durée :</strong> {f.duree}h</span>
-                  <span><strong>💰 Prix :</strong> {parseInt(f.prix).toLocaleString()} FCFA</span>
+                  <span><strong>Prix :</strong> {formatMoney(f.prix)}</span>
                 </div>
               </div>
             ))}
@@ -182,22 +246,24 @@ export default function Profile() {
         ) : (
           <p className="no-formation">Aucune formation enregistrée.</p>
         )}
-      </div>
+      </section>
 
-      {/* Produits */}
-      <div className="profile-card">
-        <h2>Mes Produits 📦</h2>
-        {Array.isArray(utilisateur.produits) && utilisateur.produits.length > 0 ? (
+      <section className="profile-card">
+        <div className="profile-card-head">
+          <h2>Mes Produits</h2>
+          <span className="section-meta">{produits.length} élément(s)</span>
+        </div>
+        {produits.length > 0 ? (
           <div className="formation-grid">
-            {utilisateur.produits.map((p) => (
+            {produits.map((p) => (
               <div key={p.id} className="formation-box">
                 <div className="formation-header">
                   <i className="fas fa-box icon"></i>
                   <h3>{p.nom}</h3>
                 </div>
                 <div className="formation-details">
-                  <span><strong>💰 Prix :</strong> {parseInt(p.prix).toLocaleString()} FCFA</span>
-                  <span><strong>📦 Référence :</strong> #{p.id}</span>
+                  <span><strong>Prix :</strong> {formatMoney(p.prix)}</span>
+                  <span><strong>Référence :</strong> #{p.id}</span>
                 </div>
               </div>
             ))}
@@ -205,22 +271,24 @@ export default function Profile() {
         ) : (
           <p className="no-formation">Aucun produit enregistré.</p>
         )}
-      </div>
+      </section>
 
-      {/* Commandes */}
-      <div className="profile-card">
-        <h2>Mes Commandes 🧾</h2>
-        {Array.isArray(utilisateur.commandes) && utilisateur.commandes.length > 0 ? (
+      <section className="profile-card">
+        <div className="profile-card-head">
+          <h2>Mes Commandes</h2>
+          <span className="section-meta">{commandes.length} élément(s)</span>
+        </div>
+        {commandes.length > 0 ? (
           <div className="formation-grid">
-            {utilisateur.commandes.map((c) => (
+            {commandes.map((c) => (
               <div key={c.id} className="formation-box">
                 <div className="formation-header">
                   <i className="fas fa-file-invoice icon"></i>
                   <h3>Commande #{c.id}</h3>
                 </div>
                 <div className="formation-details">
-                  <span><strong>📅 Date :</strong> {new Date(c.created_at).toLocaleDateString()}</span>
-                  <span><strong>📌 Statut :</strong> {c.status}</span>
+                  <span><strong>Date :</strong> {formatDate(c.created_at)}</span>
+                  <span><strong>Statut :</strong> {c.status || "En attente"}</span>
                 </div>
               </div>
             ))}
@@ -228,10 +296,9 @@ export default function Profile() {
         ) : (
           <p className="no-formation">Aucune commande enregistrée.</p>
         )}
-      </div>
+      </section>
 
-      {/* Actions */}
-      <div className="profile-actions">
+      <section className="profile-actions">
         <button className="btn-primary" onClick={handleEditProfile}>
           Modifier mon profil
         </button>
@@ -244,7 +311,7 @@ export default function Profile() {
         <button className="btn-logout" onClick={handleLogout}>
           Déconnexion
         </button>
-      </div>
+      </section>
     </div>
   );
 }

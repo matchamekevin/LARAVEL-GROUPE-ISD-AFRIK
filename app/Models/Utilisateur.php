@@ -31,6 +31,8 @@ class Utilisateur extends Authenticatable implements FilamentUser
         'role',
         'is_admin',
         'statut',
+        'can_access_client',
+        'can_access_admin',
         'two_factor_enabled',
         'two_factor_code',
         'two_factor_expires_at',
@@ -60,6 +62,8 @@ class Utilisateur extends Authenticatable implements FilamentUser
         'email_verified_at'     => 'datetime',
         'is_admin'              => 'boolean',
         'statut'                => 'string',   // ✅ corrigé
+        'can_access_client'     => 'boolean',
+        'can_access_admin'      => 'boolean',
         'two_factor_enabled'    => 'boolean',
         'two_factor_expires_at' => 'datetime',
         'last_login'            => 'datetime',
@@ -115,7 +119,9 @@ class Utilisateur extends Authenticatable implements FilamentUser
     /** Autorisation Filament */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->is_admin === true && $this->statut === 'actif'; // ✅ corrigé
+        return $this->is_admin === true
+            && $this->statut === 'actif'
+            && $this->can_access_admin === true;
     }
 
     /** Nom affiché dans Filament */
@@ -160,6 +166,6 @@ class Utilisateur extends Authenticatable implements FilamentUser
 
     public function isAdminPays(): bool
     {
-        return $this->is_admin && $this->admin_role === 'admin_pays';
+        return $this->is_admin && in_array($this->admin_role, ['admin_pays', 'admin_national', 'admin_adjoint'], true);
     }
 }

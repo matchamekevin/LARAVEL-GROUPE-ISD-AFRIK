@@ -1,0 +1,79 @@
+:root {
+  --site-header-height: 88px;
+  --site-page-padding: clamp(12px, 2vw, 28px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+}
+
+body.menu-open,
+body.admin-menu-open {
+  overflow: hidden;
+}
+
+#react-root,
+#panel,
+#admin-root {
+  min-height: 100%;
+}
+
+main {
+  min-width: 0;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a,
+button {
+  touch-action: manipulation;
+}
+
+.site-shell {
+  min-height: 100vh;
+}
+
+.site-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-top: var(--site-header-height);
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --site-header-height: 84px;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --site-header-height: 76px;
+  }
+}

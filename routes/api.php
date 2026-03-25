@@ -16,6 +16,11 @@ use App\Http\Controllers\PaiementController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RevendeurDemandeController;
 use App\Http\Controllers\ContactMessageController;
+use App\Http\Controllers\GeovisionCatalogController;
+use App\Http\Controllers\HomeMarketingCardController;
+use App\Http\Controllers\HomeTestimonialController;
+use App\Http\Controllers\HomeCollaboratorController;
+use App\Http\Controllers\HomePartnerController;
 
 // ======================================================
 // 🏠 ROUTES DE TEST
@@ -27,12 +32,12 @@ Route::get('/ping', fn() => response()->json(['message' => 'pong']));
 // 🔓 AUTH — ROUTES PUBLIQUES
 // ======================================================
 Route::prefix('auth')->group(function () {
-    Route::post('/register',        [UtilisateurController::class, 'register']);
-    Route::post('/login',           [UtilisateurController::class, 'login']);
-    Route::post('/verify-2fa',      [UtilisateurController::class, 'verify2FA']);
-    Route::post('/resend-2fa',      [UtilisateurController::class, 'resend2FACode']);
-    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink']);
-    Route::post('/reset-password',  [ForgotPasswordController::class, 'resetPassword']);
+    Route::post('/register',        [UtilisateurController::class, 'register'])->middleware('throttle:5,1');
+    Route::post('/login',           [UtilisateurController::class, 'login'])->middleware('throttle:5,1');
+    Route::post('/verify-2fa',      [UtilisateurController::class, 'verify2FA'])->middleware('throttle:5,1');
+    Route::post('/resend-2fa',      [UtilisateurController::class, 'resend2FACode'])->middleware('throttle:3,1');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->middleware('throttle:3,1');
+    Route::post('/reset-password',  [ForgotPasswordController::class, 'resetPassword'])->middleware('throttle:5,1');
 });
 
 // ======================================================
@@ -74,8 +79,9 @@ Route::prefix('produits')->group(function () {
 // 🗂️ CATÉGORIES PRODUITS — ROUTES PUBLIQUES
 // ======================================================
 Route::prefix('categories-produits')->group(function () {
-    Route::get('/',       [CategorieProduitController::class, 'index']);
-    Route::get('/{id}',   [CategorieProduitController::class, 'show'])->where('id', '[0-9]+');
+    Route::get('/',            [CategorieProduitController::class, 'index']);
+    Route::get('/slug/{slug}', [CategorieProduitController::class, 'showBySlug']);
+    Route::get('/{id}',        [CategorieProduitController::class, 'show'])->where('id', '[0-9]+');
 });
 
 // ======================================================
@@ -88,6 +94,7 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     // 📦 PRODUITS (admin)
     Route::get('/admin/produits',                     [ProduitController::class, 'adminIndex']);
     Route::get('/admin/produits/{id}',                [ProduitController::class, 'show'])->where('id', '[0-9]+');
+    Route::post('/admin/geovision/sync',              [GeovisionCatalogController::class, 'sync']);
     Route::post('/produits',                          [ProduitController::class, 'store']);
     Route::put('/produits/{id}',                      [ProduitController::class, 'update']);
     Route::delete('/produits/{id}',                   [ProduitController::class, 'destroy']);
@@ -107,6 +114,7 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     Route::put('/utilisateurs/{id}',                 [UtilisateurController::class, 'update'])->where('id', '[0-9]+');
     Route::delete('/utilisateurs/{id}',              [UtilisateurController::class, 'destroy'])->where('id', '[0-9]+');
     Route::patch('/utilisateurs/{id}/restore',       [UtilisateurController::class, 'restore'])->where('id', '[0-9]+');
+    Route::post('/utilisateurs/admin-adjoint',       [UtilisateurController::class, 'storeAdminAdjoint'])->middleware('isSuperAdmin');
 
     // 💳 PAIEMENTS (admin lecture)
     Route::get('/admin/paiements',                   [PaiementController::class, 'adminIndex']);
@@ -116,6 +124,7 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     Route::get('/admin/commandes',                   [CommandeController::class, 'adminIndex']);
     Route::get('/admin/commandes/{id}',              [CommandeController::class, 'adminShow'])->where('id', '[0-9]+');
     Route::patch('/admin/commandes/{id}/statut',     [CommandeController::class, 'adminUpdateStatus'])->where('id', '[0-9]+');
+    Route::patch('/admin/commandes/{id}/livraison-statut', [CommandeController::class, 'adminUpdateLivraisonStatus'])->where('id', '[0-9]+');
 
     // 📚 FORMATIONS (admin CRUD)
     Route::get('/admin/formations',                  [FormationController::class, 'index']);
@@ -144,9 +153,34 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     Route::put('/admin/newsletter/{id}',             [NewsletterController::class, 'update'])->where('id', '[0-9]+');
     Route::delete('/admin/newsletter/{id}',          [NewsletterController::class, 'destroy'])->where('id', '[0-9]+');
 
+    // 🏠 MARKETING HOMEPAGE CARDS (admin)
+    Route::get('/admin/home-marketing-cards',        [HomeMarketingCardController::class, 'adminIndex']);
+    Route::post('/admin/home-marketing-cards',       [HomeMarketingCardController::class, 'store']);
+    Route::put('/admin/home-marketing-cards/{card}', [HomeMarketingCardController::class, 'update']);
+    Route::delete('/admin/home-marketing-cards/{card}', [HomeMarketingCardController::class, 'destroy']);
+
+    // 🗣️ AVIS CLIENTS HOMEPAGE (admin)
+    Route::get('/admin/home-testimonials',              [HomeTestimonialController::class, 'adminIndex']);
+    Route::post('/admin/home-testimonials',             [HomeTestimonialController::class, 'store']);
+    Route::put('/admin/home-testimonials/{testimonial}', [HomeTestimonialController::class, 'update']);
+    Route::delete('/admin/home-testimonials/{testimonial}', [HomeTestimonialController::class, 'destroy']);
+
+    // 🤝 COLLABORATEURS HOMEPAGE (admin)
+    Route::get('/admin/home-collaborators',              [HomeCollaboratorController::class, 'adminIndex']);
+    Route::post('/admin/home-collaborators',             [HomeCollaboratorController::class, 'store']);
+    Route::put('/admin/home-collaborators/{collaborator}', [HomeCollaboratorController::class, 'update']);
+    Route::delete('/admin/home-collaborators/{collaborator}', [HomeCollaboratorController::class, 'destroy']);
+
+    // 🤝 PARTENAIRES HOMEPAGE (admin)
+    Route::get('/admin/home-partners',              [HomePartnerController::class, 'adminIndex']);
+    Route::post('/admin/home-partners',             [HomePartnerController::class, 'store']);
+    Route::put('/admin/home-partners/{partner}',    [HomePartnerController::class, 'update']);
+    Route::delete('/admin/home-partners/{partner}', [HomePartnerController::class, 'destroy']);
+
     // 🖼️ IMAGES (admin)
     Route::get('/admin/images',                      [ImageController::class, 'index']);
     Route::get('/admin/images/{id}',                 [ImageController::class, 'show'])->where('id', '[0-9]+');
+    Route::post('/admin/images/upload',              [ImageController::class, 'upload']);
     Route::post('/admin/images',                     [ImageController::class, 'store']);
     Route::put('/admin/images/{id}',                 [ImageController::class, 'update'])->where('id', '[0-9]+');
     Route::delete('/admin/images/{id}',              [ImageController::class, 'destroy'])->where('id', '[0-9]+');
@@ -164,17 +198,16 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
 // ======================================================
 Route::get('formations/type/{type}',              [FormationController::class, 'getByType']);
 Route::get('formations/categories/images',        [FormationController::class, 'getCategoryImages']);
-Route::post('formations/full',                    [FormationController::class, 'storeWithRelations']);
-Route::post('formations/{id}/register',           [FormationController::class, 'registerUser']);
-Route::post('formations/{id}/images',             [FormationController::class, 'addImage']);
-Route::post('formations/{id}/commentaires',       [FormationController::class, 'addCommentaire']);
+Route::middleware(['auth:sanctum', 'isAdmin'])->post('formations/full', [FormationController::class, 'storeWithRelations']);
+Route::middleware('auth:sanctum')->post('formations/{id}/register', [FormationController::class, 'registerUser']);
+Route::middleware('auth:sanctum')->post('formations/{id}/commentaires', [FormationController::class, 'addCommentaire']);
 
 Route::get('formations',                [FormationController::class, 'index']);
-Route::post('formations',               [FormationController::class, 'store']);
+Route::middleware(['auth:sanctum', 'isAdmin'])->post('formations', [FormationController::class, 'store']);
 Route::get('formations/{formation}',    [FormationController::class, 'show']);
-Route::put('formations/{formation}',    [FormationController::class, 'update']);
-Route::patch('formations/{formation}',  [FormationController::class, 'update']);
-Route::delete('formations/{formation}', [FormationController::class, 'destroy']);
+Route::middleware(['auth:sanctum', 'isAdmin'])->put('formations/{formation}', [FormationController::class, 'update']);
+Route::middleware(['auth:sanctum', 'isAdmin'])->patch('formations/{formation}', [FormationController::class, 'update']);
+Route::middleware(['auth:sanctum', 'isAdmin'])->delete('formations/{formation}', [FormationController::class, 'destroy']);
 
 // ======================================================
 // 💳 PAIEMENTS
@@ -186,7 +219,7 @@ Route::post('/paiement/callback',  [PaiementController::class, 'callback'])->nam
 // GET   = redirection navigateur après paiement (?status=approved&id=xxx)
 Route::get('/paiement/callback',   [PaiementController::class, 'callbackReturn'])->name('paiement.callback.return');
 
-Route::post('/paiement/{idPaiement}/init', [FormationController::class, 'initPaiement'])->name('paiement.init');
+Route::middleware('auth:sanctum')->post('/paiement/{idPaiement}/init', [FormationController::class, 'initPaiement'])->name('paiement.init');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/formations/{id}/paiement', [PaiementController::class, 'payFormation'])->name('paiement.formation');
@@ -202,12 +235,12 @@ Route::middleware('auth:sanctum')->group(function () {
 // ======================================================
 Route::prefix('images')->group(function () {
     Route::get('/',                [ImageController::class, 'index']);
-    Route::post('/',               [ImageController::class, 'store']);
     Route::get('/{id}',            [ImageController::class, 'show']);
-    Route::put('/{id}',            [ImageController::class, 'update']);
-    Route::delete('/{id}',         [ImageController::class, 'destroy']);
-    Route::patch('/{id}/restore',  [ImageController::class, 'restore']);
-    Route::delete('/{id}/force',   [ImageController::class, 'forceDelete']);
+    Route::middleware(['auth:sanctum', 'isAdmin'])->post('/', [ImageController::class, 'store']);
+    Route::middleware(['auth:sanctum', 'isAdmin'])->put('/{id}', [ImageController::class, 'update']);
+    Route::middleware(['auth:sanctum', 'isAdmin'])->delete('/{id}', [ImageController::class, 'destroy']);
+    Route::middleware(['auth:sanctum', 'isAdmin'])->patch('/{id}/restore', [ImageController::class, 'restore']);
+    Route::middleware(['auth:sanctum', 'isAdmin'])->delete('/{id}/force', [ImageController::class, 'forceDelete']);
 });
 
 // ======================================================
@@ -215,12 +248,10 @@ Route::prefix('images')->group(function () {
 // ======================================================
 Route::prefix('commentaires')->group(function () {
     Route::get('/',                [CommentaireController::class, 'index']);
-    Route::post('/',               [CommentaireController::class, 'store']);
     Route::get('/{id}',            [CommentaireController::class, 'show']);
-    Route::put('/{id}',            [CommentaireController::class, 'update']);
-    Route::delete('/{id}',         [CommentaireController::class, 'destroy']);
-    Route::patch('/{id}/restore',  [CommentaireController::class, 'restore']);
-    Route::delete('/{id}/force',   [CommentaireController::class, 'forceDelete']);
+    Route::middleware('auth:sanctum')->post('/', [CommentaireController::class, 'store']);
+    Route::middleware(['auth:sanctum', 'isAdmin'])->put('/{id}', [CommentaireController::class, 'update']);
+    Route::middleware(['auth:sanctum', 'isAdmin'])->delete('/{id}', [CommentaireController::class, 'destroy']);
 });
 
 // ======================================================
@@ -237,10 +268,16 @@ Route::middleware('auth:sanctum')->group(function () {
 // 📧 NEWSLETTER
 // ======================================================
 Route::post('/newsletter',         [NewsletterController::class, 'store']);
-Route::get('/newsletter',          [NewsletterController::class, 'index']);
-Route::get('/newsletter/{id}',     [NewsletterController::class, 'show']);
-Route::put('/newsletter/{id}',     [NewsletterController::class, 'update']);
-Route::delete('/newsletter/{id}',  [NewsletterController::class, 'destroy']);
+Route::middleware(['auth:sanctum', 'isAdmin'])->get('/newsletter', [NewsletterController::class, 'index']);
+Route::middleware(['auth:sanctum', 'isAdmin'])->get('/newsletter/{id}', [NewsletterController::class, 'show']);
+Route::middleware(['auth:sanctum', 'isAdmin'])->put('/newsletter/{id}', [NewsletterController::class, 'update']);
+Route::middleware(['auth:sanctum', 'isAdmin'])->delete('/newsletter/{id}', [NewsletterController::class, 'destroy']);
+
+// ======================================================
+// 🌍 PAYS
+// ======================================================
+Route::get('/pays', [PaysController::class, 'index']);
+Route::get('/pays/{id}', [PaysController::class, 'show'])->where('id', '[0-9]+');
 
 // ======================================================
 // 🤝 DEMANDES REVENDEURS
@@ -251,3 +288,23 @@ Route::post('/revendeur-demandes', [RevendeurDemandeController::class, 'store'])
 // 📩 CONTACT (public)
 // ======================================================
 Route::post('/contact-messages', [ContactMessageController::class, 'store']);
+
+// ======================================================
+// 🏠 MARKETING HOMEPAGE CARDS (public)
+// ======================================================
+Route::get('/home-marketing-cards', [HomeMarketingCardController::class, 'index']);
+
+// ======================================================
+// 🗣️ AVIS CLIENTS HOMEPAGE (public)
+// ======================================================
+Route::get('/home-testimonials', [HomeTestimonialController::class, 'index']);
+
+// ======================================================
+// 🤝 COLLABORATEURS HOMEPAGE (public)
+// ======================================================
+Route::get('/home-collaborators', [HomeCollaboratorController::class, 'index']);
+
+// ======================================================
+// 🤝 PARTENAIRES HOMEPAGE (public)
+// ======================================================
+Route::get('/home-partners', [HomePartnerController::class, 'index']);

@@ -7,6 +7,8 @@ use App\Http\Requests\ImageRequest;
 use App\Http\Resources\ImageResource;
 use App\Services\ImageService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * ImageController
@@ -26,6 +28,30 @@ class ImageController extends Controller
     {
         $images = $this->imageService->all();
         return ImageResource::collection($images);
+    }
+
+    /**
+     * POST /api/admin/images/upload : uploader un fichier image et retourner son URL publique
+     */
+    public function upload(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'image' => ['required', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'folder' => ['nullable', 'string', 'max:120'],
+        ]);
+
+        $folder = trim((string) ($validated['folder'] ?? 'uploads'), '/');
+        if ($folder === '') {
+            $folder = 'uploads';
+        }
+
+        $path = $request->file('image')->store($folder, 'public');
+        $publicUrl = Storage::disk('public')->url($path);
+
+        return response()->json([
+            'url' => $publicUrl,
+            'path' => $path,
+        ], 201);
     }
 
     /**

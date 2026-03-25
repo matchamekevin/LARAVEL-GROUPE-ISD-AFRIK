@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 /**
  * Class Formation
@@ -19,6 +20,7 @@ class Formation extends Model
     public $timestamps = true;
 
     protected $fillable = [
+        'uuid',
         'titre',
         'description',
         'duree',
@@ -36,6 +38,17 @@ class Formation extends Model
         'updated_at' => 'datetime',
         'benefices' => 'json',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function (self $formation) {
+            if (empty($formation->uuid)) {
+                $formation->uuid = (string) Str::uuid();
+            }
+        });
+    }
 
     /** Relations */
 

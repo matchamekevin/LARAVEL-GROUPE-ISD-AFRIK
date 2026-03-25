@@ -7,6 +7,20 @@ use App\Http\Resources\CategorieProduitResource;
 
 class ProduitResource extends JsonResource
 {
+    private function normalizeImageUrl(?string $value): ?string
+    {
+        $url = trim((string) ($value ?? ''));
+        if ($url === '') {
+            return null;
+        }
+
+        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://') || str_starts_with($url, '/')) {
+            return $url;
+        }
+
+        return '/storage/' . ltrim($url, '/');
+    }
+
     /**
      * Transforme le modèle Produit en tableau JSON.
      *
@@ -40,6 +54,8 @@ class ProduitResource extends JsonResource
             'note_moyenne'  => $this->note_moyenne,
             'nombre_avis'   => $this->nombre_avis,
             'id_categorie'  => $this->id_categorie,
+            'id_pays'       => $this->id_pays,
+            'id_utilisateur'=> $this->id_utilisateur,
 
             // ✅ formatage correct de la date
             'date_creation' => $this->date_creation?->toDateTimeString(),
@@ -49,7 +65,8 @@ class ProduitResource extends JsonResource
             'categorie'     => new CategorieProduitResource($this->whenLoaded('categorie')),
             'images'        => ImageResource::collection($this->whenLoaded('images')),
             'commentaires'  => CommentaireResource::collection($this->whenLoaded('commentaires')),
-            'image_url'     => $this->images->first()?->url ?? '/images/default.webp',
+            'image_url'     => $this->normalizeImageUrl($this->images->first()?->url) ?? '/images/default.webp',
+            'image_urls'    => $this->whenLoaded('images', fn () => $this->images->pluck('url')->map(fn ($url) => $this->normalizeImageUrl($url))->filter()->values()),
         ];
     }
 }

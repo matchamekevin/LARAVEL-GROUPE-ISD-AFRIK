@@ -1,232 +1,225 @@
 import React, { useEffect, useState } from 'react';
-import { getOrders, getOrder, updateOrderStatus } from '../api';
+import { getOrders, getOrder, updateOrderStatus, updateOrderDeliveryStatus } from '../api';
 import Loader from '../components/Loader';
+import '../styles/admin-shared.css';
+import './orders.css';
 
-export default function Orders(){
-  const [orders,setOrders] = useState([]);
-  const [loading,setLoading] = useState(true);
+const DELIVERY_STATUSES = [
+  'en_attente',
+  'en_preparation',
+  'expediee',
+  'en_livraison',
+  'livree',
+  'echec',
+  'retournee',
+];
+
+function formatAmount(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '0';
+  return n.toLocaleString('fr-FR');
+}
+
+function sourceLabel(source) {
+  if (source === 'geovision') return 'GeoVision';
+  return 'Produits';
+}
+
+export default function Orders() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [updatingDeliveryId, setUpdatingDeliveryId] = useState(null);
 
-  useEffect(()=>{
+  useEffect(() => {
     let mounted = true;
     getOrders()
-      .then(res=>{ if(mounted) setOrders(Array.isArray(res.data) ? res.data : []); })
-      .catch(()=>{ if(mounted) setOrders([]); })
-      .finally(()=>{ if(mounted) setLoading(false); });
-    return ()=> mounted = false;
-  },[]);
+      .then((res) => {
+        if (mounted) setOrders(Array.isArray(res.data) ? res.data : []);
+      })
+      .catch(() => {
+        if (mounted) setOrders([]);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
 
-  async function handleView(id){
-    try{
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  async function handleView(id) {
+    try {
       const res = await getOrder(id);
       setSelectedOrder(res.data);
-    }catch(err){
+    } catch (err) {
       console.error('Get order error', err);
-      alert('Erreur récupération commande');
+      alert('Erreur recuperation commande');
     }
   }
 
-  async function handleStatus(id, statut){
-    try{
+  async function handleStatus(id, statut) {
+    try {
       await updateOrderStatus(id, statut);
       setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, statut } : o)));
-    }catch(err){
+      setSelectedOrder((prev) => (prev && prev.id === id ? { ...prev, statut } : prev));
+    } catch (err) {
       console.error('Update order status error', err);
-      alert('Erreur mise à jour statut commande');
+      alert('Erreur mise a jour statut commande');
+    }
+  }
+
+  async function handleDeliveryStatus(id, statut) {
+    setUpdatingDeliveryId(id);
+    try {
+      await updateOrderDeliveryStatus(id, statut);
+      setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, delivery_status: statut } : o)));
+      setSelectedOrder((prev) => (prev && prev.id === id ? { ...prev, delivery_status: statut } : prev));
+    } catch (err) {
+      console.error('Update delivery status error', err);
+      alert(err?.response?.data?.message || 'Erreur mise a jour statut livraison');
+    } finally {
+      setUpdatingDeliveryId(null);
     }
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <div style={{
-        marginBottom: '2rem',
-      }}>
-        <h1 style={{
-          fontSize: '2rem',
-          fontWeight: 800,
-          color: '#172243',
-          margin: '0 0 0.5rem 0',
-        }}>
-          Gestion des Commandes
-        </h1>
-        <p style={{
-          color: '#6B7280',
-          fontSize: '0.95rem',
-          margin: 0,
-        }}>
-          Suivez toutes vos commandes en cours et confirmées
-        </p>
+    <div className="admin-orders-page">
+      <div className="admin-orders-hero">
+        <div className="admin-hero-content">
+          <h1>Gestion des Commandes</h1>
+          <p>Suivez toutes vos commandes en cours, confirmees et livrees.</p>
+        </div>
+        {!loading && orders.length > 0 && (
+          <div className="admin-orders-kpis">
+            <div className="admin-orders-stat">
+              <span>Total</span>
+              <strong>{orders.length}</strong>
+            </div>
+            <div className="admin-orders-stat">
+              <span>En attente</span>
+              <strong>{orders.filter((o) => o.statut === 'en_attente' || o.statut === 'en_cours').length}</strong>
+            </div>
+            <div className="admin-orders-stat">
+              <span>Payees</span>
+              <strong>{orders.filter((o) => o.statut === 'payee' || o.statut === 'completed').length}</strong>
+            </div>
+          </div>
+        )}
       </div>
 
       {loading ? (
         <Loader text="Chargement des commandes..." />
       ) : orders.length === 0 ? (
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '0.75rem',
-          padding: '3rem',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-          textAlign: 'center',
-          color: '#6B7280',
-        }}>
-          <i className="fas fa-inbox" style={{fontSize: '3rem', marginBottom: '1rem', display: 'block', color: '#D1D5DB'}}></i>
-          Aucune commande trouvée
+        <div className="admin-orders-empty">
+          <div className="admin-orders-empty-icon">Aucune commande</div>
+          <h3>Aucune commande trouvee</h3>
+          <p>Les commandes apparaitront ici lorsque des clients en placeront.</p>
         </div>
       ) : (
         <>
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '0.75rem',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-            overflow: 'hidden',
-          }}>
-            <table style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-            }}>
-              <thead>
-                <tr style={{
-                  background: '#F3F4F6',
-                  borderBottom: '2px solid #E5E7EB',
-                }}>
-                  <th style={{
-                    textAlign: 'left',
-                    padding: '1rem',
-                    fontWeight: 700,
-                    color: '#172243',
-                  }}>
-                    ID
-                  </th>
-                  <th style={{
-                    textAlign: 'left',
-                    padding: '1rem',
-                    fontWeight: 700,
-                    color: '#172243',
-                  }}>
-                    Client
-                  </th>
-                  <th style={{
-                    textAlign: 'left',
-                    padding: '1rem',
-                    fontWeight: 700,
-                    color: '#172243',
-                  }}>
-                    Total
-                  </th>
-                  <th style={{
-                    textAlign: 'left',
-                    padding: '1rem',
-                    fontWeight: 700,
-                    color: '#172243',
-                  }}>
-                    Statut
-                  </th>
-                  <th style={{
-                    textAlign: 'center',
-                    padding: '1rem',
-                    fontWeight: 700,
-                    color: '#172243',
-                  }}>
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((o, idx) => (
-                  <tr key={o.id} style={{
-                    borderBottom: '1px solid #E5E7EB',
-                    background: idx % 2 === 0 ? '#ffffff' : '#F9FAFB',
-                    transition: 'background 0.2s ease',
-                  }}>
-                    <td style={{padding: '1rem', color: '#6B7280', fontSize: '0.9rem', fontWeight: 600}}>
-                      #{o.id}
-                    </td>
-                    <td style={{padding: '1rem', color: '#172243', fontWeight: 500}}>
-                      {o.customer_name || o.client || '—'}
-                    </td>
-                    <td style={{padding: '1rem', color: '#764ba2', fontWeight: 600, fontSize: '1.05rem'}}>
-                      {o.total ?? o.montant ?? '—'} FCFA
-                    </td>
-                    <td style={{padding: '1rem', color: '#172243'}}>
-                      {o.statut || '—'}
-                    </td>
-                    <td style={{padding: '1rem', textAlign: 'center'}}>
-                      <div style={{display:'flex',gap:'0.4rem',justifyContent:'center',flexWrap:'wrap'}}>
-                        <button 
-                          onClick={()=>handleView(o.id)}
-                          style={{
-                            padding: '0.5rem 1rem',
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                            color: '#ffffff',
-                            border: 'none',
-                            borderRadius: '0.5rem',
-                            cursor: 'pointer',
-                            fontWeight: 600,
-                            fontSize: '0.85rem',
-                            transition: 'all 0.3s ease',
-                          }}
-                        >
-                          <i className="fas fa-eye" style={{marginRight: '0.3rem'}}></i>Détails
-                        </button>
-                        <button className="btn-secondary" onClick={()=>handleStatus(o.id,'en_attente')}>En attente</button>
-                        <button className="btn-secondary" onClick={()=>handleStatus(o.id,'payee')}>Payée</button>
-                        <button className="btn-secondary" onClick={()=>handleStatus(o.id,'annulee')}>Annulée</button>
-                      </div>
-                    </td>
+          <div className="admin-orders-list-card">
+            <div className="admin-orders-list-card-header">
+              <h2>Liste des Commandes</h2>
+              <span style={{ fontSize: '0.875rem', color: '#6B7280', fontWeight: 500 }}>
+                {orders.length} commande{orders.length > 1 ? 's' : ''}
+              </span>
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table className="admin-orders-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Client</th>
+                    <th>Articles</th>
+                    <th>Total</th>
+                    <th>Statut</th>
+                    <th>Livraison</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {orders.map((o) => (
+                    <tr key={o.id}>
+                      <td><span className="admin-order-id">#{o.id}</span></td>
+                      <td>
+                        <div className="admin-order-customer">
+                          <span className="admin-order-customer-name">{o.customer_name || o.client || '-'}</span>
+                          <span className="admin-order-customer-info">{o.customer_email || 'Email -'}</span>
+                          <span className="admin-order-customer-info">{o.customer_phone || 'Tel. -'}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="admin-order-items">
+                          {Array.isArray(o.paid_items) && o.paid_items.length > 0 ? (
+                            o.paid_items.map((item) => (
+                              <div key={`${o.id}-${item.id_ligne || item.id_produit || item.titre}`} className="admin-order-item">
+                                <div className="admin-order-item-title">{item.titre || 'Produit'}</div>
+                                <div className="admin-order-item-meta">
+                                  {sourceLabel(item.source)}{item.categorie ? ` · ${item.categorie}` : ''}
+                                </div>
+                                <div className="admin-order-item-quantity">
+                                  Qte {item.quantite ?? 0} -> {formatAmount(item.prix_unitaire)} FCFA
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <span style={{ color: '#6B7280', fontSize: '0.875rem' }}>Aucun article</span>
+                          )}
+                        </div>
+                      </td>
+                      <td><span className="admin-order-total">{formatAmount(o.total ?? o.montant ?? 0)} FCFA</span></td>
+                      <td>
+                        <div className="admin-order-status">
+                          <span className="admin-order-status-badge">{o.statut ? o.statut.replace(/_/g, ' ') : '-'}</span>
+                          <span className="admin-order-payment-status">Paiement: {o.payment_summary?.status || 'non renseigne'}</span>
+                          {o.payment_summary?.reference && (
+                            <span className="admin-order-payment-status">Ref: {o.payment_summary.reference}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'grid', gap: '0.5rem' }}>
+                          <strong style={{ textTransform: 'capitalize', fontSize: '0.875rem' }}>
+                            {(o.delivery_status || 'non_planifiee').replace(/_/g, ' ')}
+                          </strong>
+                          <select
+                            className="admin-order-delivery-select"
+                            value={o.delivery_status || 'en_attente'}
+                            onChange={(e) => handleDeliveryStatus(o.id, e.target.value)}
+                            disabled={updatingDeliveryId === o.id}
+                          >
+                            {DELIVERY_STATUSES.map((status) => (
+                              <option key={status} value={status}>{status.replace(/_/g, ' ')}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="admin-order-actions">
+                          <button className="admin-order-action-btn view" onClick={() => handleView(o.id)}>Details</button>
+                          <button className="admin-order-action-btn" onClick={() => handleStatus(o.id, 'en_attente')}>En attente</button>
+                          <button className="admin-order-action-btn" onClick={() => handleStatus(o.id, 'payee')}>Payee</button>
+                          <button className="admin-order-action-btn" onClick={() => handleStatus(o.id, 'annulee')}>Annulee</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {selectedOrder && (
-            <div style={{
-              marginTop: '2rem',
-              background: '#ffffff',
-              borderRadius: '0.75rem',
-              padding: '2rem',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-              borderLeft: '5px solid #667eea',
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1.5rem',
-              }}>
-                <h2 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: 700,
-                  color: '#172243',
-                  margin: 0,
-                }}>
-                  Détails de la Commande #{selectedOrder.id}
-                </h2>
-                <button 
-                  onClick={() => setSelectedOrder(null)}
-                  style={{
-                    background: '#E5E7EB',
-                    color: '#172243',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    padding: '0.5rem 1rem',
-                    cursor: 'pointer',
-                    fontWeight: 600,
-                  }}
-                >
-                  <i className="fas fa-times" style={{marginRight: '0.3rem'}}></i>Fermer
-                </button>
+            <div className="admin-order-detail">
+              <div className="admin-order-detail-header">
+                <h2>Details de la Commande #{selectedOrder.id}</h2>
+                <button className="admin-order-detail-close" onClick={() => setSelectedOrder(null)}>Fermer</button>
               </div>
-              <pre style={{
-                background: '#F3F4F6',
-                padding: '1rem',
-                borderRadius: '0.5rem',
-                overflow: 'auto',
-                fontSize: '0.85rem',
-                color: '#172243',
-              }}>
-                {JSON.stringify(selectedOrder, null, 2)}
-              </pre>
+              <div className="admin-order-detail-content">
+                <pre className="admin-order-detail-json">{JSON.stringify(selectedOrder, null, 2)}</pre>
+              </div>
             </div>
           )}
         </>

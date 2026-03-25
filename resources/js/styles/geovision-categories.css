@@ -267,6 +267,49 @@
   letter-spacing: -0.5px;
 }
 
+.pp-filter-bar {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 4px 0 28px;
+}
+
+.pp-filter-select,
+.pp-filter-reset {
+  min-height: 46px;
+  border-radius: 16px;
+  border: 1px solid rgba(23, 34, 67, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0 16px;
+  color: #172243;
+  font-weight: 600;
+}
+
+.pp-filter-reset {
+  cursor: pointer;
+  background: #172243;
+  color: #fff;
+}
+
+.pp-group-stack {
+  display: grid;
+  gap: 28px;
+  width: 100%;
+}
+
+.pp-group-section {
+  display: grid;
+  gap: 18px;
+}
+
+.pp-group-title {
+  margin: 0;
+  color: #172243;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
 /* Category Pills */
 .pp-category-pills {
   display: flex;
@@ -725,10 +768,66 @@
   overflow: hidden;
 }
 
+.pp-card-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.pp-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pp-meta-row--wrap {
+  margin-bottom: 20px;
+}
+
+.pp-meta-row--space {
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.pp-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(23, 34, 67, 0.06);
+  color: #2f486b;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.pp-price {
+  color: #172243;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.gpd-breadcrumb {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: #5f6b7a;
+  margin-bottom: 24px;
+}
+
+.gpd-breadcrumb a {
+  color: #172243;
+  text-decoration: none;
+}
+
 /* Footer Row */
 .pp-footer-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 14px;
   margin-top: auto;
   padding-top: 14px;
   border-top: 1px solid #f1f5f9;
@@ -832,6 +931,10 @@
   .pp-hero {
     padding: 32px 0;
   }
+
+  .pp-filter-bar {
+    grid-template-columns: 1fr 1fr;
+  }
   
   .pp-heading {
     margin-bottom: 28px;
@@ -845,6 +948,17 @@
   
   .pp-heading h2 {
     font-size: 1.4rem;
+  }
+
+  .pp-meta-row--space,
+  .pp-footer-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pp-price,
+  .pp-add-btn {
+    width: 100%;
   }
   
   .pp-category-pills {
@@ -917,6 +1031,10 @@
 @media (max-width: 640px) {
   .pp-hero {
     padding: 24px 0;
+  }
+
+  .pp-filter-bar {
+    grid-template-columns: 1fr;
   }
   
   .pp-container {

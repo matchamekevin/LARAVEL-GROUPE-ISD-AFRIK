@@ -1,22 +1,29 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { addToCart, isFavorite, subscribeStoreUpdates, toggleFavorite } from "../utils/shopStorage";
 import "../styles/produitcard.css";
 
 export default function ProduitCard({ produit, from }) {
   const [favori, setFavori] = useState(false);
   const [ajouteAuPanier, setAjouteAuPanier] = useState(false);
 
+  useEffect(() => {
+    const refresh = () => setFavori(isFavorite(produit?.id_produit));
+    refresh();
+    return subscribeStoreUpdates(refresh);
+  }, [produit?.id_produit]);
+
   const handlePanier = (e) => {
     e.preventDefault();
+    addToCart(produit, 1);
     setAjouteAuPanier(true);
-    // TODO: dispatch vers contexte panier
     setTimeout(() => setAjouteAuPanier(false), 1800);
   };
 
   const handleFavori = (e) => {
     e.preventDefault();
-    setFavori((prev) => !prev);
-    // TODO: appel API favoris
+    const result = toggleFavorite(produit);
+    setFavori(Boolean(result?.isFavorite));
   };
 
   const prixFinal = produit.prix_promo ?? produit.prix;

@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../../axios";
 
 export default function AdminDashboard() {
 	const [loading, setLoading] = useState(true);
-	const [stats, setStats] = useState({ produits: 0, formations: 0, utilisateurs: 0, paiements: 0 });
+	const [stats, setStats] = useState({
+		produitsGeneral: 0,
+		produitsGeovision: 0,
+		categoriesGeneral: 0,
+		categoriesGeovision: 0,
+		formations: 0,
+		utilisateurs: 0,
+		paiements: 0,
+	});
 	const [recentPaiements, setRecentPaiements] = useState([]);
 	const [error, setError] = useState("");
 
@@ -11,8 +20,11 @@ export default function AdminDashboard() {
 		let mounted = true;
 		async function loadStats() {
 			try {
-				const [produitsRes, formationsRes, usersRes, paiementsRes] = await Promise.allSettled([
-					api.get("/produits", { params: { par_page: 1 } }),
+				const [generalProductsRes, geovisionProductsRes, generalCategoriesRes, geovisionCategoriesRes, formationsRes, usersRes, paiementsRes] = await Promise.allSettled([
+					api.get("/admin/produits", { params: { segment: "general" } }),
+					api.get("/admin/produits", { params: { segment: "geovision" } }),
+					api.get("/admin/categories-produits", { params: { segment: "general" } }),
+					api.get("/admin/categories-produits", { params: { segment: "geovision" } }),
 					api.get("/formations"),
 					api.get("/utilisateurs"),
 					api.get("/admin/paiements"),
@@ -20,7 +32,10 @@ export default function AdminDashboard() {
 
 				if (mounted) {
 					setStats({
-						produits: produitsRes.status === "fulfilled" ? (produitsRes.value.data?.meta?.total ?? 0) : 0,
+						produitsGeneral: generalProductsRes.status === "fulfilled" ? (generalProductsRes.value.data?.data?.length ?? 0) : 0,
+						produitsGeovision: geovisionProductsRes.status === "fulfilled" ? (geovisionProductsRes.value.data?.data?.length ?? 0) : 0,
+						categoriesGeneral: generalCategoriesRes.status === "fulfilled" ? ((generalCategoriesRes.value.data?.data || generalCategoriesRes.value.data || []).length ?? 0) : 0,
+						categoriesGeovision: geovisionCategoriesRes.status === "fulfilled" ? ((geovisionCategoriesRes.value.data?.data || geovisionCategoriesRes.value.data || []).length ?? 0) : 0,
 						formations: formationsRes.status === "fulfilled" ? (Array.isArray(formationsRes.value.data) ? formationsRes.value.data.length : 0) : 0,
 						utilisateurs: usersRes.status === "fulfilled" ? (Array.isArray(usersRes.value.data) ? usersRes.value.data.length : 0) : 0,
 						paiements: paiementsRes.status === "fulfilled" ? (Array.isArray(paiementsRes.value.data) ? paiementsRes.value.data.length : 0) : 0,
@@ -40,7 +55,10 @@ export default function AdminDashboard() {
 	}, []);
 
 	const metrics = [
-		{ label: "Produits", value: stats.produits, hint: "Catalogue actif" },
+		{ label: "Produits généraux", value: stats.produitsGeneral, hint: "Catalogue standard" },
+		{ label: "Produits GeoVision", value: stats.produitsGeovision, hint: "Catalogue constructeur" },
+		{ label: "Catégories générales", value: stats.categoriesGeneral, hint: "Arborescence site" },
+		{ label: "Catégories GeoVision", value: stats.categoriesGeovision, hint: "Familles & types" },
 		{ label: "Formations", value: stats.formations, hint: "Disponibles" },
 		{ label: "Utilisateurs", value: stats.utilisateurs, hint: "Inscrits" },
 		{ label: "Paiements", value: stats.paiements, hint: "Transactions" },
@@ -49,6 +67,20 @@ export default function AdminDashboard() {
 	return (
 		<div>
 			{error && <div className="admin-card">{error}</div>}
+			<div className="admin-page-stack">
+				<div className="admin-card admin-page-hero">
+					<div>
+						<p className="admin-eyebrow">Pilotage</p>
+						<h2>Vue globale de l’administration</h2>
+						<p className="admin-muted">Le catalogue général et le catalogue GeoVision sont maintenant gérés séparément pour garder une logique propre et lisible.</p>
+					</div>
+					<div className="admin-quick-links">
+						<Link to="/admin/catalogue/produits" className="admin-quick-link">Catalogue général</Link>
+						<Link to="/admin/geovision/produits" className="admin-quick-link">GeoVision</Link>
+						<Link to="/admin/commandes" className="admin-quick-link">Commandes</Link>
+					</div>
+				</div>
+
 			{loading && <div className="admin-card">Chargement des donnees...</div>}
 			{!loading && (
 				<div className="admin-grid">
@@ -63,6 +95,25 @@ export default function AdminDashboard() {
 			)}
 
 			<div className="admin-section">
+				<div className="admin-grid">
+					<div className="admin-card">
+						<h3>Catalogue général</h3>
+						<p className="admin-muted">Produits et catégories du site hors GeoVision.</p>
+						<div className="admin-actions-cell">
+							<Link to="/admin/catalogue/produits" className="admin-btn-sm">Gérer les produits</Link>
+							<Link to="/admin/catalogue/categories" className="admin-btn-sm admin-btn--secondary">Gérer les catégories</Link>
+						</div>
+					</div>
+					<div className="admin-card">
+						<h3>GeoVision</h3>
+						<p className="admin-muted">Catalogue constructeur, catégories officielles et synchronisation dédiée.</p>
+						<div className="admin-actions-cell">
+							<Link to="/admin/geovision/produits" className="admin-btn-sm">Gérer les produits</Link>
+							<Link to="/admin/geovision/categories" className="admin-btn-sm admin-btn--secondary">Gérer les catégories</Link>
+						</div>
+					</div>
+				</div>
+
 				<div className="admin-card">
 					<h3>Derniers paiements</h3>
 					<table className="admin-table">
@@ -82,6 +133,7 @@ export default function AdminDashboard() {
 						</tbody>
 					</table>
 				</div>
+			</div>
 			</div>
 		</div>
 	);

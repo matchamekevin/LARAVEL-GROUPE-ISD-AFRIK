@@ -6,6 +6,26 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class ImageRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $rawType = $this->input('imageable_type');
+        if (!is_string($rawType) || trim($rawType) === '') {
+            return;
+        }
+
+        $normalized = strtoupper(trim($rawType));
+        $map = [
+            'APP\\MODELS\\PRODUIT' => 'PRODUIT',
+            'APP\\MODELS\\FORMATION' => 'FORMATION',
+            'APP\\MODELS\\BLOG' => 'BLOG',
+            'APP\\MODELS\\CATEGORIEPRODUIT' => 'CATEGORY',
+        ];
+
+        $this->merge([
+            'imageable_type' => $map[$normalized] ?? $normalized,
+        ]);
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -18,7 +38,7 @@ class ImageRequest extends FormRequest
             'path'           => 'nullable|string|max:255',
             'alt'            => 'nullable|string|max:255',
             // Ici on valide uniquement les alias simples
-            'imageable_type' => 'required|string|in:PRODUIT,FORMATION,BLOG',
+            'imageable_type' => 'required|string|in:PRODUIT,FORMATION,BLOG,CATEGORY',
             'imageable_id'   => 'required|integer',
         ];
     }
@@ -28,27 +48,9 @@ class ImageRequest extends FormRequest
         return [
             'url.required'          => 'Le champ url est obligatoire.',
             'url.url'               => 'Le champ url doit être une URL valide.',
-            'imageable_type.in'     => 'Le type doit être PRODUIT, FORMATION ou BLOG.',
+            'imageable_type.in'     => 'Le type doit être PRODUIT, FORMATION, BLOG ou CATEGORY.',
             'imageable_id.required' => 'L’ID de l’entité liée est obligatoire.',
             'imageable_id.integer'  => 'L’ID doit être un entier.',
         ];
-    }
-
-    /**
-     * Mapping automatique des alias vers les classes Laravel
-     */
-    protected function passedValidation()
-    {
-        $map = [
-            'PRODUIT'   => 'App\\Models\\Produit',
-            'FORMATION' => 'App\\Models\\Formation',
-            'BLOG'      => 'App\\Models\\Blog',
-        ];
-
-        if (isset($this->imageable_type) && isset($map[$this->imageable_type])) {
-            $this->merge([
-                'imageable_type' => $map[$this->imageable_type],
-            ]);
-        }
     }
 }

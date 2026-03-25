@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Commentaire;
+use App\Models\Produit;
 
 class CommentaireService
 {
@@ -23,7 +24,10 @@ class CommentaireService
     {
         // Forcer le type à respecter la contrainte SQL
         $data['commentable_type'] = $this->mapType($data['commentable_type']);
-        return Commentaire::create($data);
+        $commentaire = Commentaire::create($data);
+        $this->refreshProductRating($commentaire->commentable_type, (int) $commentaire->commentable_id);
+
+        return $commentaire;
     }
 
     /**
@@ -44,12 +48,20 @@ class CommentaireService
             return null;
         }
 
+        $oldType = (string) $commentaire->commentable_type;
+        $oldId = (int) $commentaire->commentable_id;
+
         if (!empty($data['commentable_type'])) {
             $data['commentable_type'] = $this->mapType($data['commentable_type']);
         }
 
         $commentaire->update($data);
-        return $commentaire->fresh();
+        $fresh = $commentaire->fresh();
+
+        $this->refreshProductRating($oldType, $oldId);
+        $this->refreshProductRating((string) $fresh->commentable_type, (int) $fresh->commentable_id);
+
+        return $fresh;
     }
 
     /**
@@ -62,7 +74,27 @@ class CommentaireService
             return false;
         }
 
-        return (bool) $commentaire->delete();
+        $type = (string) $commentaire->commentable_type;
+        $targetId = (int) $commentaire->commentable_id;
+
+        $deleted = (bool) $commentaire->delete();
+        if ($deleted) {
+            $this->refreshProductRating($type, $targetId);
+        }
+
+        return $deleted;
+    }
+
+    private function refreshProductRating(string $commentableType, int $commentableId): void
+    {
+        if (strtoupper($commentableType) !== 'PRODUIT' || $commentableId <= 0) {
+            return;
+        }
+
+        $produit = Produit::find($commentableId);
+        if ($produit) {
+            $produit->recalculerNote();
+        }
     }
 
     /**

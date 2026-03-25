@@ -7,6 +7,7 @@ use App\Http\Middleware\IsClient;
 use App\Http\Middleware\IsAdmin;
 use App\Http\Middleware\IsSuperAdmin;
 use App\Http\Middleware\RedirectTo2FA;
+use App\Http\Middleware\SecurityHeaders;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(SecurityHeaders::class);
+
         // ✅ Alias des middlewares custom
         $middleware->alias([
             'isClient'      => IsClient::class,

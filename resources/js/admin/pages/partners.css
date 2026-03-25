@@ -1,0 +1,237 @@
+/* ========================================
+   PARTNERS ADMIN PAGE STYLES
+   ======================================== */
+
+.admin-partners-page {
+  padding: var(--spacing-3xl);
+  display: grid;
+  gap: var(--spacing-xl);
+}
+
+.admin-partners-hero {
+  background: var(--gradient-partners);
+  color: var(--color-white);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-xl) var(--spacing-2xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.admin-partners-hero h1 {
+  margin: 0;
+  font-size: var(--font-size-3xl);
+  font-weight: 800;
+}
+
+.admin-partners-hero p {
+  margin: var(--spacing-sm) 0 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Container */
+.admin-partners-container {
+  background: var(--color-white);
+  border: var(--border-light);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-lg);
+}
+
+/* Form */
+.admin-partners-form {
+  display: grid;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+  border-bottom: var(--border-light);
+}
+
+.admin-partners-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-lg);
+}
+
+.admin-partners-form-grid-full {
+  grid-column: span 3;
+}
+
+.admin-partners-form-field {
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+.admin-partners-form-field label {
+  font-weight: 700;
+  font-size: var(--font-size-base);
+  color: var(--color-gray-900);
+}
+
+.admin-partners-form-field input,
+.admin-partners-form-field select {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 2px solid #d1d5db;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.admin-partners-form-field input:focus,
+.admin-partners-form-field select:focus {
+  outline: none;
+  border-color: var(--color-info);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  background: rgba(59, 130, 246, 0.02);
+}
+
+.admin-partners-form-field input:focus,
+.admin-partners-form-field select:focus {
+  outline: none;
+  border-color: var(--color-partners);
+  box-shadow: 0 0 0 3px rgba(43, 142, 184, 0.1);
+}
+
+.admin-partners-form-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+}
+
+.admin-partners-form-btn {
+  padding: var(--spacing-sm) var(--spacing-xl);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  transition: all 0.2s ease;
+}
+
+.admin-partners-form-btn.primary {
+  background: var(--gradient-partners);
+  color: var(--color-white);
+}
+
+.admin-partners-form-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(43, 142, 184, 0.3);
+}
+
+.admin-partners-form-btn.secondary {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  color: var(--color-gray-700);
+}
+
+.admin-partners-form-btn.secondary:hover {
+  background: var(--color-gray-50);
+}
+
+/* Grid */
+.admin-partners-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.admin-partners-card {
+  background: var(--color-gray-50);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-partners-card:hover {
+  border-color: var(--color-partners);
+  box-shadow: 0 8px 20px rgba(43, 142, 184, 0.15);
+  transform: translateY(-4px);
+}
+
+.admin-partners-card-logo {
+  width: 100%;
+  height: 140px;
+  object-fit: contain;
+  padding: var(--spacing-lg);
+  background: var(--color-white);
+}
+
+.admin-partners-card-content {
+  padding: var(--spacing-lg);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.admin-partners-card-name {
+  font-weight: 700;
+  font-size: var(--font-size-lg);
+  color: var(--color-gray-900);
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.admin-partners-card-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.admin-partners-btn {
+  flex: 1;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: none;
+  border-radius: 6px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-partners-btn.edit {
+  background: var(--color-info);
+  color: var(--color-white);
+}
+
+.admin-partners-btn.delete {
+  background: var(--color-danger);
+  color: var(--color-white);
+}
+
+/* Empty */
+.admin-partners-empty {
+  padding: var(--spacing-3xl) var(--spacing-xl);
+  text-align: center;
+  color: var(--color-gray-600);
+}
+
+.admin-partners-empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-partners-page {
+    padding: var(--spacing-lg);
+  }
+
+  .admin-partners-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-partners-form-grid-full {
+    grid-column: span 1;
+  }
+
+  .admin-partners-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+}

@@ -12,8 +12,14 @@ class IsSuperAdmin
     {
         $user = $request->user();
 
-        // Vérifie que l'utilisateur est connecté et qu'il a le rôle "super-admin"
-        if (!$user || $user->role !== 'super-admin') {
+        $role = strtolower((string) ($user->admin_role ?: $user->role));
+        $isSuperAdmin = $user
+            && (bool) $user->is_admin
+            && in_array($role, ['superadmin', 'super-admin'], true)
+            && (bool) $user->can_access_admin
+            && strtolower((string) ($user->statut ?? '')) === 'actif';
+
+        if (!$isSuperAdmin) {
             return response()->json(['message' => 'Accès réservé au super administrateur'], 403);
         }
 

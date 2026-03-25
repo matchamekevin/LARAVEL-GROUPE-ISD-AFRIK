@@ -1,0 +1,289 @@
+/* Formations Admin Page */
+
+.admin-formations-page {
+  padding: var(--spacing-3xl);
+  display: grid;
+  gap: var(--spacing-xl);
+}
+
+.admin-formations-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-lg);
+  background: var(--gradient-formations);
+  color: var(--color-white);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-xl) var(--spacing-2xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.admin-formations-hero h1 {
+  margin: 0;
+  font-size: var(--font-size-3xl);
+  font-weight: 800;
+  color: var(--color-white);
+}
+
+.admin-formations-hero p {
+  margin: var(--spacing-sm) 0 0;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 600px;
+  line-height: 1.5;
+  font-size: var(--font-size-sm);
+}
+
+.admin-formations-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: rgba(255, 255, 255, 0.17);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-formations-card {
+  background: var(--color-white);
+  border-radius: var(--border-radius);
+  border: var(--border-light);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-xl);
+}
+
+.admin-formations-card h2 {
+  margin: 0 0 var(--spacing-lg);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-gray-900);
+}
+
+.admin-formations-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: var(--border-light);
+}
+
+.admin-formations-form {
+  display: grid;
+  gap: var(--spacing-xl);
+}
+
+.admin-formations-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-xl);
+}
+
+.admin-formations-grid label {
+  margin: 0;
+  display: grid;
+  gap: var(--spacing-md);
+  font-weight: 700;
+  font-size: var(--font-size-base);
+  color: var(--color-gray-900);
+}
+
+.admin-formations-grid input,
+.admin-formations-grid select,
+.admin-formations-grid textarea {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 2px solid #d1d5db;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+}
+
+.admin-formations-grid-full {
+  grid-column: span 2;
+}
+
+.admin-formations-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-2xl);
+  padding-top: var(--spacing-xl);
+  border-top: var(--border-light);
+}
+
+.admin-formations-searchbar {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.admin-formations-searchbar input {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 2px solid #d1d5db;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+}
+
+.admin-formations-empty {
+  border: 2px dashed var(--color-gray-300);
+  background: var(--color-gray-50);
+  border-radius: var(--border-radius);
+  color: var(--color-gray-600);
+  padding: var(--spacing-xl);
+  text-align: center;
+  font-size: var(--font-size-base);
+}
+
+.admin-formations-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--border-radius);
+  border: var(--border-light);
+}
+
+.admin-formations-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-formations-table th {
+  background: var(--color-gray-50);
+  padding: var(--spacing-md) var(--spacing-lg);
+  text-align: left;
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-900);
+  border-bottom: var(--border-light);
+}
+
+.admin-formations-table td {
+  padding: var(--spacing-lg) var(--spacing-lg);
+  border-bottom: var(--border-light);
+  vertical-align: top;
+}
+
+.admin-formations-image-cell {
+  display: grid;
+  gap: var(--spacing-md);
+  min-width: 200px;
+}
+
+.admin-formations-image-cell img {
+  width: 160px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: var(--border-radius);
+  border: var(--border-light);
+  background: var(--color-gray-50);
+}
+
+.admin-formations-no-image {
+  color: var(--color-gray-600);
+  font-size: var(--font-size-sm);
+}
+
+.admin-formations-title-cell {
+  display: grid;
+  gap: var(--spacing-sm);
+  min-width: 280px;
+}
+
+.admin-formations-title-cell strong {
+  color: var(--color-gray-900);
+  font-size: var(--font-size-base);
+}
+
+.admin-formations-title-cell small {
+  color: var(--color-gray-600);
+  line-height: 1.4;
+  font-size: var(--font-size-sm);
+}
+
+.admin-formations-edit-stack {
+  display: grid;
+  gap: var(--spacing-sm);
+  min-width: 160px;
+}
+
+.admin-formations-badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--color-info);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.admin-formations-row-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-width: 140px;
+}
+
+.admin-formations-btn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: none;
+  border-radius: 8px;
+  background: var(--color-info);
+  color: var(--color-white);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 38px;
+  transition: all 0.3s ease;
+}
+
+.admin-formations-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.admin-formations-danger {
+  background: var(--color-danger);
+  color: var(--color-white);
+}
+
+.admin-formations-danger:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1200px) {
+  .admin-formations-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 920px) {
+  .admin-formations-page {
+    padding: var(--spacing-xl);
+  }
+
+  .admin-formations-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-formations-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-formations-grid-full {
+    grid-column: span 1;
+  }
+
+  .admin-formations-card-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-formations-row-actions {
+    flex-direction: row;
+  }
+}

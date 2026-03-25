@@ -77,20 +77,28 @@ class ImageService
     }
 
     /**
-     * Convertit un type simplifié (PRODUIT, FORMATION, BLOG)
-     * en namespace complet attendu par Laravel.
+     * Normalise le type vers les alias stockés en base
+     * (PRODUIT, FORMATION, BLOG, CATEGORY).
      */
     private function mapType(string $type): string
     {
-        switch (strtoupper($type)) {
+        $normalized = strtoupper(trim($type));
+
+        switch ($normalized) {
             case 'PRODUIT':
-                return \App\Models\Produit::class;
+            case 'APP\\MODELS\\PRODUIT':
+                return 'PRODUIT';
             case 'FORMATION':
-                return \App\Models\Formation::class;
+            case 'APP\\MODELS\\FORMATION':
+                return 'FORMATION';
             case 'BLOG':
-                return \App\Models\Blog::class;
+            case 'APP\\MODELS\\BLOG':
+                return 'BLOG';
+            case 'CATEGORY':
+            case 'APP\\MODELS\\CATEGORIEPRODUIT':
+                return 'CATEGORY';
             default:
-                return $type; // fallback si déjà namespace complet
+                return $normalized;
         }
     }
 }

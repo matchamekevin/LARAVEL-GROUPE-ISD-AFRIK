@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   getContactMessages,
   updateContactMessageStatus,
@@ -6,11 +6,55 @@ import {
   getRevendeurDemandes,
   updateRevendeurDemandeStatus,
 } from '../api';
+import Loader from '../components/Loader';
+import '../styles/admin-shared.css';
+import './messages.css';
+
+const CONTACT_STATUSES = ['nouveau', 'lu', 'traite'];
+const DEMANDE_STATUSES = ['nouveau', 'en_cours', 'valide', 'rejete'];
+
+function statusClass(status) {
+  const s = String(status || 'nouveau').toLowerCase();
+  if (s === 'valide' || s === 'traite' || s === 'lu') return 'is-success';
+  if (s === 'rejete') return 'is-danger';
+  if (s === 'en_cours') return 'is-warning';
+  return 'is-neutral';
+}
 
 export default function Messages() {
   const [contactMessages, setContactMessages] = useState([]);
   const [demandes, setDemandes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [contactSearch, setContactSearch] = useState('');
+  const [contactStatusFilter, setContactStatusFilter] = useState('all');
+  const [demandeSearch, setDemandeSearch] = useState('');
+  const [demandeStatusFilter, setDemandeStatusFilter] = useState('all');
+
+  const filteredContactMessages = useMemo(() => {
+    const q = contactSearch.trim().toLowerCase();
+    return contactMessages.filter((m) => {
+      const status = String(m.statut || 'nouveau').toLowerCase();
+      const statusOk = contactStatusFilter === 'all' || status === contactStatusFilter;
+      if (!statusOk) return false;
+      if (!q) return true;
+
+      const values = [m.nom_complet, m.email, m.sujet, m.message, m.statut, m.id];
+      return values.some((v) => String(v || '').toLowerCase().includes(q));
+    });
+  }, [contactMessages, contactSearch, contactStatusFilter]);
+
+  const filteredDemandes = useMemo(() => {
+    const q = demandeSearch.trim().toLowerCase();
+    return demandes.filter((d) => {
+      const status = String(d.statut || 'nouveau').toLowerCase();
+      const statusOk = demandeStatusFilter === 'all' || status === demandeStatusFilter;
+      if (!statusOk) return false;
+      if (!q) return true;
+
+      const values = [d.nom_entreprise, d.email_professionnel, d.pays, d.statut, d.id];
+      return values.some((v) => String(v || '').toLowerCase().includes(q));
+    });
+  }, [demandes, demandeSearch, demandeStatusFilter]);
 
   async function loadAll() {
     setLoading(true);
@@ -66,19 +110,58 @@ export default function Messages() {
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1 style={{ fontSize: '2rem', color: '#172243', marginBottom: '1rem' }}>Messages & Demandes</h1>
+    <div className="admin-messages-page">
+      <header className="admin-messages-hero">
+        <div>
+          <h1>Messages & Demandes</h1>
+          <p>
+            Gere les messages de contact et les demandes revendeurs depuis une seule interface claire.
+          </p>
+        </div>
+        <div className="admin-messages-kpis">
+          <div>
+            <span>Messages</span>
+            <strong>{contactMessages.length}</strong>
+          </div>
+          <div>
+            <span>Demandes</span>
+            <strong>{demandes.length}</strong>
+          </div>
+        </div>
+      </header>
 
       {loading ? (
-        <div>Chargement des messages...</div>
+        <Loader text="Chargement des messages..." />
       ) : (
         <>
-          <div className="card" style={{ marginBottom: '1.5rem' }}>
-            <h2 style={{ marginBottom: '1rem' }}>Messages de contact</h2>
-            {contactMessages.length === 0 ? (
-              <div>Aucun message de contact.</div>
+          <section className="admin-messages-card">
+            <div className="admin-messages-card-head">
+              <h2>Messages de contact</h2>
+              <span className="admin-messages-counter">{filteredContactMessages.length}</span>
+            </div>
+
+            <div className="admin-messages-filters">
+              <input
+                placeholder="Rechercher (nom, email, sujet, contenu...)"
+                value={contactSearch}
+                onChange={(e) => setContactSearch(e.target.value)}
+              />
+              <select
+                value={contactStatusFilter}
+                onChange={(e) => setContactStatusFilter(e.target.value)}
+              >
+                <option value="all">Tous les statuts</option>
+                {CONTACT_STATUSES.map((status) => (
+                  <option key={status} value={status}>{status}</option>
+                ))}
+              </select>
+            </div>
+
+            {filteredContactMessages.length === 0 ? (
+              <div className="admin-messages-empty">Aucun message de contact.</div>
             ) : (
-              <table>
+              <div className="admin-messages-table-wrap">
+              <table className="admin-messages-table">
                 <thead>
                   <tr>
                     <th>ID</th>
@@ -90,31 +173,74 @@ export default function Messages() {
                   </tr>
                 </thead>
                 <tbody>
-                  {contactMessages.map((m) => (
+                  {filteredContactMessages.map((m) => (
                     <tr key={m.id}>
-                      <td>{m.id}</td>
-                      <td>{m.nom_complet}</td>
-                      <td>{m.email}</td>
-                      <td>{m.sujet || '—'}</td>
-                      <td>{m.statut}</td>
+                      <td>#{m.id}</td>
                       <td>
-                        <button className="btn-secondary" onClick={() => handleContactStatus(m.id, 'lu')}>Marquer lu</button>
-                        <button className="btn-secondary" onClick={() => handleContactStatus(m.id, 'traite')}>Traité</button>
-                        <button className="btn-secondary" onClick={() => handleDeleteContact(m.id)}>Supprimer</button>
+                        <strong>{m.nom_complet || 'Sans nom'}</strong>
+                      </td>
+                      <td>
+                        <a href={`mailto:${m.email}`}>{m.email}</a>
+                      </td>
+                      <td>{m.sujet || '—'}</td>
+                      <td>
+                        <span className={`admin-messages-status ${statusClass(m.statut)}`}>
+                          {m.statut || 'nouveau'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="admin-messages-actions">
+                          {CONTACT_STATUSES.map((statut) => (
+                            <button
+                              key={statut}
+                              type="button"
+                              className="btn-secondary"
+                              onClick={() => handleContactStatus(m.id, statut)}
+                            >
+                              {statut === 'lu' ? 'Marquer lu' : statut === 'traite' ? 'Traiter' : 'Nouveau'}
+                            </button>
+                          ))}
+                          <button type="button" className="admin-messages-danger" onClick={() => handleDeleteContact(m.id)}>
+                            Supprimer
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
-          </div>
+          </section>
 
-          <div className="card">
-            <h2 style={{ marginBottom: '1rem' }}>Demandes revendeurs</h2>
-            {demandes.length === 0 ? (
-              <div>Aucune demande revendeur.</div>
+          <section className="admin-messages-card">
+            <div className="admin-messages-card-head">
+              <h2>Demandes revendeurs</h2>
+              <span className="admin-messages-counter">{filteredDemandes.length}</span>
+            </div>
+
+            <div className="admin-messages-filters">
+              <input
+                placeholder="Rechercher (entreprise, email, pays...)"
+                value={demandeSearch}
+                onChange={(e) => setDemandeSearch(e.target.value)}
+              />
+              <select
+                value={demandeStatusFilter}
+                onChange={(e) => setDemandeStatusFilter(e.target.value)}
+              >
+                <option value="all">Tous les statuts</option>
+                {DEMANDE_STATUSES.map((status) => (
+                  <option key={status} value={status}>{status}</option>
+                ))}
+              </select>
+            </div>
+
+            {filteredDemandes.length === 0 ? (
+              <div className="admin-messages-empty">Aucune demande revendeur.</div>
             ) : (
-              <table>
+              <div className="admin-messages-table-wrap">
+              <table className="admin-messages-table">
                 <thead>
                   <tr>
                     <th>ID</th>
@@ -126,24 +252,42 @@ export default function Messages() {
                   </tr>
                 </thead>
                 <tbody>
-                  {demandes.map((d) => (
+                  {filteredDemandes.map((d) => (
                     <tr key={d.id}>
-                      <td>{d.id}</td>
-                      <td>{d.nom_entreprise}</td>
-                      <td>{d.email_professionnel}</td>
-                      <td>{d.pays}</td>
-                      <td>{d.statut || 'nouveau'}</td>
+                      <td>#{d.id}</td>
                       <td>
-                        <button className="btn-secondary" onClick={() => handleDemandeStatus(d.id, 'en_cours')}>En cours</button>
-                        <button className="btn-secondary" onClick={() => handleDemandeStatus(d.id, 'valide')}>Valider</button>
-                        <button className="btn-secondary" onClick={() => handleDemandeStatus(d.id, 'rejete')}>Rejeter</button>
+                        <strong>{d.nom_entreprise || '—'}</strong>
+                      </td>
+                      <td>
+                        <a href={`mailto:${d.email_professionnel}`}>{d.email_professionnel || '—'}</a>
+                      </td>
+                      <td>{d.pays}</td>
+                      <td>
+                        <span className={`admin-messages-status ${statusClass(d.statut)}`}>
+                          {d.statut || 'nouveau'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="admin-messages-actions">
+                          {DEMANDE_STATUSES.map((statut) => (
+                            <button
+                              key={statut}
+                              type="button"
+                              className="btn-secondary"
+                              onClick={() => handleDemandeStatus(d.id, statut)}
+                            >
+                              {statut === 'en_cours' ? 'En cours' : statut === 'valide' ? 'Valider' : statut === 'rejete' ? 'Rejeter' : 'Nouveau'}
+                            </button>
+                          ))}
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
-          </div>
+          </section>
         </>
       )}
     </div>

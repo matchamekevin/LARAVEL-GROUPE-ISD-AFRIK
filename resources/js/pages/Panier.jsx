@@ -1,0 +1,99 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  clearCart,
+  getCartItems,
+  removeFromCart,
+  setCartItemQuantity,
+  subscribeStoreUpdates,
+} from "../utils/shopStorage";
+
+function formatPrice(value) {
+  return `${Number(value || 0).toLocaleString("fr-FR")} FCFA`;
+}
+
+export default function Panier() {
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    const refresh = () => setItems(getCartItems());
+    refresh();
+    return subscribeStoreUpdates(refresh);
+  }, []);
+
+  const summary = useMemo(() => {
+    const totalQty = items.reduce((sum, item) => sum + Number(item.quantite || 0), 0);
+    const totalAmount = items.reduce((sum, item) => {
+      const unit = Number(item.prix_promo || item.prix || 0);
+      return sum + unit * Number(item.quantite || 0);
+    }, 0);
+
+    return { totalQty, totalAmount };
+  }, [items]);
+
+  return (
+    <section style={{ maxWidth: "1100px", margin: "120px auto 40px", padding: "0 16px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+        <h1 style={{ margin: 0, color: "#172243" }}>Panier</h1>
+        <span style={{ color: "#64748b", fontWeight: 600 }}>{summary.totalQty} article(s)</span>
+      </div>
+
+      {items.length === 0 ? (
+        <div style={{ background: "#fff", borderRadius: "12px", padding: "24px", border: "1px solid #e2e8f0" }}>
+          <p style={{ margin: 0, color: "#64748b" }}>Votre panier est vide.</p>
+          <Link to="/produits" style={{ display: "inline-block", marginTop: "12px", color: "#1d4ed8", fontWeight: 700 }}>
+            Continuer vos achats
+          </Link>
+        </div>
+      ) : (
+        <>
+          <div style={{ display: "grid", gap: "12px" }}>
+            {items.map((item) => {
+              const unitPrice = Number(item.prix_promo || item.prix || 0);
+              const quantity = Number(item.quantite || 1);
+
+              return (
+                <article key={item.id_produit} style={{ display: "grid", gridTemplateColumns: "84px 1fr auto", gap: "12px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "12px" }}>
+                  <img src={item.image_url || "/placeholder.webp"} alt={item.titre} style={{ width: "84px", height: "84px", objectFit: "cover", borderRadius: "10px" }} />
+
+                  <div>
+                    <h3 style={{ margin: "0 0 6px", color: "#172243", fontSize: "1rem" }}>{item.titre}</h3>
+                    <p style={{ margin: "0 0 6px", color: "#64748b", fontSize: "0.9rem" }}>Prix unitaire: {formatPrice(unitPrice)}</p>
+                    <p style={{ margin: 0, color: "#0f172a", fontWeight: 700 }}>Sous-total: {formatPrice(unitPrice * quantity)}</p>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "flex-end", justifyContent: "center" }}>
+                    <div style={{ display: "inline-flex", alignItems: "center", border: "1px solid #cbd5e1", borderRadius: "8px" }}>
+                      <button type="button" onClick={() => setCartItemQuantity(item.id_produit, quantity - 1)} style={{ border: "none", background: "transparent", width: "32px", height: "32px", cursor: "pointer" }}>-</button>
+                      <span style={{ minWidth: "28px", textAlign: "center", fontWeight: 700 }}>{quantity}</span>
+                      <button type="button" onClick={() => setCartItemQuantity(item.id_produit, quantity + 1)} style={{ border: "none", background: "transparent", width: "32px", height: "32px", cursor: "pointer" }}>+</button>
+                    </div>
+                    <button type="button" onClick={() => removeFromCart(item.id_produit)} style={{ border: "none", background: "transparent", color: "#dc2626", cursor: "pointer", fontWeight: 700 }}>
+                      Retirer
+                    </button>
+                    <Link to={`/produits/${item.id_produit}`} style={{ color: "#1d4ed8", fontWeight: 600 }}>Voir</Link>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          <div style={{ marginTop: "16px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <p style={{ margin: 0, color: "#64748b" }}>Total panier</p>
+              <p style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800, color: "#172243" }}>{formatPrice(summary.totalAmount)}</p>
+            </div>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button type="button" onClick={clearCart} style={{ border: "1px solid #cbd5e1", background: "#fff", borderRadius: "8px", padding: "8px 12px", cursor: "pointer", fontWeight: 700 }}>
+                Vider le panier
+              </button>
+              <Link to="/produits" style={{ textDecoration: "none", borderRadius: "8px", padding: "8px 12px", background: "#172243", color: "#fff", fontWeight: 700 }}>
+                Continuer vos achats
+              </Link>
+            </div>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}

@@ -414,6 +414,13 @@
   color: var(--pp-primary);
 }
 
+.pp-icon-btn--fav.is-active {
+  opacity: 1;
+  transform: translateY(0);
+  color: #dc2626;
+  background: #fff;
+}
+
 .pp-body {
   flex: 1;
   display: flex;
