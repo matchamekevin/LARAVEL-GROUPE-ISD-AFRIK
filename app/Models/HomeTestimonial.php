@@ -40,6 +40,10 @@ class HomeTestimonial extends Model
             return $this->avatar_path;
         }
 
+        if (!Storage::disk('public')->exists($this->avatar_path)) {
+            return null;
+        }
+
         return Storage::disk('public')->url($this->avatar_path);
     }
 }

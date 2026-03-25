@@ -29,7 +29,7 @@ function RedirectIfLogin() {
 
   return null;
 }
-import { clearAdminToken, logout, me } from './api';
+import { clearAdminToken, hasAdminToken, logout, me } from './api';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -47,6 +47,15 @@ export default function App() {
     window.addEventListener('admin-session-invalidated', handleSessionInvalidated);
 
     let mounted = true;
+    if (!hasAdminToken()) {
+      setUser(null);
+      setLoading(false);
+      window.removeEventListener('admin-session-invalidated', handleSessionInvalidated);
+      return () => {
+        mounted = false;
+      };
+    }
+
     me()
       .then(res => {
         if (!mounted) return;

@@ -64,6 +64,10 @@ class UserFactory extends Factory
             $data['uuid'] = (string) Str::uuid();
         }
 
+        if (Schema::hasColumn('utilisateurs', 'email_verified_at')) {
+            $data['email_verified_at'] = now();
+        }
+
         return $data;
     }
 
@@ -72,7 +76,12 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
-        // No-op: la table utilisateurs ne porte pas le champ email_verified_at.
-        return $this->state(fn (array $attributes) => []);
+        if (!Schema::hasColumn('utilisateurs', 'email_verified_at')) {
+            return $this->state(fn (array $attributes) => []);
+        }
+
+        return $this->state(fn (array $attributes) => [
+            'email_verified_at' => null,
+        ]);
     }
 }

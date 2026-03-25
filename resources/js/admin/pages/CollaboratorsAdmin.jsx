@@ -6,6 +6,7 @@ import {
   deleteHomeCollaborator,
 } from '../api';
 import Loader from '../components/Loader';
+import { pickDisplayMediaUrl } from '../../utils/mediaUrl';
 import '../styles/admin-shared.css';
 import './collaborators.css';
 
@@ -26,7 +27,7 @@ export default function CollaboratorsAdmin() {
   const [form, setForm] = useState(INITIAL_FORM);
 
   function imageSrc(item) {
-    return item?.image_url || item?.image_path || '';
+    return pickDisplayMediaUrl([item?.image_url, item?.image_path], '');
   }
 
   async function loadData() {

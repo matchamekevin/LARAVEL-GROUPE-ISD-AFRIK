@@ -6,6 +6,7 @@ import {
   deleteHomeTestimonial,
 } from '../api';
 import Loader from '../components/Loader';
+import { pickDisplayMediaUrl } from '../../utils/mediaUrl';
 import '../styles/admin-shared.css';
 import './testimonials.css';
 
@@ -29,7 +30,7 @@ export default function TestimonialsAdmin() {
   const [form, setForm] = useState(INITIAL_FORM);
 
   function avatarSrc(item) {
-    return item?.avatar_url || item?.avatar_path || '';
+    return pickDisplayMediaUrl([item?.avatar_url, item?.avatar_path], '');
   }
 
   async function loadData() {

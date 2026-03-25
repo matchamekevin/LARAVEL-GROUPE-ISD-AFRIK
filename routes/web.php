@@ -3,12 +3,18 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\ProfileController;
 
 // Note: removed forcing redirect of '/login' to admin login to allow front SPA login
 
 
 // Serve la SPA React à la racine
 Route::view('/', 'app');
+
+// Route de compatibilité Breeze/tests
+Route::get('/dashboard', function () {
+    return redirect('/');
+})->name('dashboard');
 
 // Endpoint de status pour vérification
 Route::get('/status', function () {
@@ -28,6 +34,13 @@ if (file_exists(__DIR__ . '/auth.php')) {
 Route::view('/admin', 'admin');
 Route::view('/admin/{any}', 'admin')->where('any', '.*');
 
+// Routes de compatibilité Breeze/profile (tests web)
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
 // Compatibilité ancienne URL temporaire
 Route::redirect('/admin-react', '/admin');
 Route::redirect('/admin-react/{any}', '/admin/{any}')->where('any', '.*');
@@ -38,19 +51,6 @@ Route::view('/{any}', 'app')->where('any', '.*');
 // Route de développement pour servir l'application React depuis Blade
 Route::view('/app', 'app');
 Route::view('/app/{any}', 'app')->where('any', '.*');
-
-Route::get('/reset-password/{token}', function (Request $request, string $token) {
-    $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
-    $email = $request->query('email');
-
-    $target = $frontendUrl . '/reset-password/' . $token;
-
-    if ($email) {
-        $target .= '?email=' . urlencode($email);
-    }
-
-    return redirect()->away($target);
-})->name('password.reset');
 
 // ✅ Route de test pour vérifier la session utilisateur
 Route::get('/test-user', function () {

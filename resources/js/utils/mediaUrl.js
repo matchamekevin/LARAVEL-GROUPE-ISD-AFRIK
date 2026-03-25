@@ -1,5 +1,24 @@
 import { getApiBase } from "./apiBase";
 
+const ABSOLUTE_URL_REGEX = /^https?:\/\//i;
+
+export function pickDisplayMediaUrl(candidates = [], fallback = null) {
+  const list = Array.isArray(candidates) ? candidates : [candidates];
+
+  for (const candidate of list) {
+    if (typeof candidate !== "string") continue;
+
+    const value = candidate.trim();
+    if (!value) continue;
+
+    if (ABSOLUTE_URL_REGEX.test(value) || value.startsWith("/")) {
+      return value;
+    }
+  }
+
+  return fallback;
+}
+
 export function resolveFormationImageUrl(rawUrl, apiBase = getApiBase()) {
   if (!rawUrl || typeof rawUrl !== "string") return null;
 
@@ -11,7 +30,7 @@ export function resolveFormationImageUrl(rawUrl, apiBase = getApiBase()) {
     trimmed = trimmed.replace(/^\/+/, "");
   }
 
-  if (/^https?:\/\//i.test(trimmed)) {
+  if (ABSOLUTE_URL_REGEX.test(trimmed)) {
       try {
         return encodeURI(trimmed);
       } catch (e) {

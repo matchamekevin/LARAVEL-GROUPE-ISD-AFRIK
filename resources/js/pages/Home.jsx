@@ -11,6 +11,7 @@ import { getHomeCollaborators } from "../services/HomeCollaboratorsService";
 import { getHomePartners } from "../services/HomePartnersService";
 import ProduitCard from "../components/ProduitCard";
 import usePageMeta from "../hooks/usePageMeta";
+import { pickDisplayMediaUrl } from "../utils/mediaUrl";
 import {
   HOME_MARKETING_SECTIONS,
   mapFeaturedProductCard,
@@ -236,7 +237,7 @@ export default function Home() {
           .map((item) => ({
             id: item.id,
             name: item.name || '',
-            img: item.image_url || item.image_path || '/images/collaborateur/col1.webp',
+            img: pickDisplayMediaUrl([item.image_url, item.image_path], '/images/collaborateur/col1.webp'),
             objectPosition: item.object_position || '',
           }))
           .filter((item) => item.name && item.img);
@@ -261,7 +262,7 @@ export default function Home() {
             company: item.company || '',
             text: item.text || '',
             rating: Math.max(1, Math.min(5, Number(item.rating || 5))),
-            avatar: item.avatar_url || item.avatar_path || '/images/avis/pia.webp',
+            avatar: pickDisplayMediaUrl([item.avatar_url, item.avatar_path], '/images/avis/pia.webp'),
           }))
           .filter((item) => item.name && item.text);
 
@@ -281,7 +282,7 @@ export default function Home() {
           .map((item) => ({
             id: item.id,
             name: item.name || '',
-            img: item.image_url || item.image_path || '/images/partenaire/pat1.webp',
+            img: pickDisplayMediaUrl([item.image_url, item.image_path], '/images/partenaire/pat1.webp'),
           }))
           .filter((item) => item.name && item.img);
 

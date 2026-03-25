@@ -101,6 +101,15 @@ class UtilisateurController extends Controller
             ->delete();
     }
 
+    private function dispatchTwoFactorCodeMail(Utilisateur $user, string $context = '2FA'): void
+    {
+        try {
+            SendTwoFactorCodeJob::dispatchAfterResponse($user);
+        } catch (\Throwable $e) {
+            Log::warning("Envoi OTP {$context} differe indisponible: " . $e->getMessage());
+        }
+    }
+
     private function buildAccessMailPayload(Utilisateur $before, Utilisateur $after): ?array
     {
         $roleBefore = $this->normalizeRoleValue($before->admin_role ?: $before->role);
@@ -219,11 +228,7 @@ class UtilisateurController extends Controller
         try {
             if ($user->two_factor_enabled) {
                 $user->generateTwoFactorCode();
-                try {
-                    Mail::to($user->email)->send(new TwoFactorCodeMail($user));
-                } catch (\Throwable $mailEx) {
-                    Log::warning('Envoi OTP inscription échoué: ' . $mailEx->getMessage());
-                }
+                $this->dispatchTwoFactorCodeMail($user, 'inscription');
             }
         } catch (\Throwable $e) {
             // Ne pas bloquer l'inscription si génération/ envoi OTP échoue
@@ -302,18 +307,9 @@ class UtilisateurController extends Controller
 
             // 🔐 Si 2FA est activé
             if ($user->two_factor_enabled) {
-
-
                 // Génération du code OTP
                 $user->generateTwoFactorCode();
-
-                // Envoyer l'email immédiatement (évite la dépendance au worker en dev)
-                try {
-                    Mail::to($user->email)->send(new TwoFactorCodeMail($user));
-                } catch (\Throwable $e) {
-                    // Ne pas interrompre la connexion si l'envoi échoue; loggons
-                    Log::error('Erreur envoi 2FA: ' . $e->getMessage());
-                }
+                $this->dispatchTwoFactorCodeMail($user, 'login');
 
                 $payload = [
                     'message'      => 'Code OTP généré',
@@ -444,12 +440,7 @@ class UtilisateurController extends Controller
             }
 
             $user->generateTwoFactorCode();
-
-            try {
-                Mail::to($user->email)->send(new TwoFactorCodeMail($user));
-            } catch (\Throwable $e) {
-                Log::error('Erreur envoi resend2FA: ' . $e->getMessage());
-            }
+            $this->dispatchTwoFactorCodeMail($user, 'resend');
 
             return response()->json(['message' => 'Nouveau code envoyé'], 200);
 

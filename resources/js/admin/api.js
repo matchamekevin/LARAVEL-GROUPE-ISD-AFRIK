@@ -20,6 +20,10 @@ function getAdminToken() {
   }
 }
 
+export function hasAdminToken() {
+  return Boolean(getAdminToken());
+}
+
 export function setAdminToken(token) {
   if (!token) return;
 
