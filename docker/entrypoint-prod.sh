@@ -16,7 +16,7 @@ mkdir -p /var/log/php-fpm /var/log/nginx /var/log/supervisor /var/run/nginx /var
 chown -R www-data:www-data /var/log /var/run || true
 
 # Crée les répertoires d'application nécessaires et assure les permissions
-mkdir -p storage bootstrap/cache public
+mkdir -p storage storage/app/public bootstrap/cache public
 chown -R www-data:www-data storage bootstrap/cache public || true
 
 # Rendre les dossiers de cache/writes tolérants pour les environnements de déploiement
@@ -25,6 +25,12 @@ chown -R www-data:www-data storage bootstrap/cache public || true
 mkdir -p storage/framework/views storage/logs
 chown -R www-data:www-data storage bootstrap/cache public storage/framework storage/logs || true
 chmod -R 0777 storage bootstrap/cache public storage/framework storage/logs || true
+
+# Expose les uploads Laravel via /storage en prod.
+# Sans ce lien symbolique, les URLs d'images uploadées retombent sur la SPA.
+if [ ! -L public/storage ] && [ ! -e public/storage ]; then
+	php artisan storage:link || true
+fi
 # Teste la configuration Nginx pour capturer les erreurs tôt
 echo "Testing nginx configuration..."
 if ! nginx -t 2>/tmp/nginx_test.err; then

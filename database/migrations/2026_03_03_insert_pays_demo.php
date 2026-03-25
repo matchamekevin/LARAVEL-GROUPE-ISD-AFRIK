@@ -11,17 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Insérer un pays par défaut si non existant
-        if (!DB::table('pays')->where('id_pays', 1)->exists()) {
-            DB::table('pays')->insert([
-                'id_pays' => 1,
+        // Seed idempotent basé sur code_pays (évite les IDs fixes).
+        DB::table('pays')->updateOrInsert(
+            ['code_pays' => '+228'],
+            [
                 'nom_pays' => 'Togo',
-                'code_pays' => '+228',
                 'devise_locale' => 'Franc CFA',
                 'langue_principale' => 'Français',
-                'created_at' => now(),
                 'updated_at' => now(),
-            ]);
+                'created_at' => now(),
+            ]
+        );
+
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement("SELECT setval(pg_get_serial_sequence('pays','id_pays'), COALESCE((SELECT MAX(id_pays) FROM pays), 1), true)");
         }
     }
 
@@ -30,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::table('pays')->where('id_pays', 1)->delete();
+        DB::table('pays')->where('code_pays', '+228')->delete();
     }
 };

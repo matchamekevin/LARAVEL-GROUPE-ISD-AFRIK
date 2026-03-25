@@ -7,8 +7,48 @@ export const HOME_MARKETING_SECTIONS = {
 
 const EXTERNAL_URL_REGEX = /^https?:\/\//i;
 
+function isAbsoluteMediaPath(path) {
+  return typeof path === "string" && (EXTERNAL_URL_REGEX.test(path) || path.startsWith("/"));
+}
+
+export function normalizeMarketingTarget(target, fallback = "/") {
+  const rawTarget = String(target || "").trim();
+  if (!rawTarget) return fallback;
+
+  if (typeof window === "undefined") {
+    if (EXTERNAL_URL_REGEX.test(rawTarget) || rawTarget.startsWith("/")) {
+      return rawTarget;
+    }
+
+    return `/${rawTarget.replace(/^\/+/, "")}`;
+  }
+
+  try {
+    const url = new URL(rawTarget, window.location.origin);
+    const isCurrentOrigin = url.origin === window.location.origin;
+    const isKnownLocalOrigin = ["http://127.0.0.1:8000", "http://localhost:8000"].includes(url.origin);
+
+    if (isCurrentOrigin || isKnownLocalOrigin) {
+      return `${url.pathname}${url.search}${url.hash}` || fallback;
+    }
+
+    return rawTarget;
+  } catch {
+    if (rawTarget.startsWith("/")) return rawTarget;
+    return `/${rawTarget.replace(/^\/+/, "")}`;
+  }
+}
+
 function resolveImage(item, fallbackImage) {
-  return item?.image_url || item?.image_path || fallbackImage;
+  if (isAbsoluteMediaPath(item?.image_url)) {
+    return item.image_url;
+  }
+
+  if (isAbsoluteMediaPath(item?.image_path)) {
+    return item.image_path;
+  }
+
+  return fallbackImage;
 }
 
 export function mapOfferCard(item) {
@@ -44,7 +84,7 @@ export function mapPromotionCard(item, fallbackImage = "/images/promotions/promo
 }
 
 export function openMarketingTarget(navigate, target, fallback = "/") {
-  const next = target || fallback;
+  const next = normalizeMarketingTarget(target, fallback);
   if (EXTERNAL_URL_REGEX.test(next)) {
     window.location.href = next;
     return;

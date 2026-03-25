@@ -31,7 +31,12 @@ export default function MarketingAdmin() {
   const [form, setForm] = useState(INITIAL_FORM);
 
   function cardImageSrc(card) {
-    return card?.image_url || card?.image_path || '';
+    if (card?.image_url) return card.image_url;
+    if (/^https?:\/\//i.test(card?.image_path || '') || String(card?.image_path || '').startsWith('/')) {
+      return card.image_path;
+    }
+
+    return '';
   }
 
   async function loadData() {

@@ -160,7 +160,7 @@ export default function Orders() {
                                   {sourceLabel(item.source)}{item.categorie ? ` · ${item.categorie}` : ''}
                                 </div>
                                 <div className="admin-order-item-quantity">
-                                  Qte {item.quantite ?? 0} -> {formatAmount(item.prix_unitaire)} FCFA
+                                  Qte {item.quantite ?? 0}{' -> '}{formatAmount(item.prix_unitaire)} FCFA
                                 </div>
                               </div>
                             ))

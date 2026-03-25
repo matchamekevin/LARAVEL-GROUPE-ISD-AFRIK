@@ -10,6 +10,14 @@ return new class extends Migration {
         $now = now();
         $idPays = 1;
 
+        // Sur PostgreSQL, certains seeds/migrations peuvent insérer des IDs explicites.
+        // On resynchronise les séquences pour éviter les doublons de clé primaire.
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement("SELECT setval(pg_get_serial_sequence('categories_produits','id_categorie'), COALESCE((SELECT MAX(id_categorie) FROM categories_produits), 1), true)");
+            DB::statement("SELECT setval(pg_get_serial_sequence('produits','id_produit'), COALESCE((SELECT MAX(id_produit) FROM produits), 1), true)");
+            DB::statement("SELECT setval(pg_get_serial_sequence('images','id_image'), COALESCE((SELECT MAX(id_image) FROM images), 1), true)");
+        }
+
         $categories = [
             [
                 'nom' => 'Informatique',

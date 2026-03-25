@@ -6,7 +6,7 @@ import {
   deleteHomeMarketingCard,
 } from '../api';
 import Loader from '../components/Loader';
-import { HOME_MARKETING_SECTIONS } from '../../utils/homeMarketingCards';
+import { HOME_MARKETING_SECTIONS, normalizeMarketingTarget } from '../../utils/homeMarketingCards';
 import '../styles/admin-shared.css';
 import './promotions.css';
 
@@ -34,12 +34,7 @@ const INITIAL_FORM = {
 };
 
 function getPreviewHref(targetUrl) {
-  if (!targetUrl) return '#';
-  if (/^https?:\/\//i.test(targetUrl) || targetUrl.startsWith('/')) {
-    return targetUrl;
-  }
-
-  return `/${targetUrl}`;
+  return normalizeMarketingTarget(targetUrl, '#');
 }
 
 export default function PromotionsAdmin() {
@@ -50,7 +45,12 @@ export default function PromotionsAdmin() {
   const [form, setForm] = useState(INITIAL_FORM);
 
   function getCardImageSrc(card) {
-    return card?.image_url || card?.image_path || '';
+    if (card?.image_url) return card.image_url;
+    if (/^https?:\/\//i.test(card?.image_path || '') || String(card?.image_path || '').startsWith('/')) {
+      return card.image_path;
+    }
+
+    return '';
   }
 
   async function loadData() {
