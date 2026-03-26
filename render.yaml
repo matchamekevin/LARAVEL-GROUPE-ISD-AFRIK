@@ -20,21 +20,21 @@ services:
         value: https://laravel-groupe-isd-afrik.onrender.com
       - key: VITE_API_BASE
         value: https://laravel-groupe-isd-afrik.onrender.com
-      # Mail configuration - remplacez par vos valeurs de provider (Mailgun/SendGrid/Gmail App Password)
+      # Mail configuration (production): Brevo SMTP
       - key: MAIL_MAILER
         value: smtp
       - key: MAIL_HOST
-        value: smtp.mailgun.org
+        value: smtp-relay.brevo.com
       - key: MAIL_PORT
         value: '587'
       - key: MAIL_USERNAME
-        value: 'postmaster@your-mailgun-domain'
+        value: '91a8ac001@smtp-brevo.com'
       - key: MAIL_PASSWORD
-        value: 'REPLACE_WITH_SMTP_PASSWORD'
+        value: 'REPLACE_WITH_BREVO_SMTP_KEY'
       - key: MAIL_ENCRYPTION
         value: tls
       - key: MAIL_FROM_ADDRESS
-        value: no-reply@isd-afrik.com
+        value: no-reply@your-domain.com
       - key: MAIL_FROM_NAME
         value: "ISD Afrik"
       - key: APP_KEY_SET
@@ -109,12 +109,12 @@ services:
       - key: MAIL_MAILER
         value: smtp
       - key: MAIL_HOST
-        value: smtp.mailgun.org
+        value: smtp-relay.brevo.com
       - key: MAIL_PORT
         value: '587'
       - key: MAIL_USERNAME
-        value: 'postmaster@your-mailgun-domain'
+        value: '91a8ac001@smtp-brevo.com'
       - key: MAIL_PASSWORD
-        value: 'REPLACE_WITH_SMTP_PASSWORD'
+        value: 'REPLACE_WITH_BREVO_SMTP_KEY'
       - key: MAIL_ENCRYPTION
         value: tls
