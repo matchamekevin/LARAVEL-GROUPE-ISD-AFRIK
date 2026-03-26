@@ -14,11 +14,31 @@ services:
       - key: APP_DEBUG
         value: 'false'
       - key: APP_KEY
-        value: ''
+        # Remplacez ceci par la valeur sécurisée de l'APP_KEY en production
+        value: 'base64:REPLACE_WITH_YOUR_APP_KEY'
       - key: APP_URL
         value: https://laravel-groupe-isd-afrik.onrender.com
       - key: VITE_API_BASE
         value: https://laravel-groupe-isd-afrik.onrender.com
+      # Mail configuration - remplacez par vos valeurs de provider (Mailgun/SendGrid/Gmail App Password)
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        value: smtp.mailgun.org
+      - key: MAIL_PORT
+        value: '587'
+      - key: MAIL_USERNAME
+        value: 'postmaster@your-mailgun-domain'
+      - key: MAIL_PASSWORD
+        value: 'REPLACE_WITH_SMTP_PASSWORD'
+      - key: MAIL_ENCRYPTION
+        value: tls
+      - key: MAIL_FROM_ADDRESS
+        value: no-reply@isd-afrik.com
+      - key: MAIL_FROM_NAME
+        value: "ISD Afrik"
+      - key: APP_KEY_SET
+        value: 'true'
       - key: CORS_ALLOWED_ORIGINS
         value: https://laravel-groupe-isd-afrik.onrender.com
       - key: SANCTUM_STATEFUL_DOMAINS
@@ -65,3 +85,36 @@ services:
         value: https://laravel-groupe-isd-afrik.onrender.com
       - key: NODE_ENV
         value: production
+
+  # Worker service to process queued jobs (emails, notifications)
+  - type: worker
+    name: isd-afrik-worker
+    env: docker
+    plan: free
+    repo: https://github.com/your-username/your-repo
+    branch: main
+    dockerfilePath: Dockerfile.prod
+    startCommand: php artisan queue:work --sleep=3 --tries=3 --timeout=60
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: 'false'
+      - key: APP_KEY
+        value: 'base64:REPLACE_WITH_YOUR_APP_KEY'
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: VITE_API_BASE
+        value: https://laravel-groupe-isd-afrik.onrender.com
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        value: smtp.mailgun.org
+      - key: MAIL_PORT
+        value: '587'
+      - key: MAIL_USERNAME
+        value: 'postmaster@your-mailgun-domain'
+      - key: MAIL_PASSWORD
+        value: 'REPLACE_WITH_SMTP_PASSWORD'
+      - key: MAIL_ENCRYPTION
+        value: tls

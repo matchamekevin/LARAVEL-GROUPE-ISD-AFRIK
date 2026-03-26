@@ -1,39 +1,17 @@
 import axios from "axios";
+import { getApiBase } from "./utils/apiBase";
 
-const getBaseUrl = () => {
-  // Prioritise the older `VITE_API_BASE` (used in some builds), then the newer `VITE_API_BASE_URL`.
-  if (import.meta.env.VITE_API_BASE) {
-    const envBase = import.meta.env.VITE_API_BASE.replace(/\/$/, '');
-    if (typeof window !== "undefined") {
-      const hostIsLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-      const envLooksLocal = /localhost|127\.0\.0\.1/i.test(envBase);
-      if (!envLooksLocal || hostIsLocal) {
-        return envBase + '/api';
-      }
-    } else {
-      return envBase + '/api';
-    }
-  }
+function normalizeApiBase(raw) {
+  if (!raw) return '';
+  return String(raw).replace(/\/$/, '');
+}
 
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '');
-  }
-
-  if (typeof window !== "undefined") {
-    const { protocol, hostname, port } = window.location;
-
-    if (["localhost", "127.0.0.1"].includes(hostname) && port && port !== "8000") {
-      return `${protocol}//${hostname}:8000/api`;
-    }
-
-    return `${window.location.origin}/api`;
-  }
-
-  return (typeof window !== "undefined" ? `${window.location.origin}/api` : "/api");
-};
+const apiBase = normalizeApiBase(getApiBase());
+const computedBase = apiBase ? `${apiBase.replace(/\/$/, '')}/api` : '/api';
 
 const api = axios.create({
-  baseURL: getBaseUrl(),
+  baseURL: computedBase,
+  timeout: 15000, // 15s timeout to avoid hanging requests in prod
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -50,5 +28,19 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    try {
+      const cfg = err?.config || {};
+      const url = cfg.url || cfg.baseURL || 'unknown';
+      console.error('API request failed', { url, message: err.message, code: err.code, status: err?.response?.status });
+    } catch (e) {
+      // ignore logging errors
+    }
+    return Promise.reject(err);
+  }
+);
 
 export default api;
