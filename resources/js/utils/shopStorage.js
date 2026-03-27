@@ -77,16 +77,18 @@ function readArray(prefix, scope) {
   return Array.isArray(parsed) ? parsed : [];
 }
 
-function writeArray(prefix, scope, data) {
+function writeArray(prefix, scope, data, shouldNotify = true) {
   const key = buildKey(prefix, scope);
   localStorage.setItem(key, safeStringify(data));
-  notifyStoreUpdated();
+  if (shouldNotify) {
+    notifyStoreUpdated();
+  }
 }
 
 function mergeGuestDataForUser(userId) {
   const markerKey = `${MERGE_MARKER_PREFIX}:${userId}`;
   if (localStorage.getItem(markerKey)) {
-    return;
+    return false;
   }
 
   const guestScope = `guest:${getGuestId()}`;
@@ -98,7 +100,7 @@ function mergeGuestDataForUser(userId) {
   [...userFavorites, ...guestFavorites].forEach((item) => {
     favoriteMap.set(Number(item.id_produit), item);
   });
-  writeArray(FAVORITES_KEY_PREFIX, userScope, Array.from(favoriteMap.values()));
+  writeArray(FAVORITES_KEY_PREFIX, userScope, Array.from(favoriteMap.values()), false);
 
   const guestCart = readArray(CART_KEY_PREFIX, guestScope);
   const userCart = readArray(CART_KEY_PREFIX, userScope);
@@ -113,11 +115,15 @@ function mergeGuestDataForUser(userId) {
       cartMap.set(Number(item.id_produit), { ...item });
     }
   });
-  writeArray(CART_KEY_PREFIX, userScope, Array.from(cartMap.values()));
+  writeArray(CART_KEY_PREFIX, userScope, Array.from(cartMap.values()), false);
 
   localStorage.removeItem(buildKey(FAVORITES_KEY_PREFIX, guestScope));
   localStorage.removeItem(buildKey(CART_KEY_PREFIX, guestScope));
   localStorage.setItem(markerKey, "1");
+
+  // Emit once after migration to avoid recursive update loops.
+  notifyStoreUpdated();
+  return true;
 }
 
 function ensureScopeReady() {

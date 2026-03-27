@@ -4,6 +4,45 @@ import { getCategories, getProduits } from "../services/ProduitService";
 import { isFavorite, subscribeStoreUpdates, toggleFavorite } from "../utils/shopStorage";
 import "../styles/produit.css";
 
+const flattenCategories = (items = [], depth = 0) =>
+  items.flatMap((item) => {
+    const children = item.children_recursive || item.children || [];
+    return [{ ...item, depth }, ...flattenCategories(children, depth + 1)];
+  });
+
+const getDescendantIds = (rootId, categories) => {
+  const byParent = categories.reduce((acc, item) => {
+    const key = item.parent_id == null ? "root" : String(item.parent_id);
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {});
+
+  const stack = [Number(rootId)];
+  const ids = [];
+  while (stack.length > 0) {
+    const currentId = stack.pop();
+    if (!currentId || ids.includes(currentId)) continue;
+    ids.push(currentId);
+    const children = byParent[String(currentId)] || [];
+    children.forEach((child) => stack.push(Number(child.id_categorie)));
+  }
+
+  return ids;
+};
+
+const isInBranch = (selectedId, branchRootId, categoriesById) => {
+  let current = categoriesById[Number(selectedId)] || null;
+
+  while (current) {
+    if (Number(current.id_categorie) === Number(branchRootId)) return true;
+    if (!current.parent_id) return false;
+    current = categoriesById[Number(current.parent_id)] || null;
+  }
+
+  return false;
+};
+
 const formatPrice = (value) => Number(value || 0).toLocaleString("fr-FR");
 
 const statusLabel = (statut) => {
@@ -139,6 +178,24 @@ export default function Produits() {
     tri: "recent",
   });
 
+  const categoriesById = useMemo(() => {
+    return categories.reduce((acc, item) => {
+      acc[Number(item.id_categorie)] = item;
+      return acc;
+    }, {});
+  }, [categories]);
+
+  const engineeringRoot = useMemo(() => {
+    return categories.find((item) => String(item.slug || "").toLowerCase() === "ingenierie") || null;
+  }, [categories]);
+
+  const engineeringFamilies = useMemo(() => {
+    if (!engineeringRoot) return [];
+    return categories
+      .filter((item) => Number(item.parent_id) === Number(engineeringRoot.id_categorie))
+      .sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
+  }, [categories, engineeringRoot]);
+
   const location = useLocation();
 
   useEffect(() => {
@@ -161,9 +218,9 @@ export default function Produits() {
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const res = await getCategories({ segment: "general" });
-        // L'API retourne un tableau direct; gérer les deux formats (data.data ou data)
-        setCategories(res.data?.data || res.data || []);
+        const res = await getCategories({ segment: "general", tree: 1 });
+        const tree = res.data?.data || res.data || [];
+        setCategories(flattenCategories(tree));
       } catch {
         setCategories([]);
       }
@@ -208,7 +265,7 @@ export default function Produits() {
 
     const uniq = Array.from(new Set(ids)).filter(Boolean);
     if (uniq.length === 1) {
-      setFiltres((prev) => ({ ...prev, id_categorie: String(uniq[0]) }));
+      setFiltres((prev) => ({ ...prev, id_categorie: Number(uniq[0]) }));
     } else if (uniq.length > 1) {
       // set as array of ids; loadProduits will join them into CSV
       setFiltres((prev) => ({ ...prev, id_categorie: uniq }));
@@ -253,7 +310,9 @@ export default function Produits() {
           if (Array.isArray(filtres.id_categorie)) {
             params.id_categorie = filtres.id_categorie.join(',');
           } else {
-            params.id_categorie = filtres.id_categorie;
+            const selectedId = Number(filtres.id_categorie);
+            const branchIds = getDescendantIds(selectedId, categories);
+            params.id_categorie = branchIds.join(',');
           }
         }
         if (filtres.statut !== "all") params.statut = filtres.statut;
@@ -331,14 +390,8 @@ export default function Produits() {
           Toutes
         </button>
 
-        {[
-          ['ingenierie', "Ingénierie"],
-          ['solutions-gestion-entreprise', "Solutions de gestion d'entreprise"],
-          ['drone-formation', 'Fourniture de drone & formation'],
-          ['fourniture-tpe', 'Fourniture de TPE'],
-        ].map(([slug, label]) => {
-          const cat = categories.find((c) => c.slug === slug);
-          const id = cat ? Number(cat.id_categorie) : null;
+        {engineeringFamilies.map((cat) => {
+          const id = Number(cat.id_categorie);
 
           const selected = filtres.id_categorie;
 
@@ -346,29 +399,21 @@ export default function Produits() {
           if (selected === 'all') {
             isActive = false;
           } else if (Array.isArray(selected)) {
-            isActive = id && selected.some((s) => Number(s) === id);
+            isActive = selected.some((s) => isInBranch(Number(s), id, categoriesById));
           } else {
-            const selNum = Number(selected);
-            if (!Number.isNaN(selNum) && id) {
-              if (selNum === id) {
-                isActive = true;
-              } else {
-                const selCat = categories.find((c) => Number(c.id_categorie) === selNum);
-                if (selCat && Number(selCat.parent_id) === id) isActive = true;
-              }
-            }
+            isActive = isInBranch(Number(selected), id, categoriesById);
           }
 
           return (
             <button
-              key={slug}
+              key={id}
               type="button"
               className={`pp-pill ${isActive ? 'is-active' : ''}`}
               onClick={() => { if (id) setFilter('id_categorie', id); }}
               aria-pressed={isActive}
-              title={cat ? cat.nom : label}
+              title={cat.nom}
             >
-              {cat ? cat.nom : label}
+              {cat.nom}
             </button>
           );
         })}

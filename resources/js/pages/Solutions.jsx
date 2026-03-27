@@ -15,19 +15,22 @@ export default function Solutions() {
             title: "Solutions de gestion d'entreprise",
             description: "ERP, CRM, achat, vente, stock et finance dans une plateforme unique et evolutive.",
             image: "/images/solutions/im1.webp",
-            points: ["Suivi des operations", "Tableaux de bord temps reel", "Workflows de validation"]
+            points: ["Suivi des operations", "Tableaux de bord temps reel", "Workflows de validation"],
+            link: "/produits?categories=ingenierie"
         },
         {
             title: "Solutions de securite electronique",
             description: "Videosurveillance IP, controle d'acces et protection des infrastructures.",
             image: "/images/solutions/im2.webp",
-            points: ["Protection des sites", "Supervision intelligente", "Securite operationnelle"]
+            points: ["Protection des sites", "Supervision intelligente", "Securite operationnelle"],
+            link: "/produits?categories=incendie,reseau-informatique,securite-informatique-base-de-donnees"
         },
         {
             title: "Solutions numeriques et digitales",
             description: "Applications et outils numeriques pour accelerer la transformation digitale.",
             image: "/images/solutions/im3.webp",
-            points: ["Applications metiers", "Plateformes digitales", "Integration technologique"]
+            points: ["Applications metiers", "Plateformes digitales", "Integration technologique"],
+            link: "/produits?categories=archivage-numerique,materiel-informatique,telecommunications,energie"
         }
     ];
 
@@ -57,6 +60,13 @@ export default function Solutions() {
                                         </li>
                                     ))}
                                 </ul>
+                                <button
+                                    type="button"
+                                    className="mt-4 inline-flex items-center justify-center px-4 py-2 rounded-lg bg-[#172243] text-white text-sm font-medium hover:opacity-95"
+                                    onClick={() => navigate(item.link)}
+                                >
+                                    Voir les produits liés
+                                </button>
                             </div>
                         </article>
                     ))}

@@ -35,6 +35,18 @@ export default function Ingenierie() {
         "Documentation technique et transfert de competence"
     ];
 
+    const famillesProduits = [
+        { label: "Drone", slug: "drone" },
+        { label: "TPE", slug: "tpe" },
+        { label: "Archivage numérique", slug: "archivage-numerique" },
+        { label: "Matériel informatique", slug: "materiel-informatique" },
+        { label: "Réseau informatique", slug: "reseau-informatique" },
+        { label: "Incendie", slug: "incendie" },
+        { label: "Énergie", slug: "energie" },
+        { label: "Télécommunications", slug: "telecommunications" },
+        { label: "Sécurité informatique et base de données", slug: "securite-informatique-base-de-donnees" },
+    ];
+
     return (
         <div className="ingenierie-page">
             <section className="ingenierie-hero">
@@ -70,6 +82,17 @@ export default function Ingenierie() {
                         {livrables.map((item) => (
                             <li key={item} className="deliverable-item">
                                 {item}
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+
+                <section className="ingenierie-deliverables">
+                    <h2 className="deliverables-title">Familles produits prises en charge</h2>
+                    <ul className="deliverables-list">
+                        {famillesProduits.map((item) => (
+                            <li key={item.slug} className="deliverable-item">
+                                <Link to={`/produits?categories=${item.slug}`}>{item.label}</Link>
                             </li>
                         ))}
                     </ul>

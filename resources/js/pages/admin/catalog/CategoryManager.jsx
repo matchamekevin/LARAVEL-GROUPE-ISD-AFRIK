@@ -32,6 +32,7 @@ export default function CategoryManager({ segment, title, description }) {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [bootstrapping, setBootstrapping] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const flatItems = flattenCategoryTree(itemsTree);
@@ -139,6 +140,25 @@ export default function CategoryManager({ segment, title, description }) {
     }
   }
 
+  async function handleBootstrapIngenierie() {
+    if (!window.confirm("Initialiser / mettre à jour l'arborescence Ingénierie du catalogue général ?")) return;
+
+    setBootstrapping(true);
+    setMessage("");
+
+    try {
+      const response = await api.post("/admin/categories-produits/bootstrap-ingenierie");
+      const created = response.data?.data?.created ?? 0;
+      const updated = response.data?.data?.updated ?? 0;
+      setMessage(`Arborescence Ingénierie synchronisée (${created} créées, ${updated} mises à jour).`);
+      await load();
+    } catch (error) {
+      setMessage(error.response?.data?.message || "Erreur lors de l'initialisation de l'arborescence Ingénierie.");
+    } finally {
+      setBootstrapping(false);
+    }
+  }
+
   const availableParents = flatItems.filter((item) => {
     const itemId = item.id_categorie || item.id;
     const editingId = editing?.id_categorie || editing?.id;
@@ -179,6 +199,11 @@ export default function CategoryManager({ segment, title, description }) {
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
             />
+            {segment === "general" && (
+              <button className="admin-btn admin-btn--secondary" onClick={handleBootstrapIngenierie} disabled={bootstrapping}>
+                {bootstrapping ? "Initialisation..." : "Initialiser Ingénierie"}
+              </button>
+            )}
             <button className="admin-btn" onClick={openNew}>+ Nouvelle catégorie</button>
           </div>
         </div>

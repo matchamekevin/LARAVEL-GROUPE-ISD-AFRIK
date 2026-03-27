@@ -17,7 +17,9 @@
         "league/flysystem-aws-s3-v3": "^3.0",
         "livewire/livewire": "*",
         "predis/predis": "*",
-        "psr/log": "3.0"
+        "psr/log": "3.0",
+        "symfony/http-client": "^7.4",
+        "symfony/resend-mailer": "^7.4"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.6",

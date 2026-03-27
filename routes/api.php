@@ -91,6 +91,7 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     // 🗂️ CATÉGORIES (admin)
     Route::get('/admin/categories-produits',         [CategorieProduitController::class, 'index']);
     Route::get('/admin/categories-produits/{id}',    [CategorieProduitController::class, 'show'])->where('id', '[0-9]+');
+    Route::post('/admin/categories-produits/bootstrap-ingenierie', [CategorieProduitController::class, 'bootstrapIngenierie']);
     // 📦 PRODUITS (admin)
     Route::get('/admin/produits',                     [ProduitController::class, 'adminIndex']);
     Route::get('/admin/produits/{id}',                [ProduitController::class, 'show'])->where('id', '[0-9]+');
@@ -308,3 +309,10 @@ Route::get('/home-collaborators', [HomeCollaboratorController::class, 'index']);
 // 🤝 PARTENAIRES HOMEPAGE (public)
 // ======================================================
 Route::get('/home-partners', [HomePartnerController::class, 'index']);
+
+// ======================================================
+// 🔄 AUTO-REFRESH MANIFEST (admin only)
+// ======================================================
+Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
+    Route::post('/admin/refresh-manifest', App\Http\Controllers\ManifestController::class . '@refresh');
+});

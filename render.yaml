@@ -20,19 +20,11 @@ services:
         value: https://laravel-groupe-isd-afrik.onrender.com
       - key: VITE_API_BASE
         value: https://laravel-groupe-isd-afrik.onrender.com
-      # Mail configuration (production): Brevo SMTP
+      # Mail configuration (production): API provider (Resend)
       - key: MAIL_MAILER
-        value: smtp
-      - key: MAIL_HOST
-        value: smtp-relay.brevo.com
-      - key: MAIL_PORT
-        value: '587'
-      - key: MAIL_USERNAME
-        value: '91a8ac001@smtp-brevo.com'
-      - key: MAIL_PASSWORD
-        value: 'REPLACE_WITH_BREVO_SMTP_KEY'
-      - key: MAIL_ENCRYPTION
-        value: tls
+        value: resend
+      - key: RESEND_API_KEY
+        value: 'REPLACE_WITH_RESEND_API_KEY'
       - key: MAIL_FROM_ADDRESS
         value: no-reply@your-domain.com
       - key: MAIL_FROM_NAME
@@ -69,6 +61,10 @@ services:
         fromDatabase:
           name: isd-afrik-db
           property: password
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: RUN_MIGRATIONS
+        value: 'true'
 
   - type: postgres
     name: isd-afrik-db
@@ -86,35 +82,6 @@ services:
       - key: NODE_ENV
         value: production
 
-  # Worker service to process queued jobs (emails, notifications)
-  - type: worker
-    name: isd-afrik-worker
-    env: docker
-    plan: free
-    repo: https://github.com/your-username/your-repo
-    branch: main
-    dockerfilePath: Dockerfile.prod
-    startCommand: php artisan queue:work --sleep=3 --tries=3 --timeout=60
-    envVars:
-      - key: APP_ENV
-        value: production
-      - key: APP_DEBUG
-        value: 'false'
-      - key: APP_KEY
-        value: 'base64:REPLACE_WITH_YOUR_APP_KEY'
-      - key: DB_CONNECTION
-        value: pgsql
-      - key: VITE_API_BASE
-        value: https://laravel-groupe-isd-afrik.onrender.com
-      - key: MAIL_MAILER
-        value: smtp
-      - key: MAIL_HOST
-        value: smtp-relay.brevo.com
-      - key: MAIL_PORT
-        value: '587'
-      - key: MAIL_USERNAME
-        value: '91a8ac001@smtp-brevo.com'
-      - key: MAIL_PASSWORD
-        value: 'REPLACE_WITH_BREVO_SMTP_KEY'
-      - key: MAIL_ENCRYPTION
-        value: tls
+  # Worker service removed: using QUEUE_CONNECTION=sync on Web to avoid paid shell/worker
+      - key: RUN_MIGRATIONS
+        value: 'true'

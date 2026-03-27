@@ -171,6 +171,154 @@ class CategorieProduitController extends Controller
         ]);
     }
 
+    /**
+     * POST /api/admin/categories-produits/bootstrap-ingenierie (admin)
+     * Initialise / met à jour l'arborescence Ingénierie du catalogue général.
+     */
+    public function bootstrapIngenierie(): \Illuminate\Http\JsonResponse
+    {
+        $tree = [
+            [
+                'nom' => 'Ingénierie',
+                'slug' => 'ingenierie',
+                'description' => 'Famille principale des prestations et produits techniques.',
+                'children' => [
+                    [
+                        'nom' => 'Drone',
+                        'slug' => 'drone',
+                        'children' => [
+                            ['nom' => 'Drone de cartographie'],
+                            ['nom' => 'Drone de surveillance'],
+                            ['nom' => 'Drone agricole'],
+                        ],
+                    ],
+                    [
+                        'nom' => 'TPE',
+                        'slug' => 'tpe',
+                        'children' => [
+                            ['nom' => 'TPE mobile'],
+                            ['nom' => 'TPE fixe'],
+                            ['nom' => 'TPE Android'],
+                        ],
+                    ],
+                    [
+                        'nom' => 'Archivage numérique',
+                        'slug' => 'archivage-numerique',
+                        'children' => [
+                            ['nom' => 'Scanner documentaire'],
+                            ['nom' => 'Serveur de stockage'],
+                            ['nom' => 'Logiciel GED'],
+                        ],
+                    ],
+                    [
+                        'nom' => 'Matériel informatique',
+                        'slug' => 'materiel-informatique',
+                        'children' => [
+                            ['nom' => 'Ordinateur portable'],
+                            ['nom' => 'Ordinateur bureau'],
+                            ['nom' => 'Serveur rack'],
+                            ['nom' => 'Imprimante professionnelle'],
+                        ],
+                    ],
+                    [
+                        'nom' => 'Réseau informatique',
+                        'slug' => 'reseau-informatique',
+                        'children' => [
+                            ['nom' => 'Switch managé'],
+                            ['nom' => 'Routeur entreprise'],
+                            ['nom' => 'Point d\'accès Wi-Fi'],
+                            ['nom' => 'Firewall'],
+                        ],
+                    ],
+                    [
+                        'nom' => 'Incendie',
+                        'slug' => 'incendie',
+                        'children' => [
+                            ['nom' => 'Extincteur'],
+                            ['nom' => 'R.I.A'],
+                            ['nom' => 'Détecteur de fumée'],
+                            ['nom' => 'Détecteur d\'humidité'],
+                            ['nom' => 'Sirène'],
+                        ],
+                    ],
+                    [
+                        'nom' => 'Énergie',
+                        'slug' => 'energie',
+                        'children' => [
+                            ['nom' => 'Onduleur'],
+                            ['nom' => 'Groupe électrogène'],
+                            ['nom' => 'Panneau solaire'],
+                        ],
+                    ],
+                    [
+                        'nom' => 'Télécommunications',
+                        'slug' => 'telecommunications',
+                        'children' => [
+                            ['nom' => 'Autocom'],
+                            ['nom' => 'Téléphone IP'],
+                            ['nom' => 'Passerelle VoIP'],
+                            ['nom' => 'Antenne radio'],
+                        ],
+                    ],
+                    [
+                        'nom' => 'Sécurité informatique et base de données',
+                        'slug' => 'securite-informatique-base-de-donnees',
+                        'children' => [
+                            ['nom' => 'Antivirus entreprise'],
+                            ['nom' => 'Pare-feu applicatif'],
+                            ['nom' => 'Sauvegarde base de données'],
+                            ['nom' => 'Audit sécurité'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $created = 0;
+        $updated = 0;
+
+        $upsertNode = function (array $node, ?int $parentId = null, int $order = 0) use (&$upsertNode, &$created, &$updated) {
+            $slug = $node['slug'] ?? Str::slug($node['nom']);
+
+            $existing = CategorieProduit::query()->where('slug', $slug)->first();
+
+            $payload = [
+                'nom' => $node['nom'],
+                'slug' => $slug,
+                'description' => $node['description'] ?? null,
+                'segment' => 'general',
+                'parent_id' => $parentId,
+                'ordre' => $order,
+                'actif' => true,
+            ];
+
+            if ($existing) {
+                $existing->update($payload);
+                $category = $existing;
+                $updated++;
+            } else {
+                $category = CategorieProduit::query()->create($payload);
+                $created++;
+            }
+
+            foreach ($node['children'] ?? [] as $index => $child) {
+                $upsertNode($child, (int) $category->id_categorie, $index + 1);
+            }
+        };
+
+        foreach ($tree as $index => $rootNode) {
+            $upsertNode($rootNode, null, $index + 1);
+        }
+
+        return response()->json([
+            'message' => 'Arborescence Ingénierie initialisée avec succès.',
+            'data' => [
+                'created' => $created,
+                'updated' => $updated,
+            ],
+        ]);
+    }
+
     private function preparePayload(array $data, ?CategorieProduit $current = null): array
     {
         if (!empty($data['image_url'])) {

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ManifestController;
 
 // Note: removed forcing redirect of '/login' to admin login to allow front SPA login
 
@@ -23,6 +24,11 @@ Route::get('/status', function () {
         'status' => 'ok',
     ]);
 });
+
+// ===== AUTO-REFRESH MANIFEST =====
+// Endpoint pour obtenir la version actuelle (utilisé par le système d'auto-refresh)
+Route::get('/manifest.json', [ManifestController::class, 'show']);
+// =================================
 
 // Catch-all : laisser la SPA gérer les routes front (ex: /produits, /produits/123)
 // Charger les routes d'authentification (Breeze) avant le catch-all SPA
