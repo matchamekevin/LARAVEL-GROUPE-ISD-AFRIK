@@ -88,7 +88,7 @@ export default function Orders() {
     <div className="admin-orders-page">
       <div className="admin-orders-hero">
         <div className="admin-hero-content">
-          <h1>Gestion des Commandes</h1>
+          <h1 style={{ color: '#ffffff' }}>Gestion des Commandes</h1>
           <p>Suivez toutes vos commandes en cours, confirmees et livrees.</p>
         </div>
         {!loading && orders.length > 0 && (

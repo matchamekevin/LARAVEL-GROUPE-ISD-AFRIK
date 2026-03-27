@@ -141,19 +141,26 @@ export default function CategoryManager({ segment, title, description }) {
   }
 
   async function handleBootstrapIngenierie() {
-    if (!window.confirm("Initialiser / mettre à jour l'arborescence Ingénierie du catalogue général ?")) return;
+    if (!window.confirm("Reconstruire l'arborescence Produits (categories + sous-categories) et remplacer la structure existante ?")) return;
 
     setBootstrapping(true);
     setMessage("");
 
     try {
-      const response = await api.post("/admin/categories-produits/bootstrap-ingenierie");
+      const response = await api.post("/admin/categories-produits/bootstrap-ingenierie", {
+        replace: true,
+      });
+
+      const deletedProducts = response.data?.data?.deleted_products ?? 0;
+      const deletedCategories = response.data?.data?.deleted_categories ?? 0;
       const created = response.data?.data?.created ?? 0;
       const updated = response.data?.data?.updated ?? 0;
-      setMessage(`Arborescence Ingénierie synchronisée (${created} créées, ${updated} mises à jour).`);
+      setMessage(
+        `Structure Produits recreee (${deletedProducts} produits supprimes, ${deletedCategories} categories supprimees, ${created} categories creees, ${updated} categories mises a jour).`
+      );
       await load();
     } catch (error) {
-      setMessage(error.response?.data?.message || "Erreur lors de l'initialisation de l'arborescence Ingénierie.");
+      setMessage(error.response?.data?.message || "Erreur lors de l'initialisation de l'arborescence Produits.");
     } finally {
       setBootstrapping(false);
     }
@@ -190,7 +197,7 @@ export default function CategoryManager({ segment, title, description }) {
         <div className="admin-card-header admin-card-header--stack">
           <div>
             <h3>Arborescence</h3>
-            <p className="admin-muted">Gestion hiérarchique lisible, avec séparation nette entre catalogue général et GeoVision.</p>
+            <p className="admin-muted">Gestion hierarchique categorie -> sous-categorie avec separation nette entre catalogue general et GeoVision.</p>
           </div>
           <div className="admin-toolbar">
             <input
@@ -201,7 +208,7 @@ export default function CategoryManager({ segment, title, description }) {
             />
             {segment === "general" && (
               <button className="admin-btn admin-btn--secondary" onClick={handleBootstrapIngenierie} disabled={bootstrapping}>
-                {bootstrapping ? "Initialisation..." : "Initialiser Ingénierie"}
+                {bootstrapping ? "Reconstruction..." : "Recreer structure Produits"}
               </button>
             )}
             <button className="admin-btn" onClick={openNew}>+ Nouvelle catégorie</button>

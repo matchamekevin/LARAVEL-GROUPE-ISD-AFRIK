@@ -5,8 +5,8 @@ export default function CatalogueCategories() {
   return (
     <CategoryManager
       segment="general"
-      title="Catégories du catalogue général"
-      description="Arborescence du catalogue non GeoVision, gérée indépendamment avec la même logique de CRUD."
+      title="Categories du catalogue general"
+      description="Arborescence categorie -> sous-categorie des produits, geree independamment du catalogue GeoVision."
     />
   );
 }

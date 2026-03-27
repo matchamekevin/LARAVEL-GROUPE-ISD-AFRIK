@@ -92,7 +92,7 @@ export default function Login({ onLogin }){
           color: '#ffffff',
           textAlign: 'center',
         }}>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 0.5rem 0', letterSpacing: '-0.5px' }}>
+          <h1 style={{ color: '#ffffff', fontSize: '1.75rem', fontWeight: 800, margin: '0 0 0.5rem 0', letterSpacing: '-0.5px' }}>
             Admin Dashboard
           </h1>
           <p style={{ fontSize: '0.9rem', opacity: 0.9, margin: 0 }}>

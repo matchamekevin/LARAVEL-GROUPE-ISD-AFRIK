@@ -88,6 +88,10 @@ class ProduitService
             $query->where('marque', $filters['marque']);
         }
 
+        if (!empty($filters['modele'])) {
+            $query->where('modele', 'LIKE', '%' . $filters['modele'] . '%');
+        }
+
         if (!empty($filters['en_vedette'])) {
             $query->where('est_en_vedette', true);
         }

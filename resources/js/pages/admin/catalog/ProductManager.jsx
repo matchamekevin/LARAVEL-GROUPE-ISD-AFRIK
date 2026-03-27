@@ -6,6 +6,7 @@ import {
   readGeovisionSpecifications,
   resolveGeovisionImage,
 } from "../../../utils/geovision";
+import { PRODUCT_CATEGORY_SLUGS } from "../../../data/engineeringCatalog";
 
 const EMPTY_TEXT = "";
 const EMPTY_TECH_SPEC = { label: "", value: "" };
@@ -47,11 +48,21 @@ function removeWithFallback(items, index, fallbackItem) {
   return next.length > 0 ? next : [fallbackItem];
 }
 
+function normalizeSlug(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 function computeTaxonomy(categoryId, categoriesById) {
   const category = categoriesById[Number(categoryId)];
 
   if (!category) {
-    return { family: "", category: "", subcategory: "" };
+    return { domain: "", category: "", subcategory: "" };
   }
 
   const chain = [];
@@ -64,10 +75,14 @@ function computeTaxonomy(categoryId, categoriesById) {
     guard += 1;
   }
 
+  const domain = chain[0]?.nom || "";
+  const mainCategory = chain.length >= 2 ? chain[1]?.nom || "" : domain;
+  const subcategory = chain.length >= 3 ? chain[2]?.nom || chain[chain.length - 1]?.nom || "" : chain[chain.length - 1]?.nom || "";
+
   return {
-    family: chain[0]?.nom || "",
-    category: chain[chain.length - 1]?.nom || chain[0]?.nom || "",
-    subcategory: chain[chain.length - 1]?.nom || "",
+    domain,
+    category: mainCategory,
+    subcategory,
   };
 }
 
@@ -106,7 +121,8 @@ function toProductPayload(form, categoriesById, segment) {
         .map((item) => ({ label: item.label.trim(), value: item.value.trim() }))
         .filter((item) => item.label || item.value),
       taxonomy: {
-        family: taxonomy.family,
+        domain: taxonomy.domain,
+        family: taxonomy.category,
         category: taxonomy.category,
         subcategory: taxonomy.subcategory,
         series: form.series.trim() || form.modele.trim() || form.titre.trim(),
@@ -169,6 +185,7 @@ export default function ProductManager({
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [modeleFilter, setModeleFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearch = useDeferredValue(searchQuery);
   const [showForm, setShowForm] = useState(false);
@@ -177,9 +194,66 @@ export default function ProductManager({
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
+  const childrenByParentId = flatCategories.reduce((accumulator, category) => {
+    const parentId = category.parent_id;
+    if (!parentId) return accumulator;
+
+    if (!accumulator[parentId]) {
+      accumulator[parentId] = 0;
+    }
+
+    accumulator[parentId] += 1;
+    return accumulator;
+  }, {});
+
+  const flatCategoriesById = flatCategories.reduce((accumulator, item) => {
+    accumulator[item.id_categorie || item.id] = item;
+    return accumulator;
+  }, {});
+
+  const catalogueRoots = flatCategories.filter((item) => {
+    return PRODUCT_CATEGORY_SLUGS.includes(normalizeSlug(item.slug || item.nom));
+  });
+
+  const catalogueRootIdSet = new Set(
+    catalogueRoots.map((item) => Number(item.id_categorie || item.id)).filter(Boolean)
+  );
+
+  const isInsideManagedBranch = (category) => {
+    if (catalogueRootIdSet.size === 0) {
+      return Boolean(category.parent_id);
+    }
+
+    let current = category;
+    let guard = 0;
+
+    while (current && guard < 20) {
+      const currentId = Number(current.id_categorie || current.id);
+      if (catalogueRootIdSet.has(currentId)) {
+        return true;
+      }
+
+      if (!current.parent_id) {
+        break;
+      }
+
+      current = flatCategoriesById[current.parent_id] || null;
+      guard += 1;
+    }
+
+    return false;
+  };
+
   const selectableCategories = flatCategories.filter((category) => {
     if (segment === "geovision") {
       return Boolean(category.parent_id);
+    }
+
+    if (segment === "general") {
+      const categoryId = category.id_categorie || category.id;
+      const hasChildren = Boolean(childrenByParentId[categoryId]);
+
+      return !hasChildren && isInsideManagedBranch(category);
     }
 
     return true;
@@ -215,6 +289,7 @@ export default function ProductManager({
         params: {
           segment,
           ...(categoryFilter ? { id_categorie: categoryFilter } : {}),
+          ...(modeleFilter.trim() ? { modele: modeleFilter.trim() } : {}),
           ...(deferredSearch.trim() ? { q: deferredSearch.trim() } : {}),
         },
       });
@@ -235,7 +310,7 @@ export default function ProductManager({
 
   useEffect(() => {
     loadProducts();
-  }, [segment, categoryFilter, deferredSearch]);
+  }, [segment, categoryFilter, modeleFilter, deferredSearch]);
 
   useEffect(() => {
     if (showForm) {
@@ -388,6 +463,13 @@ export default function ProductManager({
               placeholder="Rechercher un produit précis..."
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
+            />
+
+            <input
+              className="admin-input admin-search"
+              placeholder="Filtrer par modele..."
+              value={modeleFilter}
+              onChange={(event) => setModeleFilter(event.target.value)}
             />
 
             {allowSync && (
@@ -546,14 +628,14 @@ export default function ProductManager({
               <div className="admin-form-section">
                 <div className="admin-form-section__head">
                   <h4>Catégorie et taxonomie</h4>
-                  <p className="admin-muted">La famille et la série sont pilotées par la catégorie choisie, sans champ JSON brut.</p>
+                  <p className="admin-muted">Le produit est rattache a une sous-categorie feuille (ex: switch manage, onduleur, detecteur de fumee). Le modele est saisi au niveau produit.</p>
                 </div>
 
                 <div className="admin-form-row">
                   <div>
                     <label>Catégorie *</label>
                     <select className="admin-input" required value={form.id_categorie} onChange={(event) => setForm({ ...form, id_categorie: event.target.value })}>
-                      <option value="">-- Choisir une catégorie --</option>
+                      <option value="">-- Choisir une sous-categorie produit --</option>
                       {selectableCategories.map((category) => {
                         const categoryId = category.id_categorie || category.id;
                         return (
@@ -581,9 +663,10 @@ export default function ProductManager({
                 </div>
 
                 <div className="admin-taxonomy-preview">
-                  <span><strong>Famille:</strong> {taxonomyPreview.family || "—"}</span>
-                  <span><strong>Catégorie:</strong> {taxonomyPreview.category || "—"}</span>
-                  <span><strong>Sous-type:</strong> {taxonomyPreview.subcategory || "—"}</span>
+                  <span><strong>Racine:</strong> {taxonomyPreview.domain || "—"}</span>
+                  <span><strong>Categorie:</strong> {taxonomyPreview.category || "—"}</span>
+                  <span><strong>Sous-categorie:</strong> {taxonomyPreview.subcategory || "—"}</span>
+                  <span><strong>Modele:</strong> {form.modele || "—"}</span>
                 </div>
               </div>
 

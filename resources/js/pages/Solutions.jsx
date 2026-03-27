@@ -1,6 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import usePageMeta from "../hooks/usePageMeta";
+import { ENGINEERING_DELIVERY_STEPS, ENGINEERING_FAMILIES } from "../data/engineeringCatalog";
+import "../styles/marketing-premium.css";
 
 
 export default function Solutions() {
@@ -12,42 +14,57 @@ export default function Solutions() {
 
     const solutions = [
         {
-            title: "Solutions de gestion d'entreprise",
-            description: "ERP, CRM, achat, vente, stock et finance dans une plateforme unique et evolutive.",
+            title: "Pole Ingenierie transactionnelle",
+            description: "Prestations autour des familles Drone et TPE pour la mise en place de solutions terrain avec typologies et modeles adaptes.",
             image: "/images/solutions/im1.webp",
-            points: ["Suivi des operations", "Tableaux de bord temps reel", "Workflows de validation"],
-            link: "/produits?categories=ingenierie"
+            points: ["Cadrage metier", "Selection type/modele", "Mise en service et formation"],
+            link: "/produits?categories=drone,tpe"
         },
         {
-            title: "Solutions de securite electronique",
-            description: "Videosurveillance IP, controle d'acces et protection des infrastructures.",
+            title: "Pole Infrastructures techniques",
+            description: "Conception, fourniture et deploiement des equipements d'archivage, materiel informatique, reseau, incendie, energie et telecommunications.",
             image: "/images/solutions/im2.webp",
-            points: ["Protection des sites", "Supervision intelligente", "Securite operationnelle"],
-            link: "/produits?categories=incendie,reseau-informatique,securite-informatique-base-de-donnees"
+            points: ["Ingenierie de conception", "Integration sur site", "Maintenance preventive"],
+            link: "/produits?categories=archivage-numerique,materiel-informatique,reseau-informatique,incendie,energie,telecommunications"
         },
         {
-            title: "Solutions numeriques et digitales",
-            description: "Applications et outils numeriques pour accelerer la transformation digitale.",
+            title: "Pole Cybersecurite et donnees",
+            description: "Protection des infrastructures et des bases de donnees avec des offres declinables par type et modele.",
             image: "/images/solutions/im3.webp",
-            points: ["Applications metiers", "Plateformes digitales", "Integration technologique"],
-            link: "/produits?categories=archivage-numerique,materiel-informatique,telecommunications,energie"
+            points: ["Audit securite", "Durcissement des plateformes", "Sauvegarde et continuite"],
+            link: "/produits?categories=securite-informatique-base-de-donnees"
         }
     ];
 
+    const famillesResume = ENGINEERING_FAMILIES.map((item) => ({
+        label: item.label,
+        slug: item.slug,
+        details: item.types.slice(0, 3),
+    }));
+
     return (
         <div className="bg-slate-50 py-12 premium-page">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <section className="text-center">
-                    <h1 className="text-3xl sm:text-4xl font-bold text-[#172243]">Solutions / Produits</h1>
-                    <p className="mt-4 text-slate-600 max-w-3xl mx-auto leading-relaxed">
-                        Le Groupe ISD AFRIK selectionne et propose des technologies fiables et innovantes
-                        pour repondre aux besoins des entreprises africaines.
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <section className="text-center premium-hero p-8 sm:p-12">
+                    <p className="uppercase tracking-[0.2em] text-xs text-slate-500">Solutions metier</p>
+                    <h1 className="mt-3 text-3xl sm:text-5xl font-black text-[#172243] premium-title">Prestations associees au catalogue produits</h1>
+                    <p className="mt-4 text-slate-600 max-w-4xl mx-auto leading-relaxed premium-subtitle">
+                        Les pages Solutions et Ingenierie sont des pages de prestations. Elles cadrent les familles
+                        de produits, les types et les modeles a deployer selon vos contraintes metier.
                     </p>
+                </section>
+
+                <section className="mt-10 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                    {ENGINEERING_DELIVERY_STEPS.map((step) => (
+                        <article key={step} className="rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-700 premium-card">
+                            {step}
+                        </article>
+                    ))}
                 </section>
 
                 <section className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
                     {solutions.map((item) => (
-                        <article key={item.title} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                        <article key={item.title} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm premium-card">
                             <img src={item.image} alt={item.title} className="w-full h-52 object-cover" />
                             <div className="p-5">
                                 <h2 className="text-lg font-semibold text-[#172243]">{item.title}</h2>
@@ -65,7 +82,7 @@ export default function Solutions() {
                                     className="mt-4 inline-flex items-center justify-center px-4 py-2 rounded-lg bg-[#172243] text-white text-sm font-medium hover:opacity-95"
                                     onClick={() => navigate(item.link)}
                                 >
-                                    Voir les produits liés
+                                    Voir les produits relies
                                 </button>
                             </div>
                         </article>
@@ -73,12 +90,27 @@ export default function Solutions() {
                 </section>
 
                 <section className="mt-10 bg-white border border-slate-200 rounded-xl p-6 sm:p-8">
-                    <h2 className="text-xl font-semibold text-[#172243]">Notre approche de deploiement</h2>
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-700">
-                        <p>1. Analyse des besoins et cadrage de la solution.</p>
-                        <p>2. Conception, parametrage et integration.</p>
-                        <p>3. Deploiement controle et verification qualite.</p>
-                        <p>4. Formation des equipes, support et maintenance.</p>
+                    <h2 className="text-xl font-semibold text-[#172243]">Familles couvertes par nos prestations</h2>
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {famillesResume.map((famille) => (
+                            <article key={famille.slug} className="rounded-xl border border-slate-200 bg-slate-50 p-4 premium-card">
+                                <div className="flex items-center justify-between gap-3">
+                                    <h3 className="font-semibold text-[#172243]">{famille.label}</h3>
+                                    <button
+                                        type="button"
+                                        className="text-xs font-semibold text-[#172243]"
+                                        onClick={() => navigate(`/produits?categories=${famille.slug}`)}
+                                    >
+                                        Voir
+                                    </button>
+                                </div>
+                                <ul className="mt-3 space-y-1 text-sm text-slate-600">
+                                    {famille.details.map((item) => (
+                                        <li key={`${famille.slug}-${item}`}>{item}</li>
+                                    ))}
+                                </ul>
+                            </article>
+                        ))}
                     </div>
                 </section>
 
@@ -95,7 +127,7 @@ export default function Solutions() {
                         onClick={() => navigate("/inscription")}
                         className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-amber-400 text-[#172243] font-semibold hover:bg-amber-300"
                     >
-                        Souscrire
+                        Demander un accompagnement
                     </button>
                 </section>
             </div>

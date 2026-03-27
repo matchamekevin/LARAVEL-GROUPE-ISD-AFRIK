@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, NavLink, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Products from './pages/Products';
@@ -154,7 +154,7 @@ export default function App() {
             </h2>
             <p style={{
               fontSize: '0.8rem',
-              color: '#9CA3AF',
+              color: '#ffffff',
               margin: 0,
               fontStyle: 'italic',
             }}>
@@ -195,342 +195,225 @@ export default function App() {
               padding: 0,
             }}>
               <li style={{marginBottom: '0.75rem'}}>
-                <Link to="/" style={{
+                <NavLink to="/" style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0.75rem 1rem',
-                  color: '#D1D5DB',
+                  color: isActive ? '#ffffff' : '#D1D5DB',
                   textDecoration: 'none',
                   borderRadius: '0.5rem',
                   transition: 'all 0.3s ease',
-                  borderLeft: '3px solid transparent',
+                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
                   fontSize: '0.95rem',
                   fontWeight: 500,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
-                  e.currentTarget.style.borderLeftColor = '#667eea';
-                  e.currentTarget.style.color = '#ffffff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderLeftColor = 'transparent';
-                  e.currentTarget.style.color = '#D1D5DB';
-                }}>
+                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+                })}>
                   <i className="fas fa-chart-line" style={{marginRight: '0.5rem'}}></i>Dashboard
-                </Link>
+                </NavLink>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
-                <Link to="/users" style={{
+                <NavLink to="/users" style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0.75rem 1rem',
-                  color: '#D1D5DB',
+                  color: isActive ? '#ffffff' : '#D1D5DB',
                   textDecoration: 'none',
                   borderRadius: '0.5rem',
                   transition: 'all 0.3s ease',
-                  borderLeft: '3px solid transparent',
+                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
                   fontSize: '0.95rem',
                   fontWeight: 500,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
-                  e.currentTarget.style.borderLeftColor = '#667eea';
-                  e.currentTarget.style.color = '#ffffff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderLeftColor = 'transparent';
-                  e.currentTarget.style.color = '#D1D5DB';
-                }}>
+                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+                })}>
                   <i className="fas fa-users" style={{marginRight: '0.5rem'}}></i>Utilisateurs
-                </Link>
+                </NavLink>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
-                <Link to="/products" style={{
+                <NavLink to="/products" style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0.75rem 1rem',
-                  color: '#D1D5DB',
+                  color: isActive ? '#ffffff' : '#D1D5DB',
                   textDecoration: 'none',
                   borderRadius: '0.5rem',
                   transition: 'all 0.3s ease',
-                  borderLeft: '3px solid transparent',
+                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
                   fontSize: '0.95rem',
                   fontWeight: 500,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
-                  e.currentTarget.style.borderLeftColor = '#667eea';
-                  e.currentTarget.style.color = '#ffffff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderLeftColor = 'transparent';
-                  e.currentTarget.style.color = '#D1D5DB';
-                }}>
+                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+                })}>
                   <i className="fas fa-box" style={{marginRight: '0.5rem'}}></i>Produits
-                </Link>
+                </NavLink>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
-                <Link to="/orders" style={{
+                <NavLink to="/orders" style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0.75rem 1rem',
-                  color: '#D1D5DB',
+                  color: isActive ? '#ffffff' : '#D1D5DB',
                   textDecoration: 'none',
                   borderRadius: '0.5rem',
                   transition: 'all 0.3s ease',
-                  borderLeft: '3px solid transparent',
+                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
                   fontSize: '0.95rem',
                   fontWeight: 500,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
-                  e.currentTarget.style.borderLeftColor = '#667eea';
-                  e.currentTarget.style.color = '#ffffff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderLeftColor = 'transparent';
-                  e.currentTarget.style.color = '#D1D5DB';
-                }}>
+                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+                })}>
                   <i className="fas fa-shopping-cart" style={{marginRight: '0.5rem'}}></i>Commandes
-                </Link>
+                </NavLink>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
-                <Link to="/formations" style={{
+                <NavLink to="/formations" style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0.75rem 1rem',
-                  color: '#D1D5DB',
+                  color: isActive ? '#ffffff' : '#D1D5DB',
                   textDecoration: 'none',
                   borderRadius: '0.5rem',
                   transition: 'all 0.3s ease',
-                  borderLeft: '3px solid transparent',
+                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
                   fontSize: '0.95rem',
                   fontWeight: 500,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
-                  e.currentTarget.style.borderLeftColor = '#667eea';
-                  e.currentTarget.style.color = '#ffffff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderLeftColor = 'transparent';
-                  e.currentTarget.style.color = '#D1D5DB';
-                }}>
+                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+                })}>
                   <i className="fas fa-graduation-cap" style={{marginRight: '0.5rem'}}></i>Formations
-                </Link>
+                </NavLink>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
-                <Link to="/messages" style={{
+                <NavLink to="/messages" style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0.75rem 1rem',
-                  color: '#D1D5DB',
+                  color: isActive ? '#ffffff' : '#D1D5DB',
                   textDecoration: 'none',
                   borderRadius: '0.5rem',
                   transition: 'all 0.3s ease',
-                  borderLeft: '3px solid transparent',
+                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
                   fontSize: '0.95rem',
                   fontWeight: 500,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
-                  e.currentTarget.style.borderLeftColor = '#667eea';
-                  e.currentTarget.style.color = '#ffffff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderLeftColor = 'transparent';
-                  e.currentTarget.style.color = '#D1D5DB';
-                }}>
+                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+                })}>
                   <i className="fas fa-envelope" style={{marginRight: '0.5rem'}}></i>Messages
-                </Link>
+                </NavLink>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
-                <Link to="/catalogue" style={{
+                <NavLink to="/catalogue" style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0.75rem 1rem',
-                  color: '#D1D5DB',
+                  color: isActive ? '#ffffff' : '#D1D5DB',
                   textDecoration: 'none',
                   borderRadius: '0.5rem',
                   transition: 'all 0.3s ease',
-                  borderLeft: '3px solid transparent',
+                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
                   fontSize: '0.95rem',
                   fontWeight: 500,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
-                  e.currentTarget.style.borderLeftColor = '#667eea';
-                  e.currentTarget.style.color = '#ffffff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderLeftColor = 'transparent';
-                  e.currentTarget.style.color = '#D1D5DB';
-                }}>
+                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+                })}>
                   <i className="fas fa-puzzle-piece" style={{marginRight: '0.5rem'}}></i>Catalogue
-                </Link>
+                </NavLink>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
-                <Link to="/promotions" style={{
+                <NavLink to="/promotions" style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0.75rem 1rem',
-                  color: '#D1D5DB',
+                  color: isActive ? '#ffffff' : '#D1D5DB',
                   textDecoration: 'none',
                   borderRadius: '0.5rem',
                   transition: 'all 0.3s ease',
-                  borderLeft: '3px solid transparent',
+                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
                   fontSize: '0.95rem',
                   fontWeight: 500,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
-                  e.currentTarget.style.borderLeftColor = '#667eea';
-                  e.currentTarget.style.color = '#ffffff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderLeftColor = 'transparent';
-                  e.currentTarget.style.color = '#D1D5DB';
-                }}>
+                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+                })}>
                   <i className="fas fa-images" style={{marginRight: '0.5rem'}}></i>Promotions
-                </Link>
+                </NavLink>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
-                <Link to="/marketing" style={{
+                <NavLink to="/marketing" style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0.75rem 1rem',
-                  color: '#D1D5DB',
+                  color: isActive ? '#ffffff' : '#D1D5DB',
                   textDecoration: 'none',
                   borderRadius: '0.5rem',
                   transition: 'all 0.3s ease',
-                  borderLeft: '3px solid transparent',
+                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
                   fontSize: '0.95rem',
                   fontWeight: 500,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
-                  e.currentTarget.style.borderLeftColor = '#667eea';
-                  e.currentTarget.style.color = '#ffffff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderLeftColor = 'transparent';
-                  e.currentTarget.style.color = '#D1D5DB';
-                }}>
+                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+                })}>
                   <i className="fas fa-bullhorn" style={{marginRight: '0.5rem'}}></i>Marketing Accueil
-                </Link>
+                </NavLink>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
-                <Link to="/testimonials" style={{
+                <NavLink to="/testimonials" style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0.75rem 1rem',
-                  color: '#D1D5DB',
+                  color: isActive ? '#ffffff' : '#D1D5DB',
                   textDecoration: 'none',
                   borderRadius: '0.5rem',
                   transition: 'all 0.3s ease',
-                  borderLeft: '3px solid transparent',
+                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
                   fontSize: '0.95rem',
                   fontWeight: 500,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
-                  e.currentTarget.style.borderLeftColor = '#667eea';
-                  e.currentTarget.style.color = '#ffffff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderLeftColor = 'transparent';
-                  e.currentTarget.style.color = '#D1D5DB';
-                }}>
+                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+                })}>
                   <i className="fas fa-comments" style={{marginRight: '0.5rem'}}></i>Avis Clients
-                </Link>
+                </NavLink>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
-                <Link to="/collaborators" style={{
+                <NavLink to="/collaborators" style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0.75rem 1rem',
-                  color: '#D1D5DB',
+                  color: isActive ? '#ffffff' : '#D1D5DB',
                   textDecoration: 'none',
                   borderRadius: '0.5rem',
                   transition: 'all 0.3s ease',
-                  borderLeft: '3px solid transparent',
+                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
                   fontSize: '0.95rem',
                   fontWeight: 500,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
-                  e.currentTarget.style.borderLeftColor = '#667eea';
-                  e.currentTarget.style.color = '#ffffff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderLeftColor = 'transparent';
-                  e.currentTarget.style.color = '#D1D5DB';
-                }}>
+                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+                })}>
                   <i className="fas fa-handshake" style={{marginRight: '0.5rem'}}></i>Collaborateurs
-                </Link>
+                </NavLink>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
-                <Link to="/partners" style={{
+                <NavLink to="/partners" style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0.75rem 1rem',
-                  color: '#D1D5DB',
+                  color: isActive ? '#ffffff' : '#D1D5DB',
                   textDecoration: 'none',
                   borderRadius: '0.5rem',
                   transition: 'all 0.3s ease',
-                  borderLeft: '3px solid transparent',
+                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
                   fontSize: '0.95rem',
                   fontWeight: 500,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
-                  e.currentTarget.style.borderLeftColor = '#667eea';
-                  e.currentTarget.style.color = '#ffffff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderLeftColor = 'transparent';
-                  e.currentTarget.style.color = '#D1D5DB';
-                }}>
+                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+                })}>
                   <i className="fas fa-building" style={{marginRight: '0.5rem'}}></i>Partenaires
-                </Link>
+                </NavLink>
               </li>
               <li style={{marginBottom: '0.75rem'}}>
-                <Link to="/settings" style={{
+                <NavLink to="/settings" style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0.75rem 1rem',
-                  color: '#D1D5DB',
+                  color: isActive ? '#ffffff' : '#D1D5DB',
                   textDecoration: 'none',
                   borderRadius: '0.5rem',
                   transition: 'all 0.3s ease',
-                  borderLeft: '3px solid transparent',
+                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
                   fontSize: '0.95rem',
                   fontWeight: 500,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
-                  e.currentTarget.style.borderLeftColor = '#667eea';
-                  e.currentTarget.style.color = '#ffffff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderLeftColor = 'transparent';
-                  e.currentTarget.style.color = '#D1D5DB';
-                }}>
+                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+                })}>
                   <i className="fas fa-gear" style={{marginRight: '0.5rem'}}></i>Paramètres
-                </Link>
+                </NavLink>
               </li>
             </ul>
           </nav>

@@ -13,7 +13,25 @@ const isProd = import.meta.env.PROD;
  */
 export const initServiceWorker = async () => {
   if (isDev) {
-    console.log('[AutoRefresh] Dev mode - Service Worker disabled');
+    try {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.unregister()));
+      }
+
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+          cacheNames
+            .filter((name) => name.startsWith('isd-afrik'))
+            .map((name) => caches.delete(name))
+        );
+      }
+    } catch (error) {
+      console.warn('[AutoRefresh] Dev cleanup failed:', error);
+    }
+
+    console.log('[AutoRefresh] Dev mode - Service Worker disabled and old caches cleared');
     return;
   }
 
@@ -110,6 +128,10 @@ export const initAutoRefresh = async () => {
 
   // Enregistrer Service Worker
   await initServiceWorker();
+
+  if (isDev) {
+    return;
+  }
 
   // Checker les updates
   checkServiceWorkerUpdates();

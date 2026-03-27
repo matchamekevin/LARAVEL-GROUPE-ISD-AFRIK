@@ -5,8 +5,8 @@ export default function CatalogueProduits() {
   return (
     <ProductManager
       segment="general"
-      title="Produits du catalogue général"
-      description="Espace dédié aux produits standards du site, séparé des références GeoVision pour éviter tout mélange métier."
+      title="Produits du catalogue general"
+      description="Gestion des produits par categorie -> sous-categorie -> modele, separee des references GeoVision."
     />
   );
 }

@@ -290,7 +290,7 @@ export default function Users() {
     <div className="admin-users-page">
       <div className="admin-users-hero">
         <div className="admin-hero-content">
-          <h1>👥 Gestion des Utilisateurs</h1>
+          <h1 style={{ color: '#ffffff' }}>👥 Gestion des Utilisateurs</h1>
           <p>
             Les rôles et accès sont pilotés depuis la base de données. Toute modification coupe les sessions du compte ciblé,
             et un email détaille ce qui a été retiré ainsi que ce qui lui reste.

@@ -62,6 +62,7 @@ class ProduitController extends Controller
             'include_descendants' => $request->boolean('include_descendants'),
             'statut'       => $statusFilter,
             'statuts'      => $statusList,
+            'modele'       => $request->query('modele'),
             'prix_min'     => $request->query('prix_min'),
             'prix_max'     => $request->query('prix_max'),
             'marque'       => $request->query('marque'),
@@ -249,6 +250,10 @@ class ProduitController extends Controller
                         ->orWhere('modele', 'LIKE', "%{$terme}%")
                         ->orWhere('slug', 'LIKE', "%{$terme}%");
                 });
+            })
+            ->when($request->filled('modele'), function ($query) use ($request) {
+                $modele = $request->query('modele');
+                $query->where('modele', 'LIKE', "%{$modele}%");
             })
             ->orderByDesc('date_creation')
             ->get();
