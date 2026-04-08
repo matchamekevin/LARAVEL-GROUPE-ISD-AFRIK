@@ -8,6 +8,10 @@
   gap: var(--spacing-xl);
 }
 
+.admin-users-notice {
+  margin: var(--spacing-lg) 0;
+}
+
 .admin-users-hero {
   background: linear-gradient(145deg, #4a5568 0%, #2d3748 50%, #1a202c 100%);
   color: var(--color-white);
@@ -86,31 +90,27 @@
 .admin-users-search-input {
   flex: 1;
   min-width: 250px;
-  position: relative;
 }
 
 .admin-users-search-input input {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-sm) 2.5rem;
+  min-height: 42px;
+  padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-sm) 2.6rem;
   border: var(--border-light);
   border-radius: 8px;
   font-size: var(--font-size-sm);
   transition: all 0.2s ease;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='20' y1='20' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 0.9rem 50%;
+  background-size: 0.95rem 0.95rem;
 }
 
 .admin-users-search-input input:focus {
   outline: none;
   border-color: #718096;
   box-shadow: 0 0 0 3px rgba(113, 128, 150, 0.1);
-}
-
-.admin-users-search-input::before {
-  content: '🔍';
-  position: absolute;
-  left: var(--spacing-lg);
-  top: 50%;
-  transform: translateY(-50%);
-  opacity: 0.5;
 }
 
 /* Table Card */
@@ -392,41 +392,6 @@
   font-size: var(--font-size-sm);
 }
 
-/* Toast Notifications */
-.admin-users-toast {
-  position: fixed;
-  bottom: var(--spacing-lg);
-  right: var(--spacing-lg);
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-radius: 8px;
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  z-index: var(--z-tooltip);
-  animation: slideUp 0.3s ease;
-}
-
-.admin-users-toast.success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: var(--color-white);
-}
-
-.admin-users-toast.error {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: var(--color-white);
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(20px) translateX(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0) translateX(0);
-    opacity: 1;
-  }
-}
-
 /* Responsive */
 @media (max-width: 1024px) {
   .admin-users-stats {
@@ -506,10 +471,4 @@
     align-items: stretch;
   }
 
-  .admin-users-toast {
-    left: var(--spacing-lg);
-    right: var(--spacing-lg);
-    bottom: auto;
-    top: var(--spacing-lg);
-  }
 }

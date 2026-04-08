@@ -20,6 +20,7 @@ class Paiement extends Model
         'statut_paiement',
         'montant',
         'date_paiement',
+        'id_commande',
         'id_formation',
         'id_utilisateur',
     ];
@@ -42,6 +43,11 @@ class Paiement extends Model
     public function formation()
     {
         return $this->belongsTo(Formation::class, 'id_formation', 'id_formation');
+    }
+
+    public function commande()
+    {
+        return $this->belongsTo(Commande::class, 'id_commande', 'id_commande');
     }
 
     // Relation avec l'utilisateur

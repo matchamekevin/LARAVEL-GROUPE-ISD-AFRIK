@@ -620,6 +620,42 @@ body, html {
 }
 
 /* ========================================
+   INLINE NOTICES
+   ======================================== */
+
+.admin-notice {
+  border-radius: 10px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+  border: 1px solid transparent;
+}
+
+.admin-notice.info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.admin-notice.success {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.admin-notice.warning {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  color: #b45309;
+}
+
+.admin-notice.error {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+/* ========================================
    SEARCH & FILTERS
    ======================================== */
 
@@ -751,6 +787,44 @@ body, html {
 }
 
 /* ========================================
+   TOASTS
+   ======================================== */
+
+.admin-toast {
+  position: fixed;
+  right: var(--spacing-lg);
+  bottom: var(--spacing-lg);
+  z-index: var(--z-tooltip);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: 10px;
+  color: var(--color-white);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+  animation: adminToastIn 0.24s ease;
+}
+
+.admin-toast.success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.admin-toast.error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+@keyframes adminToastIn {
+  from {
+    transform: translateY(18px) translateX(18px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0) translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ========================================
    RESPONSIVE
    ======================================== */
 
@@ -813,5 +887,12 @@ body, html {
   .admin-table td {
     padding: var(--spacing-sm) var(--spacing-md);
     font-size: var(--font-size-xs);
+  }
+
+  .admin-toast {
+    left: var(--spacing-lg);
+    right: var(--spacing-lg);
+    top: var(--spacing-lg);
+    bottom: auto;
   }
 }

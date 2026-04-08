@@ -43,6 +43,21 @@ export default function Login() {
     }
   }, [location.state]);
 
+  // Ensure inputs remain empty on mount (clear browser autofill if any)
+  useEffect(() => {
+    setFormData({ email: "", mot_de_passe: "" });
+    const clearInputs = () => {
+      const elEmail = document.getElementById("email");
+      const elPass = document.getElementById("mot_de_passe");
+      if (elEmail) elEmail.value = "";
+      if (elPass) elPass.value = "";
+    };
+    // clear immediately and shortly after to counter browser autofill timing
+    clearInputs();
+    const t = setTimeout(clearInputs, 120);
+    return () => clearTimeout(t);
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -122,7 +137,7 @@ export default function Login() {
 
           {success && <div className="success-msg">✅ {success}</div>}
 
-          <form onSubmit={handleSubmit} className="login-form" noValidate>
+          <form onSubmit={handleSubmit} className="login-form" noValidate autoComplete="off" spellCheck={false} autoCapitalize="off">
             <label className="sr-only" htmlFor="email">Email</label>
             <div className="input-group">
               <i className="fas fa-envelope icon" aria-hidden="true"></i>
@@ -137,8 +152,11 @@ export default function Login() {
                 required
                 aria-required="true"
                 aria-label="Email"
-                autoComplete="email"
+                autoComplete="off"
                 inputMode="email"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
               />
             </div>
 
@@ -156,7 +174,10 @@ export default function Login() {
                 required
                 aria-required="true"
                 aria-label="Mot de passe"
-                autoComplete="current-password"
+                autoComplete="new-password"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
               />
               <button
                 type="button"

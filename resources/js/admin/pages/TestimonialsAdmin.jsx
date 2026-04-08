@@ -6,9 +6,10 @@ import {
   deleteHomeTestimonial,
 } from '../api';
 import Loader from '../components/Loader';
+import AdminToast, { useAdminToast } from '../components/AdminToast';
 import { pickDisplayMediaUrl } from '../../utils/mediaUrl';
 import '../styles/admin-shared.css';
-import './testimonials.css';
+import '../styles/testimonials.css';
 
 const INITIAL_FORM = {
   name: '',
@@ -28,6 +29,7 @@ export default function TestimonialsAdmin() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
+  const { toast, showToast } = useAdminToast();
 
   function avatarSrc(item) {
     return pickDisplayMediaUrl([item?.avatar_url, item?.avatar_path], '');
@@ -41,7 +43,7 @@ export default function TestimonialsAdmin() {
     } catch (err) {
       console.error(err);
       setItems([]);
-      alert('Impossible de charger les avis clients');
+      showToast('Impossible de charger les avis clients', 'error');
     } finally {
       setLoading(false);
     }
@@ -77,19 +79,20 @@ export default function TestimonialsAdmin() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    const editing = Boolean(editingId);
 
     if (!form.name?.trim()) {
-      alert('Le nom du client est obligatoire');
+      showToast('Le nom du client est obligatoire', 'error');
       return;
     }
 
     if (!form.text?.trim()) {
-      alert('Le temoignage est obligatoire');
+      showToast('Le temoignage est obligatoire', 'error');
       return;
     }
 
     if (!editingId && !form.avatar) {
-      alert('Veuillez ajouter un avatar/logo');
+      showToast('Veuillez ajouter un avatar/logo', 'error');
       return;
     }
 
@@ -115,8 +118,9 @@ export default function TestimonialsAdmin() {
 
       resetForm();
       await loadData();
+      showToast(editing ? 'Avis mis a jour.' : 'Avis cree.', 'success');
     } catch (err) {
-      alert(err?.response?.data?.message || 'Erreur enregistrement avis');
+      showToast(err?.response?.data?.message || 'Erreur enregistrement avis', 'error');
     } finally {
       setSaving(false);
     }
@@ -128,8 +132,9 @@ export default function TestimonialsAdmin() {
       await deleteHomeTestimonial(id);
       setItems((prev) => prev.filter((x) => x.id !== id));
       if (editingId === id) resetForm();
+      showToast('Avis supprime.', 'success');
     } catch (err) {
-      alert('Erreur suppression avis');
+      showToast('Erreur suppression avis', 'error');
     }
   }
 
@@ -289,6 +294,8 @@ export default function TestimonialsAdmin() {
           </table>
         )}
       </div>
+
+      <AdminToast toast={toast} />
     </div>
   );
 }

@@ -32,13 +32,60 @@ class ContactMessageController extends Controller
     }
 
     /**
-     * GET /api/admin/contact-messages
+     * GET /api/admin/contact-messages — Liste paginée
      */
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(
-            ContactMessage::query()->latest()->get()
-        );
+        $perPage = max(1, min(50, (int) $request->query('per_page', 20)));
+        $page = max(1, (int) $request->query('page', 1));
+        $search = trim((string) $request->query('q', ''));
+        $status = trim((string) $request->query('statut', ''));
+
+        $query = ContactMessage::query()->orderByDesc('created_at');
+
+        if ($search !== '') {
+            $like = "%{$search}%";
+            $query->where(function ($q) use ($like) {
+                $q->where('nom_complet', 'ILIKE', $like)
+                    ->orWhere('email', 'ILIKE', $like)
+                    ->orWhere('sujet', 'ILIKE', $like)
+                    ->orWhere('message', 'ILIKE', $like);
+            });
+        }
+
+        if ($status !== '' && strtolower($status) !== 'all') {
+            $query->where('statut', $status);
+        }
+
+        $paginator = $query->paginate($perPage, ['*'], 'page', $page)->appends($request->query());
+
+        $nouveau = ContactMessage::where('statut', 'nouveau')->count();
+        $lu = ContactMessage::where('statut', 'lu')->count();
+        $traite = ContactMessage::where('statut', 'traite')->count();
+
+        return response()->json([
+            'data' => $paginator->items(),
+            'meta' => [
+                'total' => $paginator->total(),
+                'per_page' => $paginator->perPage(),
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+            ],
+            'links' => [
+                'first' => $paginator->url(1),
+                'last' => $paginator->url($paginator->lastPage()),
+                'next' => $paginator->nextPageUrl(),
+                'prev' => $paginator->previousPageUrl(),
+            ],
+            'stats' => [
+                'total' => $paginator->total(),
+                'nouveau' => $nouveau,
+                'lu' => $lu,
+                'traite' => $traite,
+            ],
+        ]);
     }
 
     /**

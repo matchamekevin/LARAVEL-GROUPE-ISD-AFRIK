@@ -1,5 +1,5 @@
 import React from "react";
-import "../../js/styles/home.css";
+import "../styles/home.css";
 import usePageMeta from "../hooks/usePageMeta";
 import { submitContactMessage } from "../admin/api";
 
@@ -50,7 +50,6 @@ export default function Contact() {
                     </div>
                     <div className="contact-hero-actions">
                         <button className="btn-primary">Prendre rendez-vous</button>
-                        <button className="btn-secondary">Demander un devis</button>
                     </div>
                 </div>
             </section>

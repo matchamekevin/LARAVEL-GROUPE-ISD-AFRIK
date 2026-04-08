@@ -899,11 +899,8 @@ export default function Home() {
           <h2 style={{ fontSize: '3.6rem' }}>Prêt à transformer votre entreprise ?</h2>
           <p>Contactez-nous dès aujourd'hui pour discuter de votre projet</p>
           <div className="cta-buttons">
-            <button className="btn-primary" onClick={() => navigate('/contact')}>
-              <i className="fas fa-phone"></i> Nous contacter
-            </button>
             <button className="btn-secondary" onClick={() => navigate('/contact')}>
-              <i className="fas fa-file-alt"></i> Demander un devis
+              <i className="fas fa-file-alt"></i> Nous contacter
             </button>
           </div>
         </div>

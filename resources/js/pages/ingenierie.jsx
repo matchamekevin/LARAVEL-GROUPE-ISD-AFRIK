@@ -2,11 +2,12 @@ import React from "react";
 import { Link } from "react-router-dom";
 import usePageMeta from "../hooks/usePageMeta";
 import { ENGINEERING_DELIVERY_STEPS, ENGINEERING_FAMILIES } from "../data/engineeringCatalog";
+import "../styles/marketing-premium.css";
 import "../../css/ingenierie.css";
 
 export default function Ingenierie() {
     usePageMeta(
-        "Ingenierie informatique et industrielle | Groupe ISD AFRIK",
+        "Ingeierie informatique et industrielle | Groupe ISD AFRIK",
         "Architecture SI, integration systemes et automatisation pour renforcer la performance et la securite des entreprises."
     );
 
@@ -18,7 +19,7 @@ export default function Ingenierie() {
         },
         {
             title: "Integration et deploiement",
-            text: "Mise en oeuvre sur site des equipements Ingenierie: drone, TPE, reseau, incendie, energie, telecoms et plus.",
+            text: "Mise en oeuvre sur site des equipements d'ingenierie : drone, TPE, reseau, incendie, energie, telecoms et plus.",
             image: "/images/solutions/im2.webp"
         },
         {
@@ -36,70 +37,192 @@ export default function Ingenierie() {
         "Formation et transfert de competence"
     ];
 
+    const chiffres = [
+        { value: "15+", label: "Annees d'experience" },
+        { value: "500+", label: "Projets reussis" },
+        { value: "1000+", label: "Clients satisfaits" },
+        { value: "99.8%", label: "Taux de succes" }
+    ];
+
+    const engagements = [
+        "Audit de l'existant et recommandations sur mesure",
+        "Pilotage de projet avec approche terrain et suivi des delais",
+        "Integration multi-equipements et interoperabilite",
+        "Formation des equipes et accompagnement post-livraison"
+    ];
+
     return (
-        <div className="bg-slate-50 min-h-screen py-10 sm:py-14 ingenierie-page">
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="rounded-3xl bg-gradient-to-br from-[#172243] via-[#1d4a73] to-[#0f766e] text-white p-8 sm:p-12 shadow-xl ingenierie-hero">
-                    <p className="uppercase tracking-[0.2em] text-xs text-sky-200">Prestation Ingenierie</p>
-                    <h1 className="mt-3 text-3xl sm:text-5xl font-black max-w-4xl leading-tight">Ingenierie informatique et industrielle</h1>
-                    <p className="mt-4 max-w-4xl text-slate-100 leading-relaxed">
-                        Cette page est une page de prestations liee au catalogue produits. La categorie Ingenierie
-                        regroupe Drone, TPE, Archivage numerique, Materiel informatique, Reseau, Incendie,
-                        Energie, Telecommunications et Securite informatique / Base de donnees.
-                    </p>
-                    <div className="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-                        {ENGINEERING_DELIVERY_STEPS.map((step) => (
-                            <div key={step} className="rounded-xl border border-white/25 bg-white/10 px-4 py-3 text-sm font-semibold">
-                                {step}
+        <div className="ingenierie-page premium-page">
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 mb-12 sm:mb-16 ingenierie-hero-shell">
+                <div className="ingenierie-hero premium-hero">
+                    <div className="ingenierie-hero-grid">
+                        <div className="ingenierie-hero-copy">
+                            <span className="premium-chip">Prestation Ingenierie</span>
+                            <h1 className="premium-title">Ingenierie informatique et industrielle</h1>
+                            <p className="premium-subtitle">
+                                Nous concevons, integrons et faisons evoluer des environnements techniques
+                                fiables pour les entreprises, institutions et projets industriels en Afrique
+                                de l'Ouest.
+                            </p>
+
+                            <div className="ingenierie-hero-actions">
+                                <Link to="/contact" className="ingenierie-primary-btn">
+                                    Demarrer un projet
+                                </Link>
+                                <Link to="/produits" className="ingenierie-secondary-btn">
+                                    Voir le catalogue
+                                </Link>
                             </div>
-                        ))}
+                        </div>
+
+                        <div className="ingenierie-hero-panel">
+                            <h2>Domaines couverts</h2>
+                            <p>
+                                Drone, TPE, archivage numerique, materiel informatique, reseau,
+                                incendie, energie, telecommunications et securite informatique.
+                            </p>
+
+                            <div className="ingenierie-hero-steps">
+                                {ENGINEERING_DELIVERY_STEPS.map((step, index) => (
+                                    <div
+                                        key={step}
+                                        className="ingenierie-hero-step"
+                                        style={{ animationDelay: `${0.1 * (index + 1)}s` }}
+                                    >
+                                        <span className="ingenierie-step-index">0{index + 1}</span>
+                                        <span>{step}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-8">
-                <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
-                    <h2 className="text-2xl font-black text-[#172243]">Nos piliers d'expertise</h2>
-                    <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-5">
-                        {piliers.map((item) => (
-                            <article key={item.title} className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
-                                <img src={item.image} alt={item.title} className="h-48 w-full object-cover" />
-                                <div className="p-5">
-                                    <h3 className="text-lg font-bold text-[#172243]">{item.title}</h3>
-                                    <p className="mt-2 text-sm text-slate-600 leading-relaxed">{item.text}</p>
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 flex flex-col gap-12 sm:gap-16 ingenierie-sections-stack">
+                <section className="ingenierie-overview-grid">
+                    <article className="premium-card ingenierie-highlight-card">
+                        <span className="ingenierie-section-kicker">Positionnement</span>
+                        <h2>Une expertise de bout en bout</h2>
+                        <p>
+                            De l'analyse initiale au maintien en conditions operationnelles,
+                            nous securisons chaque etape de votre transformation technique.
+                        </p>
+                    </article>
+
+                    <article className="premium-card ingenierie-highlight-card">
+                        <span className="ingenierie-section-kicker">Approche</span>
+                        <h2>Des solutions adaptees au terrain</h2>
+                        <p>
+                            Chaque prestation prend en compte vos contraintes metiers, votre niveau
+                            de maturite et la realite de vos infrastructures existantes.
+                        </p>
+                    </article>
+
+                    <article className="premium-card ingenierie-highlight-card">
+                        <span className="ingenierie-section-kicker">Impact</span>
+                        <h2>Performance, securite et continuite</h2>
+                        <p>
+                            Nos architectures visent la fiabilite des operations, la maitrise des risques
+                            et l'evolutivite de vos equipements.
+                        </p>
+                    </article>
+                </section>
+
+                <section className="premium-card ingenierie-section-shell">
+                    <div className="ingenierie-section-header">
+                        <span className="ingenierie-section-kicker">Expertise</span>
+                        <h2>Nos piliers d'intervention</h2>
+                        <p>
+                            Une demarche structuree pour transformer un besoin technique en solution
+                            operationnelle durable.
+                        </p>
+                    </div>
+
+                    <div className="ingenierie-pillars-grid">
+                        {piliers.map((item, index) => (
+                            <article
+                                key={item.title}
+                                className="pillar-card"
+                                style={{ animationDelay: `${0.1 * (index + 1)}s` }}
+                            >
+                                <img src={item.image} alt={item.title} className="pillar-image" />
+                                <div className="pillar-content">
+                                    <h3 className="pillar-title">{item.title}</h3>
+                                    <p className="pillar-description">{item.text}</p>
                                 </div>
                             </article>
                         ))}
                     </div>
                 </section>
 
-                <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
-                    <h2 className="text-2xl font-black text-[#172243]">Ce que vous obtenez</h2>
-                    <ul className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {livrables.map((item) => (
-                            <li key={item} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 font-medium">{item}</li>
-                        ))}
-                    </ul>
+                <section className="ingenierie-two-columns">
+                    <article className="premium-card ingenierie-section-shell">
+                        <div className="ingenierie-section-header">
+                            <span className="ingenierie-section-kicker">Livrables</span>
+                            <h2>Ce que vous obtenez</h2>
+                        </div>
+
+                        <ul className="ingenierie-deliverables-grid">
+                            {livrables.map((item, index) => (
+                                <li
+                                    key={item}
+                                    className="deliverable-item"
+                                    style={{ animationDelay: `${0.1 * (index + 1)}s` }}
+                                >
+                                    {item}
+                                </li>
+                            ))}
+                        </ul>
+                    </article>
+
+                    <article className="premium-card ingenierie-section-shell">
+                        <div className="ingenierie-section-header">
+                            <span className="ingenierie-section-kicker">Engagements</span>
+                            <h2>Notre methode projet</h2>
+                        </div>
+
+                        <ul className="ingenierie-engagement-list">
+                            {engagements.map((item) => (
+                                <li key={item} className="ingenierie-engagement-item">
+                                    <span className="ingenierie-engagement-bullet" />
+                                    <span>{item}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </article>
                 </section>
 
-                <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
-                    <h2 className="text-2xl font-black text-[#172243]">Familles, types et modeles couverts</h2>
-                    <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <section className="premium-card ingenierie-section-shell">
+                    <div className="ingenierie-section-header">
+                        <span className="ingenierie-section-kicker">Catalogue</span>
+                        <h2>Familles, types et modeles couverts</h2>
+                        <p>
+                            Explorez les differentes categories d'equipements et accedez directement
+                            aux produits associes.
+                        </p>
+                    </div>
+
+                    <div className="ingenierie-family-grid">
                         {ENGINEERING_FAMILIES.map((item) => (
-                            <article key={item.slug} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <div className="flex items-start justify-between gap-3">
-                                    <h3 className="font-bold text-[#172243] leading-snug">{item.label}</h3>
+                            <article key={item.slug} className="ingenierie-family-card">
+                                <div className="ingenierie-family-top">
+                                    <h3>{item.label}</h3>
                                     <Link
                                         to={`/produits?categories=${item.slug}`}
-                                        className="text-xs font-semibold text-[#172243]"
+                                        className="ingenierie-family-link"
                                     >
                                         Produits
                                     </Link>
                                 </div>
-                                <p className="mt-2 text-sm text-slate-600 leading-relaxed">{item.description}</p>
-                                <ul className="mt-3 space-y-1 text-sm text-slate-700">
+
+                                <p className="ingenierie-family-description">{item.description}</p>
+
+                                <ul className="ingenierie-family-types">
                                     {item.types.map((type) => (
-                                        <li key={`${item.slug}-${type}`}>{type}</li>
+                                        <li key={`${item.slug}-${type}`} className="ingenierie-family-type">
+                                            {type}
+                                        </li>
                                     ))}
                                 </ul>
                             </article>
@@ -107,41 +230,37 @@ export default function Ingenierie() {
                     </div>
                 </section>
 
-                <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="rounded-xl border border-slate-200 bg-white p-5 text-center">
-                        <div className="text-3xl font-black text-[#172243]">15+</div>
-                        <p className="mt-1 text-sm text-slate-600">Annees d'experience</p>
-                    </div>
-                    <div className="rounded-xl border border-slate-200 bg-white p-5 text-center">
-                        <div className="text-3xl font-black text-[#172243]">500+</div>
-                        <p className="mt-1 text-sm text-slate-600">Projets reussis</p>
-                    </div>
-                    <div className="rounded-xl border border-slate-200 bg-white p-5 text-center">
-                        <div className="text-3xl font-black text-[#172243]">1000+</div>
-                        <p className="mt-1 text-sm text-slate-600">Clients satisfaits</p>
-                    </div>
-                    <div className="rounded-xl border border-slate-200 bg-white p-5 text-center">
-                        <div className="text-3xl font-black text-[#172243]">99.8%</div>
-                        <p className="mt-1 text-sm text-slate-600">Taux de succes</p>
-                    </div>
+                <section className="ingenierie-metrics">
+                    {chiffres.map((item, index) => (
+                        <article
+                            key={item.label}
+                            className="metric-card"
+                            style={{ animationDelay: `${0.1 * (index + 1)}s` }}
+                        >
+                            <div className="metric-value">{item.value}</div>
+                            <p className="metric-name">{item.label}</p>
+                        </article>
+                    ))}
                 </section>
 
-                <section className="rounded-2xl bg-[#172243] text-white p-7 sm:p-9">
-                    <h2 className="text-2xl font-black">Pret a lancer votre projet ?</h2>
-                    <p className="mt-3 text-slate-100 max-w-3xl">
-                        Contactez nos experts pour calibrer la bonne combinaison famille, type et modele selon votre organisation.
-                    </p>
-                    <div className="mt-5 flex flex-wrap gap-3">
-                        <Link
-                            to="/contact"
-                            className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-[#172243] font-semibold"
-                        >
+                <section className="ingenierie-cta">
+                    <div className="ingenierie-cta-copy">
+                        <span className="ingenierie-section-kicker ingenierie-section-kicker--light">
+                            Accompagnement
+                        </span>
+                        <h2>Pret a lancer votre projet d'ingenierie ?</h2>
+                        <p>
+                            Contactez nos experts pour definir la bonne combinaison famille,
+                            type et modele selon votre organisation, vos contraintes
+                            techniques et vos objectifs de croissance.
+                        </p>
+                    </div>
+
+                    <div className="ingenierie-cta-buttons">
+                        <Link to="/contact" className="ingenierie-primary-btn">
                             Lancer un projet
                         </Link>
-                        <Link
-                            to="/produits"
-                            className="inline-flex items-center justify-center rounded-xl border border-white/60 px-5 py-3 text-white font-semibold"
-                        >
+                        <Link to="/produits" className="ingenierie-secondary-btn ingenierie-secondary-btn--light">
                             Voir le catalogue Ingenierie
                         </Link>
                     </div>

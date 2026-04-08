@@ -26,7 +26,7 @@
   background: var(--dark-bg);
   overflow-x: hidden;
   margin: 0;
-  padding: 82px 0 0;
+  padding: 0 0 0;
 }
 
 /* =================================
@@ -36,9 +36,9 @@
     position: relative;
     background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 50%, var(--dark-bg) 100%);
     overflow: hidden;
-    padding: 95px 20px 150px;
+    padding: 24px 20px 120px;
     will-change: transform;
-    margin-top: 0; /* ✅ CORRIGÉ */
+    margin-top: 0;
   }
   
   .formations-container .hero-background {

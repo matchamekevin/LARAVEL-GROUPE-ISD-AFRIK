@@ -59,6 +59,7 @@ class ProduitResource extends JsonResource
 
             // ✅ formatage correct de la date
             'date_creation' => $this->date_creation?->toDateTimeString(),
+            'deleted_at'    => $this->deleted_at?->toDateTimeString(),
 
             // ✅ Relations
             'pays'          => new PaysResource($this->whenLoaded('pays')),

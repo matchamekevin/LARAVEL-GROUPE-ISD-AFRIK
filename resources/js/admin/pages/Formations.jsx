@@ -12,8 +12,9 @@ import {
 import { resolveFormationImageUrl } from '../../utils/mediaUrl';
 import { getApiBase } from '../../utils/apiBase';
 import Loader from '../components/Loader';
+import AdminToast, { useAdminToast } from '../components/AdminToast';
 import '../styles/admin-shared.css';
-import './formations.css';
+import '../styles/formations.css';
 
 const INITIAL_FORM = {
   titre: '',
@@ -44,34 +45,72 @@ export default function Formations() {
   const [formations, setFormations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [newFormation, setNewFormation] = useState(INITIAL_FORM);
+  const { toast, showToast } = useAdminToast();
 
-  const filteredFormations = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return formations;
+  const FORMATIONS_PER_PAGE = 20;
+  const EMPTY_PAGINATION = {
+    total: 0,
+    per_page: FORMATIONS_PER_PAGE,
+    current_page: 1,
+    last_page: 1,
+    from: 0,
+    to: 0,
+  };
 
-    return formations.filter((f) => {
-      const values = [
-        f.titre,
-        f.description,
-        f.categorie,
-        f.id_formation,
-        f.id,
-        f.id_pays,
-      ];
-      return values.some((v) => String(v || '').toLowerCase().includes(q));
-    });
-  }, [formations, search]);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(EMPTY_PAGINATION);
+  const [stats, setStats] = useState({ total: 0, particulier: 0, etudiant: 0, entreprise: 0 });
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [categorie, setCategorie] = useState('all');
 
   async function loadFormations() {
     setLoading(true);
     try {
-      const res = await getFormations();
-      setFormations(Array.isArray(res.data) ? res.data : []);
+      const params = {
+        page,
+        per_page: FORMATIONS_PER_PAGE,
+      };
+
+      if (searchInput.trim() !== '') {
+        params.q = searchInput.trim();
+      }
+
+      if (categorie !== 'all') {
+        params.categorie = categorie;
+      }
+
+      const res = await getFormations(params);
+      const list = Array.isArray(res.data) ? res.data : [];
+      const nextMeta = res.meta || EMPTY_PAGINATION;
+      const nextStats = res.stats || {};
+
+      if (nextMeta.last_page && page > nextMeta.last_page) {
+        setPage(nextMeta.last_page);
+        return;
+      }
+
+      setFormations(list);
+      setPagination({
+        total: Number(nextMeta.total || list.length || 0),
+        per_page: Number(nextMeta.per_page || FORMATIONS_PER_PAGE),
+        current_page: Number(nextMeta.current_page || page),
+        last_page: Number(nextMeta.last_page || 1),
+        from: Number(nextMeta.from || 0),
+        to: Number(nextMeta.to || 0),
+      });
+      setStats({
+        total: Number(nextStats.total || nextMeta.total || list.length || 0),
+        particulier: Number(nextStats.particulier || 0),
+        etudiant: Number(nextStats.etudiant || 0),
+        entreprise: Number(nextStats.entreprise || 0),
+      });
     } catch (err) {
       console.error('Erreur chargement formations', err);
       setFormations([]);
+      setPagination(EMPTY_PAGINATION);
+      setStats({ total: 0, particulier: 0, etudiant: 0, entreprise: 0 });
     } finally {
       setLoading(false);
     }
@@ -79,7 +118,7 @@ export default function Formations() {
 
   useEffect(() => {
     loadFormations();
-  }, []);
+  }, [page, categorie, searchInput, refreshToken]);
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -109,9 +148,10 @@ export default function Formations() {
 
       setNewFormation(INITIAL_FORM);
       await loadFormations();
+      showToast('Formation creee avec succes.', 'success');
     } catch (err) {
       console.error('Erreur création formation', err);
-      alert(err?.response?.data?.message || 'Erreur création formation');
+      showToast(err?.response?.data?.message || 'Erreur creation formation', 'error');
     } finally {
       setSaving(false);
     }
@@ -121,10 +161,11 @@ export default function Formations() {
     if (!confirm('Supprimer cette formation ?')) return;
     try {
       await deleteFormation(id);
-      setFormations((prev) => prev.filter((f) => f.id !== id));
+      setRefreshToken((t) => t + 1);
+      showToast('Formation supprimee.', 'success');
     } catch (err) {
       console.error('Erreur suppression formation', err);
-      alert('Erreur suppression formation');
+      showToast('Erreur suppression formation', 'error');
     }
   }
 
@@ -174,9 +215,10 @@ export default function Formations() {
       }
 
       await loadFormations();
+      showToast('Formation mise a jour avec succes.', 'success');
     } catch (err) {
       console.error('Erreur update formation', err);
-      alert(err?.response?.data?.message || 'Erreur mise à jour formation');
+      showToast(err?.response?.data?.message || 'Erreur mise a jour formation', 'error');
     }
   }
 
@@ -218,7 +260,7 @@ export default function Formations() {
             Creez, recherchez et mettez a jour vos formations, avec gestion de l image principale.
           </p>
         </div>
-        <span className="admin-formations-count">{filteredFormations.length} formation(s)</span>
+        <span className="admin-formations-count">{stats.total || pagination.total || formations.length} formation(s)</span>
       </header>
 
       <section className="admin-formations-card">
@@ -347,163 +389,178 @@ export default function Formations() {
 
         <div className="admin-formations-searchbar">
           <input
-            placeholder="Rechercher par titre, categorie, description, ID pays..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher par titre ou description..."
+            value={searchInput}
+            onChange={(e) => {
+              setSearchInput(e.target.value);
+              setPage(1);
+            }}
           />
+          <select
+            value={categorie}
+            onChange={(e) => {
+              setCategorie(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="all">Toutes les categories</option>
+            <option value="particulier">Particulier</option>
+            <option value="etudiant">Etudiant</option>
+            <option value="entreprise">Entreprise</option>
+          </select>
         </div>
 
         {loading ? (
           <Loader text="Chargement des formations..." />
-        ) : filteredFormations.length === 0 ? (
+        ) : (pagination.total === 0 && formations.length === 0) ? (
           <div className="admin-formations-empty">Aucune formation trouvee.</div>
         ) : (
-          <div className="admin-formations-table-wrap">
-            <table className="admin-formations-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Image</th>
-                  <th>Titre et description</th>
-                  <th>Prix</th>
-                  <th>Categorie</th>
-                  <th>Debut</th>
-                  <th>Places</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredFormations.map((f) => {
-                  const image = getFirstImage(f);
-                  const imageUrl = resolveFormationImageUrl(
-                    f._editing ? f._image_url : image?.url,
-                    getApiBase()
-                  );
+          <>
+            <div className="admin-formations-table-wrap">
+              <table className="admin-formations-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Image</th>
+                    <th>Titre et description</th>
+                    <th>Prix</th>
+                    <th>Categorie</th>
+                    <th>Debut</th>
+                    <th>Places</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {formations.map((f) => {
+                    const image = getFirstImage(f);
+                    const imageUrl = resolveFormationImageUrl(image?.url, getApiBase());
 
-                  return (
-                    <tr key={f.id}>
-                      <td>#{f.id}</td>
-                      <td>
-                        <div className="admin-formations-image-cell">
-                          {imageUrl ? <img src={imageUrl} alt={f._editing ? (f._image_alt || f.titre) : (image?.alt || f.titre)} /> : <span className="admin-formations-no-image">Aucune image</span>}
-                          {f._editing && (
-                            <>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) =>
-                                  setFormations((prev) =>
-                                    prev.map((x) => (x.id === f.id ? { ...x, _image_file: e.target.files?.[0] || null } : x))
-                                  )
-                                }
-                              />
-                              <small style={{ color: '#64748b' }}>
-                                {f._image_file ? `Nouvelle image: ${f._image_file.name}` : 'Laisser vide pour conserver l image actuelle.'}
-                              </small>
-                              <input
-                                placeholder="Texte alternatif"
-                                value={f._image_alt}
-                                onChange={(e) =>
-                                  setFormations((prev) =>
-                                    prev.map((x) => (x.id === f.id ? { ...x, _image_alt: e.target.value } : x))
-                                  )
-                                }
-                              />
-                            </>
-                          )}
-                        </div>
-                      </td>
-                      <td>
-                        {f._editing ? (
-                          <div className="admin-formations-edit-stack">
-                            <input
-                              value={f._titre}
-                              onChange={(e) =>
-                                setFormations((prev) =>
-                                  prev.map((x) => (x.id === f.id ? { ...x, _titre: e.target.value } : x))
-                                )
-                              }
-                            />
-                            <textarea
-                              rows={3}
-                              value={f._description}
-                              onChange={(e) =>
-                                setFormations((prev) =>
-                                  prev.map((x) => (x.id === f.id ? { ...x, _description: e.target.value } : x))
-                                )
-                              }
-                            />
+                    return (
+                      <tr key={f.id}>
+                        <td>#{f.id}</td>
+
+                        <td>
+                          <div className="admin-formations-image-cell">
+                            {f._editing ? (
+                              <>
+                                {imageUrl ? (
+                                  <img src={imageUrl} alt={image?.alt || f.titre} />
+                                ) : (
+                                  <span className="admin-formations-no-image">Aucune image</span>
+                                )}
+
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) =>
+                                    setFormations((prev) =>
+                                      prev.map((x) => (x.id === f.id ? { ...x, _image_file: e.target.files?.[0] || null, _image_url: '' } : x))
+                                    )
+                                  }
+                                />
+
+                                <small>
+                                  {f._image_file ? `Nouvelle image: ${f._image_file.name}` : 'Laisser vide pour conserver l image actuelle.'}
+                                </small>
+
+                                <input
+                                  placeholder="Texte alternatif"
+                                  value={f._image_alt}
+                                  onChange={(e) =>
+                                    setFormations((prev) => prev.map((x) => (x.id === f.id ? { ...x, _image_alt: e.target.value } : x)))
+                                  }
+                                />
+                              </>
+                            ) : (
+                              imageUrl ? (
+                                <img src={imageUrl} alt={image?.alt || f.titre} />
+                              ) : (
+                                <span className="admin-formations-no-image">Aucune image</span>
+                              )
+                            )}
                           </div>
-                        ) : (
-                          <div className="admin-formations-title-cell">
-                            <strong>{f.titre}</strong>
-                            <small>{f.description}</small>
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        {f._editing ? (
-                          <input
-                            type="number"
-                            min="0"
-                            value={f._prix}
-                            onChange={(e) =>
-                              setFormations((prev) =>
-                                prev.map((x) => (x.id === f.id ? { ...x, _prix: e.target.value } : x))
-                              )
-                            }
-                          />
-                        ) : (
-                          <strong>{formatAmount(f.prix)} FCFA</strong>
-                        )}
-                      </td>
-                      <td>
-                        {f._editing ? (
-                          <select
-                            value={f._categorie}
-                            onChange={(e) =>
-                              setFormations((prev) =>
-                                prev.map((x) => (x.id === f.id ? { ...x, _categorie: e.target.value } : x))
-                              )
-                            }
-                          >
-                            <option value="particulier">Particulier</option>
-                            <option value="etudiant">Etudiant</option>
-                            <option value="entreprise">Entreprise</option>
-                          </select>
-                        ) : (
-                          <span className="admin-formations-badge">{f.categorie}</span>
-                        )}
-                      </td>
-                      <td>
-                        {f._editing ? (
-                          <input
-                            type="date"
-                            value={f._date_debut}
-                            onChange={(e) =>
-                              setFormations((prev) =>
-                                prev.map((x) => (x.id === f.id ? { ...x, _date_debut: e.target.value } : x))
-                              )
-                            }
-                          />
-                        ) : (
-                          f.date_debut ? String(f.date_debut).slice(0, 10) : '—'
-                        )}
-                      </td>
-                      <td>
-                        <div className="admin-formations-edit-stack">
+                        </td>
+
+                        <td>
                           {f._editing ? (
-                            <>
+                            <div className="admin-formations-edit-stack">
+                              <input
+                                value={f._titre}
+                                onChange={(e) =>
+                                  setFormations((prev) => prev.map((x) => (x.id === f.id ? { ...x, _titre: e.target.value } : x)))
+                                }
+                              />
+                              <textarea
+                                rows={3}
+                                value={f._description}
+                                onChange={(e) =>
+                                  setFormations((prev) => prev.map((x) => (x.id === f.id ? { ...x, _description: e.target.value } : x)))
+                                }
+                              />
+                            </div>
+                          ) : (
+                            <div className="admin-formations-title-cell">
+                              <strong>{f.titre}</strong>
+                              <small>{f.description}</small>
+                            </div>
+                          )}
+                        </td>
+
+                        <td>
+                          {f._editing ? (
+                            <input
+                              type="number"
+                              min="0"
+                              value={f._prix}
+                              onChange={(e) =>
+                                setFormations((prev) => prev.map((x) => (x.id === f.id ? { ...x, _prix: e.target.value } : x)))
+                              }
+                            />
+                          ) : (
+                            <strong>{formatAmount(f.prix)} FCFA</strong>
+                          )}
+                        </td>
+
+                        <td>
+                          {f._editing ? (
+                            <select
+                              value={f._categorie}
+                              onChange={(e) =>
+                                setFormations((prev) => prev.map((x) => (x.id === f.id ? { ...x, _categorie: e.target.value } : x)))
+                              }
+                            >
+                              <option value="particulier">Particulier</option>
+                              <option value="etudiant">Etudiant</option>
+                              <option value="entreprise">Entreprise</option>
+                            </select>
+                          ) : (
+                            <span className="admin-formations-badge">{f.categorie}</span>
+                          )}
+                        </td>
+
+                        <td>
+                          {f._editing ? (
+                            <input
+                              type="date"
+                              value={f._date_debut}
+                              onChange={(e) =>
+                                setFormations((prev) => prev.map((x) => (x.id === f.id ? { ...x, _date_debut: e.target.value } : x)))
+                              }
+                            />
+                          ) : (
+                            f.date_debut ? String(f.date_debut).slice(0, 10) : '—'
+                          )}
+                        </td>
+
+                        <td>
+                          {f._editing ? (
+                            <div className="admin-formations-edit-stack">
                               <input
                                 type="number"
                                 min="1"
                                 value={f._places_disponibles}
                                 onChange={(e) =>
-                                  setFormations((prev) =>
-                                    prev.map((x) =>
-                                      x.id === f.id ? { ...x, _places_disponibles: e.target.value } : x
-                                    )
-                                  )
+                                  setFormations((prev) => prev.map((x) => (x.id === f.id ? { ...x, _places_disponibles: e.target.value } : x)))
                                 }
                               />
                               <input
@@ -511,51 +568,81 @@ export default function Formations() {
                                 min="1"
                                 value={f._id_pays}
                                 onChange={(e) =>
-                                  setFormations((prev) =>
-                                    prev.map((x) => (x.id === f.id ? { ...x, _id_pays: e.target.value } : x))
-                                  )
+                                  setFormations((prev) => prev.map((x) => (x.id === f.id ? { ...x, _id_pays: e.target.value } : x)))
                                 }
                               />
-                            </>
+                            </div>
                           ) : (
                             <>
                               <strong>{f.places_disponibles ?? 0}</strong>
                               <small>ID Pays: {f.id_pays ?? '—'}</small>
                             </>
                           )}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="admin-formations-row-actions">
-                          {f._editing ? (
-                            <>
-                              <button type="button" className="btn-primary" onClick={() => handleSave(f.id)}>
-                                Enregistrer
-                              </button>
-                              <button type="button" className="btn-secondary" onClick={() => cancelEdit(f.id)}>
-                                Annuler
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button type="button" className="btn-secondary" onClick={() => startEdit(f.id)}>
-                                Editer
-                              </button>
-                              <button type="button" className="admin-formations-danger" onClick={() => handleDelete(f.id)}>
-                                Supprimer
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+
+                        <td>
+                          <div className="admin-formations-row-actions">
+                            {f._editing ? (
+                              <>
+                                <button type="button" className="btn-primary" onClick={() => handleSave(f.id)}>
+                                  Enregistrer
+                                </button>
+                                <button type="button" className="btn-secondary" onClick={() => cancelEdit(f.id)}>
+                                  Annuler
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button type="button" className="btn-secondary" onClick={() => startEdit(f.id)}>
+                                  Editer
+                                </button>
+                                <button type="button" className="admin-formations-danger" onClick={() => handleDelete(f.id)}>
+                                  Supprimer
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {formations.length > 0 && (
+              <div className="admin-formations-pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1rem 1.25rem' }}>
+                <span className="admin-formations-count">
+                  Affichage {pagination.from || 0}-{pagination.to || 0} sur {pagination.total || 0}
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={pagination.current_page <= 1}
+                  >
+                    Précédent
+                  </button>
+                  <span className="admin-formations-count">
+                    Page {pagination.current_page} / {pagination.last_page}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={pagination.current_page >= pagination.last_page}
+                  >
+                    Suivant
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </section>
+
+      <AdminToast toast={toast} />
     </div>
   );
 }

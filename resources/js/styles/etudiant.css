@@ -2,13 +2,13 @@
   font-family: 'Segoe UI', sans-serif;
   background-color: #f5f7fa;
   color: #172243;
-  padding-top: 80px;
+  padding-top: 0; /* removed extra top spacing; hero will handle spacing */
 }
 
 /* Hero */
 .etudiant-hero {
   background: #172243;
-  padding: 80px 20px;
+  padding: 24px 20px 24px; /* reduced top/bottom while keeping centered layout */
   text-align: center;
   color: white;
 }
@@ -198,7 +198,7 @@
   }
 
   .etudiant-hero {
-    padding: 60px 15px;
+    padding: 32px 15px;
   }
 
   .etudiant-hero h1 {

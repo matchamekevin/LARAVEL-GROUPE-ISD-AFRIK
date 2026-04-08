@@ -6,9 +6,10 @@ import {
   deleteHomeCollaborator,
 } from '../api';
 import Loader from '../components/Loader';
+import AdminToast, { useAdminToast } from '../components/AdminToast';
 import { pickDisplayMediaUrl } from '../../utils/mediaUrl';
 import '../styles/admin-shared.css';
-import './collaborators.css';
+import '../styles/collaborators.css';
 
 const INITIAL_FORM = {
   name: '',
@@ -25,6 +26,7 @@ export default function CollaboratorsAdmin() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
+  const { toast, showToast } = useAdminToast();
 
   function imageSrc(item) {
     return pickDisplayMediaUrl([item?.image_url, item?.image_path], '');
@@ -38,7 +40,7 @@ export default function CollaboratorsAdmin() {
     } catch (err) {
       console.error(err);
       setItems([]);
-      alert('Impossible de charger les collaborateurs');
+      showToast('Impossible de charger les collaborateurs', 'error');
     } finally {
       setLoading(false);
     }
@@ -71,14 +73,15 @@ export default function CollaboratorsAdmin() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    const editing = Boolean(editingId);
 
     if (!form.name?.trim()) {
-      alert('Le nom est obligatoire');
+      showToast('Le nom est obligatoire', 'error');
       return;
     }
 
     if (!editingId && !form.image) {
-      alert('Veuillez ajouter une image');
+      showToast('Veuillez ajouter une image', 'error');
       return;
     }
 
@@ -101,8 +104,9 @@ export default function CollaboratorsAdmin() {
 
       resetForm();
       await loadData();
+      showToast(editing ? 'Collaborateur mis a jour.' : 'Collaborateur cree.', 'success');
     } catch (err) {
-      alert(err?.response?.data?.message || 'Erreur enregistrement collaborateur');
+      showToast(err?.response?.data?.message || 'Erreur enregistrement collaborateur', 'error');
     } finally {
       setSaving(false);
     }
@@ -114,8 +118,9 @@ export default function CollaboratorsAdmin() {
       await deleteHomeCollaborator(id);
       setItems((prev) => prev.filter((x) => x.id !== id));
       if (editingId === id) resetForm();
+      showToast('Collaborateur supprime.', 'success');
     } catch (err) {
-      alert('Erreur suppression collaborateur');
+      showToast('Erreur suppression collaborateur', 'error');
     }
   }
 
@@ -240,6 +245,8 @@ export default function CollaboratorsAdmin() {
           </table>
         )}
       </div>
+
+      <AdminToast toast={toast} />
     </div>
   );
 }

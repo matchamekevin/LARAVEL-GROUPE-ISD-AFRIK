@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createAdminAdjoint, getCountries, getUsers, me, updateUser, updateUserStatus } from '../api';
+import AdminToast, { useAdminToast } from '../components/AdminToast';
+import AdminNotice from '../components/AdminNotice';
 import Loader from '../components/Loader';
 import '../styles/admin-shared.css';
-import './users.css';
+import '../styles/users.css';
 
 const ROLE_OPTIONS = [
   { value: 'client', label: 'Client (sans role admin)' },
@@ -27,6 +29,22 @@ const INITIAL_ADMIN_FORM = {
   id_pays: '',
   can_access_client: false,
   two_factor_enabled: true,
+};
+
+const USERS_PER_PAGE = 20;
+const EMPTY_PAGINATION = {
+  total: 0,
+  per_page: USERS_PER_PAGE,
+  current_page: 1,
+  last_page: 1,
+  from: 0,
+  to: 0,
+};
+
+const EMPTY_STATS = {
+  total: 0,
+  active: 0,
+  suspended: 0,
 };
 
 function normalizeRole(value) {
@@ -60,18 +78,25 @@ function shouldInvalidateSelfAdminSession(user) {
 
 export default function Users() {
   const [users, setUsers] = useState([]);
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  const [pagination, setPagination] = useState(EMPTY_PAGINATION);
+  const [stats, setStats] = useState(EMPTY_STATS);
   const [countries, setCountries] = useState([]);
   const [actorUser, setActorUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const [toggling, setToggling] = useState(null);
   const [roleUpdating, setRoleUpdating] = useState(null);
   const [accessUpdating, setAccessUpdating] = useState(null);
   const [creatingAdmin, setCreatingAdmin] = useState(false);
   const [roleDrafts, setRoleDrafts] = useState({});
   const [accessDrafts, setAccessDrafts] = useState({});
-  const [search, setSearch] = useState('');
-  const [toast, setToast] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [phoneError, setPhoneError] = useState(null);
   const [adminForm, setAdminForm] = useState(INITIAL_ADMIN_FORM);
+  const [refreshToken, setRefreshToken] = useState(0);
+  const { toast, showToast } = useAdminToast();
 
   const actorId = actorUser?.id ?? actorUser?.id_utilisateur ?? null;
   const actorRole = normalizeRole(actorUser?.admin_role || actorUser?.role || 'client');
@@ -86,14 +111,9 @@ export default function Users() {
   useEffect(() => {
     let mounted = true;
 
-    Promise.allSettled([getUsers(), me(), getCountries()])
-      .then(([usersRes, meRes, countriesRes]) => {
+    Promise.allSettled([me(), getCountries()])
+      .then(([meRes, countriesRes]) => {
         if (!mounted) return;
-
-        if (usersRes.status === 'fulfilled') {
-          const list = Array.isArray(usersRes.value.data) ? usersRes.value.data : [];
-          setUsers(list.map((item) => mergeUserState(item, item)));
-        }
 
         if (meRes.status === 'fulfilled') {
           const profile = meRes.value?.data || null;
@@ -109,8 +129,8 @@ export default function Users() {
           setCountries(list);
         }
       })
-      .finally(() => {
-        if (mounted) setLoading(false);
+      .catch(() => {
+        // handled below by the users loader / empty states
       });
 
     return () => {
@@ -118,21 +138,87 @@ export default function Users() {
     };
   }, []);
 
-  const filteredUsers = users.filter((u) => {
-    const q = search.toLowerCase();
-    return (
-      (u.nom || '').toLowerCase().includes(q)
-      || (u.prenom || '').toLowerCase().includes(q)
-      || (u.email || '').toLowerCase().includes(q)
-    );
-  });
+  useEffect(() => {
+    let mounted = true;
 
-  const activeCount = users.filter((u) => u.statut === 'actif').length;
-  const suspendedCount = users.filter((u) => u.statut === 'suspendu').length;
+    async function loadUsers() {
+      setLoading(true);
+      setErrorMessage('');
 
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    window.setTimeout(() => setToast(null), 3500);
+      try {
+        const params = {
+          page,
+          per_page: USERS_PER_PAGE,
+        };
+
+        const trimmedSearch = search.trim();
+        if (trimmedSearch !== '') {
+          params.q = trimmedSearch;
+        }
+
+        const res = await getUsers(params);
+
+        if (!mounted) return;
+
+        const list = Array.isArray(res.data) ? res.data : [];
+        const nextMeta = res.meta || EMPTY_PAGINATION;
+        const nextStats = res.stats || EMPTY_STATS;
+
+        if (nextMeta.last_page && page > nextMeta.last_page) {
+          setPage(nextMeta.last_page);
+          return;
+        }
+
+        setUsers(list.map((item) => mergeUserState(item, item)));
+        setPagination({
+          total: Number(nextMeta.total || list.length || 0),
+          per_page: Number(nextMeta.per_page || USERS_PER_PAGE),
+          current_page: Number(nextMeta.current_page || page),
+          last_page: Number(nextMeta.last_page || 1),
+          from: Number(nextMeta.from || 0),
+          to: Number(nextMeta.to || 0),
+        });
+        setStats({
+          total: Number(nextStats.total || nextMeta.total || list.length || 0),
+          active: Number(nextStats.active || 0),
+          suspended: Number(nextStats.suspended || 0),
+        });
+      } catch (err) {
+        if (!mounted) return;
+        setUsers([]);
+        setPagination(EMPTY_PAGINATION);
+        setStats(EMPTY_STATS);
+        setErrorMessage('Impossible de charger les utilisateurs pour le moment.');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+
+    loadUsers();
+
+    return () => {
+      mounted = false;
+    };
+  }, [search, page, refreshToken]);
+
+  const activeCount = stats.active;
+  const suspendedCount = stats.suspended;
+  const totalUsers = stats.total || pagination.total || users.length;
+
+  const reloadUsers = () => {
+    setRefreshToken((previous) => previous + 1);
+  };
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    setPage(1);
+    setSearch(searchInput.trim());
+  };
+
+  const handleSearchReset = () => {
+    setSearchInput('');
+    setPage(1);
+    setSearch('');
   };
 
   const applySelfUpdate = async (nextUser) => {
@@ -164,12 +250,9 @@ export default function Users() {
       const updated = res?.data?.utilisateur || { statut: nextStatus };
       const nextUser = mergeUserState(selectedUser, updated);
 
-      setUsers((previous) => previous.map((item) => (
-        item.id === selectedUser.id ? nextUser : item
-      )));
-
       await applySelfUpdate(nextUser);
       showToast(`✅ ${actionText} effectué. Email envoyé à ${selectedUser.email}`, 'success');
+      reloadUsers();
     } catch (err) {
       console.error('Toggle user status error', err);
       showToast('❌ Erreur lors de la mise à jour du statut', 'error');
@@ -189,10 +272,6 @@ export default function Users() {
       const updated = res?.data?.utilisateur || { role: nextRole };
       const nextUser = mergeUserState(selectedUser, updated);
 
-      setUsers((previous) => previous.map((item) => (
-        item.id === selectedUser.id ? nextUser : item
-      )));
-
       setRoleDrafts((previous) => {
         const next = { ...previous };
         delete next[selectedUser.id];
@@ -201,6 +280,7 @@ export default function Users() {
 
       await applySelfUpdate(nextUser);
       showToast(`✅ Rôle mis à jour pour ${selectedUser.email}`, 'success');
+      reloadUsers();
     } catch (err) {
       console.error('Role update error', err);
       showToast(err?.response?.data?.message || '❌ Erreur lors de la mise à jour du rôle', 'error');
@@ -237,10 +317,6 @@ export default function Users() {
 
       const nextUser = mergeUserState(selectedUser, updated);
 
-      setUsers((previous) => previous.map((item) => (
-        item.id === selectedUser.id ? nextUser : item
-      )));
-
       setAccessDrafts((previous) => {
         const next = { ...previous };
         delete next[selectedUser.id];
@@ -249,6 +325,7 @@ export default function Users() {
 
       await applySelfUpdate(nextUser);
       showToast(`✅ Accès mis à jour pour ${selectedUser.email}`, 'success');
+      reloadUsers();
     } catch (err) {
       console.error('Access update error', err);
       showToast(err?.response?.data?.message || '❌ Erreur lors de la mise à jour des accès', 'error');
@@ -262,11 +339,21 @@ export default function Users() {
     setCreatingAdmin(true);
 
     try {
-      const res = await createAdminAdjoint(adminForm);
-      const created = res?.data?.utilisateur;
-      const nextUser = mergeUserState(created, created);
+      // Valider / normaliser le téléphone selon le pays sélectionné
+      const idPaysForValidation = adminForm.id_pays || actorUser?.id_pays || '';
+      let payload = { ...adminForm };
+      if (payload.telephone) {
+        const normalized = normalizePhoneForCountry(payload.telephone, idPaysForValidation);
+        if (!normalized) {
+          setPhoneError('Numéro invalide pour le pays sélectionné. Exemple attendu: +22890123456');
+          setCreatingAdmin(false);
+          return;
+        }
+        payload.telephone = normalized;
+      }
 
-      setUsers((previous) => [...previous, nextUser].sort((a, b) => Number(a.id) - Number(b.id)));
+      const res = await createAdminAdjoint(payload);
+      const created = res?.data?.utilisateur;
       setAdminForm((previous) => ({
         ...INITIAL_ADMIN_FORM,
         id_pays: previous.id_pays || String(actorUser?.id_pays || ''),
@@ -274,12 +361,52 @@ export default function Users() {
       }));
 
       showToast(`✅ Admin adjoint créé. Email envoyé à ${created?.email || adminForm.email}`, 'success');
+      reloadUsers();
     } catch (err) {
       console.error('Create admin adjoint error', err);
       showToast(err?.response?.data?.message || '❌ Impossible de créer le compte admin adjoint', 'error');
     } finally {
       setCreatingAdmin(false);
     }
+  }
+
+  function normalizePhoneForCountry(raw, idPays) {
+    if (!raw) return null;
+    const digits = String(raw).replace(/\D/g, '');
+    if (!digits) return null;
+
+    const countriesMap = (countries || []).reduce((acc, c) => {
+      acc[String(c.id)] = c;
+      return acc;
+    }, {});
+
+    const country = countriesMap[String(idPays)];
+    const expectedLengths = { '225': 8, '226': 8, '228': 8, '229': 8, '227': 8 };
+
+    let d = digits;
+    if (d.startsWith('00')) d = d.slice(2);
+
+    if (country && country.code) {
+      const codeDigits = String(country.code).replace(/\D/g, '');
+      const expected = expectedLengths[codeDigits] || 8;
+
+      if (d.startsWith(codeDigits)) {
+        d = d.slice(codeDigits.length);
+      } else if (d.length === expected + 1 && d.startsWith('0')) {
+        d = d.slice(1);
+      } else if (d.length === expected) {
+        // ok
+      } else {
+        return null;
+      }
+
+      if (d.length !== expected) return null;
+      return `+${codeDigits}${d}`;
+    }
+
+    // Fallback: accept generic between 8 and 15 digits
+    if (d.length >= 8 && d.length <= 15) return `+${d}`;
+    return null;
   }
 
   if (loading) {
@@ -301,11 +428,11 @@ export default function Users() {
             </p>
           )}
         </div>
-        {users.length > 0 && (
+        {totalUsers > 0 && (
           <div className="admin-users-stats">
             <div className="admin-users-stat">
               <span>Total</span>
-              <strong>{users.length}</strong>
+              <strong>{totalUsers}</strong>
             </div>
             <div className="admin-users-stat">
               <span>Actifs</span>
@@ -318,6 +445,8 @@ export default function Users() {
           </div>
         )}
       </div>
+
+      <AdminNotice type="error" message={errorMessage} className="admin-users-notice" />
 
       {actorIsSuperAdmin && (
         <div className="admin-users-create-card">
@@ -360,8 +489,14 @@ export default function Users() {
               type="text"
               placeholder="Téléphone"
               value={adminForm.telephone}
-              onChange={(e) => setAdminForm((previous) => ({ ...previous, telephone: e.target.value }))}
+              onChange={(e) => {
+                setPhoneError(null);
+                setAdminForm((previous) => ({ ...previous, telephone: e.target.value }));
+              }}
             />
+            {phoneError && (
+              <div style={{ color: '#DC2626', fontSize: '0.9rem' }}>{phoneError}</div>
+            )}
 
             {countries.length > 0 ? (
               <select
@@ -422,22 +557,30 @@ export default function Users() {
         </div>
       ) : (
         <>
-          <div className="admin-users-search">
+          <form className="admin-users-search" onSubmit={handleSearchSubmit}>
             <div className="admin-users-search-input">
               <input
                 type="text"
                 placeholder="Rechercher par nom, prénom ou email..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
               />
             </div>
-          </div>
+            <div className="admin-users-search-actions" style={{ display: 'flex', gap: '0.75rem' }}>
+              <button type="submit" className="admin-user-action-btn reactivate">
+                Rechercher
+              </button>
+              <button type="button" className="admin-user-action-btn suspend" onClick={handleSearchReset}>
+                Réinitialiser
+              </button>
+            </div>
+          </form>
 
           <div className="admin-users-list-card">
             <div className="admin-users-list-card-header">
               <h2>Liste des Utilisateurs</h2>
               <span className="admin-users-list-card-count">
-                {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
+                {totalUsers} utilisateur{totalUsers > 1 ? 's' : ''}
               </span>
             </div>
 
@@ -455,7 +598,7 @@ export default function Users() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((u) => {
+                  {users.map((u) => {
                     const isTargetSuperAdmin = normalizeRole(u.role || u.admin_role) === 'superadmin';
                     const actorIsAdjoint = actorRole === 'admin_adjoint';
                     const cannotManageSuperAdmin = isTargetSuperAdmin && actorIsAdjoint && !actorIsSuperAdmin;
@@ -594,7 +737,7 @@ export default function Users() {
                     );
                   })}
 
-                  {filteredUsers.length === 0 && (
+                  {users.length === 0 && (
                     <tr>
                       <td colSpan="7" className="admin-users-empty-cell">
                         Aucun résultat pour cette recherche.
@@ -604,15 +747,38 @@ export default function Users() {
                 </tbody>
               </table>
             </div>
+
+            <div className="admin-users-pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1rem 1.25rem 1.25rem' }}>
+              <span className="admin-users-list-card-count">
+                Affichage {pagination.from || 0}-{pagination.to || 0} sur {pagination.total || 0}
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button
+                  type="button"
+                  className="admin-user-action-btn suspend"
+                  onClick={() => setPage((previous) => Math.max(1, previous - 1))}
+                  disabled={loading || pagination.current_page <= 1}
+                >
+                  Précédent
+                </button>
+                <span className="admin-users-list-card-count">
+                  Page {pagination.current_page} / {pagination.last_page}
+                </span>
+                <button
+                  type="button"
+                  className="admin-user-action-btn reactivate"
+                  onClick={() => setPage((previous) => previous + 1)}
+                  disabled={loading || pagination.current_page >= pagination.last_page}
+                >
+                  Suivant
+                </button>
+              </div>
+            </div>
           </div>
         </>
       )}
 
-      {toast && (
-        <div className={`admin-users-toast ${toast.type}`}>
-          {toast.message}
-        </div>
-      )}
+      <AdminToast toast={toast} />
     </div>
   );
 }

@@ -19,7 +19,7 @@
 .pd-page {
   background: var(--pd-bg);
   min-height: 100vh;
-  padding-top: 80px;
+  padding-top: 0;
   font-family: var(--pd-font);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -41,6 +41,14 @@
     gap: 8px;
     flex-wrap: wrap;
     font-size: 13px;
+    list-style: none;
+  }
+
+  .pd-breadcrumb-inner li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #adb5bd;
   }
   
   .pd-breadcrumb-inner a {
@@ -217,12 +225,16 @@
   
   /* Stock */
   .pd-stock        { font-size: 13px; font-weight: 600; }
+  .pd-stock span   { display: inline-flex; align-items: center; gap: 8px; }
   .pd-stock--dispo  { color: #28a745; }
   .pd-stock--alerte { color: #fd7e14; }
   .pd-stock--rupture{ color: #dc3545; }
   
   /* Garantie */
   .pd-garantie {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     font-size: 13px;
     color: #172243;
     background: #e8edf5;
@@ -270,6 +282,10 @@
   }
   
   .pd-btn-panier {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     flex: 1;
     min-width: 160px;
     background: linear-gradient(90deg,var(--pd-dark), #223058 60%);
@@ -292,6 +308,10 @@
   .pd-btn-panier:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .pd-btn-payer {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     flex: 1;
     min-width: 160px;
     background: linear-gradient(90deg, #28a745, #20c997);
@@ -338,6 +358,7 @@
   
   .pd-btn-favori:hover      { border-color: #dc3545; transform: scale(1.1); }
   .pd-btn-favori--actif     { border-color: #dc3545; background: #fff5f5; }
+  .pd-btn-favori i          { font-size: 18px; color: #dc3545; }
   
   /* Infos rapides */
   .pd-infos-rapides {
@@ -356,6 +377,12 @@
     font-size: 13px;
     color: #555;
   }
+
+  .pd-info-icon {
+    width: 16px;
+    text-align: center;
+    color: #172243;
+  }
   
   /* ── Onglets ────────────────────────────────────────── */
   .pd-onglets {
@@ -372,6 +399,10 @@
   }
   
   .pd-onglet-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     flex: 1;
     padding: 16px;
     background: none;
@@ -508,7 +539,11 @@
   }
   
   .pd-not-found div  { font-size: 60px; margin-bottom: 16px; }
+  .pd-empty-icon     { color: #fb9c08; }
   .pd-not-found h2   { color: #172243; margin-bottom: 20px; }
+
+  .pd-icon-inline { width: 16px; text-align: center; }
+  .pd-tab-icon { font-size: 0.92em; }
   
   .pd-back-btn {
     display: inline-block;

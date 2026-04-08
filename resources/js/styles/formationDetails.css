@@ -13,7 +13,7 @@
     radial-gradient(circle at 20% 50%, rgba(251, 156, 8, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 80% 80%, rgba(23, 34, 67, 0.3) 0%, transparent 50%),
     linear-gradient(180deg, #0a0e27 0%, #172243 100%);
-  padding-top:200px;
+  padding-top: 24px;
   font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif;
   position: relative;
   overflow-x: hidden;

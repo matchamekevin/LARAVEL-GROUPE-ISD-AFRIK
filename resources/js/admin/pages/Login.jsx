@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { login, verify2FA, resend2FA, setAdminToken } from '../api';
 
 function normalizeAuthMessage(err, fallback) {
@@ -24,6 +24,28 @@ export default function Login({ onLogin }){
   const [userId, setUserId] = useState(null);
   const [code, setCode] = useState('');
   const [info, setInfo] = useState(null);
+  const emailInputRef = useRef(null);
+  const passwordInputRef = useRef(null);
+
+  useEffect(() => {
+    const clearFields = () => {
+      setEmail('');
+      setPassword('');
+
+      if (emailInputRef.current) {
+        emailInputRef.current.value = '';
+      }
+
+      if (passwordInputRef.current) {
+        passwordInputRef.current.value = '';
+      }
+    };
+
+    clearFields();
+    const timer = window.setTimeout(clearFields, 120);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   async function handleSubmit(e){
     e.preventDefault();
@@ -69,13 +91,17 @@ export default function Login({ onLogin }){
     }finally{ setLoading(false); }
   }
 
-  return (
+    return (
     <div style={{
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url("/inscription/background-image.webp")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center center',
+      backgroundRepeat: 'no-repeat',
+      backgroundAttachment: 'fixed',
       padding: '1rem',
     }}>
       <div style={{
@@ -100,7 +126,30 @@ export default function Login({ onLogin }){
           </p>
         </div>
 
-        <form onSubmit={requires2fa ? handleVerify : handleSubmit} style={{ padding: '2rem' }}>
+        <form
+          onSubmit={requires2fa ? handleVerify : handleSubmit}
+          autoComplete="off"
+          data-lpignore="true"
+          style={{ padding: '2rem' }}
+        >
+          {/* Champs leurre pour absorber l'autoremplissage navigateur */}
+          <input
+            type="text"
+            name="username"
+            autoComplete="username"
+            tabIndex={-1}
+            aria-hidden="true"
+            style={{ display: 'none' }}
+          />
+          <input
+            type="password"
+            name="password"
+            autoComplete="current-password"
+            tabIndex={-1}
+            aria-hidden="true"
+            style={{ display: 'none' }}
+          />
+
           {!requires2fa ? (
             <>
               <div style={{marginBottom: 18}}>
@@ -114,7 +163,12 @@ export default function Login({ onLogin }){
                   Email
                 </label>
                 <input 
+                  ref={emailInputRef}
                   type="email"
+                  name="admin_email_no_autofill"
+                  autoComplete="off"
+                  spellCheck={false}
+                  data-form-type="other"
                   value={email} 
                   onChange={e=>setEmail(e.target.value)}
                   style={{
@@ -140,7 +194,11 @@ export default function Login({ onLogin }){
                   Mot de passe
                 </label>
                 <input 
+                  ref={passwordInputRef}
                   type="password" 
+                  name="admin_password_no_autofill"
+                  autoComplete="new-password"
+                  data-form-type="other"
                   value={password} 
                   onChange={e=>setPassword(e.target.value)}
                   style={{
@@ -281,7 +339,7 @@ export default function Login({ onLogin }){
           fontSize: '0.8rem',
           color: '#6B7280',
         }}>
-          <i className="fas fa-building" style={{marginRight: '0.3rem'}}></i>ISD AFRIK Admin © 2026
+          <i className="fas fa-building" style={{marginRight: '0.3rem'}}></i>GROUPE ISD AFRIK Admin © 2026
         </div>
       </div>
     </div>

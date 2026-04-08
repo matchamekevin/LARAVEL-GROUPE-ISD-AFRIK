@@ -24,6 +24,34 @@ const GEOVISION_FAMILY_ORDER = [
 
 const ALL_FAMILY_SLUG = "all";
 
+// Mapping de noms français pour les familles / catégories GeoVision
+const CATEGORY_NAME_FR_MAP = {
+  "geovision-cameras": "Caméras",
+  "geovision-controle-acces": "Contrôle d'accès",
+  "geovision-lpr-anpr": "LPR / ANPR",
+  "geovision-vms-analytics": "VMS & Analytics",
+  "geovision-systemes-surveillance": "Systèmes de surveillance",
+  "geovision-enregistreurs-nvr": "Enregistreurs (NVR)",
+  "geovision-poe-reseau": "PoE & Réseau",
+  "geovision-ip-speaker-io": "Haut-parleurs IP & E/S",
+};
+
+function getFrenchCategoryName(category) {
+  if (!category) return "";
+
+  const slug = normalizeGeovisionKey(category.slug || "");
+  const nameKey = normalizeGeovisionKey(category.nom || "");
+
+  for (const [k, v] of Object.entries(CATEGORY_NAME_FR_MAP)) {
+    const short = k.replace(/^geovision-/, "");
+    if (slug === k || slug.startsWith(k) || slug.includes(short) || nameKey === k || nameKey.includes(short)) {
+      return v;
+    }
+  }
+
+  return category.nom || "";
+}
+
 export default function Geovision() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -320,6 +348,7 @@ export default function Geovision() {
             <div className="pp-grid" aria-label="Catégories GeoVision">
               {visibleCategories.map((category) => {
                 const childCount = getCategoryChildren(category).length;
+                const frenchName = getFrenchCategoryName(category);
 
                 return (
                   <article key={category.slug} className="pp-card">
@@ -329,7 +358,7 @@ export default function Geovision() {
                       onClick={() => navigate(`/geovision/categorie/${category.slug}`)}
                     >
                       <img
-                        alt={category.nom}
+                        alt={frenchName || category.nom}
                         className="pp-image"
                         loading="lazy"
                         src={resolveGeovisionImage(category)}
@@ -339,7 +368,7 @@ export default function Geovision() {
                     </button>
 
                     <div className="pp-body">
-                      <h3 className="pp-title">{category.nom}</h3>
+                      <h3 className="pp-title">{frenchName}</h3>
                       <p className="pp-desc">{category.description}</p>
                       <div className="pp-meta-row">
                         <span className="pp-meta-chip">{childCount > 0 ? `${childCount} sous-types` : "Modèles disponibles"}</span>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import usePageMeta from "../hooks/usePageMeta";
 import { ENGINEERING_DELIVERY_STEPS, ENGINEERING_FAMILIES } from "../data/engineeringCatalog";
 import "../styles/marketing-premium.css";
+import "../../css/solutions.css";
 
 
 export default function Solutions() {
@@ -42,69 +43,122 @@ export default function Solutions() {
         details: item.types.slice(0, 3),
     }));
 
+    const stats = [
+        { label: "Poles d expertise", value: solutions.length },
+        { label: "Etapes delivery", value: ENGINEERING_DELIVERY_STEPS.length },
+        { label: "Familles couvertes", value: ENGINEERING_FAMILIES.length },
+    ];
+
     return (
-        <div className="bg-slate-50 py-12 premium-page">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <section className="text-center premium-hero p-8 sm:p-12">
-                    <p className="uppercase tracking-[0.2em] text-xs text-slate-500">Solutions metier</p>
-                    <h1 className="mt-3 text-3xl sm:text-5xl font-black text-[#172243] premium-title">Prestations associees au catalogue produits</h1>
-                    <p className="mt-4 text-slate-600 max-w-4xl mx-auto leading-relaxed premium-subtitle">
-                        Les pages Solutions et Ingenierie sont des pages de prestations. Elles cadrent les familles
-                        de produits, les types et les modeles a deployer selon vos contraintes metier.
+        <div className="solutions-page premium-page">
+            <div className="solutions-shell">
+                <section className="solutions-hero premium-hero">
+                    <span className="premium-chip">Solutions metier</span>
+                    <h1 className="premium-title">Prestations associees au catalogue produits</h1>
+                    <p className="premium-subtitle">
+                        Les pages Solutions et Ingenierie cadrent les familles de produits,
+                        les types et les modeles a deployer selon vos contraintes metier.
                     </p>
+
+                    <div className="solutions-hero-actions">
+                        <button
+                            type="button"
+                            className="solutions-btn solutions-btn-primary"
+                            onClick={() => navigate("/contact")}
+                        >
+                            Parler a un expert
+                        </button>
+                        <button
+                            type="button"
+                            className="solutions-btn solutions-btn-secondary"
+                            onClick={() => navigate("/produits")}
+                        >
+                            Explorer le catalogue
+                        </button>
+                    </div>
+
+                    <div className="solutions-stats-grid">
+                        {stats.map((item) => (
+                            <article key={item.label} className="solutions-stat-card">
+                                <strong>{item.value}</strong>
+                                <span>{item.label}</span>
+                            </article>
+                        ))}
+                    </div>
                 </section>
 
-                <section className="mt-10 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-                    {ENGINEERING_DELIVERY_STEPS.map((step) => (
-                        <article key={step} className="rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-700 premium-card">
-                            {step}
-                        </article>
-                    ))}
+                <section className="solutions-delivery premium-card">
+                    <div className="solutions-section-head">
+                        <p className="solutions-kicker">Methodologie</p>
+                        <h2>Cycle de delivery de nos prestations</h2>
+                    </div>
+
+                    <div className="solutions-delivery-grid">
+                        {ENGINEERING_DELIVERY_STEPS.map((step, index) => (
+                            <article key={step} className="solutions-step-item">
+                                <span className="solutions-step-index">0{index + 1}</span>
+                                <p>{step}</p>
+                            </article>
+                        ))}
+                    </div>
                 </section>
 
-                <section className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {solutions.map((item) => (
-                        <article key={item.title} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm premium-card">
-                            <img src={item.image} alt={item.title} className="w-full h-52 object-cover" />
-                            <div className="p-5">
-                                <h2 className="text-lg font-semibold text-[#172243]">{item.title}</h2>
-                                <p className="mt-3 text-slate-600 leading-relaxed">{item.description}</p>
-                                <ul className="mt-4 space-y-2 text-sm text-slate-700">
-                                    {item.points.map((point) => (
-                                        <li key={point} className="flex gap-2">
-                                              <span className="text-amber-500">-</span>
-                                            <span>{point}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                                <button
-                                    type="button"
-                                    className="mt-4 inline-flex items-center justify-center px-4 py-2 rounded-lg bg-[#172243] text-white text-sm font-medium hover:opacity-95"
-                                    onClick={() => navigate(item.link)}
-                                >
-                                    Voir les produits relies
-                                </button>
-                            </div>
-                        </article>
-                    ))}
-                </section>
+                <section className="solutions-poles">
+                    <div className="solutions-section-head">
+                        <p className="solutions-kicker">Nos poles</p>
+                        <h2>3 axes d intervention pour vos projets</h2>
+                    </div>
 
-                <section className="mt-10 bg-white border border-slate-200 rounded-xl p-6 sm:p-8">
-                    <h2 className="text-xl font-semibold text-[#172243]">Familles couvertes par nos prestations</h2>
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {famillesResume.map((famille) => (
-                            <article key={famille.slug} className="rounded-xl border border-slate-200 bg-slate-50 p-4 premium-card">
-                                <div className="flex items-center justify-between gap-3">
-                                    <h3 className="font-semibold text-[#172243]">{famille.label}</h3>
+                    <div className="solutions-poles-grid">
+                        {solutions.map((item) => (
+                            <article key={item.title} className="solutions-pole-card premium-card">
+                                <div className="solutions-pole-media">
+                                    <img src={item.image} alt={item.title} />
+                                </div>
+                                <div className="solutions-pole-body">
+                                    <h3>{item.title}</h3>
+                                    <p>{item.description}</p>
+
+                                    <ul className="solutions-points-list">
+                                        {item.points.map((point) => (
+                                            <li key={point}>{point}</li>
+                                        ))}
+                                    </ul>
+
                                     <button
                                         type="button"
-                                        className="text-xs font-semibold text-[#172243]"
+                                        className="solutions-inline-btn"
+                                        onClick={() => navigate(item.link)}
+                                    >
+                                        Voir les produits relies
+                                    </button>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                </section>
+
+                <section className="solutions-families premium-card">
+                    <div className="solutions-section-head">
+                        <p className="solutions-kicker">Couverture</p>
+                        <h2>Familles couvertes par nos prestations</h2>
+                    </div>
+
+                    <div className="solutions-family-grid">
+                        {famillesResume.map((famille) => (
+                            <article key={famille.slug} className="solutions-family-card">
+                                <div className="solutions-family-top">
+                                    <h3>{famille.label}</h3>
+                                    <button
+                                        type="button"
+                                        className="solutions-inline-link"
                                         onClick={() => navigate(`/produits?categories=${famille.slug}`)}
                                     >
                                         Voir
                                     </button>
                                 </div>
-                                <ul className="mt-3 space-y-1 text-sm text-slate-600">
+
+                                <ul className="solutions-family-list">
                                     {famille.details.map((item) => (
                                         <li key={`${famille.slug}-${item}`}>{item}</li>
                                     ))}
@@ -114,21 +168,32 @@ export default function Solutions() {
                     </div>
                 </section>
 
-                <section className="mt-10 text-center flex flex-wrap gap-3 justify-center">
-                    <button
-                        type="button"
-                        onClick={() => navigate("/contact")}
-                        className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-[#172243] text-white font-medium hover:opacity-95"
-                    >
-                        Demander une demonstration
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => navigate("/inscription")}
-                        className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-amber-400 text-[#172243] font-semibold hover:bg-amber-300"
-                    >
-                        Demander un accompagnement
-                    </button>
+                <section className="solutions-cta premium-card">
+                    <div className="solutions-cta-copy">
+                        <p className="solutions-kicker">Accompagnement</p>
+                        <h2>Construisons la bonne architecture pour votre organisation</h2>
+                        <p>
+                            Nous vous aidons a selectionner les bonnes familles, les bons types
+                            et les bons modeles pour un deploiement maitrise.
+                        </p>
+                    </div>
+
+                    <div className="solutions-cta-actions">
+                        <button
+                            type="button"
+                            className="solutions-btn solutions-btn-primary"
+                            onClick={() => navigate("/contact")}
+                        >
+                            Demander une demonstration
+                        </button>
+                        <button
+                            type="button"
+                            className="solutions-btn solutions-btn-secondary"
+                            onClick={() => navigate("/inscription")}
+                        >
+                            Demander un accompagnement
+                        </button>
+                    </div>
                 </section>
             </div>
         </div>

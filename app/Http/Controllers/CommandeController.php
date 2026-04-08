@@ -143,22 +143,65 @@ class CommandeController extends Controller
     }
 
     /**
-     * GET /api/admin/commandes — Liste toutes les commandes (admin)
+     * GET /api/admin/commandes — Liste paginée des commandes (admin)
      */
-    public function adminIndex()
+    public function adminIndex(Request $request)
     {
-        $commandes = Commande::with(['utilisateur'])
-            ->with(['paiements', 'factures', 'livraison'])
-            ->orderByDesc('date_commande')
-            ->get();
+        $perPage = max(1, min(50, (int) $request->query('per_page', 20)));
+        $page = max(1, (int) $request->query('page', 1));
+        $search = trim((string) $request->query('q', ''));
 
-        $itemsByCommande = $this->fetchItemsByCommandeIds($commandes->pluck('id_commande')->all());
+        $query = Commande::with(['utilisateur', 'paiements', 'factures', 'livraison'])
+            ->orderByDesc('date_commande');
 
-        $payload = $commandes
+        if ($search !== '') {
+            $like = "%{$search}%";
+            $query->where(function ($q) use ($like) {
+                $q->where('numero_commande', 'ILIKE', $like)
+                    ->orWhereHas('utilisateur', function ($uq) use ($like) {
+                        $uq->where('email', 'ILIKE', $like)
+                           ->orWhere('prenom', 'ILIKE', $like)
+                           ->orWhere('nom', 'ILIKE', $like);
+                    });
+            });
+        }
+
+        $paginator = $query->paginate($perPage, ['*'], 'page', $page)->appends($request->query());
+
+        $items = collect($paginator->items());
+        $ids = $items->pluck('id_commande')->all();
+        $itemsByCommande = $this->fetchItemsByCommandeIds($ids);
+
+        $payload = $items
             ->map(fn (Commande $commande) => $this->enrichCommandeForAdmin($commande, $itemsByCommande))
             ->values();
 
-        return response()->json($payload);
+        $total = $paginator->total();
+        $enAttente = Commande::whereIn('statut', ['en_attente', 'en_cours'])->count();
+        $payee = Commande::whereIn('statut', ['payee', 'completed'])->count();
+
+        return response()->json([
+            'data' => $payload,
+            'meta' => [
+                'total' => $paginator->total(),
+                'per_page' => $paginator->perPage(),
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+            ],
+            'links' => [
+                'first' => $paginator->url(1),
+                'last' => $paginator->url($paginator->lastPage()),
+                'next' => $paginator->nextPageUrl(),
+                'prev' => $paginator->previousPageUrl(),
+            ],
+            'stats' => [
+                'total' => $total,
+                'en_attente' => $enAttente,
+                'payee' => $payee,
+            ],
+        ]);
     }
 
     /**

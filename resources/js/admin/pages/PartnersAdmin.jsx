@@ -6,9 +6,10 @@ import {
   deleteHomePartner,
 } from '../api';
 import Loader from '../components/Loader';
+import AdminToast, { useAdminToast } from '../components/AdminToast';
 import { pickDisplayMediaUrl } from '../../utils/mediaUrl';
 import '../styles/admin-shared.css';
-import './partners.css';
+import '../styles/partners.css';
 
 const INITIAL_FORM = {
   name: '',
@@ -24,6 +25,7 @@ export default function PartnersAdmin() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
+  const { toast, showToast } = useAdminToast();
 
   function imageSrc(item) {
     return pickDisplayMediaUrl([item?.image_url, item?.image_path], '');
@@ -37,7 +39,7 @@ export default function PartnersAdmin() {
     } catch (err) {
       console.error(err);
       setItems([]);
-      alert('Impossible de charger les partenaires');
+      showToast('Impossible de charger les partenaires', 'error');
     } finally {
       setLoading(false);
     }
@@ -69,14 +71,15 @@ export default function PartnersAdmin() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    const editing = Boolean(editingId);
 
     if (!form.name?.trim()) {
-      alert('Le nom est obligatoire');
+      showToast('Le nom est obligatoire', 'error');
       return;
     }
 
     if (!editingId && !form.image) {
-      alert('Veuillez ajouter une image');
+      showToast('Veuillez ajouter une image', 'error');
       return;
     }
 
@@ -98,8 +101,9 @@ export default function PartnersAdmin() {
 
       resetForm();
       await loadData();
+      showToast(editing ? 'Partenaire mis a jour.' : 'Partenaire cree.', 'success');
     } catch (err) {
-      alert(err?.response?.data?.message || 'Erreur enregistrement partenaire');
+      showToast(err?.response?.data?.message || 'Erreur enregistrement partenaire', 'error');
     } finally {
       setSaving(false);
     }
@@ -111,8 +115,9 @@ export default function PartnersAdmin() {
       await deleteHomePartner(id);
       setItems((prev) => prev.filter((x) => x.id !== id));
       if (editingId === id) resetForm();
+      showToast('Partenaire supprime.', 'success');
     } catch (err) {
-      alert('Erreur suppression partenaire');
+      showToast('Erreur suppression partenaire', 'error');
     }
   }
 
@@ -226,6 +231,8 @@ export default function PartnersAdmin() {
           </table>
         )}
       </div>
+
+      <AdminToast toast={toast} />
     </div>
   );
 }

@@ -17,6 +17,7 @@ use App\Mail\AccountReactivatedMail;
 use App\Mail\AccountAccessUpdatedMail;
 use App\Mail\AdminCreatedMail;
 use App\Jobs\SendTwoFactorCodeJob;
+use App\Models\Pays;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -46,7 +47,7 @@ class UtilisateurController extends Controller
         return 'client';
     }
 
-    private function isSuperAdminUser(?Utilisateur $user): bool
+    private function isSuperAdminUser(?object $user): bool
     {
         if (!$user) {
             return false;
@@ -56,7 +57,7 @@ class UtilisateurController extends Controller
             && $this->normalizeRoleValue($user->admin_role ?: $user->role) === 'superadmin';
     }
 
-    private function canActorManageUser(?Utilisateur $actor, Utilisateur $target): bool
+    private function canActorManageUser(?object $actor, Utilisateur $target): bool
     {
         if (!$actor) {
             return false;
@@ -182,6 +183,70 @@ class UtilisateurController extends Controller
         if (!array_key_exists('can_access_admin', $validated)) {
             $validated['can_access_admin'] = true;
         }
+    }
+
+    /**
+     * Normalise et valide un numéro de téléphone selon l'indicatif du pays.
+     * Retourne la forme E.164 (ex: +22890123456) ou null si invalide.
+     */
+    private function normalizeTelephoneForCountry(?string $telephone, ?int $id_pays): ?string
+    {
+        if (!$telephone) return null;
+
+        // Ne garder que les chiffres
+        $digits = preg_replace('/\D+/', '', $telephone);
+        if (!$digits) return null;
+
+        // Récupérer l'indicatif du pays (ex: +228)
+        $countryCodeDigits = null;
+        $pays = null;
+        if ($id_pays) {
+            $pays = Pays::find($id_pays);
+        }
+        if ($pays && !empty($pays->code_pays)) {
+            $countryCodeDigits = preg_replace('/\D+/', '', $pays->code_pays);
+        }
+
+        // Mappage d'attendus (principalement pays OUest-africains utilisés)
+        $expectedLengths = [
+            '225' => 8, // Cote d'Ivoire
+            '226' => 8, // Burkina Faso
+            '228' => 8, // Togo
+            '229' => 8, // Benin
+            '227' => 8, // Niger
+        ];
+
+        // Retirer préfixe international '00' si présent
+        if (strpos($digits, '00') === 0) {
+            $digits = substr($digits, 2);
+        }
+
+        if ($countryCodeDigits) {
+            $expected = $expectedLengths[$countryCodeDigits] ?? 8;
+
+            // Si le numéro commence par l'indicatif -> extraire la partie nationale
+            if (strpos($digits, $countryCodeDigits) === 0) {
+                $national = substr($digits, strlen($countryCodeDigits));
+            } elseif (strlen($digits) === $expected + 1 && $digits[0] === '0') {
+                // cas '0' préfixe local (ex: 090123456)
+                $national = substr($digits, 1);
+            } elseif (strlen($digits) === $expected) {
+                $national = $digits;
+            } else {
+                return null;
+            }
+
+            if (strlen($national) !== $expected) return null;
+
+            return '+' . $countryCodeDigits . $national;
+        }
+
+        // Si aucun pays trouvé, accepter un numéro général entre 8 et 15 chiffres
+        if (strlen($digits) >= 8 && strlen($digits) <= 15) {
+            return '+' . $digits;
+        }
+
+        return null;
     }
 
     private function generateTemporaryPassword(): string
@@ -636,7 +701,26 @@ class UtilisateurController extends Controller
     {
         try {
             $actor = $request->user();
-            $query = Utilisateur::whereNull('deleted_at')->orderBy('id_utilisateur');
+            $perPage = max(1, min(50, (int) $request->query('per_page', 20)));
+            $page = max(1, (int) $request->query('page', 1));
+            $search = trim((string) $request->query('q', ''));
+
+            $query = Utilisateur::query()
+                ->select([
+                    'id_utilisateur',
+                    'nom',
+                    'prenom',
+                    'email',
+                    'telephone',
+                    'role',
+                    'is_admin',
+                    'statut',
+                    'can_access_client',
+                    'can_access_admin',
+                    'admin_role',
+                    'id_pays',
+                ])
+                ->whereNull('deleted_at');
 
             if (!$this->isSuperAdminUser($actor)) {
                 $query->where(function ($builder) {
@@ -646,8 +730,40 @@ class UtilisateurController extends Controller
                 });
             }
 
-            $utilisateurs = $query->get();
-            return response()->json($utilisateurs);
+            if ($search !== '') {
+                $term = '%' . $search . '%';
+                $query->where(function ($builder) use ($term) {
+                    $builder
+                        ->where('nom', 'ILIKE', $term)
+                        ->orWhere('prenom', 'ILIKE', $term)
+                        ->orWhere('email', 'ILIKE', $term)
+                        ->orWhere('telephone', 'ILIKE', $term);
+                });
+            }
+
+            $statsQuery = clone $query;
+
+            $utilisateurs = $query
+                ->orderBy('id_utilisateur')
+                ->paginate($perPage, ['*'], 'page', $page)
+                ->appends($request->query());
+
+            return response()->json([
+                'data' => $utilisateurs->items(),
+                'meta' => [
+                    'total' => $utilisateurs->total(),
+                    'per_page' => $utilisateurs->perPage(),
+                    'current_page' => $utilisateurs->currentPage(),
+                    'last_page' => $utilisateurs->lastPage(),
+                    'from' => $utilisateurs->firstItem(),
+                    'to' => $utilisateurs->lastItem(),
+                ],
+                'stats' => [
+                    'total' => $statsQuery->count(),
+                    'active' => (clone $statsQuery)->where('statut', 'actif')->count(),
+                    'suspended' => (clone $statsQuery)->where('statut', 'suspendu')->count(),
+                ],
+            ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'message' => 'Erreur',
@@ -894,12 +1010,27 @@ class UtilisateurController extends Controller
                 'two_factor_enabled' => 'nullable|boolean',
             ]);
 
+            // Normaliser et valider le numéro selon le pays sélectionné
+            $idPays = $validated['id_pays'] ?? $actor->id_pays ?? null;
+            $normalizedPhone = null;
+            if (!empty($validated['telephone'])) {
+                $normalizedPhone = $this->normalizeTelephoneForCountry($validated['telephone'], $idPays);
+                if ($normalizedPhone === null) {
+                    return response()->json([
+                        'message' => 'Erreur de validation',
+                        'errors' => [
+                            'telephone' => ['Numéro de téléphone invalide pour le pays sélectionné.'],
+                        ],
+                    ], 422);
+                }
+            }
+
             $password = $this->generateTemporaryPassword();
             $admin = Utilisateur::create([
                 'nom' => $validated['nom'],
                 'prenom' => $validated['prenom'],
                 'email' => $validated['email'],
-                'telephone' => $validated['telephone'] ?? null,
+                'telephone' => $normalizedPhone ?? ($validated['telephone'] ?? null),
                 'mot_de_passe' => $password,
                 'role' => 'admin_adjoint',
                 'admin_role' => 'admin_adjoint',

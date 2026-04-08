@@ -386,7 +386,7 @@ body.modal-open {
 .home .hero-stat-item .stat-number {
   font-size: 2.5rem;
   font-weight: 800;
-  color: #fb9c08;
+  color: #fff;
   margin-bottom: 0.3rem;
   text-shadow: 0 2px 10px rgba(251, 156, 8, 0.5);
 }
@@ -403,7 +403,7 @@ body.modal-open {
 .home .section-header {
   text-align: center;
   max-width: 800px;
-  margin: 0 auto 60px;
+  margin: 0 auto 24px;
 }
 
 .home .section-header h2 {
@@ -436,7 +436,7 @@ body.modal-open {
 =========================== */
 .home.contact-page .contact-hero {
   position: relative;
-  padding: 90px 20px 70px;
+  padding: 40px 20px 44px;
   background: radial-gradient(circle at 20% 20%, rgba(251,156,8,0.18), transparent 45%),
               linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);
   overflow: hidden;
@@ -574,7 +574,7 @@ body.modal-open {
     grid-template-columns: 1fr;
   }
   .home.contact-page .contact-hero {
-    padding-top: 70px;
+    padding: 34px 16px 34px;
   }
 }
 @media (max-width: 720px) {
@@ -1433,7 +1433,7 @@ body.modal-open {
    GEOVISION PAGES
 =========================== */
 .home.geovision-page .geovision-hero {
-  padding: 90px 20px 70px;
+  padding: 48px 20px 48px;
   background: radial-gradient(circle at 20% 20%, rgba(251,156,8,0.16), transparent 45%),
               linear-gradient(135deg, #f7f9fc 0%, #eef2f7 100%);
 }

@@ -21,6 +21,7 @@ use App\Http\Controllers\HomeMarketingCardController;
 use App\Http\Controllers\HomeTestimonialController;
 use App\Http\Controllers\HomeCollaboratorController;
 use App\Http\Controllers\HomePartnerController;
+use App\Http\Controllers\AdminActivityController;
 
 // ======================================================
 // 🏠 ROUTES DE TEST
@@ -99,6 +100,7 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     Route::post('/produits',                          [ProduitController::class, 'store']);
     Route::put('/produits/{id}',                      [ProduitController::class, 'update']);
     Route::delete('/produits/{id}',                   [ProduitController::class, 'destroy']);
+    Route::delete('/produits/{id}/force',             [ProduitController::class, 'forceDestroy']);
     Route::patch('/produits/{id}/restore',            [ProduitController::class, 'restore']);
     Route::patch('/produits/{id}/stock',              [ProduitController::class, 'updateStock']);
     Route::patch('/produits/{id}/vedette',            [ProduitController::class, 'toggleVedette']);
@@ -120,6 +122,10 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     // 💳 PAIEMENTS (admin lecture)
     Route::get('/admin/paiements',                   [PaiementController::class, 'adminIndex']);
     Route::get('/admin/paiements/{id}',              [PaiementController::class, 'show'])->where('id', '[0-9]+');
+
+    // 📝 ACTIVITÉS RÉCENTES (audit + admin actions)
+    Route::get('/admin/dashboard',                 [AdminActivityController::class, 'dashboard']);
+    Route::get('/admin/activities',                  [AdminActivityController::class, 'index']);
 
     // 📦 COMMANDES (admin)
     Route::get('/admin/commandes',                   [CommandeController::class, 'adminIndex']);
@@ -223,6 +229,7 @@ Route::get('/paiement/callback',   [PaiementController::class, 'callbackReturn']
 Route::middleware('auth:sanctum')->post('/paiement/{idPaiement}/init', [FormationController::class, 'initPaiement'])->name('paiement.init');
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/produits/paiement',   [PaiementController::class, 'payProduits'])->name('paiement.produits');
     Route::post('/formations/{id}/paiement', [PaiementController::class, 'payFormation'])->name('paiement.formation');
     Route::post('/paiement/test',            [PaiementController::class, 'testPaiement'])->name('paiement.test');
     Route::get('/paiement/{id}/facture',     [PaiementController::class, 'facture'])->name('paiement.facture');

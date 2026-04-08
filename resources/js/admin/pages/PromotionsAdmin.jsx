@@ -6,9 +6,10 @@ import {
   deleteHomeMarketingCard,
 } from '../api';
 import Loader from '../components/Loader';
+import AdminToast, { useAdminToast } from '../components/AdminToast';
 import { HOME_MARKETING_SECTIONS, normalizeMarketingTarget } from '../../utils/homeMarketingCards';
 import '../styles/admin-shared.css';
-import './promotions.css';
+import '../styles/promotions.css';
 
 const SECTION_OPTIONS = [
   {
@@ -43,6 +44,7 @@ export default function PromotionsAdmin() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
+  const { toast, showToast } = useAdminToast();
 
   function getCardImageSrc(card) {
     if (card?.image_url) return card.image_url;
@@ -67,7 +69,7 @@ export default function PromotionsAdmin() {
     } catch (err) {
       console.error(err);
       setCards([]);
-      alert('Impossible de charger les promotions');
+      showToast('Impossible de charger les promotions', 'error');
     } finally {
       setLoading(false);
     }
@@ -101,19 +103,20 @@ export default function PromotionsAdmin() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    const editing = Boolean(editingId);
 
     if (!form.title.trim()) {
-      alert('Le nom interne de la promotion est obligatoire');
+      showToast('Le nom interne de la promotion est obligatoire', 'error');
       return;
     }
 
     if (!form.target_url.trim()) {
-      alert("L'URL de redirection est obligatoire");
+      showToast("L'URL de redirection est obligatoire", 'error');
       return;
     }
 
     if (!editingId && !form.image) {
-      alert('Veuillez ajouter une image');
+      showToast('Veuillez ajouter une image', 'error');
       return;
     }
 
@@ -139,8 +142,9 @@ export default function PromotionsAdmin() {
 
       resetForm();
       await loadData();
+      showToast(editing ? 'Promotion mise a jour.' : 'Promotion creee.', 'success');
     } catch (err) {
-      alert(err?.response?.data?.message || 'Erreur enregistrement promotion');
+      showToast(err?.response?.data?.message || 'Erreur enregistrement promotion', 'error');
     } finally {
       setSaving(false);
     }
@@ -155,9 +159,10 @@ export default function PromotionsAdmin() {
       if (editingId === id) {
         resetForm();
       }
+      showToast('Promotion supprimee.', 'success');
     } catch (err) {
       console.error(err);
-      alert('Erreur suppression promotion');
+      showToast('Erreur suppression promotion', 'error');
     }
   }
 
@@ -393,6 +398,8 @@ export default function PromotionsAdmin() {
           </div>
         )}
       </div>
+
+      <AdminToast toast={toast} />
     </div>
   );
 }

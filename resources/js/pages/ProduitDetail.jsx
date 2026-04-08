@@ -1,9 +1,66 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../axios";
-import { getProduit, getCategorie } from "../services/ProduitService";
+import { getCategorie, getProduit, getProduits } from "../services/ProduitService";
 import { addToCart, isFavorite, subscribeStoreUpdates, toggleFavorite } from "../utils/shopStorage";
+import { toastError } from "../utils/toast";
 import "../styles/produitdetail.css";
+
+function normalizeMediaUrl(value) {
+  const trimmed = String(value || "").trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/")) {
+    return trimmed;
+  }
+
+  return `/${trimmed}`;
+}
+
+function collectProductMedia(product) {
+  const candidates = [
+    product?.image_url,
+    ...(Array.isArray(product?.image_urls) ? product.image_urls : []),
+    ...(Array.isArray(product?.images)
+      ? product.images.flatMap((image) => [image?.url, image?.path])
+      : []),
+  ];
+
+  const seen = new Set();
+
+  return candidates
+    .map((candidate) => normalizeMediaUrl(candidate))
+    .filter((candidate) => candidate && candidate !== "/images/default.webp" && candidate !== "/placeholder.webp")
+    .filter((candidate) => {
+      if (seen.has(candidate)) {
+        return false;
+      }
+
+      seen.add(candidate);
+      return true;
+    });
+}
+
+function collectGalleryFromProducts(products) {
+  const gallery = [];
+  const seen = new Set();
+
+  (Array.isArray(products) ? products : []).forEach((product) => {
+    collectProductMedia(product).forEach((candidate) => {
+      if (seen.has(candidate)) {
+        return;
+      }
+
+      seen.add(candidate);
+      gallery.push(candidate);
+    });
+  });
+
+  return gallery;
+}
 
 function toReadableSpecValue(value) {
   if (value === null || value === undefined || value === "") {
@@ -63,6 +120,8 @@ export default function ProduitDetail() {
   const [avisSubmitting, setAvisSubmitting] = useState(false);
   const [avisMessage, setAvisMessage] = useState("");
   const [avisError, setAvisError] = useState("");
+  const [modelGallery, setModelGallery] = useState([]);
+  const [paiementLoading, setPaiementLoading] = useState(false);
 
   const getCurrentUserId = () => {
     try {
@@ -80,6 +139,8 @@ export default function ProduitDetail() {
     setOnglet("description");
     setAvisMessage("");
     setAvisError("");
+    setImageActive(0);
+    setModelGallery([]);
     getProduit(id)
       .then((res) => {
         setProduit(res.data.data);
@@ -107,6 +168,61 @@ export default function ProduitDetail() {
     }
     return () => { active = false; };
   }, [produit]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadModelGallery = async () => {
+      if (!produit?.modele) {
+        setModelGallery([]);
+        return;
+      }
+
+      const baseParams = {
+        modele: produit.modele,
+        par_page: 50,
+        tri: "recent",
+      };
+
+      if (produit.id_categorie) {
+        baseParams.id_categorie = produit.id_categorie;
+      }
+
+      try {
+        const response = await getProduits(baseParams);
+        if (!active) return;
+
+        const items = Array.isArray(response.data?.data) ? response.data.data : [];
+        const categoryGallery = collectGalleryFromProducts(items);
+
+        if (categoryGallery.length > 0) {
+          setModelGallery(categoryGallery);
+          return;
+        }
+
+        const fallbackResponse = await getProduits({
+          modele: produit.modele,
+          par_page: 50,
+          tri: "recent",
+        });
+
+        if (!active) return;
+
+        const fallbackItems = Array.isArray(fallbackResponse.data?.data) ? fallbackResponse.data.data : [];
+        setModelGallery(collectGalleryFromProducts(fallbackItems));
+      } catch {
+        if (active) {
+          setModelGallery([]);
+        }
+      }
+    };
+
+    loadModelGallery();
+
+    return () => {
+      active = false;
+    };
+  }, [produit?.modele, produit?.id_categorie]);
 
   const _catCheckSource = produit?.categorie || categorieInfo || {};
   const _catCheck = (
@@ -155,6 +271,42 @@ export default function ProduitDetail() {
     setFavori(Boolean(result?.isFavorite));
   };
 
+  const handlePaiementProduit = async () => {
+    if (!produit || Number(produit.stock || 0) <= 0 || paiementLoading) {
+      return;
+    }
+    setPaiementLoading(true);
+
+    try {
+      const response = await api.post("/produits/paiement", {
+        items: [
+          {
+            id_produit: Number(produit.id_produit),
+            quantite: Number(quantite || 1),
+          },
+        ],
+      });
+
+      const checkoutUrl = response?.data?.checkout_url;
+      if (!checkoutUrl) {
+        throw new Error("URL de paiement manquante.");
+      }
+
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      if (error?.response?.status === 401) {
+        navigate('/login', { state: { from: location.pathname } });
+        return;
+      }
+
+      const backendMessage =
+        error?.response?.data?.message ||
+        "Impossible d'initialiser le paiement pour ce produit.";
+      toastError(backendMessage);
+      setPaiementLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="pd-page">
@@ -175,7 +327,9 @@ export default function ProduitDetail() {
     return (
       <div className="pd-page">
         <div className="pd-not-found">
-          <div>📦</div>
+          <div>
+            <i className="fa-solid fa-box-open pd-empty-icon" aria-hidden="true"></i>
+          </div>
           <h2>Produit introuvable</h2>
           <Link to={location.state?.from || "/produits"} className="pd-back-btn">← Retour boutique</Link>
         </div>
@@ -183,9 +337,12 @@ export default function ProduitDetail() {
     );
   }
 
-  const images = produit.images?.length
-    ? produit.images.map((img) => img.url || img.path)
-    : [produit.image_url || "/placeholder.webp"];
+  const localGallery = collectProductMedia(produit);
+  const images = modelGallery.length > 0
+    ? modelGallery
+    : localGallery.length > 0
+      ? localGallery
+      : ["/images/default.webp"];
 
   const prixFinal   = produit.prix_promo ?? produit.prix;
   const reduction   = produit.prix_promo
@@ -199,28 +356,34 @@ export default function ProduitDetail() {
     <div className="pd-page">
 
       {/* ── Fil d'Ariane ─────────────────────────── */}
-      <nav className="pd-breadcrumb">
-        <div className="pd-breadcrumb-inner">
-          <Link to="/">Accueil</Link>
-          <span>›</span>
-          <Link to="/produits">Boutique</Link>
+      <nav className="pd-breadcrumb" aria-label="Fil d'Ariane">
+        <ol className="pd-breadcrumb-inner">
+          <li>
+            <Link to="/">Accueil</Link>
+          </li>
+          <li>
+            <span aria-hidden="true">›</span>
+            <Link to="/produits">Boutique</Link>
+          </li>
           {isGeovision && (
-            <>
-              <span>›</span>
+            <li>
+              <span aria-hidden="true">›</span>
               <Link to={geovisionLink}>Geovision</Link>
-            </>
+            </li>
           )}
           {(produit.categorie || categorieInfo) && (
-            <>
-              <span>›</span>
+            <li>
+              <span aria-hidden="true">›</span>
               <Link to={`/produits?id_categorie=${(produit.categorie?.id_categorie || categorieInfo?.id_categorie || produit.id_categorie)}`}>
                 {(produit.categorie?.nom || categorieInfo?.nom)}
               </Link>
-            </>
+            </li>
           )}
-          <span>›</span>
-          <span className="pd-breadcrumb-current">{produit.titre}</span>
-        </div>
+          <li>
+            <span aria-hidden="true">›</span>
+            <span className="pd-breadcrumb-current" aria-current="page">{produit.titre}</span>
+          </li>
+        </ol>
       </nav>
 
       {/* ── Corps principal ───────────────────────── */}
@@ -244,20 +407,7 @@ export default function ProduitDetail() {
               />
             </div>
 
-            {/* Thumbnails */}
-            {images.length > 1 && (
-              <div className="pd-thumbnails">
-                {images.map((src, i) => (
-                  <button
-                    key={i}
-                    className={`pd-thumb ${imageActive === i ? "pd-thumb--actif" : ""}`}
-                    onClick={() => setImageActive(i)}
-                  >
-                    <img src={src} alt={`Vue ${i + 1}`} />
-                  </button>
-                ))}
-              </div>
-            )}
+            {/* Thumbnails removed */}
           </div>
 
           {/* ── Infos produit ────────────────────── */}
@@ -307,17 +457,29 @@ export default function ProduitDetail() {
             {/* Stock */}
             <div className="pd-stock">
               {produit.stock === 0 ? (
-                <span className="pd-stock--rupture">❌ Rupture de stock</span>
+                <span className="pd-stock--rupture">
+                  <i className="fa-solid fa-circle-xmark pd-icon-inline" aria-hidden="true"></i>
+                  Rupture de stock
+                </span>
               ) : produit.stock <= 5 ? (
-                <span className="pd-stock--alerte">⚠️ Plus que {produit.stock} en stock !</span>
+                <span className="pd-stock--alerte">
+                  <i className="fa-solid fa-triangle-exclamation pd-icon-inline" aria-hidden="true"></i>
+                  Plus que {produit.stock} en stock !
+                </span>
               ) : (
-                <span className="pd-stock--dispo">✅ En stock ({produit.stock} disponibles)</span>
+                <span className="pd-stock--dispo">
+                  <i className="fa-solid fa-circle-check pd-icon-inline" aria-hidden="true"></i>
+                  En stock ({produit.stock} disponibles)
+                </span>
               )}
             </div>
 
             {/* Garantie */}
             {produit.garantie && (
-              <div className="pd-garantie">🛡️ Garantie : {produit.garantie}</div>
+              <div className="pd-garantie">
+                <i className="fa-solid fa-shield-halved pd-icon-inline" aria-hidden="true"></i>
+                <span>Garantie : {produit.garantie}</span>
+              </div>
             )}
 
             {/* Quantité + Panier */}
@@ -333,31 +495,54 @@ export default function ProduitDetail() {
                 onClick={handlePanier}
                 disabled={produit.stock === 0 || ajouteAuPanier}
               >
-                {ajouteAuPanier ? "✅ Ajouté au panier !" : "🛒 Ajouter au panier"}
+                {ajouteAuPanier ? (
+                  <>
+                    <i className="fa-solid fa-circle-check pd-icon-inline" aria-hidden="true"></i>
+                    Ajouté au panier !
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-cart-shopping pd-icon-inline" aria-hidden="true"></i>
+                    Ajouter au panier
+                  </>
+                )}
               </button>
 
               <button
                 className="pd-btn-payer"
-                onClick={() => navigate('/paiement')}
-                disabled={produit.stock === 0}
+                onClick={handlePaiementProduit}
+                disabled={produit.stock === 0 || paiementLoading}
               >
-                💳 Payer maintenant
+                <i className="fa-solid fa-credit-card pd-icon-inline" aria-hidden="true"></i>
+                {paiementLoading ? "Redirection..." : "Payer maintenant"}
               </button>
 
               <button
                 className={`pd-btn-favori ${favori ? "pd-btn-favori--actif" : ""}`}
                 onClick={handleFavori}
                 title={favori ? "Retirer des favoris" : "Ajouter aux favoris"}
+                aria-label={favori ? "Retirer des favoris" : "Ajouter aux favoris"}
               >
-                {favori ? "❤️" : "🤍"}
+                <i className={`${favori ? "fa-solid" : "fa-regular"} fa-heart`} aria-hidden="true"></i>
               </button>
             </div>
 
+            
+
             {/* Infos rapides */}
             <div className="pd-infos-rapides">
-              <div className="pd-info-item">📦 <span>Livraison disponible</span></div>
-              <div className="pd-info-item">🔄 <span>Retour sous 7 jours</span></div>
-              <div className="pd-info-item">💳 <span>TMoney · Flooz · Visa</span></div>
+              <div className="pd-info-item">
+                <i className="fa-solid fa-box-open pd-info-icon" aria-hidden="true"></i>
+                <span>Livraison disponible</span>
+              </div>
+              <div className="pd-info-item">
+                <i className="fa-solid fa-rotate-left pd-info-icon" aria-hidden="true"></i>
+                <span>Retour sous 7 jours</span>
+              </div>
+              <div className="pd-info-item">
+                <i className="fa-solid fa-credit-card pd-info-icon" aria-hidden="true"></i>
+                <span>TMoney · Flooz · Visa</span>
+              </div>
             </div>
           </div>
         </div>
@@ -376,9 +561,24 @@ export default function ProduitDetail() {
                 className={`pd-onglet-btn ${onglet === o ? "pd-onglet-btn--actif" : ""}`}
                 onClick={() => setOnglet(o)}
               >
-                {o === "description"   && "📝 Description"}
-                {o === "specifications" && "⚙️ Spécifications"}
-                {o === "avis"           && `⭐ Avis (${avisCount})`}
+                {o === "description" && (
+                  <>
+                    <i className="fa-regular fa-file-lines pd-tab-icon" aria-hidden="true"></i>
+                    Description
+                  </>
+                )}
+                {o === "specifications" && (
+                  <>
+                    <i className="fa-solid fa-sliders pd-tab-icon" aria-hidden="true"></i>
+                    Spécifications
+                  </>
+                )}
+                {o === "avis" && (
+                  <>
+                    <i className="fa-solid fa-star pd-tab-icon" aria-hidden="true"></i>
+                    Avis ({avisCount})
+                  </>
+                )}
               </button>
             ))}
           </div>

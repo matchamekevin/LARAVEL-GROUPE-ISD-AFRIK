@@ -3,6 +3,7 @@ import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import ToastContainer from "../components/ToastContainer";
 
 function resolveApiBase() {
     if (typeof window !== "undefined") {
@@ -87,6 +88,7 @@ export default function MainLayout({ children }) {
     return (
         <div className="site-shell min-h-screen flex flex-col font-[Corbel]">
             <Header />
+            <ToastContainer />
             <main className="site-main flex-grow">{children}</main>
             <Footer />
         </div>

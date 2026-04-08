@@ -228,38 +228,68 @@ class ProduitController extends Controller
 
     /**
      * GET /api/admin/produits
-     * Liste admin complète des produits (sans pagination front catalogue)
+     * Liste admin paginée des produits
      */
     public function adminIndex(Request $request): JsonResponse
     {
         $segment = $request->query('segment', 'general');
+        $perPage = max(1, min(50, (int) $request->query('per_page', 12)));
+        $page = max(1, (int) $request->query('page', 1));
+        $search = trim((string) $request->query('q', ''));
+        $status = trim((string) $request->query('statut', ''));
+        $trashed = strtolower(trim((string) $request->query('trashed', '')));
 
-        $produits = Produit::query()
+        $query = Produit::query()
             ->with(['pays', 'categorie.parent', 'images'])
+            ->when($trashed === 'only', fn ($builder) => $builder->onlyTrashed())
+            ->when($trashed === 'with' || $trashed === 'all', fn ($builder) => $builder->withTrashed())
             ->whereHas('categorie', fn ($categorieQuery) => $categorieQuery->where('segment', $segment))
             ->when($request->filled('id_categorie'), function ($query) use ($request) {
                 $query->where('id_categorie', $request->query('id_categorie'));
             })
-            ->when($request->filled('q'), function ($query) use ($request) {
-                $terme = $request->query('q');
+            ->when($search !== '', function ($query) use ($search) {
+                $terme = $search;
                 $query->where(function ($nestedQuery) use ($terme) {
-                    $nestedQuery->where('titre', 'LIKE', "%{$terme}%")
-                        ->orWhere('description', 'LIKE', "%{$terme}%")
-                        ->orWhere('marque', 'LIKE', "%{$terme}%")
-                        ->orWhere('reference', 'LIKE', "%{$terme}%")
-                        ->orWhere('modele', 'LIKE', "%{$terme}%")
-                        ->orWhere('slug', 'LIKE', "%{$terme}%");
+                    $like = "%{$terme}%";
+                    $nestedQuery->where('titre', 'ILIKE', $like)
+                        ->orWhere('description', 'ILIKE', $like)
+                        ->orWhere('marque', 'ILIKE', $like)
+                        ->orWhere('reference', 'ILIKE', $like)
+                        ->orWhere('modele', 'ILIKE', $like)
+                        ->orWhere('slug', 'ILIKE', $like);
                 });
+            })
+            ->when($status !== '' && strtolower($status) !== 'all', function ($query) use ($status) {
+                $query->where('statut', $status);
             })
             ->when($request->filled('modele'), function ($query) use ($request) {
                 $modele = $request->query('modele');
                 $query->where('modele', 'LIKE', "%{$modele}%");
             })
             ->orderByDesc('date_creation')
-            ->get();
+            ->paginate($perPage, ['*'], 'page', $page)
+            ->appends($request->query());
+
+        $data = collect($query->items())
+            ->map(fn ($produit) => (new ProduitResource($produit))->resolve())
+            ->all();
 
         return response()->json([
-            'data' => ProduitResource::collection($produits),
+            'data' => $data,
+            'meta' => [
+                'total' => $query->total(),
+                'per_page' => $query->perPage(),
+                'current_page' => $query->currentPage(),
+                'last_page' => $query->lastPage(),
+                'from' => $query->firstItem(),
+                'to' => $query->lastItem(),
+            ],
+            'links' => [
+                'first' => $query->url(1),
+                'last' => $query->url($query->lastPage()),
+                'next' => $query->nextPageUrl(),
+                'prev' => $query->previousPageUrl(),
+            ],
         ]);
     }
 
@@ -338,6 +368,27 @@ class ProduitController extends Controller
         $this->service->delete($produit);
 
         return response()->json(['message' => 'Produit supprimé avec succès']);
+    }
+
+    /**
+     * DELETE /api/produits/{id}/force
+     * Suppression définitive
+     */
+    public function forceDestroy(int $id): JsonResponse
+    {
+        $produit = Produit::withTrashed()->find($id);
+
+        if (!$produit) {
+            return response()->json(['message' => 'Produit introuvable'], 404);
+        }
+
+        $deleted = $this->service->forceDelete($id);
+
+        if (!$deleted) {
+            return response()->json(['message' => 'Suppression définitive impossible'], 500);
+        }
+
+        return response()->json(['message' => 'Produit supprimé définitivement']);
     }
 
     /**

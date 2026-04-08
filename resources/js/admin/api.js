@@ -6,6 +6,150 @@ const api = axios.create({
   headers: { 'Accept': 'application/json' },
 });
 
+const ADMIN_CACHE_PREFIX = 'isd-afrik-admin-cache:';
+const ADMIN_CACHE_TTL_MS = 5 * 60 * 1000;
+const adminCache = new Map();
+const adminPendingRequests = new Map();
+let adminCacheVersion = 0;
+
+function hashString(value) {
+  let hash = 2166136261;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return (hash >>> 0).toString(36);
+}
+
+function stableSerialize(value) {
+  if (value === null || value === undefined) return '';
+  if (typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableSerialize(item)).join(',')}]`;
+  }
+
+  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableSerialize(value[key])}`).join(',')}}`;
+}
+
+function buildAdminCacheKey(path, params = {}) {
+  return hashString(`${getAdminToken() || 'anonymous'}|${path}|${stableSerialize(params)}`);
+}
+
+function readAdminCacheEntry(cacheKey) {
+  const memoryEntry = adminCache.get(cacheKey);
+  if (memoryEntry && memoryEntry.version === adminCacheVersion && memoryEntry.expiresAt > Date.now()) {
+    return memoryEntry;
+  }
+
+  if (memoryEntry) {
+    adminCache.delete(cacheKey);
+  }
+
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(`${ADMIN_CACHE_PREFIX}${cacheKey}`);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.version === adminCacheVersion && parsed.expiresAt > Date.now()) {
+      adminCache.set(cacheKey, parsed);
+      return parsed;
+    }
+
+    window.localStorage.removeItem(`${ADMIN_CACHE_PREFIX}${cacheKey}`);
+  } catch (error) {
+    // ignore malformed cache entries
+  }
+
+  return null;
+}
+
+function writeAdminCacheEntry(cacheKey, data, ttlMs = ADMIN_CACHE_TTL_MS) {
+  const entry = {
+    version: adminCacheVersion,
+    expiresAt: Date.now() + ttlMs,
+    data,
+  };
+
+  adminCache.set(cacheKey, entry);
+
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(`${ADMIN_CACHE_PREFIX}${cacheKey}`, JSON.stringify(entry));
+  } catch (error) {
+    // ignore storage quota or availability errors
+  }
+}
+
+function clearAdminGetCache() {
+  adminCacheVersion += 1;
+  adminCache.clear();
+  adminPendingRequests.clear();
+
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    const keysToRemove = [];
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const key = window.localStorage.key(index);
+      if (key && key.startsWith(ADMIN_CACHE_PREFIX)) {
+        keysToRemove.push(key);
+      }
+    }
+
+    keysToRemove.forEach((key) => window.localStorage.removeItem(key));
+  } catch (error) {
+    // ignore storage cleanup failures
+  }
+}
+
+async function cachedAdminGet(path, options = {}, ttlMs = ADMIN_CACHE_TTL_MS) {
+  const cacheKey = buildAdminCacheKey(path, options.params || {});
+  const cachedEntry = readAdminCacheEntry(cacheKey);
+
+  if (cachedEntry) {
+    return {
+      data: cachedEntry.data,
+      status: 200,
+      statusText: 'OK',
+      cached: true,
+    };
+  }
+
+  const pendingRequest = adminPendingRequests.get(cacheKey);
+  if (pendingRequest) {
+    return pendingRequest;
+  }
+
+  const requestPromise = api.get(path, options)
+    .then((response) => {
+      if (adminCacheVersion >= 0) {
+        writeAdminCacheEntry(cacheKey, response.data, ttlMs);
+      }
+
+      return {
+        ...response,
+        cached: false,
+      };
+    })
+    .finally(() => {
+      adminPendingRequests.delete(cacheKey);
+    });
+
+  adminPendingRequests.set(cacheKey, requestPromise);
+  return requestPromise;
+}
+
 function extractMessage(res) {
   if (typeof res?.data?.message === 'string') return res.data.message;
   if (typeof res?.data?.error === 'string') return res.data.error;
@@ -33,6 +177,8 @@ export function setAdminToken(token) {
   } catch (e) {
     // ignore if localStorage not available
   }
+
+  clearAdminGetCache();
 }
 
 export function clearAdminToken() {
@@ -42,10 +188,13 @@ export function clearAdminToken() {
   } catch (e) {
     // ignore if localStorage not available
   }
+
+  clearAdminGetCache();
 }
 
 function invalidateAdminSession(message = 'Votre session admin a expiré.') {
   clearAdminToken();
+  clearAdminGetCache();
 
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('admin-session-invalidated', {
@@ -67,7 +216,13 @@ api.interceptors.request.use(config => {
 
 // Response interceptor: normalize common error messages for the front
 api.interceptors.response.use(
-  resp => resp,
+  resp => {
+    if (resp?.config?.method && resp.config.method.toLowerCase() !== 'get') {
+      clearAdminGetCache();
+    }
+
+    return resp;
+  },
   err => {
     // If server returned a JSON payload with a message, ensure it's in French when known
     const res = err.response;
@@ -144,6 +299,19 @@ function asArray(payload) {
   return [];
 }
 
+function normalizeListResponse(response, itemNormalizer = (item) => item) {
+  const payload = response?.data;
+  const isPaginated = payload && !Array.isArray(payload) && Array.isArray(payload.data);
+
+  return {
+    ...response,
+    data: asArray(payload).map(itemNormalizer),
+    meta: isPaginated ? (payload.meta || null) : null,
+    links: isPaginated ? (payload.links || null) : null,
+    stats: isPaginated && payload.stats ? payload.stats : null,
+  };
+}
+
 function resolveMediaUrl(value) {
   const raw = String(value || '').trim();
   if (!raw) return null;
@@ -201,6 +369,8 @@ function normalizeProduct(p) {
     poids: p?.poids ?? '',
     slug: p?.slug || '',
     promo_price: p?.prix_promo ?? '',
+    deleted_at: p?.deleted_at || null,
+    is_deleted: Boolean(p?.deleted_at),
     est_nouveau: Boolean(p?.est_nouveau),
     est_en_vedette: Boolean(p?.est_en_vedette),
     en_promo: Boolean(p?.en_promo),
@@ -241,16 +411,13 @@ function normalizeOrder(o) {
   };
 }
 
-export async function getUsers() {
-  const res = await api.get('/api/utilisateurs');
-  return {
-    ...res,
-    data: asArray(res.data).map(normalizeUser),
-  };
+export async function getUsers(params = {}) {
+  const res = await cachedAdminGet('/api/utilisateurs', { params });
+  return normalizeListResponse(res, normalizeUser);
 }
 
 export async function getCountries(params = { per_page: 250 }) {
-  const res = await api.get('/api/pays', { params });
+  const res = await cachedAdminGet('/api/pays', { params });
   return {
     ...res,
     data: asArray(res.data).map(normalizeCountry),
@@ -270,20 +437,14 @@ export async function createAdminAdjoint(payload) {
 }
 
 export async function getProducts(params = {}) {
-  const res = await api.get('/api/admin/produits', { params });
-  return {
-    ...res,
-    data: asArray(res.data).map(normalizeProduct),
-  };
+  const res = await cachedAdminGet('/api/admin/produits', { params });
+  return normalizeListResponse(res, normalizeProduct);
 }
 
-export async function getOrders() {
-  // admin orders endpoint
-  const res = await api.get('/api/admin/commandes');
-  return {
-    ...res,
-    data: asArray(res.data).map(normalizeOrder),
-  };
+export async function getOrders(params = {}) {
+  // admin orders endpoint (supports pagination/search)
+  const res = await cachedAdminGet('/api/admin/commandes', { params });
+  return normalizeListResponse(res, normalizeOrder);
 }
 
 export async function createProduct(data) {
@@ -391,6 +552,26 @@ export async function deleteProduct(id) {
   return api.delete(`/api/produits/${id}`);
 }
 
+export async function restoreProduct(id) {
+  return api.patch(`/api/produits/${id}/restore`);
+}
+
+export async function forceDeleteProduct(id) {
+  return api.delete(`/api/produits/${id}/force`);
+}
+
+export async function toggleProductVedette(id) {
+  return api.patch(`/api/produits/${id}/vedette`);
+}
+
+export async function deleteProductImage(productId, imageId) {
+  return api.delete(`/api/produits/${productId}/images/${imageId}`);
+}
+
+export async function updateProductStock(id, payload) {
+  return api.patch(`/api/produits/${id}/stock`, payload);
+}
+
 export async function deleteUser(id) {
   return api.delete(`/api/utilisateurs/${id}`);
 }
@@ -420,7 +601,7 @@ export async function updateOrderDeliveryStatus(id, statut) {
 }
 
 export async function getCategories(params = {}) {
-  const res = await api.get('/api/admin/categories-produits', { params });
+  const res = await cachedAdminGet('/api/admin/categories-produits', { params });
   return {
     ...res,
     data: asArray(res.data).map((c) => ({
@@ -469,7 +650,7 @@ export async function syncGeovisionCatalog(payload = {}) {
 }
 
 export async function getPaiements() {
-  const res = await api.get('/api/admin/paiements');
+  const res = await cachedAdminGet('/api/admin/paiements');
   return {
     ...res,
     data: asArray(res.data).map((p) => ({
@@ -511,12 +692,9 @@ export async function uploadProductImages(id, files) {
   return api.post(`/api/produits/${id}/images`, formData);
 }
 
-export async function getFormations() {
-  const res = await api.get('/api/admin/formations');
-  return {
-    ...res,
-    data: asArray(res.data).map((f) => ({ ...f, id: f.id || f.id_formation })),
-  };
+export async function getFormations(params = {}) {
+  const res = await cachedAdminGet('/api/admin/formations', { params });
+  return normalizeListResponse(res, (f) => ({ ...f, id: f.id || f.id_formation }));
 }
 
 export async function createFormation(data) {
@@ -531,12 +709,9 @@ export async function deleteFormation(id) {
   return api.delete(`/api/admin/formations/${id}`);
 }
 
-export async function getContactMessages() {
-  const res = await api.get('/api/admin/contact-messages');
-  return {
-    ...res,
-    data: asArray(res.data),
-  };
+export async function getContactMessages(params = {}) {
+  const res = await cachedAdminGet('/api/admin/contact-messages', { params });
+  return normalizeListResponse(res);
 }
 
 export async function updateContactMessageStatus(id, statut) {
@@ -547,12 +722,9 @@ export async function deleteContactMessage(id) {
   return api.delete(`/api/admin/contact-messages/${id}`);
 }
 
-export async function getRevendeurDemandes() {
-  const res = await api.get('/api/admin/revendeur-demandes');
-  return {
-    ...res,
-    data: asArray(res.data),
-  };
+export async function getRevendeurDemandes(params = {}) {
+  const res = await cachedAdminGet('/api/admin/revendeur-demandes', { params });
+  return normalizeListResponse(res);
 }
 
 export async function updateRevendeurDemandeStatus(id, statut) {
@@ -560,7 +732,7 @@ export async function updateRevendeurDemandeStatus(id, statut) {
 }
 
 export async function getHomeMarketingCardsAdmin(params = {}) {
-  const res = await api.get('/api/admin/home-marketing-cards', { params });
+  const res = await cachedAdminGet('/api/admin/home-marketing-cards', { params });
   return {
     ...res,
     data: asArray(res.data),
@@ -593,7 +765,7 @@ export async function deleteHomeMarketingCard(id) {
 }
 
 export async function getHomeTestimonialsAdmin(params = {}) {
-  const res = await api.get('/api/admin/home-testimonials', { params });
+  const res = await cachedAdminGet('/api/admin/home-testimonials', { params });
   return {
     ...res,
     data: asArray(res.data),
@@ -626,7 +798,7 @@ export async function deleteHomeTestimonial(id) {
 }
 
 export async function getHomeCollaboratorsAdmin(params = {}) {
-  const res = await api.get('/api/admin/home-collaborators', { params });
+  const res = await cachedAdminGet('/api/admin/home-collaborators', { params });
   return {
     ...res,
     data: asArray(res.data),
@@ -659,11 +831,60 @@ export async function deleteHomeCollaborator(id) {
 }
 
 export async function getHomePartnersAdmin(params = {}) {
-  const res = await api.get('/api/admin/home-partners', { params });
+  const res = await cachedAdminGet('/api/admin/home-partners', { params });
   return {
     ...res,
     data: asArray(res.data),
   };
+}
+
+export async function getAdminActivities(params = {}) {
+  const res = await cachedAdminGet('/api/admin/activities', { params });
+  return {
+    ...res,
+    data: Array.isArray(res.data) ? res.data : [],
+  };
+}
+
+export async function getDashboardSummary() {
+  const res = await cachedAdminGet('/api/admin/dashboard');
+  const data = res?.data || {};
+
+  return {
+    ...res,
+    data: {
+      ...data,
+      recentActivity: Array.isArray(data.recentActivity)
+        ? data.recentActivity.map((item) => ({
+            ...item,
+            date: item?.date ? new Date(item.date) : null,
+          }))
+        : [],
+    },
+  };
+}
+
+export function warmAdminCaches() {
+  if (!hasAdminToken()) {
+    return;
+  }
+
+  void Promise.allSettled([
+    getUsers(),
+    getCountries(),
+    getCategories({ segment: 'general' }),
+    getOrders(),
+    getPaiements(),
+    getProducts({ segment: 'general' }),
+    getFormations(),
+    getContactMessages(),
+    getRevendeurDemandes(),
+    getHomeMarketingCardsAdmin(),
+    getHomeTestimonialsAdmin(),
+    getHomeCollaboratorsAdmin(),
+    getHomePartnersAdmin(),
+    getAdminActivities(),
+  ]);
 }
 
 export async function createHomePartner(payload) {

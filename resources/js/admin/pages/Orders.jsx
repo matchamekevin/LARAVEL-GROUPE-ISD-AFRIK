@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { getOrders, getOrder, updateOrderStatus, updateOrderDeliveryStatus } from '../api';
+import AdminToast, { useAdminToast } from '../components/AdminToast';
+import AdminNotice from '../components/AdminNotice';
 import Loader from '../components/Loader';
 import '../styles/admin-shared.css';
-import './orders.css';
+import '../styles/orders.css';
 
 const DELIVERY_STATUSES = [
   'en_attente',
@@ -31,23 +33,76 @@ export default function Orders() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [updatingDeliveryId, setUpdatingDeliveryId] = useState(null);
 
+  const ORDERS_PER_PAGE = 20;
+  const EMPTY_PAGINATION = {
+    total: 0,
+    per_page: ORDERS_PER_PAGE,
+    current_page: 1,
+    last_page: 1,
+    from: 0,
+    to: 0,
+  };
+
+  const [pagination, setPagination] = useState(EMPTY_PAGINATION);
+  const [page, setPage] = useState(1);
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [stats, setStats] = useState({ total: 0, en_attente: 0, payee: 0 });
+  const [errorMessage, setErrorMessage] = useState('');
+  const { toast, showToast } = useAdminToast();
+
   useEffect(() => {
     let mounted = true;
-    getOrders()
-      .then((res) => {
-        if (mounted) setOrders(Array.isArray(res.data) ? res.data : []);
-      })
-      .catch(() => {
-        if (mounted) setOrders([]);
-      })
-      .finally(() => {
+
+    async function loadOrders() {
+      setLoading(true);
+      setErrorMessage('');
+      try {
+        const params = { page, per_page: ORDERS_PER_PAGE };
+        const res = await getOrders(params);
+
+        if (!mounted) return;
+
+        const list = Array.isArray(res.data) ? res.data : [];
+        const nextMeta = res.meta || EMPTY_PAGINATION;
+        const nextStats = res.stats || {};
+
+        if (nextMeta.last_page && page > nextMeta.last_page) {
+          setPage(nextMeta.last_page);
+          return;
+        }
+
+        setOrders(list);
+        setPagination({
+          total: Number(nextMeta.total || list.length || 0),
+          per_page: Number(nextMeta.per_page || ORDERS_PER_PAGE),
+          current_page: Number(nextMeta.current_page || page),
+          last_page: Number(nextMeta.last_page || 1),
+          from: Number(nextMeta.from || 0),
+          to: Number(nextMeta.to || 0),
+        });
+
+        setStats({
+          total: Number(nextStats.total || nextMeta.total || list.length || 0),
+          en_attente: Number(nextStats.en_attente || 0),
+          payee: Number(nextStats.payee || 0),
+        });
+      } catch (err) {
+        if (!mounted) return;
+        setOrders([]);
+        setPagination(EMPTY_PAGINATION);
+        setStats({ total: 0, en_attente: 0, payee: 0 });
+        setErrorMessage('Impossible de charger les commandes pour le moment.');
+      } finally {
         if (mounted) setLoading(false);
-      });
+      }
+    }
+
+    loadOrders();
 
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [page, refreshToken]);
 
   async function handleView(id) {
     try {
@@ -55,18 +110,26 @@ export default function Orders() {
       setSelectedOrder(res.data);
     } catch (err) {
       console.error('Get order error', err);
-      alert('Erreur recuperation commande');
+      showToast('Erreur recuperation commande', 'error');
     }
   }
 
   async function handleStatus(id, statut) {
     try {
       await updateOrderStatus(id, statut);
-      setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, statut } : o)));
-      setSelectedOrder((prev) => (prev && prev.id === id ? { ...prev, statut } : prev));
+      showToast('Statut commande mis a jour.', 'success');
+      setRefreshToken((t) => t + 1);
+      if (selectedOrder && selectedOrder.id === id) {
+        try {
+          const res = await getOrder(id);
+          setSelectedOrder(res.data);
+        } catch (e) {
+          // ignore
+        }
+      }
     } catch (err) {
       console.error('Update order status error', err);
-      alert('Erreur mise a jour statut commande');
+      showToast('Erreur mise a jour statut commande', 'error');
     }
   }
 
@@ -74,11 +137,19 @@ export default function Orders() {
     setUpdatingDeliveryId(id);
     try {
       await updateOrderDeliveryStatus(id, statut);
-      setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, delivery_status: statut } : o)));
-      setSelectedOrder((prev) => (prev && prev.id === id ? { ...prev, delivery_status: statut } : prev));
+      showToast('Statut livraison mis a jour.', 'success');
+      setRefreshToken((t) => t + 1);
+      if (selectedOrder && selectedOrder.id === id) {
+        try {
+          const res = await getOrder(id);
+          setSelectedOrder(res.data);
+        } catch (e) {
+          // ignore
+        }
+      }
     } catch (err) {
       console.error('Update delivery status error', err);
-      alert(err?.response?.data?.message || 'Erreur mise a jour statut livraison');
+      showToast(err?.response?.data?.message || 'Erreur mise a jour statut livraison', 'error');
     } finally {
       setUpdatingDeliveryId(null);
     }
@@ -91,27 +162,29 @@ export default function Orders() {
           <h1 style={{ color: '#ffffff' }}>Gestion des Commandes</h1>
           <p>Suivez toutes vos commandes en cours, confirmees et livrees.</p>
         </div>
-        {!loading && orders.length > 0 && (
+        {!loading && (pagination.total > 0 || orders.length > 0) && (
           <div className="admin-orders-kpis">
             <div className="admin-orders-stat">
               <span>Total</span>
-              <strong>{orders.length}</strong>
+              <strong>{stats.total || pagination.total || orders.length}</strong>
             </div>
             <div className="admin-orders-stat">
               <span>En attente</span>
-              <strong>{orders.filter((o) => o.statut === 'en_attente' || o.statut === 'en_cours').length}</strong>
+              <strong>{typeof stats.en_attente === 'number' ? stats.en_attente : orders.filter((o) => o.statut === 'en_attente' || o.statut === 'en_cours').length}</strong>
             </div>
             <div className="admin-orders-stat">
               <span>Payees</span>
-              <strong>{orders.filter((o) => o.statut === 'payee' || o.statut === 'completed').length}</strong>
+              <strong>{typeof stats.payee === 'number' ? stats.payee : orders.filter((o) => o.statut === 'payee' || o.statut === 'completed').length}</strong>
             </div>
           </div>
         )}
       </div>
 
+      <AdminNotice type="error" message={errorMessage} className="admin-orders-notice" />
+
       {loading ? (
         <Loader text="Chargement des commandes..." />
-      ) : orders.length === 0 ? (
+      ) : (pagination.total === 0 && orders.length === 0) ? (
         <div className="admin-orders-empty">
           <div className="admin-orders-empty-icon">Aucune commande</div>
           <h3>Aucune commande trouvee</h3>
@@ -123,7 +196,7 @@ export default function Orders() {
             <div className="admin-orders-list-card-header">
               <h2>Liste des Commandes</h2>
               <span style={{ fontSize: '0.875rem', color: '#6B7280', fontWeight: 500 }}>
-                {orders.length} commande{orders.length > 1 ? 's' : ''}
+                {pagination.total || orders.length} commande{(pagination.total || orders.length) > 1 ? 's' : ''}
               </span>
             </div>
             <div style={{ overflowX: 'auto' }}>
@@ -222,8 +295,39 @@ export default function Orders() {
               </div>
             </div>
           )}
+
+          {!loading && orders.length > 0 && (
+            <div className="admin-orders-pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1rem 1.25rem 1.25rem' }}>
+              <span className="admin-orders-list-card-count">
+                Affichage {pagination.from || 0}-{pagination.to || 0} sur {pagination.total || 0}
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button
+                  type="button"
+                  className="admin-order-action-btn suspend"
+                  onClick={() => setPage((previous) => Math.max(1, previous - 1))}
+                  disabled={loading || pagination.current_page <= 1}
+                >
+                  Précédent
+                </button>
+                <span className="admin-orders-list-card-count">
+                  Page {pagination.current_page} / {pagination.last_page}
+                </span>
+                <button
+                  type="button"
+                  className="admin-order-action-btn reactivate"
+                  onClick={() => setPage((previous) => previous + 1)}
+                  disabled={loading || pagination.current_page >= pagination.last_page}
+                >
+                  Suivant
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
+
+      <AdminToast toast={toast} />
     </div>
   );
 }

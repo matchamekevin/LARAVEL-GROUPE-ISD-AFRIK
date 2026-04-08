@@ -6,8 +6,9 @@ import {
   deleteHomeMarketingCard,
 } from '../api';
 import Loader from '../components/Loader';
+import AdminToast, { useAdminToast } from '../components/AdminToast';
 import '../styles/admin-shared.css';
-import './marketing.css';
+import '../styles/marketing.css';
 
 const INITIAL_FORM = {
   section: 'offer',
@@ -29,6 +30,7 @@ export default function MarketingAdmin() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
+  const { toast, showToast } = useAdminToast();
 
   function cardImageSrc(card) {
     if (card?.image_url) return card.image_url;
@@ -47,7 +49,7 @@ export default function MarketingAdmin() {
     } catch (err) {
       console.error(err);
       setCards([]);
-      alert('Impossible de charger les cartes marketing');
+      showToast('Impossible de charger les cartes marketing', 'error');
     } finally {
       setLoading(false);
     }
@@ -85,12 +87,14 @@ export default function MarketingAdmin() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    const editing = Boolean(editingId);
+
     if (!form.title?.trim()) {
-      alert('Le titre est obligatoire');
+      showToast('Le titre est obligatoire', 'error');
       return;
     }
     if (!editingId && !form.image) {
-      alert('Veuillez ajouter une image');
+      showToast('Veuillez ajouter une image', 'error');
       return;
     }
 
@@ -116,8 +120,9 @@ export default function MarketingAdmin() {
       }
       resetForm();
       await loadData();
+      showToast(editing ? 'Carte marketing mise a jour.' : 'Carte marketing creee.', 'success');
     } catch (err) {
-      alert(err?.response?.data?.message || 'Erreur enregistrement carte');
+      showToast(err?.response?.data?.message || 'Erreur enregistrement carte', 'error');
     } finally {
       setSaving(false);
     }
@@ -129,8 +134,9 @@ export default function MarketingAdmin() {
       await deleteHomeMarketingCard(id);
       setCards((prev) => prev.filter((x) => x.id !== id));
       if (editingId === id) resetForm();
+      showToast('Carte marketing supprimee.', 'success');
     } catch (err) {
-      alert('Erreur suppression carte');
+      showToast('Erreur suppression carte', 'error');
     }
   }
 
@@ -356,6 +362,8 @@ export default function MarketingAdmin() {
           </div>
         )}
       </div>
+
+      <AdminToast toast={toast} />
     </div>
   );
 }

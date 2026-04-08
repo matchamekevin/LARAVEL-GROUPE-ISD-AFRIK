@@ -70,7 +70,7 @@ function App() {
     return (
         <BrowserRouter>
             <MainLayout>
-                  {/* Ce composant force le scroll en haut à chaque navigation */}
+                {/* Gestion unifiée du scroll: top sur navigation normale, restauration sur back/forward */}
                   <ScrollToTop />
                 <Suspense fallback={<div style={{ padding: "20px", textAlign: "center" }}>Chargement...</div>}>
                 <Routes>

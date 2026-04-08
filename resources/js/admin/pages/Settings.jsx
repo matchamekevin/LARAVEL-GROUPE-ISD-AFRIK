@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { me, updateMyProfile, changeMyPassword } from '../api';
+import AdminNotice from '../components/AdminNotice';
 import '../styles/admin-shared.css';
-import './settings.css';
+import '../styles/settings.css';
 
 const INITIAL_PROFILE = {
   nom: '',
@@ -24,6 +25,9 @@ export default function Settings() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [profileMessage, setProfileMessage] = useState('');
   const [passwordMessage, setPasswordMessage] = useState('');
+
+  const profileNoticeType = profileMessage.toLowerCase().includes('succes') ? 'success' : 'error';
+  const passwordNoticeType = passwordMessage.toLowerCase().includes('succes') ? 'success' : 'error';
 
   const fullNamePreview = useMemo(
     () => [profile.prenom, profile.nom].filter(Boolean).join(' ').trim(),
@@ -283,9 +287,9 @@ export default function Settings() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ color: profileMessage.includes('succes') ? '#15803D' : '#6B7280', fontSize: '0.9rem' }}>
-              {profileMessage}
-            </span>
+            <div style={{ flex: 1 }}>
+              <AdminNotice type={profileNoticeType} message={profileMessage} />
+            </div>
             <button
               onClick={handleSaveProfile}
               disabled={loading || savingProfile}
@@ -359,9 +363,9 @@ export default function Settings() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ color: passwordMessage.includes('succes') ? '#15803D' : '#6B7280', fontSize: '0.9rem' }}>
-              {passwordMessage}
-            </span>
+            <div style={{ flex: 1 }}>
+              <AdminNotice type={passwordNoticeType} message={passwordMessage} />
+            </div>
             <button
               onClick={handleSavePassword}
               disabled={savingPassword}

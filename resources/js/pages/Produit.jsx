@@ -1,37 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getCategories, getProduits } from "../services/ProduitService";
-import {
-  ENGINEERING_DELIVERY_STEPS,
-  PRODUCT_CATEGORY_DEFINITIONS,
-  PRODUCT_CATEGORY_SLUGS,
-  PRODUCT_MODEL_INDEX,
-  PRODUCT_SUBCATEGORY_INDEX,
-} from "../data/engineeringCatalog";
-import { isFavorite, subscribeStoreUpdates, toggleFavorite } from "../utils/shopStorage";
+import { addToCart, getCartItems, isFavorite, subscribeStoreUpdates, toggleFavorite } from "../utils/shopStorage";
 import "../styles/produit.css";
 
-const CATEGORY_IMAGES = {
-  ingenierie: "/images/solutions/im1.webp",
-  "archivage-numerique": "/images/solutions/im2.webp",
-  "materiel-informatique": "/images/produits/proj.webp",
-  "reseau-informatique": "/images/produits/int.webp",
-  incendie: "/images/produits/ond.webp",
-  telecommunications: "/images/solutions/im3.webp",
-  "securite-informatique-base-de-donnees": "/images/produits/int.webp",
-  energie: "/images/produits/ond.webp",
-};
-
-const CATEGORY_THEMES = {
-  ingenierie: { accent: "#ff8a1f", soft: "#ffd5ad" },
-  "archivage-numerique": { accent: "#0ea5e9", soft: "#bae6fd" },
-  "materiel-informatique": { accent: "#8b5cf6", soft: "#ddd6fe" },
-  "reseau-informatique": { accent: "#14b8a6", soft: "#99f6e4" },
-  incendie: { accent: "#ef4444", soft: "#fecaca" },
-  telecommunications: { accent: "#f59e0b", soft: "#fde68a" },
-  "securite-informatique-base-de-donnees": { accent: "#06b6d4", soft: "#a5f3fc" },
-  energie: { accent: "#65a30d", soft: "#d9f99d" },
-};
+const ALL_CATEGORY_SLUG = "tout";
 
 const flattenCategories = (items = [], depth = 0) =>
   items.flatMap((item) => {
@@ -102,7 +75,10 @@ const statusClasses = {
 };
 
 const getProductImage = (produit) => {
-  const directImage = produit.image_url || produit.images?.[0]?.url || produit.images?.[0]?.path;
+  const directImage = [produit.image_url, produit.images?.[0]?.url, produit.images?.[0]?.path]
+    .map((value) => String(value || "").trim())
+    .find((value) => value && value !== "/images/default.webp" && value !== "/placeholder.webp");
+
   if (directImage) {
     return directImage;
   }
@@ -127,6 +103,52 @@ const getProductImage = (produit) => {
   return "/images/produits/proj.webp";
 };
 
+const getDbProductImage = (produit) => {
+  const candidates = [
+    produit.image_url,
+    ...(Array.isArray(produit.image_urls) ? produit.image_urls : []),
+    produit.images?.[0]?.url,
+    produit.images?.[0]?.path,
+  ]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .filter((value) => value !== "/images/default.webp");
+
+  return candidates[0] || null;
+};
+
+const getCategoryImage = (category) => {
+  const candidates = [
+    category?.image_url,
+    category?.image_path,
+    category?.thumbnail,
+    category?.photo_url,
+    category?.image?.url,
+    category?.image,
+  ]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+
+  return candidates[0] || "/images/produits/proj.webp";
+};
+
+const buildSearchBlob = (item) =>
+  [
+    item?.nom,
+    item?.label,
+    item?.slug,
+    item?.titre,
+    item?.title,
+    item?.reference,
+    item?.modele,
+    item?.marque,
+    item?.description_courte,
+    item?.description,
+  ]
+    .map((value) => String(value || "").trim().toLowerCase())
+    .filter(Boolean)
+    .join(" ");
+
 function Stars({ note = 0 }) {
   const rounded = Math.round(Number(note || 0));
 
@@ -150,12 +172,13 @@ export default function Produits() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [activeCategorySlug, setActiveCategorySlug] = useState(PRODUCT_CATEGORY_SLUGS[0] || "ingenierie");
+  const [activeCategorySlug, setActiveCategorySlug] = useState(ALL_CATEGORY_SLUG);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState("");
   const [selectedSubcategorySlug, setSelectedSubcategorySlug] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [favoriteIds, setFavoriteIds] = useState(() => new Set());
+  const [cartIds, setCartIds] = useState(() => new Set());
 
   const categoriesById = useMemo(() => {
     return categories.reduce((accumulator, item) => {
@@ -164,16 +187,63 @@ export default function Produits() {
     }, {});
   }, [categories]);
 
+  const topLevelCategories = useMemo(
+    () => categories.filter((item) => Number(item.parent_id || 0) === 0),
+    [categories]
+  );
+
+  const technicalRootCategory = useMemo(() => {
+    const bySlug = topLevelCategories.find(
+      (item) => normalizeSlug(item.slug || item.nom) === "catalogue-produits-techniques"
+    );
+    if (bySlug) return bySlug;
+
+    const byName = topLevelCategories.find((item) =>
+      String(item.nom || "").trim().toLowerCase().includes("catalogue produits techniques")
+    );
+
+    return byName || null;
+  }, [topLevelCategories]);
+
+  const technicalRootId = Number(technicalRootCategory?.id_categorie || technicalRootCategory?.id || 0);
+
   const mainCategories = useMemo(() => {
-    return PRODUCT_CATEGORY_DEFINITIONS.map((definition) => {
-      const node = categories.find((item) => normalizeSlug(item.slug || item.nom) === definition.slug) || null;
-      return {
-        ...definition,
-        id: node ? Number(node.id_categorie || node.id) : null,
-        node,
-      };
-    });
-  }, [categories]);
+    const base = [
+      {
+        slug: ALL_CATEGORY_SLUG,
+        label: "Tout",
+        id: null,
+        node: null,
+        image: "/images/produits/proj.webp",
+      },
+    ];
+
+    if (!technicalRootId) {
+      return base;
+    }
+
+    const dbMain = categories
+      .filter((item) => Number(item.parent_id || 0) === technicalRootId)
+      .sort((a, b) => {
+        const orderDiff = Number(a.ordre || 0) - Number(b.ordre || 0);
+        if (orderDiff !== 0) return orderDiff;
+        return String(a.nom || "").localeCompare(String(b.nom || ""), "fr");
+      })
+      .map((item) => ({
+        slug: normalizeSlug(item.slug || item.nom),
+        label: item.nom,
+        id: Number(item.id_categorie || item.id),
+        node: item,
+        image: getCategoryImage(item),
+      }));
+
+    return [...base, ...dbMain];
+  }, [categories, technicalRootId]);
+
+  const mainCategorySlugs = useMemo(
+    () => mainCategories.filter((item) => item.slug !== ALL_CATEGORY_SLUG).map((item) => item.slug),
+    [mainCategories]
+  );
 
   const activeCategory = useMemo(() => {
     return mainCategories.find((item) => item.slug === activeCategorySlug) || mainCategories[0] || null;
@@ -184,34 +254,33 @@ export default function Produits() {
       return [];
     }
 
-    if (activeCategory.id) {
-      const realChildren = categories
-        .filter((item) => Number(item.parent_id) === Number(activeCategory.id))
-        .sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
+    let source = [];
 
-      if (realChildren.length > 0) {
-        return realChildren.map((item) => {
-          const itemSlug = normalizeSlug(item.slug || item.nom);
-          const fallback = PRODUCT_SUBCATEGORY_INDEX[itemSlug] || null;
-          return {
-            id: Number(item.id_categorie || item.id),
-            slug: itemSlug,
-            label: item.nom,
-            description: item.description || fallback?.description || "",
-            fallbackModels: PRODUCT_MODEL_INDEX[itemSlug] || [],
-          };
-        });
-      }
+    if (activeCategory.slug === ALL_CATEGORY_SLUG) {
+      const mainCategoryIds = mainCategories
+        .filter((item) => item.slug !== ALL_CATEGORY_SLUG && item.id)
+        .map((item) => Number(item.id));
+
+      const idSet = new Set(mainCategoryIds);
+      source = categories.filter((item) => idSet.has(Number(item.parent_id || 0)));
+    } else if (activeCategory.id) {
+      source = categories.filter((item) => Number(item.parent_id || 0) === Number(activeCategory.id));
     }
 
-    return (activeCategory.subcategories || []).map((item) => ({
-      id: null,
-      slug: item.slug,
-      label: item.label,
-      description: item.description,
-      fallbackModels: item.models || [],
-    }));
-  }, [activeCategory, categories]);
+    return source
+      .sort((a, b) => {
+        const orderDiff = Number(a.ordre || 0) - Number(b.ordre || 0);
+        if (orderDiff !== 0) return orderDiff;
+        return String(a.nom || "").localeCompare(String(b.nom || ""), "fr");
+      })
+      .map((item) => ({
+        id: Number(item.id_categorie || item.id),
+        slug: normalizeSlug(item.slug || item.nom),
+        label: item.nom,
+        description: item.description || "",
+        image: getCategoryImage(item),
+      }));
+  }, [activeCategory, categories, mainCategories]);
 
   const selectedSubcategory = useMemo(() => {
     if (!selectedSubcategoryId && !selectedSubcategorySlug) {
@@ -235,23 +304,64 @@ export default function Produits() {
   const searchNormalized = useMemo(() => searchTerm.trim().toLowerCase(), [searchTerm]);
 
   const filteredSubcategories = useMemo(() => {
+    const subcategoryIds = new Set(subcategories.filter((item) => item.id).map((item) => Number(item.id)));
+    const productSearchIndex = new Map();
+
+    if (subcategoryIds.size > 0) {
+      produits.forEach((produit) => {
+        let current = Number(produit.id_categorie || produit.categorie?.id_categorie || 0);
+        let resolvedSubcategoryId = 0;
+        let guard = 0;
+
+        while (current && guard < 15) {
+          if (subcategoryIds.has(current)) {
+            resolvedSubcategoryId = current;
+            break;
+          }
+
+          current = Number(categoriesById[current]?.parent_id || 0);
+          guard += 1;
+        }
+
+        if (!resolvedSubcategoryId) return;
+
+        const blob = buildSearchBlob(produit);
+        if (!blob) return;
+
+        const previous = productSearchIndex.get(resolvedSubcategoryId) || "";
+        productSearchIndex.set(resolvedSubcategoryId, `${previous} ${blob}`);
+      });
+    }
+
     if (!searchNormalized) {
       return subcategories;
     }
 
     return subcategories.filter((item) => {
       const haystack = `${item.label} ${item.description || ""}`.toLowerCase();
-      return haystack.includes(searchNormalized);
+      if (haystack.includes(searchNormalized)) {
+        return true;
+      }
+
+      if (!item.id) {
+        return false;
+      }
+
+      const productBlob = productSearchIndex.get(Number(item.id)) || "";
+      return productBlob.includes(searchNormalized);
     });
-  }, [searchNormalized, subcategories]);
+  }, [categoriesById, produits, searchNormalized, subcategories]);
 
   const countsBySubcategory = useMemo(() => {
     const buckets = {};
-    if (!activeCategory?.id) {
+    if (!activeCategory) {
       return buckets;
     }
 
     const subcategoryIds = new Set(subcategories.filter((item) => item.id).map((item) => Number(item.id)));
+    if (subcategoryIds.size === 0) {
+      return buckets;
+    }
 
     produits.forEach((produit) => {
       let current = Number(produit.id_categorie || produit.categorie?.id_categorie || 0);
@@ -285,29 +395,75 @@ export default function Produits() {
       }
 
       const key = modelName.toLowerCase();
+      const productId = Number(item.id_produit || item.id || 0);
+      const dbImage = getDbProductImage(item);
+
       if (!byModel[key]) {
         byModel[key] = {
           name: modelName,
           count: 0,
           source: "db",
+          image: dbImage || getProductImage(item),
+          hasDbImage: Boolean(dbImage),
+          searchBlob: "",
+          representativeProduct: item,
+          representativeId: productId || null,
+          ratingWeightedTotal: 0,
+          ratingVoteTotal: 0,
+          ratingFallbackTotal: 0,
+          ratingFallbackCount: 0,
         };
       }
 
+      if (!byModel[key].hasDbImage) {
+        if (dbImage) {
+          byModel[key].image = dbImage;
+          byModel[key].hasDbImage = true;
+        }
+      }
+
+      if (!byModel[key].representativeId && productId) {
+        byModel[key].representativeProduct = item;
+        byModel[key].representativeId = productId;
+      }
+
+      const note = Number(item.note_moyenne || 0);
+      const avis = Number(item.nombre_avis || 0);
+
+      if (note > 0 && avis > 0) {
+        byModel[key].ratingWeightedTotal += note * avis;
+        byModel[key].ratingVoteTotal += avis;
+      } else if (note > 0) {
+        byModel[key].ratingFallbackTotal += note;
+        byModel[key].ratingFallbackCount += 1;
+      }
+
+      byModel[key].searchBlob += ` ${buildSearchBlob(item)}`;
       byModel[key].count += 1;
     });
 
-    let cards = Object.values(byModel).sort((a, b) => a.name.localeCompare(b.name, "fr"));
+    const cards = Object.values(byModel)
+      .map((item) => {
+        const ratingAverage = item.ratingVoteTotal > 0
+          ? item.ratingWeightedTotal / item.ratingVoteTotal
+          : item.ratingFallbackCount > 0
+            ? item.ratingFallbackTotal / item.ratingFallbackCount
+            : 0;
 
-    if (cards.length === 0) {
-      cards = (selectedSubcategory.fallbackModels || []).map((modelName) => ({
-        name: modelName,
-        count: 0,
-        source: "catalogue",
-      }));
-    }
+        const ratingCount = item.ratingVoteTotal > 0 ? item.ratingVoteTotal : item.ratingFallbackCount;
+
+        return {
+          ...item,
+          ratingAverage,
+          ratingCount,
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, "fr"));
 
     if (searchNormalized) {
-      return cards.filter((item) => item.name.toLowerCase().includes(searchNormalized));
+      return cards.filter((item) => {
+        return item.name.toLowerCase().includes(searchNormalized) || item.searchBlob.includes(searchNormalized);
+      });
     }
 
     return cards;
@@ -320,6 +476,14 @@ export default function Produits() {
 
     return produits.filter((item) => String(item.modele || "").trim().toLowerCase() === selectedModel.toLowerCase());
   }, [produits, selectedModel]);
+
+  const filteredProduitsModele = useMemo(() => {
+    if (!searchNormalized) {
+      return produitsModele;
+    }
+
+    return produitsModele.filter((item) => buildSearchBlob(item).includes(searchNormalized));
+  }, [produitsModele, searchNormalized]);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -341,15 +505,39 @@ export default function Produits() {
       .split(",")
       .map((item) => normalizeSlug(item))
       .filter(Boolean);
+    const subcategoryIdParam = Number(params.get("sous_categorie_id") || 0);
     const modelParam = String(params.get("modele") || "").trim();
 
-    if (categoriesParam.length === 0) {
+    if (categoriesParam.length === 0 && !subcategoryIdParam) {
+      if (modelParam) {
+        setSelectedModel(modelParam);
+      }
       return;
     }
 
-    const requestedCategory = categoriesParam.find((slug) => PRODUCT_CATEGORY_SLUGS.includes(slug));
+    const requestedCategory = categoriesParam.find((slug) => [...mainCategorySlugs, ALL_CATEGORY_SLUG].includes(slug));
     if (requestedCategory) {
       setActiveCategorySlug(requestedCategory);
+    }
+
+    const categoryFromId = subcategoryIdParam
+      ? categoriesById[subcategoryIdParam] || categories.find((item) => Number(item.id_categorie || item.id) === subcategoryIdParam)
+      : null;
+
+    if (categoryFromId) {
+      const ownSlug = normalizeSlug(categoryFromId.slug || categoryFromId.nom);
+      const parent = categoriesById[Number(categoryFromId.parent_id)];
+      const parentSlug = normalizeSlug(parent?.slug || parent?.nom || "");
+
+      if (mainCategorySlugs.includes(ownSlug)) {
+        setActiveCategorySlug(ownSlug);
+        setSelectedSubcategoryId("");
+        setSelectedSubcategorySlug("");
+      } else if (mainCategorySlugs.includes(parentSlug)) {
+        setActiveCategorySlug(parentSlug);
+        setSelectedSubcategoryId(String(categoryFromId.id_categorie || categoryFromId.id));
+        setSelectedSubcategorySlug(ownSlug);
+      }
     }
 
     const categoryFromDb = categories.find((item) => {
@@ -357,16 +545,16 @@ export default function Produits() {
       return categoriesParam.includes(slug);
     });
 
-    if (categoryFromDb) {
+    if (!categoryFromId && categoryFromDb) {
       const ownSlug = normalizeSlug(categoryFromDb.slug || categoryFromDb.nom);
       const parent = categoriesById[Number(categoryFromDb.parent_id)];
       const parentSlug = normalizeSlug(parent?.slug || parent?.nom || "");
 
-      if (PRODUCT_CATEGORY_SLUGS.includes(ownSlug)) {
+      if (mainCategorySlugs.includes(ownSlug)) {
         setActiveCategorySlug(ownSlug);
         setSelectedSubcategoryId("");
         setSelectedSubcategorySlug("");
-      } else if (PRODUCT_CATEGORY_SLUGS.includes(parentSlug)) {
+      } else if (mainCategorySlugs.includes(parentSlug)) {
         setActiveCategorySlug(parentSlug);
         setSelectedSubcategoryId(String(categoryFromDb.id_categorie || categoryFromDb.id));
         setSelectedSubcategorySlug(ownSlug);
@@ -376,22 +564,31 @@ export default function Produits() {
     if (modelParam) {
       setSelectedModel(modelParam);
     }
-  }, [categories, categoriesById, location.search]);
+  }, [categories, categoriesById, location.search, mainCategorySlugs]);
 
   useEffect(() => {
-    const refreshFavorites = () => {
-      const next = new Set();
+    const refreshStoreState = () => {
+      const nextFavorites = new Set();
+
       produits.forEach((item) => {
         const id = Number(item.id_produit || item.id);
         if (id && isFavorite(id)) {
-          next.add(id);
+          nextFavorites.add(id);
         }
       });
-      setFavoriteIds(next);
+
+      const nextCart = new Set(
+        getCartItems()
+          .map((item) => Number(item.id_produit || item.id))
+          .filter((id) => Number.isFinite(id) && id > 0)
+      );
+
+      setFavoriteIds(nextFavorites);
+      setCartIds(nextCart);
     };
 
-    refreshFavorites();
-    return subscribeStoreUpdates(refreshFavorites);
+    refreshStoreState();
+    return subscribeStoreUpdates(refreshStoreState);
   }, [produits]);
 
   useEffect(() => {
@@ -431,10 +628,6 @@ export default function Produits() {
           params.modele = selectedModel;
         }
 
-        if (selectedModel && searchNormalized) {
-          params.q = searchNormalized;
-        }
-
         const response = await getProduits(params);
         setProduits(response.data?.data || []);
       } catch {
@@ -446,7 +639,7 @@ export default function Produits() {
     };
 
     loadProduits();
-  }, [activeCategory, categories, searchNormalized, selectedModel, selectedSubcategoryId]);
+  }, [activeCategory, categories, selectedModel, selectedSubcategoryId]);
 
   const searchPlaceholder = selectedModel
     ? "Rechercher un produit dans ce modele"
@@ -454,24 +647,57 @@ export default function Produits() {
       ? "Rechercher un modele"
       : "Rechercher une sous-categorie";
 
-  const activeTheme = CATEGORY_THEMES[activeCategorySlug] || {
-    accent: "#ff8a1f",
-    soft: "#ffd5ad",
-  };
-
   const handleCategoryChange = (slug) => {
     setActiveCategorySlug(slug);
     setSelectedSubcategoryId("");
     setSelectedSubcategorySlug("");
     setSelectedModel("");
     setSearchTerm("");
+
+    const params = new URLSearchParams(location.search);
+    params.set("categories", slug);
+    params.delete("sous_categorie_id");
+    params.delete("modele");
+    const query = params.toString();
+    navigate(`${location.pathname}${query ? `?${query}` : ""}`);
   };
 
   const handleSubcategoryClick = (item) => {
-    setSelectedSubcategoryId(item.id ? String(item.id) : "");
-    setSelectedSubcategorySlug(item.slug || "");
+    const idStr = item.id ? String(item.id) : "";
+    const slug = item.slug || "";
+    const categoryFromId = item.id ? categoriesById[Number(item.id)] || null : null;
+    const parentCategory = categoryFromId ? categoriesById[Number(categoryFromId.parent_id || 0)] : null;
+    const parentSlug = normalizeSlug(parentCategory?.slug || parentCategory?.nom || "");
+    const includeMainCategory = Boolean(parentSlug && mainCategorySlugs.includes(parentSlug));
+
+    setSelectedSubcategoryId(idStr);
+    setSelectedSubcategorySlug(slug);
+    if (includeMainCategory) {
+      setActiveCategorySlug(parentSlug);
+    }
     setSelectedModel("");
     setSearchTerm("");
+
+    const params = new URLSearchParams(location.search);
+    const fallbackMain = activeCategorySlug && activeCategorySlug !== ALL_CATEGORY_SLUG ? activeCategorySlug : "";
+    const mainSlugForQuery = includeMainCategory ? parentSlug : fallbackMain;
+    const cats = mainSlugForQuery ? `${mainSlugForQuery}${slug ? `,${slug}` : ""}` : slug;
+
+    if (cats) {
+      params.set("categories", cats);
+    } else {
+      params.delete("categories");
+    }
+
+    if (idStr) {
+      params.set("sous_categorie_id", idStr);
+    } else {
+      params.delete("sous_categorie_id");
+    }
+
+    params.delete("modele");
+    const query = params.toString();
+    navigate(`${location.pathname}${query ? `?${query}` : ""}`);
   };
 
   const handleModelClick = (modelName) => {
@@ -486,49 +712,90 @@ export default function Produits() {
 
     setSelectedModel(modelName);
     setSearchTerm("");
+
+    const params = new URLSearchParams(location.search);
+    const cats = selectedSubcategorySlug || activeCategorySlug || "";
+    if (cats) {
+      params.set("categories", cats);
+    } else {
+      params.delete("categories");
+    }
+
+    if (selectedSubcategoryId) {
+      params.set("sous_categorie_id", selectedSubcategoryId);
+    } else {
+      params.delete("sous_categorie_id");
+    }
+
+    params.set("modele", modelName);
+    const query = params.toString();
+    navigate(`${location.pathname}${query ? `?${query}` : ""}`);
+  };
+
+  const handleModelAddToCart = (modelCard) => {
+    const targetProduct = modelCard?.representativeProduct || null;
+    if (!targetProduct) {
+      handleModelClick(modelCard?.name || "");
+      return;
+    }
+
+    addToCart(targetProduct, 1);
+  };
+
+  const handleModelToggleFavorite = (modelCard) => {
+    const targetProduct = modelCard?.representativeProduct || null;
+    if (!targetProduct) {
+      handleModelClick(modelCard?.name || "");
+      return;
+    }
+
+    toggleFavorite(targetProduct);
+  };
+
+  const applyOrientationClass = (event) => {
+    const img = event.currentTarget || event.target;
+    if (!img) return;
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+    if (!w || !h) return;
+
+    img.classList.remove("is-landscape", "is-portrait", "is-square");
+    const ratio = w / h;
+    if (ratio >= 1.15) {
+      img.classList.add("is-landscape");
+    } else if (ratio <= 0.85) {
+      img.classList.add("is-portrait");
+    } else {
+      img.classList.add("is-landscape");
+    }
   };
 
   return (
-    <section className="pcat-shell" style={{ "--pcat-accent": activeTheme.accent, "--pcat-accent-soft": activeTheme.soft }}>
+    <section className="pcat-shell">
       <div className="pcat-bg-layer" aria-hidden="true" />
       <div className="pcat-container">
         <section className="pcat-hero">
-          <div className="pcat-hero-topline">
-            <span className="pcat-hero-kicker">Catalogue Produits</span>
-            {activeCategory?.label && <span className="pcat-hero-tag">Focus: {activeCategory.label}</span>}
+
+          <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+            <h1 className="pcat-hero-title">Nos Produits</h1>
+
+            <label className="pcat-search" aria-label="Recherche catalogue">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M11 19a8 8 0 1 1 5.293-14.002A8 8 0 0 1 11 19Zm9.707 1.293-4.52-4.52" />
+              </svg>
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder={searchPlaceholder}
+              />
+              {searchTerm && (
+                <button type="button" onClick={() => setSearchTerm("")} className="pcat-search-clear" aria-label="Effacer la recherche">
+                  x
+                </button>
+              )}
+            </label>
           </div>
-
-          <h1 className="pcat-hero-title">Parcourez notre catalogue en 3 etapes simples</h1>
-          <p className="pcat-hero-text">
-            Selectionnez une categorie, puis une sous-categorie en cartes visuelles. Choisissez ensuite un modele
-            pour afficher ses produits et ouvrir la fiche detaillee.
-          </p>
-
-          <div className="pcat-steps">
-            {ENGINEERING_DELIVERY_STEPS.map((step, index) => (
-              <div key={step} className="pcat-step-item">
-                <span className="pcat-step-index">0{index + 1}</span>
-                <span>{step}</span>
-              </div>
-            ))}
-          </div>
-
-          <label className="pcat-search" aria-label="Recherche catalogue">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M11 19a8 8 0 1 1 5.293-14.002A8 8 0 0 1 11 19Zm9.707 1.293-4.52-4.52" />
-            </svg>
-            <input
-              type="search"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder={searchPlaceholder}
-            />
-            {searchTerm && (
-              <button type="button" onClick={() => setSearchTerm("")} className="pcat-search-clear" aria-label="Effacer la recherche">
-                x
-              </button>
-            )}
-          </label>
         </section>
 
         <section className="pcat-main-pills" aria-label="Categories principales">
@@ -558,6 +825,13 @@ export default function Produits() {
                   setSelectedSubcategorySlug("");
                   setSelectedModel("");
                   setSearchTerm("");
+
+                  const params = new URLSearchParams(location.search);
+                  params.set("categories", activeCategorySlug);
+                  params.delete("sous_categorie_id");
+                  params.delete("modele");
+                  const query = params.toString();
+                  navigate(`${location.pathname}${query ? `?${query}` : ""}`);
                 }}
               >
                 Retour sous-categories
@@ -570,6 +844,24 @@ export default function Produits() {
                   onClick={() => {
                     setSelectedModel("");
                     setSearchTerm("");
+
+                    const params = new URLSearchParams(location.search);
+                    const cats = selectedSubcategorySlug || activeCategorySlug || "";
+                    if (cats) {
+                      params.set("categories", cats);
+                    } else {
+                      params.delete("categories");
+                    }
+
+                    if (selectedSubcategoryId) {
+                      params.set("sous_categorie_id", selectedSubcategoryId);
+                    } else {
+                      params.delete("sous_categorie_id");
+                    }
+
+                    params.delete("modele");
+                    const query = params.toString();
+                    navigate(`${location.pathname}${query ? `?${query}` : ""}`);
                   }}
                 >
                   Retour modeles
@@ -597,9 +889,10 @@ export default function Produits() {
                 <article key={`${item.slug}-${item.id || "catalog"}`} className="pcat-sub-card">
                   <div className="pcat-sub-visual">
                     <img
-                      src={CATEGORY_IMAGES[activeCategory?.slug] || "/images/produits/proj.webp"}
+                      src={item.image || "/images/produits/proj.webp"}
                       alt={item.label}
                       loading="lazy"
+                      onLoad={applyOrientationClass}
                     />
                     <div className="pcat-sub-overlay" aria-hidden="true" />
                   </div>
@@ -611,7 +904,15 @@ export default function Produits() {
                       <span className="pcat-sub-count">
                         {item.id ? `${countsBySubcategory[item.id] || 0} produit(s) DB` : "Catalogue modele"}
                       </span>
-                      <button type="button" onClick={() => handleSubcategoryClick(item)} className="pcat-solid-btn">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          handleSubcategoryClick(item);
+                        }}
+                        className="pcat-solid-btn"
+                      >
                         Voir modeles
                       </button>
                     </div>
@@ -634,15 +935,66 @@ export default function Produits() {
             </div>
 
             <div className="pcat-model-grid">
-              {modelCards.map((item) => (
-                <article key={`${selectedSubcategory.slug}-${item.name}`} className="pcat-model-card">
-                  <h3>{item.name}</h3>
-                  <p>{item.source === "db" ? `${item.count} produit(s) en base` : "Modele de reference catalogue"}</p>
-                  <button type="button" onClick={() => handleModelClick(item.name)} className="pcat-solid-btn">
-                    Voir produits / detail
-                  </button>
-                </article>
-              ))}
+              {modelCards.map((item) => {
+                const representativeId = Number(item.representativeId || item.representativeProduct?.id_produit || item.representativeProduct?.id || 0);
+                const isModelFavorite = representativeId > 0 ? favoriteIds.has(representativeId) : false;
+                const isModelInCart = representativeId > 0 ? cartIds.has(representativeId) : false;
+
+                return (
+                  <article key={`${selectedSubcategory.slug}-${item.name}`} className="pcat-model-card">
+                    <div className="pcat-model-visual">
+                      <img src={item.image || "/images/produits/proj.webp"} alt={`Modele ${item.name}`} className="pcat-model-image" loading="lazy" onLoad={applyOrientationClass} />
+
+                      <div className="pcat-model-badges" aria-hidden="true">
+                        {isModelInCart && (
+                          <span className="pcat-model-badge pcat-model-badge--cart">
+                            <span role="img" aria-hidden="true">🛒</span>
+                            <span className="pcat-model-badge-text">Dans le panier</span>
+                          </span>
+                        )}
+
+                        {isModelFavorite && (
+                          <span className="pcat-model-badge pcat-model-badge--fav" aria-label="Favori">
+                            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <h3>{item.name}</h3>
+                    <p>{item.source === "db" ? `${item.count} produit(s) en base` : "Modele de reference catalogue"}</p>
+
+                    <div className="pcat-model-rating">
+                      <Stars note={item.ratingAverage} />
+                      <span>{item.ratingCount > 0 ? `(${item.ratingCount})` : "Aucun avis"}</span>
+                    </div>
+
+                    <div className="pcat-model-actions">
+                      <button
+                        type="button"
+                        className={`pcat-model-secondary-btn ${isModelInCart ? "is-added" : ""}`}
+                        onClick={() => handleModelAddToCart(item)}
+                      >
+                        {isModelInCart ? "Dans le panier" : "Ajouter panier"}
+                      </button>
+
+                      <button
+                        type="button"
+                        className={`pcat-model-fav-btn ${isModelFavorite ? "is-active" : ""}`}
+                        aria-label={isModelFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                        onClick={() => handleModelToggleFavorite(item)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                        </svg>
+                      </button>
+
+                      <button type="button" onClick={() => handleModelClick(item.name)} className="pcat-solid-btn pcat-model-view-btn">
+                        Voir produits / detail
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
 
             {!loading && modelCards.length === 0 && (
@@ -670,7 +1022,7 @@ export default function Produits() {
                 </article>
               ))}
 
-              {!loading && produitsModele.map((produit) => {
+              {!loading && filteredProduitsModele.map((produit) => {
                 const prixFinal = produit.prix_promo ?? produit.prix;
                 const isFav = favoriteIds.has(Number(produit.id_produit));
                 const badgeClass = statusClasses[produit.statut] || "bg-slate-100 text-slate-800 border border-slate-200";
@@ -678,7 +1030,7 @@ export default function Produits() {
                 return (
                   <article key={produit.id_produit} className="pcat-product-card">
                     <div className="pcat-product-image-wrap">
-                      <img src={getProductImage(produit)} alt={produit.titre} className="pcat-product-image" loading="lazy" />
+                      <img src={getProductImage(produit)} alt={produit.titre} className="pcat-product-image" loading="lazy" onLoad={applyOrientationClass} />
 
                       <span className={`pcat-status-chip ${badgeClass}`}>{statusLabel(produit.statut)}</span>
 
@@ -716,7 +1068,7 @@ export default function Produits() {
               })}
             </div>
 
-            {!loading && !error && produitsModele.length === 0 && (
+            {!loading && !error && filteredProduitsModele.length === 0 && (
               <div className="pcat-empty-box">Aucun produit detaille trouve pour ce modele.</div>
             )}
           </section>

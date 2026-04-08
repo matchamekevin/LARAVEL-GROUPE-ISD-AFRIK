@@ -7,11 +7,60 @@ use Illuminate\Http\Request;
 
 class RevendeurDemandeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(
-            RevendeurDemande::query()->latest()->get()
-        );
+        $perPage = max(1, min(50, (int) $request->query('per_page', 20)));
+        $page = max(1, (int) $request->query('page', 1));
+        $search = trim((string) $request->query('q', ''));
+        $status = trim((string) $request->query('statut', ''));
+
+        $query = RevendeurDemande::query()->orderByDesc('created_at');
+
+        if ($search !== '') {
+            $like = "%{$search}%";
+            $query->where(function ($q) use ($like) {
+                $q->where('nom_entreprise', 'ILIKE', $like)
+                    ->orWhere('email_professionnel', 'ILIKE', $like)
+                    ->orWhere('representant_nom', 'ILIKE', $like)
+                    ->orWhere('pays', 'ILIKE', $like);
+            });
+        }
+
+        if ($status !== '' && strtolower($status) !== 'all') {
+            $query->where('statut', $status);
+        }
+
+        $paginator = $query->paginate($perPage, ['*'], 'page', $page)->appends($request->query());
+
+        $nouveau = RevendeurDemande::where('statut', 'nouveau')->count();
+        $en_cours = RevendeurDemande::where('statut', 'en_cours')->count();
+        $valide = RevendeurDemande::where('statut', 'valide')->count();
+        $rejete = RevendeurDemande::where('statut', 'rejete')->count();
+
+        return response()->json([
+            'data' => $paginator->items(),
+            'meta' => [
+                'total' => $paginator->total(),
+                'per_page' => $paginator->perPage(),
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+            ],
+            'links' => [
+                'first' => $paginator->url(1),
+                'last' => $paginator->url($paginator->lastPage()),
+                'next' => $paginator->nextPageUrl(),
+                'prev' => $paginator->previousPageUrl(),
+            ],
+            'stats' => [
+                'total' => $paginator->total(),
+                'nouveau' => $nouveau,
+                'en_cours' => $en_cours,
+                'valide' => $valide,
+                'rejete' => $rejete,
+            ],
+        ]);
     }
 
     public function show(int $id)

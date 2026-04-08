@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "../styles/mesFormation.css";
+import "../styles/formation.css";
 
 export default function MesFormations() {
   const [formations, setFormations] = useState([]);

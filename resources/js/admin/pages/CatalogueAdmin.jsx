@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   getCategories,
   createCategory,
@@ -12,8 +12,9 @@ import {
   syncGeovisionCatalog,
 } from '../api';
 import Loader from '../components/Loader';
+import AdminToast, { useAdminToast } from '../components/AdminToast';
 import '../styles/admin-shared.css';
-import './catalogue-admin.css';
+import '../styles/catalogue-admin.css';
 
 const GEOVISION_SEGMENT = 'geovision';
 
@@ -160,6 +161,20 @@ export default function CatalogueAdmin() {
   const [modelQuery, setModelQuery] = useState('');
   const [modelCategoryFilter, setModelCategoryFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('categories');
+  const categoriesSectionRef = useRef(null);
+  const modelsSectionRef = useRef(null);
+  const { toast, showToast } = useAdminToast();
+
+  const scrollToTabSection = (tab, behavior = 'smooth') => {
+    const target = tab === 'models' ? modelsSectionRef.current : categoriesSectionRef.current;
+    if (!target) return;
+    target.scrollIntoView({ behavior, block: 'start' });
+  };
+
+  const handleTabClick = (tab) => {
+    setActiveTab(tab);
+    scrollToTabSection(tab);
+  };
 
   const isEditingCategory = editingCategoryId !== null;
   const isEditingModel = editingModelId !== null;
@@ -268,6 +283,40 @@ export default function CatalogueAdmin() {
     loadModels();
   }, [modelCategoryFilter]);
 
+  useEffect(() => {
+    const categoriesSection = categoriesSectionRef.current;
+    const modelsSection = modelsSectionRef.current;
+
+    if (!categoriesSection || !modelsSection || typeof IntersectionObserver === 'undefined') {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+        if (visible.length === 0) return;
+
+        const nextTab = visible[0].target.getAttribute('data-tab');
+        if (nextTab === 'categories' || nextTab === 'models') {
+          setActiveTab((prev) => (prev === nextTab ? prev : nextTab));
+        }
+      },
+      {
+        root: null,
+        threshold: [0.2, 0.35, 0.55],
+        rootMargin: '-16% 0px -55% 0px',
+      }
+    );
+
+    observer.observe(categoriesSection);
+    observer.observe(modelsSection);
+
+    return () => observer.disconnect();
+  }, []);
+
   async function handleSaveCategory(e) {
     e.preventDefault();
     setSavingCategory(true);
@@ -296,12 +345,13 @@ export default function CatalogueAdmin() {
       setCategoryForm(INITIAL_CATEGORY_FORM);
       setEditingCategoryId(null);
       await loadCategories();
+      showToast(isEditingCategory ? 'Categorie GeoVision mise a jour.' : 'Categorie GeoVision creee.', 'success');
     } catch (err) {
       const errors = err?.response?.data?.errors;
       const details = errors
         ? Object.values(errors).flat().join('\n')
         : '';
-      alert(details || err?.response?.data?.message || 'Erreur sauvegarde categorie GeoVision');
+      showToast(details || err?.response?.data?.message || 'Erreur sauvegarde categorie GeoVision', 'error');
     } finally {
       setSavingCategory(false);
     }
@@ -321,7 +371,7 @@ export default function CatalogueAdmin() {
       actif: category.actif !== false,
     });
     setActiveTab('categories');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTabSection('categories');
   }
 
   async function handleDeleteCategory(id) {
@@ -329,20 +379,22 @@ export default function CatalogueAdmin() {
     try {
       await deleteCategory(id);
       setCategories((prev) => prev.filter((c) => c.id !== id));
+      showToast('Categorie GeoVision supprimee.', 'success');
     } catch (err) {
-      alert('Erreur suppression categorie');
+      showToast('Erreur suppression categorie', 'error');
     }
   }
 
   async function handleSaveModel(e) {
     e.preventDefault();
+    const editing = Boolean(editingModelId);
 
     if (!modelForm.title.trim()) {
-      alert('Le titre du modele est obligatoire.');
+      showToast('Le titre du modele est obligatoire.', 'error');
       return;
     }
     if (!modelForm.id_categorie) {
-      alert('La categorie GeoVision est obligatoire.');
+      showToast('La categorie GeoVision est obligatoire.', 'error');
       return;
     }
 
@@ -375,12 +427,13 @@ export default function CatalogueAdmin() {
       setEditingModelId(null);
       setModelImageFiles([]);
       await loadModels();
+      showToast(editing ? 'Modele GeoVision mis a jour.' : 'Modele GeoVision cree.', 'success');
     } catch (err) {
       const errors = err?.response?.data?.errors;
       const details = errors
         ? Object.values(errors).flat().join('\n')
         : '';
-      alert(details || err?.response?.data?.message || 'Erreur sauvegarde modele GeoVision');
+      showToast(details || err?.response?.data?.message || 'Erreur sauvegarde modele GeoVision', 'error');
     } finally {
       setSavingModel(false);
     }
@@ -391,7 +444,7 @@ export default function CatalogueAdmin() {
     setModelForm(toModelForm(model));
     setModelImageFiles([]);
     setActiveTab('models');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTabSection('models');
   }
 
   async function handleDeleteModel(id) {
@@ -399,8 +452,9 @@ export default function CatalogueAdmin() {
     try {
       await deleteProduct(id);
       setModels((prev) => prev.filter((m) => m.id !== id));
+      showToast('Modele GeoVision supprime.', 'success');
     } catch (err) {
-      alert('Erreur suppression modele GeoVision');
+      showToast('Erreur suppression modele GeoVision', 'error');
     }
   }
 
@@ -409,9 +463,9 @@ export default function CatalogueAdmin() {
     try {
       await syncGeovisionCatalog({ replace: false, fetch_details: true });
       await Promise.all([loadCategories(), loadModels()]);
-      alert('Synchronisation GeoVision terminee.');
+      showToast('Synchronisation GeoVision terminee.', 'success');
     } catch (err) {
-      alert(err?.response?.data?.message || 'Erreur de synchronisation GeoVision');
+      showToast(err?.response?.data?.message || 'Erreur de synchronisation GeoVision', 'error');
     } finally {
       setSyncing(false);
     }
@@ -436,16 +490,15 @@ export default function CatalogueAdmin() {
       </header>
 
       <section className="admin-catalogue-tabs">
-        <button type="button" className={activeTab === 'categories' ? 'is-active' : ''} onClick={() => setActiveTab('categories')}>
+        <button type="button" className={activeTab === 'categories' ? 'is-active' : ''} onClick={() => handleTabClick('categories')}>
           Categories GeoVision
         </button>
-        <button type="button" className={activeTab === 'models' ? 'is-active' : ''} onClick={() => setActiveTab('models')}>
+        <button type="button" className={activeTab === 'models' ? 'is-active' : ''} onClick={() => handleTabClick('models')}>
           Modeles GeoVision
         </button>
       </section>
 
-      {activeTab === 'categories' && (
-        <>
+      <section className="admin-catalogue-scroll-section" ref={categoriesSectionRef} data-tab="categories">
           <section className="admin-catalogue-card">
             <div className="admin-catalogue-card-head">
               <h2>{isEditingCategory ? 'Modifier categorie GeoVision' : 'Creer categorie GeoVision'}</h2>
@@ -606,11 +659,9 @@ export default function CatalogueAdmin() {
               </div>
             )}
           </section>
-        </>
-      )}
+      </section>
 
-      {activeTab === 'models' && (
-        <>
+      <section className="admin-catalogue-scroll-section" ref={modelsSectionRef} data-tab="models">
           <section className="admin-catalogue-card">
             <div className="admin-catalogue-card-head">
               <h2>{isEditingModel ? 'Modifier modele GeoVision' : 'Creer modele GeoVision'}</h2>
@@ -866,8 +917,9 @@ export default function CatalogueAdmin() {
               </div>
             )}
           </section>
-        </>
-      )}
+      </section>
+
+      <AdminToast toast={toast} />
       </div>
   );
 }

@@ -8,6 +8,10 @@
   gap: var(--spacing-xl);
 }
 
+.admin-orders-notice {
+  margin-top: calc(-1 * var(--spacing-sm));
+}
+
 /* Hero Section */
 .admin-orders-hero {
   display: flex;

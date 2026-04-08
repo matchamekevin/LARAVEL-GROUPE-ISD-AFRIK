@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Link, NavLink, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Products from './pages/Products';
@@ -14,21 +14,8 @@ import TestimonialsAdmin from './pages/TestimonialsAdmin';
 import CollaboratorsAdmin from './pages/CollaboratorsAdmin';
 import PartnersAdmin from './pages/PartnersAdmin';
 import Login from './pages/Login';
-import { useLocation, useNavigate } from 'react-router-dom';
 import Loader from './components/Loader';
 
-function RedirectIfLogin() {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (location.pathname === '/login') {
-      navigate('/', { replace: true });
-    }
-  }, [location, navigate]);
-
-  return null;
-}
 import { clearAdminToken, hasAdminToken, logout, me } from './api';
 
 export default function App() {
@@ -126,7 +113,6 @@ export default function App() {
         minHeight: '100vh',
         background: '#f8f9fa',
       }}>
-        <RedirectIfLogin />
         <aside style={{
           width: '280px',
           background: 'linear-gradient(180deg, #172243 0%, #0f1621 100%)',
@@ -146,9 +132,8 @@ export default function App() {
               fontSize: '1.5rem',
               fontWeight: 800,
               margin: '0 0 0.5rem 0',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              color: '#ffffff',
+              WebkitTextFillColor: 'initial',
             }}>
               GROUPE ISD AFRIK
             </h2>
@@ -481,6 +466,7 @@ export default function App() {
             <Route path="/collaborators" element={<CollaboratorsAdmin />} />
             <Route path="/partners" element={<PartnersAdmin />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
       </div>

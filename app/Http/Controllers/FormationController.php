@@ -12,18 +12,64 @@ use FedaPay\FedaPay;
 
 class FormationController extends Controller
 {
-    /** Liste toutes les formations */
-    public function index()
+    /** Liste paginée des formations (admin et public) */
+    public function index(Request $request)
     {
-        $formations = Formation::with(['pays', 'images'])->get();
+        $perPage = max(1, min(50, (int) $request->query('per_page', 20)));
+        $page = max(1, (int) $request->query('page', 1));
+        $search = trim((string) $request->query('q', ''));
+        $categorie = trim((string) $request->query('categorie', ''));
 
-        foreach ($formations as $formation) {
+        $query = Formation::with(['pays', 'images'])->orderByDesc('created_at');
+
+        if ($search !== '') {
+            $like = "%{$search}%";
+            $query->where(function ($q) use ($like) {
+                $q->where('titre', 'ILIKE', $like)
+                    ->orWhere('description', 'ILIKE', $like);
+            });
+        }
+
+        if ($categorie !== '' && strtolower($categorie) !== 'all') {
+            $query->where('categorie', $categorie);
+        }
+
+        $paginator = $query->paginate($perPage, ['*'], 'page', $page)->appends($request->query());
+
+        // Normalise les URLs d'images
+        foreach ($paginator->items() as $formation) {
             foreach ($formation->images as $img) {
                 $img->url = $this->normalizeImageUrl($img->url);
             }
         }
 
-        return response()->json($formations, 200);
+        $particulier = Formation::where('categorie', 'particulier')->count();
+        $etudiant = Formation::where('categorie', 'etudiant')->count();
+        $entreprise = Formation::where('categorie', 'entreprise')->count();
+
+        return response()->json([
+            'data' => $paginator->items(),
+            'meta' => [
+                'total' => $paginator->total(),
+                'per_page' => $paginator->perPage(),
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+            ],
+            'links' => [
+                'first' => $paginator->url(1),
+                'last' => $paginator->url($paginator->lastPage()),
+                'next' => $paginator->nextPageUrl(),
+                'prev' => $paginator->previousPageUrl(),
+            ],
+            'stats' => [
+                'total' => $paginator->total(),
+                'particulier' => $particulier,
+                'etudiant' => $etudiant,
+                'entreprise' => $entreprise,
+            ],
+        ], 200);
     }
 
     /** Crée une nouvelle formation */
