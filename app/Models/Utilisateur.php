@@ -28,7 +28,6 @@ class Utilisateur extends Authenticatable implements FilamentUser
         'email',
         'telephone',
         'mot_de_passe',
-        'role',
         'is_admin',
         'statut',
         'can_access_client',
@@ -161,11 +160,20 @@ class Utilisateur extends Authenticatable implements FilamentUser
     /** Vérification des rôles */
     public function isSuperAdmin(): bool
     {
-        return $this->is_admin && $this->admin_role === 'superadmin';
+        return (bool) $this->is_admin
+            && (bool) $this->can_access_admin
+            && strtolower((string) $this->admin_role) === 'superadmin';
     }
 
     public function isAdminPays(): bool
     {
-        return $this->is_admin && in_array($this->admin_role, ['admin_pays', 'admin_national', 'admin_adjoint'], true);
+        $role = strtolower((string) $this->admin_role);
+        if (in_array($role, ['admin', 'admin_pays', 'admin_national'], true)) {
+            $role = 'admin_adjoint';
+        }
+
+        return (bool) $this->is_admin
+            && (bool) $this->can_access_admin
+            && in_array($role, ['admin_adjoint'], true);
     }
 }

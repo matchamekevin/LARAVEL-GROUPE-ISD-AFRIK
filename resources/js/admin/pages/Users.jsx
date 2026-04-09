@@ -1,12 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createAdminAdjoint, getCountries, getUsers, me, updateUser, updateUserStatus } from '../api';
 import AdminToast, { useAdminToast } from '../components/AdminToast';
 import AdminNotice from '../components/AdminNotice';
 import Loader from '../components/Loader';
-import { ROLE_OPTIONS, ROLE_LABELS, normalizeRole } from '../utils/roles';
 import '../styles/admin-shared.css';
 import '../styles/users.css';
 
+import { ROLE_LABELS, normalizeRole } from '../utils/roles';
 
 const INITIAL_ADMIN_FORM = {
   nom: '',
@@ -34,30 +34,56 @@ const EMPTY_STATS = {
   suspended: 0,
 };
 
-// `normalizeRole`, `ROLE_OPTIONS` and `ROLE_LABELS` are imported from
-// resources/js/admin/utils/roles so they can be reused and kept DRY.
+function normalizeAdminLevel(value) {
+  const level = String(value || 'client').toLowerCase().trim();
+  if (['superadmin', 'super-admin'].includes(level)) return 'superadmin';
+  if (['admin', 'admin_pays', 'admin_national', 'admin_adjoint'].includes(level)) return 'admin_adjoint';
+  return 'client';
+}
+
+function deriveAdminLevel(user = {}) {
+  const explicitLevel = normalizeAdminLevel(user?.admin_level || user?.admin_role || user?.role || 'client');
+  if (explicitLevel === 'superadmin' && Boolean(user?.is_admin) && Boolean(user?.can_access_admin)) {
+    return 'superadmin';
+  }
+
+  if (Boolean(user?.is_admin) && Boolean(user?.can_access_admin)) {
+    return explicitLevel === 'superadmin' ? 'superadmin' : 'admin_adjoint';
+  }
+
+  return 'client';
+}
 
 function mergeUserState(baseUser, updatedUser = {}) {
-  return {
+  const merged = {
     ...baseUser,
     ...updatedUser,
     id: updatedUser?.id ?? updatedUser?.id_utilisateur ?? baseUser?.id,
-    role: normalizeRole(updatedUser?.role ?? baseUser?.role),
     admin_role: updatedUser?.admin_role ?? baseUser?.admin_role,
     is_admin: updatedUser?.is_admin ?? baseUser?.is_admin ?? false,
     can_access_client: updatedUser?.can_access_client ?? baseUser?.can_access_client ?? false,
     can_access_admin: updatedUser?.can_access_admin ?? baseUser?.can_access_admin ?? false,
     statut: updatedUser?.statut ?? baseUser?.statut ?? 'actif',
   };
+
+  const adminLevel = deriveAdminLevel(merged);
+
+  return {
+    ...merged,
+    admin_level: adminLevel,
+    role: adminLevel,
+    is_super_admin: adminLevel === 'superadmin',
+    is_admin_adjoint: adminLevel === 'admin_adjoint',
+  };
 }
 
 function shouldInvalidateSelfAdminSession(user) {
-  const role = normalizeRole(user?.admin_role || user?.role || 'client');
+  const adminLevel = deriveAdminLevel(user);
   return !user
     || String(user?.statut || '').toLowerCase() !== 'actif'
     || !Boolean(user?.is_admin)
     || !Boolean(user?.can_access_admin)
-    || role === 'client';
+    || adminLevel === 'client';
 }
 
 export default function Users() {
@@ -71,10 +97,8 @@ export default function Users() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [toggling, setToggling] = useState(null);
-  const [roleUpdating, setRoleUpdating] = useState(null);
   const [accessUpdating, setAccessUpdating] = useState(null);
   const [creatingAdmin, setCreatingAdmin] = useState(false);
-  const [roleDrafts, setRoleDrafts] = useState({});
   const [accessDrafts, setAccessDrafts] = useState({});
   const [errorMessage, setErrorMessage] = useState('');
   const [phoneError, setPhoneError] = useState(null);
@@ -83,14 +107,8 @@ export default function Users() {
   const { toast, showToast } = useAdminToast();
 
   const actorId = actorUser?.id ?? actorUser?.id_utilisateur ?? null;
-  const actorRole = normalizeRole(actorUser?.admin_role || actorUser?.role || 'client');
+  const actorRole = deriveAdminLevel(actorUser || {});
   const actorIsSuperAdmin = actorRole === 'superadmin';
-
-  const availableRoleOptions = useMemo(() => (
-    actorIsSuperAdmin
-      ? ROLE_OPTIONS
-      : ROLE_OPTIONS.filter((option) => option.value !== 'superadmin')
-  ), [actorIsSuperAdmin]);
 
   useEffect(() => {
     let mounted = true;
@@ -245,33 +263,7 @@ export default function Users() {
     }
   }
 
-  async function handleApplyRole(selectedUser) {
-    const currentRole = normalizeRole(selectedUser.role || 'client');
-    const nextRole = String(roleDrafts[selectedUser.id] || currentRole);
-    if (nextRole === currentRole) return;
-
-    setRoleUpdating(selectedUser.id);
-    try {
-      const res = await updateUser(selectedUser.id, { role: nextRole });
-      const updated = res?.data?.utilisateur || { role: nextRole };
-      const nextUser = mergeUserState(selectedUser, updated);
-
-      setRoleDrafts((previous) => {
-        const next = { ...previous };
-        delete next[selectedUser.id];
-        return next;
-      });
-
-      await applySelfUpdate(nextUser);
-      showToast(`✅ Rôle mis à jour pour ${selectedUser.email}`, 'success');
-      reloadUsers();
-    } catch (err) {
-      console.error('Role update error', err);
-      showToast(err?.response?.data?.message || '❌ Erreur lors de la mise à jour du rôle', 'error');
-    } finally {
-      setRoleUpdating(null);
-    }
-  }
+  // Remplacé par handleApplyAccess qui gère les flags can_access_admin et admin_role
 
   async function handleApplyAccess(selectedUser) {
     const draft = accessDrafts[selectedUser.id] || {
@@ -397,6 +389,13 @@ export default function Users() {
     return <Loader text="Chargement des utilisateurs..." />;
   }
 
+  const visibleUsers = (users || []).filter((uu) => {
+    try {
+      return actorIsSuperAdmin || normalizeRole(uu.role || uu.admin_role) !== 'superadmin';
+    } catch (e) {
+      return true;
+    }
+  });
   return (
     <div className="admin-users-page">
       <div className="admin-users-hero">
@@ -533,7 +532,7 @@ export default function Users() {
         </div>
       )}
 
-      {users.length === 0 ? (
+      {visibleUsers.length === 0 ? (
         <div className="admin-users-empty">
           <div className="admin-users-empty-icon">👥</div>
           <h3>Aucun utilisateur trouvé</h3>
@@ -582,7 +581,7 @@ export default function Users() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((u) => {
+                  {visibleUsers.map((u) => {
                     const isTargetSuperAdmin = normalizeRole(u.role || u.admin_role) === 'superadmin';
                     const actorIsAdjoint = actorRole === 'admin_adjoint';
                     const cannotManageSuperAdmin = isTargetSuperAdmin && actorIsAdjoint && !actorIsSuperAdmin;
@@ -608,88 +607,99 @@ export default function Users() {
                         <td>
                           <div className="admin-user-role-cell">
                             <span className="admin-user-role-badge">
-                              {ROLE_LABELS[normalizeRole(u.role)] || normalizeRole(u.role)}
+                              {ROLE_LABELS[normalizeRole(u.role || u.admin_role)] || normalizeRole(u.role || u.admin_role)}
                             </span>
-                            <div className="admin-user-role-controls">
-                              <select
-                                className="admin-user-role-select"
-                                value={roleDrafts[u.id] ?? normalizeRole(u.role || 'client')}
-                                onChange={(e) => setRoleDrafts((previous) => ({ ...previous, [u.id]: e.target.value }))}
-                                disabled={roleUpdating === u.id || cannotManageSuperAdmin}
-                              >
-                                {availableRoleOptions.map((option) => (
-                                  <option key={option.value} value={option.value}>
-                                    {option.label}
-                                  </option>
-                                ))}
-                              </select>
-                              <button
-                                type="button"
-                                className="admin-user-action-btn reactivate"
-                                onClick={() => handleApplyRole(u)}
-                                disabled={
-                                  cannotManageSuperAdmin
-                                  || roleUpdating === u.id
-                                  || (roleDrafts[u.id] ?? normalizeRole(u.role || 'client')) === normalizeRole(u.role || 'client')
-                                }
-                                title="Appliquer le role choisi"
-                              >
-                                {roleUpdating === u.id ? '⏳ En cours...' : 'Appliquer'}
-                              </button>
-                            </div>
                           </div>
                         </td>
 
                         <td>
                           <div className="admin-user-role-cell">
-                            <div className="admin-user-role-controls">
-                              <label className="admin-user-access-check">
-                                <input
-                                  type="checkbox"
-                                  checked={(accessDrafts[u.id]?.can_access_client ?? Boolean(u.can_access_client))}
-                                  onChange={(e) => setAccessDrafts((previous) => ({
-                                    ...previous,
-                                    [u.id]: {
-                                      can_access_client: e.target.checked,
-                                      can_access_admin: previous[u.id]?.can_access_admin ?? Boolean(u.can_access_admin),
-                                    },
-                                  }))}
-                                  disabled={accessUpdating === u.id || cannotManageSuperAdmin}
-                                />
-                                Client
-                              </label>
-                              <label className="admin-user-access-check">
-                                <input
-                                  type="checkbox"
-                                  checked={(accessDrafts[u.id]?.can_access_admin ?? Boolean(u.can_access_admin))}
-                                  onChange={(e) => setAccessDrafts((previous) => ({
-                                    ...previous,
-                                    [u.id]: {
-                                      can_access_client: previous[u.id]?.can_access_client ?? Boolean(u.can_access_client),
-                                      can_access_admin: e.target.checked,
-                                    },
-                                  }))}
-                                  disabled={accessUpdating === u.id || cannotManageSuperAdmin}
-                                />
-                                Admin
-                              </label>
-                            </div>
-                            <button
-                              type="button"
-                              className="admin-user-action-btn reactivate"
-                              onClick={() => handleApplyAccess(u)}
-                              disabled={
-                                cannotManageSuperAdmin
-                                || accessUpdating === u.id
-                                || (
-                                  Boolean(u.can_access_client) === Boolean(accessDrafts[u.id]?.can_access_client ?? u.can_access_client)
-                                  && Boolean(u.can_access_admin) === Boolean(accessDrafts[u.id]?.can_access_admin ?? u.can_access_admin)
-                                )
-                              }
-                              title="Appliquer les acces client/admin"
-                            >
-                              {accessUpdating === u.id ? '⏳ En cours...' : 'Appliquer'}
-                            </button>
+                              <div className="admin-user-role-controls">
+                                <label className="admin-user-access-check">
+                                  <input
+                                    type="checkbox"
+                                    checked={(accessDrafts[u.id]?.can_access_client ?? Boolean(u.can_access_client))}
+                                    onChange={(e) => setAccessDrafts((previous) => ({
+                                      ...previous,
+                                      [u.id]: {
+                                        ...(previous[u.id] || {}),
+                                        can_access_client: e.target.checked,
+                                      },
+                                    }))}
+                                    disabled={accessUpdating === u.id || cannotManageSuperAdmin}
+                                  />
+                                  Client
+                                </label>
+                                <label className="admin-user-access-check">
+                                  <input
+                                    type="checkbox"
+                                    checked={(accessDrafts[u.id]?.can_access_admin ?? Boolean(u.can_access_admin))}
+                                    onChange={(e) => setAccessDrafts((previous) => ({
+                                      ...previous,
+                                      [u.id]: {
+                                        ...(previous[u.id] || {}),
+                                        can_access_admin: e.target.checked,
+                                      },
+                                    }))}
+                                    disabled={accessUpdating === u.id || cannotManageSuperAdmin}
+                                  />
+                                  Admin
+                                </label>
+
+                                {actorIsSuperAdmin && (
+                                  <label className="admin-user-access-check">
+                                    <input
+                                      type="checkbox"
+                                      checked={Boolean(accessDrafts[u.id]?.is_admin_adjoint ?? u.is_admin_adjoint)}
+                                      onChange={(e) => setAccessDrafts((previous) => ({
+                                        ...previous,
+                                        [u.id]: {
+                                          ...(previous[u.id] || {}),
+                                          is_admin_adjoint: e.target.checked,
+                                        },
+                                      }))}
+                                      disabled={accessUpdating === u.id || cannotManageSuperAdmin}
+                                    />
+                                    Admin adjoint
+                                  </label>
+                                )}
+
+                                {actorIsSuperAdmin && (
+                                  <label className="admin-user-access-check">
+                                    <input
+                                      type="checkbox"
+                                      checked={Boolean(accessDrafts[u.id]?.is_super_admin ?? u.is_super_admin)}
+                                      onChange={(e) => setAccessDrafts((previous) => ({
+                                        ...previous,
+                                        [u.id]: {
+                                          ...(previous[u.id] || {}),
+                                          is_super_admin: e.target.checked,
+                                        },
+                                      }))}
+                                      disabled={accessUpdating === u.id || cannotManageSuperAdmin}
+                                    />
+                                    Super admin
+                                  </label>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                className="admin-user-action-btn reactivate"
+                                onClick={() => handleApplyAccess(u)}
+                                disabled={
+                                  cannotManageSuperAdmin
+                                  || accessUpdating === u.id
+                                  || (
+                                    Boolean(u.can_access_client) === Boolean(accessDrafts[u.id]?.can_access_client ?? u.can_access_client)
+                                    && Boolean(u.can_access_admin) === Boolean(accessDrafts[u.id]?.can_access_admin ?? u.can_access_admin)
+                                    && Boolean(u.is_admin_adjoint) === Boolean(accessDrafts[u.id]?.is_admin_adjoint ?? u.is_admin_adjoint)
+                                    && Boolean(u.is_super_admin) === Boolean(accessDrafts[u.id]?.is_super_admin ?? u.is_super_admin)
+                                  )
+                                }
+                                title="Appliquer les acces client/admin"
+                              >
+                                {accessUpdating === u.id ? '⏳ En cours...' : 'Appliquer'}
+                              </button>
                           </div>
                         </td>
 

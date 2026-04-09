@@ -37,7 +37,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'telephone',
         'password',
         'mot_de_passe',
-        'role',
         'is_admin',
         'statut',
         'admin_role',
@@ -94,10 +93,6 @@ class User extends Authenticatable implements MustVerifyEmail
 
             if (empty($user->date_creation)) {
                 $user->date_creation = now();
-            }
-
-            if (empty($user->role)) {
-                $user->role = 'client';
             }
 
             if (!isset($user->is_admin)) {

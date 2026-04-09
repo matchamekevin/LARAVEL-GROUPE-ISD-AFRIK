@@ -28,7 +28,6 @@ function makeAdminProductsContext(): array
         'prenom' => 'Products',
         'email' => 'admin-products-' . now()->timestamp . '-' . random_int(1000, 9999) . '@example.test',
         'mot_de_passe' => 'password',
-        'role' => 'admin_adjoint',
         'admin_role' => 'admin_adjoint',
         'is_admin' => true,
         'statut' => 'actif',

@@ -1,0 +1,7 @@
+[prod]
+# Remplacez par l'hôte de production et l'utilisateur SSH
+# ex:
+# prod.example.com ansible_user=deploy
+
+# Exemple local pour tests:
+# 127.0.0.1 ansible_user=kev ansible_connection=local

@@ -1,0 +1,108 @@
+---
+- name: Backup production DB and uploads
+  hosts: prod
+  gather_facts: no
+  vars:
+    app_path: /var/www/html
+    backup_dir: /tmp/ansible_backups
+    uploads_rel_path: public/uploads
+    local_backup_dir: ./backups
+    do_import: false   # Set to true when you want to run the import section
+    import_dir: ./imports
+  tasks:
+    - name: Ensure remote backup directory exists
+      file:
+        path: "{{ backup_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Set timestamp fact
+      set_fact:
+        timestamp: "{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
+
+    - name: Create DB dump on remote (pg_dump must be available)
+      shell: |
+        set -e
+        cd {{ app_path }}
+        if command -v pg_dump >/dev/null 2>&1; then
+          pg_dump -Fc "$DATABASE_URL" -f {{ backup_dir }}/backup_prod_{{ timestamp }}.dump
+        else
+          echo "pg_dump absent" >&2
+          exit 2
+        fi
+      args:
+        warn: false
+
+    - name: Archive uploads on remote
+      shell: |
+        set -e
+        tar -C {{ app_path }} -czf {{ backup_dir }}/uploads_backup_{{ timestamp }}.tar.gz {{ uploads_rel_path }}
+      args:
+        warn: false
+
+    - name: Fetch DB dump to control machine
+      fetch:
+        src: "{{ backup_dir }}/backup_prod_{{ timestamp }}.dump"
+        dest: "{{ local_backup_dir }}/"
+        flat: yes
+
+    - name: Fetch uploads archive to control machine
+      fetch:
+        src: "{{ backup_dir }}/uploads_backup_{{ timestamp }}.tar.gz"
+        dest: "{{ local_backup_dir }}/"
+        flat: yes
+
+    - name: Cleanup remote temporary dump
+      file:
+        path: "{{ backup_dir }}/backup_prod_{{ timestamp }}.dump"
+        state: absent
+      ignore_errors: yes
+
+    - name: Cleanup remote uploads archive
+      file:
+        path: "{{ backup_dir }}/uploads_backup_{{ timestamp }}.tar.gz"
+        state: absent
+      ignore_errors: yes
+
+- name: Import CSVs and uploads (optional)
+  hosts: prod
+  gather_facts: no
+  vars:
+    app_path: /var/www/html
+    import_dir: "{{ import_dir }}"
+  when: do_import | bool
+  tasks:
+    - name: Copy imports to remote temp directory
+      synchronize:
+        src: "{{ import_dir }}/"
+        dest: /tmp/product_import/
+        recursive: yes
+
+    - name: Import categories CSV
+      shell: |
+        set -e
+        psql "$DATABASE_URL" -c "\copy categories FROM '/tmp/product_import/categories.csv' CSV HEADER"
+      args:
+        warn: false
+
+    - name: Import produits CSV
+      shell: |
+        set -e
+        psql "$DATABASE_URL" -c "\copy produits FROM '/tmp/product_import/produits.csv' CSV HEADER"
+      args:
+        warn: false
+
+    - name: Extract images into public/uploads
+      shell: |
+        set -e
+        if [ -d /tmp/product_import/uploads ]; then
+          rsync -avz /tmp/product_import/uploads/ {{ app_path }}/public/uploads/
+        fi
+      args:
+        warn: false
+
+    - name: Cleanup remote import tmp
+      file:
+        path: /tmp/product_import
+        state: absent
+      ignore_errors: yes

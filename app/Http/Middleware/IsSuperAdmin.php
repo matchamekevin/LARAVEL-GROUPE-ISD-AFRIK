@@ -12,7 +12,11 @@ class IsSuperAdmin
     {
         $user = $request->user();
 
-        $role = strtolower((string) ($user->admin_role ?: $user->role));
+        $role = strtolower(trim((string) ($user->admin_role ?? '')));
+        if ($role === 'super-admin') {
+            $role = 'superadmin';
+        }
+
         $isSuperAdmin = $user
             && (bool) $user->is_admin
             && in_array($role, ['superadmin', 'super-admin'], true)

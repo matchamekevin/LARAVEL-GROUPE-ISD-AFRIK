@@ -19,9 +19,11 @@ beforeEach(function () {
         'prenom' => 'GeoVision',
         'email' => 'admin-geovision@example.test',
         'mot_de_passe' => 'password',
-        'role' => 'admin',
+        'admin_role' => 'admin_adjoint',
         'is_admin' => true,
         'statut' => 'actif',
+        'can_access_client' => true,
+        'can_access_admin' => true,
         'id_pays' => $country->id_pays,
     ]);
 

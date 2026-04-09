@@ -20,7 +20,7 @@ use Illuminate\Support\Str;
 
 class AdminActivityController extends Controller
 {
-    private function normalizeRoleValue(?string $role): string
+    private function normalizeAdminRoleValue(?string $role): string
     {
         $value = strtolower(trim((string) $role));
 
@@ -42,7 +42,7 @@ class AdminActivityController extends Controller
         }
 
         return (bool) ($user->is_admin ?? false)
-            && $this->normalizeRoleValue($user->admin_role ?: ($user->role ?? null)) === 'superadmin';
+            && $this->normalizeAdminRoleValue($user->admin_role ?? null) === 'superadmin';
     }
 
     private function isPaidStatus(?string $value): bool
@@ -186,8 +186,8 @@ class AdminActivityController extends Controller
         if (!$this->isSuperAdminUser($actor)) {
             $query->where(function ($builder) {
                 $builder
-                    ->where('role', '!=', 'superadmin')
-                    ->where('admin_role', '!=', 'superadmin');
+                    ->whereNull('admin_role')
+                    ->orWhereRaw("LOWER(admin_role) != 'superadmin'");
             });
         }
 

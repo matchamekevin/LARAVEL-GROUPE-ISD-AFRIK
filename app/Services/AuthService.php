@@ -44,8 +44,8 @@ class AuthService
             return null;
         }
 
-        // ✅ Déclenchement du 2FA si admin
-        if ($user->role === 'admin') {
+        // ✅ Déclenchement du 2FA si accès admin actif
+        if ((bool) $user->is_admin && (bool) $user->can_access_admin) {
             if (method_exists($user, 'generateTwoFactorCode')) {
                 $user->generateTwoFactorCode();
             }

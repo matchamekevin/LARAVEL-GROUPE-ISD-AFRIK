@@ -23,10 +23,17 @@ class IsAdmin
             return response()->json(['message' => 'Compte désactivé'], 403);
         }
 
-        // Accepte les anciens et nouveaux rôles admin pour éviter les blocages.
-        $adminRoles = ['admin', 'super_admin', 'admin_pays', 'admin_national', 'admin_adjoint', 'superadmin'];
         $isAdminFlag = filter_var($user->is_admin, FILTER_VALIDATE_BOOLEAN);
-        $hasAdminRole = in_array((string) $user->role, $adminRoles, true);
+        $adminRole = strtolower(trim((string) ($user->admin_role ?? '')));
+
+        if (in_array($adminRole, ['admin', 'admin_pays', 'admin_national'], true)) {
+            $adminRole = 'admin_adjoint';
+        }
+        if ($adminRole === 'super-admin') {
+            $adminRole = 'superadmin';
+        }
+
+        $hasAdminRole = in_array($adminRole, ['admin_adjoint', 'superadmin'], true);
 
         if (!$isAdminFlag && !$hasAdminRole) {
             return response()->json(['message' => 'Accès réservé aux administrateurs'], 403);

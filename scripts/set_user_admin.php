@@ -14,8 +14,10 @@ if (!$user) {
     exit(1);
 }
 
-$user->role = 'superadmin';
+$user->admin_role = 'superadmin';
 $user->is_admin = true;
+$user->can_access_admin = true;
+$user->statut = 'actif';
 $user->save();
 
 echo "User updated to admin\n";

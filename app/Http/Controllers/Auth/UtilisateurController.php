@@ -32,7 +32,7 @@ class UtilisateurController extends Controller
         $this->auth = $auth;
     }
 
-    private function normalizeRoleValue(?string $role): string
+    private function normalizeAdminRoleValue(?string $role): string
     {
         $value = strtolower(trim((string) $role));
 
@@ -40,11 +40,137 @@ class UtilisateurController extends Controller
             return 'admin_adjoint';
         }
 
-        if ($value === 'superadmin') {
+        if (in_array($value, ['superadmin', 'super-admin'], true)) {
             return 'superadmin';
         }
 
         return 'client';
+    }
+
+    private function resolveAdminLevelFromFlags(bool $isAdmin, bool $canAccessAdmin, ?string $adminRole): string
+    {
+        if (!$isAdmin || !$canAccessAdmin) {
+            return 'client';
+        }
+
+        return $this->normalizeAdminRoleValue($adminRole);
+    }
+
+    private function resolveUserAdminLevel(?object $user): string
+    {
+        if (!$user) {
+            return 'client';
+        }
+
+        return $this->resolveAdminLevelFromFlags(
+            (bool) ($user->is_admin ?? false),
+            (bool) ($user->can_access_admin ?? false),
+            $user->admin_role ?? null
+        );
+    }
+
+    private function buildAdminFlagsFromLevel(string $level): array
+    {
+        $normalized = $this->normalizeAdminRoleValue($level);
+
+        if ($normalized === 'superadmin') {
+            return [
+                'is_admin' => true,
+                'admin_role' => 'superadmin',
+                'can_access_admin' => true,
+            ];
+        }
+
+        if ($normalized === 'admin_adjoint') {
+            return [
+                'is_admin' => true,
+                'admin_role' => 'admin_adjoint',
+                'can_access_admin' => true,
+            ];
+        }
+
+        return [
+            'is_admin' => false,
+            'admin_role' => 'client',
+            'can_access_admin' => false,
+        ];
+    }
+
+    private function deriveRequestedAdminLevel(array $validated, Utilisateur $user): string
+    {
+        if (
+            array_key_exists('statut', $validated)
+            && in_array((string) $validated['statut'], ['suspendu', 'inactif'], true)
+        ) {
+            return 'client';
+        }
+
+        $hasSuperAdminInput = array_key_exists('is_super_admin', $validated);
+        $hasAdminAdjointInput = array_key_exists('is_admin_adjoint', $validated);
+
+        if ($hasSuperAdminInput || $hasAdminAdjointInput) {
+            if ((bool) ($validated['is_super_admin'] ?? false)) {
+                return 'superadmin';
+            }
+
+            if ((bool) ($validated['is_admin_adjoint'] ?? false)) {
+                return 'admin_adjoint';
+            }
+
+            return 'client';
+        }
+
+        if (array_key_exists('can_access_admin', $validated)) {
+            if (!(bool) $validated['can_access_admin']) {
+                return 'client';
+            }
+
+            return $this->resolveUserAdminLevel($user) === 'superadmin'
+                ? 'superadmin'
+                : 'admin_adjoint';
+        }
+
+        return $this->resolveUserAdminLevel($user);
+    }
+
+    private function hasAnotherSuperAdmin(?int $exceptUserId = null): bool
+    {
+        $query = Utilisateur::query()
+            ->whereNull('deleted_at')
+            ->where('is_admin', true)
+            ->whereRaw("LOWER(COALESCE(admin_role, '')) = 'superadmin'");
+
+        if ($exceptUserId !== null) {
+            $query->where('id_utilisateur', '!=', $exceptUserId);
+        }
+
+        return $query->exists();
+    }
+
+    private function syncAccessPayload(array &$validated, Utilisateur $user, string $requestedAdminLevel): void
+    {
+        $flags = $this->buildAdminFlagsFromLevel($requestedAdminLevel);
+        $validated['is_admin'] = $flags['is_admin'];
+        $validated['admin_role'] = $flags['admin_role'];
+        $validated['can_access_admin'] = $flags['can_access_admin'];
+
+        if (
+            $requestedAdminLevel === 'client'
+            && !array_key_exists('can_access_client', $validated)
+            && !(bool) $user->can_access_client
+        ) {
+            $validated['can_access_client'] = true;
+        }
+
+        if (
+            array_key_exists('statut', $validated)
+            && in_array((string) $validated['statut'], ['suspendu', 'inactif'], true)
+        ) {
+            $validated['can_access_client'] = false;
+            $validated['is_admin'] = false;
+            $validated['admin_role'] = 'client';
+            $validated['can_access_admin'] = false;
+        }
     }
 
     private function isSuperAdminUser(?object $user): bool
@@ -54,7 +180,7 @@ class UtilisateurController extends Controller
         }
 
         return (bool) $user->is_admin
-            && $this->normalizeRoleValue($user->admin_role ?: $user->role) === 'superadmin';
+            && $this->normalizeAdminRoleValue($user->admin_role ?? null) === 'superadmin';
     }
 
     private function canActorManageUser(?object $actor, Utilisateur $target): bool
@@ -76,20 +202,18 @@ class UtilisateurController extends Controller
             return false;
         }
 
-        $normalizedRole = $this->normalizeRoleValue($user->admin_role ?: $user->role);
-        $hasAdminRole = in_array($normalizedRole, ['admin_adjoint', 'superadmin'], true);
+        $adminLevel = $this->resolveUserAdminLevel($user);
+        $hasAdminAccess = in_array($adminLevel, ['admin_adjoint', 'superadmin'], true);
 
         if ($portal === 'admin') {
-            return $hasAdminRole
-                && (bool) $user->is_admin
-                && (bool) $user->can_access_admin;
+            return $hasAdminAccess;
         }
 
         if ($portal === 'client') {
             return (bool) $user->can_access_client;
         }
 
-        return (bool) $user->can_access_client || ((bool) $user->can_access_admin && $hasAdminRole);
+        return (bool) $user->can_access_client || $hasAdminAccess;
     }
 
     private function invalidateUserSessions(Utilisateur $user): void
@@ -140,8 +264,8 @@ class UtilisateurController extends Controller
 
     private function buildAccessMailPayload(Utilisateur $before, Utilisateur $after): ?array
     {
-        $roleBefore = $this->normalizeRoleValue($before->admin_role ?: $before->role);
-        $roleAfter = $this->normalizeRoleValue($after->admin_role ?: $after->role);
+        $roleBefore = $this->resolveUserAdminLevel($before);
+        $roleAfter = $this->resolveUserAdminLevel($after);
 
         $removed = [];
         if ($before->can_access_client && !$after->can_access_client) {
@@ -181,35 +305,11 @@ class UtilisateurController extends Controller
 
     private function roleLabel(?string $role): string
     {
-        return match ($this->normalizeRoleValue($role)) {
+        return match ($this->normalizeAdminRoleValue($role)) {
             'superadmin' => 'Super admin',
             'admin_adjoint' => 'Admin adjoint',
             default => 'Client',
         };
-    }
-
-    private function syncRoleAndAccessPayload(array &$validated, Utilisateur $user): void
-    {
-        if (!array_key_exists('role', $validated)) {
-            return;
-        }
-
-        $selectedRole = $this->normalizeRoleValue((string) $validated['role']);
-        $validated['role'] = $selectedRole;
-        $validated['is_admin'] = in_array($selectedRole, ['admin_adjoint', 'superadmin'], true);
-        $validated['admin_role'] = $validated['is_admin'] ? $selectedRole : 'client';
-
-        if ($selectedRole === 'client') {
-            $validated['can_access_admin'] = false;
-            if (!array_key_exists('can_access_client', $validated) && !(bool) $user->can_access_client) {
-                $validated['can_access_client'] = true;
-            }
-            return;
-        }
-
-        if (!array_key_exists('can_access_admin', $validated)) {
-            $validated['can_access_admin'] = true;
-        }
     }
 
     /**
@@ -307,7 +407,6 @@ class UtilisateurController extends Controller
         ]);
 
         // L'inscription publique crée toujours un compte client standard.
-        $validated['role'] = 'client';
         $validated['is_admin'] = false;
         $validated['admin_role'] = 'client';
         $validated['statut'] = 'actif';
@@ -421,7 +520,10 @@ class UtilisateurController extends Controller
                 'message'      => 'Connexion réussie',
                 'token'        => $token,
                 'user'         => $user->load('pays'),
-                'role'         => $user->role,
+                'role'         => $this->resolveUserAdminLevel($user),
+                'admin_level'  => $this->resolveUserAdminLevel($user),
+                'is_super_admin' => $this->resolveUserAdminLevel($user) === 'superadmin',
+                'is_admin_adjoint' => $this->resolveUserAdminLevel($user) === 'admin_adjoint',
                 'requires_2fa' => false
             ], 200);
 
@@ -488,7 +590,10 @@ class UtilisateurController extends Controller
             return response()->json([
                 'message'      => 'Connexion réussie',
                 'user'         => $user->load('pays'),
-                'role'         => $user->role,
+                'role'         => $this->resolveUserAdminLevel($user),
+                'admin_level'  => $this->resolveUserAdminLevel($user),
+                'is_super_admin' => $this->resolveUserAdminLevel($user) === 'superadmin',
+                'is_admin_adjoint' => $this->resolveUserAdminLevel($user) === 'admin_adjoint',
                 'token'        => $token,
                 'requires_2fa' => false
             ], 200);
@@ -587,6 +692,8 @@ class UtilisateurController extends Controller
                 ], 403);
             }
 
+            $adminLevel = $this->resolveUserAdminLevel($user);
+
             // Charger les relations
             $user->load(['formations', 'produits', 'commandes', 'pays']);
 
@@ -597,8 +704,11 @@ class UtilisateurController extends Controller
                 'prenom'         => $user->prenom,
                 'email'          => $user->email,
                 'telephone'      => $user->telephone,
-                'role'           => $user->role,
+                'role'           => $adminLevel,
+                'admin_level'    => $adminLevel,
                 'admin_role'     => $user->admin_role,
+                'is_super_admin' => $adminLevel === 'superadmin',
+                'is_admin_adjoint' => $adminLevel === 'admin_adjoint',
                 'is_admin'       => (bool) $user->is_admin,
                 'statut'         => $user->statut,
                 'can_access_client' => (bool) $user->can_access_client,
@@ -739,7 +849,6 @@ class UtilisateurController extends Controller
                     'prenom',
                     'email',
                     'telephone',
-                    'role',
                     'is_admin',
                     'statut',
                     'can_access_client',
@@ -752,8 +861,8 @@ class UtilisateurController extends Controller
             if (!$this->isSuperAdminUser($actor)) {
                 $query->where(function ($builder) {
                     $builder
-                        ->where('role', '!=', 'superadmin')
-                        ->where('admin_role', '!=', 'superadmin');
+                        ->whereNull('admin_role')
+                        ->orWhereRaw("LOWER(admin_role) != 'superadmin'");
                 });
             }
 
@@ -775,8 +884,20 @@ class UtilisateurController extends Controller
                 ->paginate($perPage, ['*'], 'page', $page)
                 ->appends($request->query());
 
+            $items = collect($utilisateurs->items())
+                ->map(function ($item) {
+                    $level = $this->resolveUserAdminLevel($item);
+                    $item->role = $level;
+                    $item->admin_level = $level;
+                    $item->is_super_admin = $level === 'superadmin';
+                    $item->is_admin_adjoint = $level === 'admin_adjoint';
+
+                    return $item;
+                })
+                ->values();
+
             return response()->json([
-                'data' => $utilisateurs->items(),
+                'data' => $items,
                 'meta' => [
                     'total' => $utilisateurs->total(),
                     'per_page' => $utilisateurs->perPage(),
@@ -811,7 +932,15 @@ class UtilisateurController extends Controller
                     'message' => 'Accès refusé à ce compte.'
                 ], 403);
             }
-            return response()->json($user);
+            $level = $this->resolveUserAdminLevel($user);
+
+            return response()->json([
+                ...$user->toArray(),
+                'role' => $level,
+                'admin_level' => $level,
+                'is_super_admin' => $level === 'superadmin',
+                'is_admin_adjoint' => $level === 'admin_adjoint',
+            ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'message' => 'Utilisateur introuvable',
@@ -837,10 +966,11 @@ class UtilisateurController extends Controller
                         ->whereNull('deleted_at')
                 ],
                 'telephone' => 'nullable|string',
-                'role' => 'nullable|in:client,admin,admin_pays,admin_national,admin_adjoint,superadmin',
                 'statut' => 'nullable|in:actif,inactif,suspendu',
                 'can_access_client' => 'nullable|boolean',
                 'can_access_admin' => 'nullable|boolean',
+                'is_super_admin' => 'nullable|boolean',
+                'is_admin_adjoint' => 'nullable|boolean',
             ]);
 
             $user = Utilisateur::findOrFail($id);
@@ -852,40 +982,42 @@ class UtilisateurController extends Controller
                 ], 403);
             }
 
+            $requestedAdminLevel = $this->deriveRequestedAdminLevel($validated, $user);
+
+            if ($requestedAdminLevel === 'superadmin' && !$this->isSuperAdminUser($actor)) {
+                return response()->json([
+                    'message' => 'Seul un super admin peut attribuer ce niveau.'
+                ], 403);
+            }
+
+            if ($requestedAdminLevel === 'superadmin' && $this->hasAnotherSuperAdmin((int) $user->id_utilisateur)) {
+                return response()->json([
+                    'message' => 'Un seul super admin est autorisé.'
+                ], 422);
+            }
+
             if (
-                array_key_exists('role', $validated)
-                && $this->normalizeRoleValue((string) $validated['role']) === 'superadmin'
-                && !$this->isSuperAdminUser($actor)
+                $this->isSuperAdminUser($user)
+                && $requestedAdminLevel !== 'superadmin'
+                && !$this->hasAnotherSuperAdmin((int) $user->id_utilisateur)
             ) {
                 return response()->json([
-                    'message' => 'Seul un super admin peut attribuer ce rôle.'
-                ], 403);
+                    'message' => 'Impossible de retirer le seul super admin existant.'
+                ], 422);
             }
 
             $before = $user->replicate();
 
-            $this->syncRoleAndAccessPayload($validated, $user);
+            $this->syncAccessPayload($validated, $user, $requestedAdminLevel);
 
-            // Si statut suspendu/inactif sans précision fine, on coupe les 2 accès.
-            if (array_key_exists('statut', $validated) && in_array((string) $validated['statut'], ['suspendu', 'inactif'], true)) {
-                $validated['can_access_client'] = false;
-                $validated['can_access_admin'] = false;
-            }
-
-            if (
-                array_key_exists('can_access_admin', $validated)
-                && $validated['can_access_admin']
-                && $this->normalizeRoleValue($validated['role'] ?? $user->role) === 'client'
-            ) {
-                $validated['can_access_admin'] = false;
-            }
+            unset($validated['is_super_admin'], $validated['is_admin_adjoint']);
 
             $user->update($validated);
             $user->refresh();
 
             $statusChanged = (string) $before->statut !== (string) $user->statut;
-            $roleChanged = $this->normalizeRoleValue($before->admin_role ?: $before->role)
-                !== $this->normalizeRoleValue($user->admin_role ?: $user->role);
+            $roleChanged = $this->resolveUserAdminLevel($before)
+                !== $this->resolveUserAdminLevel($user);
             $accessChanged = (bool) $before->can_access_client !== (bool) $user->can_access_client
                 || (bool) $before->can_access_admin !== (bool) $user->can_access_admin;
 
@@ -1059,7 +1191,6 @@ class UtilisateurController extends Controller
                 'email' => $validated['email'],
                 'telephone' => $normalizedPhone ?? ($validated['telephone'] ?? null),
                 'mot_de_passe' => $password,
-                'role' => 'admin_adjoint',
                 'admin_role' => 'admin_adjoint',
                 'is_admin' => true,
                 'statut' => 'actif',
