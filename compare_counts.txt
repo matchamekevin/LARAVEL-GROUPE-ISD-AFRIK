@@ -1,0 +1,41 @@
+admin_logs: ok(0)
+archivages: ok(0)
+audit_logs: ok(0)
+blogs: ok(0)
+cache: prod=1 local=2
+cache_locks: ok(0)
+categorie_produits: prod=10 local=0
+categories_produits: prod=71 local=92
+commandes: ok(0)
+commentaires: prod=2 local=0
+contact_messages: ok(0)
+entreprises: ok(0)
+factures: ok(0)
+failed_jobs: ok(0)
+formation_participants: prod=3 local=0
+formations: prod=30 local=0
+formation_user: prod=3 local=0
+home_collaborators: prod=5 local=4
+home_marketing_cards: prod=21 local=20
+home_partners: prod=13 local=10
+home_testimonials: ok(6)
+images: prod=599 local=402
+job_batches: ok(0)
+jobs: ok(0)
+ligne_commandes: ok(0)
+livraisons: ok(0)
+migrations: ok(68)
+newsletters: ok(0)
+notifications: ok(0)
+paiements: prod=2 local=0
+password_reset_tokens: prod=1 local=0
+pays: ok(1)
+personal_access_tokens: prod=4 local=1
+platform_promotions: ok(0)
+produits: prod=288 local=283
+reservation_formation: ok(0)
+revendeur_demandes: ok(0)
+sessions: prod=173 local=4
+suivi_techniques: ok(0)
+tickets_support: ok(0)
+utilisateurs: prod=4 local=2
