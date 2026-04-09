@@ -1,0 +1,32 @@
+id_categorie,nom,slug,description,icone,image,parent_id,ordre,actif,segment,image_url,created_at,updated_at
+25,Serveur rack,serveur-rack,,circle,,22,3,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+18,Scanner documentaire,scanner-documentaire,,circle,,17,1,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+51,Panneau solaire,panneau-solaire,,circle,,48,3,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+52,Regulateur / convertisseur,regulateur-convertisseur,,circle,,48,4,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+50,Groupe electrique,groupe-electrique,,circle,,48,2,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+29,Routeur entreprise,routeur-entreprise,,circle,,27,2,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+46,Sauvegarde base de donnees,sauvegarde-base-de-donnees,,circle,,43,3,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+39,Autocom,autocom,,circle,,38,1,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+31,Pare-feu reseau,pare-feu-reseau,,circle,,27,4,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+26,Imprimante professionnelle,imprimante-professionnelle,,circle,,22,4,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+41,Passerelle VoIP,passerelle-voip,,circle,,38,3,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+24,Ordinateur de bureau,ordinateur-bureau,,circle,,22,2,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+42,Routeur 4G/5G,routeur-4g-5g,,circle,,38,4,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+34,R.I.A,ria,,circle,,32,2,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+21,Logiciel GED,logiciel-ged,,circle,,17,4,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+35,Detecteur de fumee,detecteur-fumee,,circle,,32,3,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+16,Drone,drone,"Drones pour cartographie, surveillance et inspection.",circle,http://127.0.0.1:8000/storage/geovision-categories/C2YC1AnIRtYgHOQ8HaZjPozoctAeHTyY9nST4exN.webp,8,2,t,general,http://127.0.0.1:8000/storage/geovision-categories/C2YC1AnIRtYgHOQ8HaZjPozoctAeHTyY9nST4exN.webp,2026-04-07 16:34:32,2026-04-08 15:15:07
+37,Sirene,sirene,,circle,,32,5,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+30,Point d'acces Wi-Fi,point-acces-wifi,,circle,,27,3,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+19,Baie NAS,baie-nas,,circle,,17,2,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+49,Onduleur,onduleur,,circle,,48,1,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+20,Serveur de sauvegarde,serveur-sauvegarde,,circle,,17,3,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+33,Extincteur,extincteur,,circle,,32,1,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+44,Antivirus / EDR,antivirus-edr,,circle,http://127.0.0.1:8000/storage/geovision-categories/diMDQRMUFC5e9csd2ujHnMN2lZSQ1vqOHC9WemrA.png,43,1,t,general,http://127.0.0.1:8000/storage/geovision-categories/diMDQRMUFC5e9csd2ujHnMN2lZSQ1vqOHC9WemrA.png,2026-04-07 16:34:32,2026-04-08 14:01:51
+23,Ordinateur portable,ordinateur-portable,,circle,,22,1,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+40,Telephone IP,telephone-ip,,circle,,38,2,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+36,Detecteur d'humidite,detecteur-humidite,,circle,,32,4,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+47,Pare-feu applicatif et BDD,pare-feu-applicatif-bdd,,circle,,43,4,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+45,SIEM / SOC,siem-soc,,circle,,43,2,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+28,Switch manage,switch-manage,,circle,,27,1,t,general,,2026-04-07 16:34:32,2026-04-07 16:34:32
+15,TPE,tpe,Terminaux de paiement electronique.,circle,http://127.0.0.1:8000/storage/geovision-categories/S5xhe0CmPITxKJuxM1xnWlFCxrYLhP4U1yCi0EhM.webp,8,1,t,general,http://127.0.0.1:8000/storage/geovision-categories/S5xhe0CmPITxKJuxM1xnWlFCxrYLhP4U1yCi0EhM.webp,2026-04-07 16:34:32,2026-04-08 15:16:19

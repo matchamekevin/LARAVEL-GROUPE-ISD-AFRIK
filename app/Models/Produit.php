@@ -45,6 +45,7 @@ class Produit extends Model
         'note_moyenne',
         'nombre_avis',
         'id_categorie',
+        'segment',
         'id_pays',
         'id_utilisateur',
         'date_creation',

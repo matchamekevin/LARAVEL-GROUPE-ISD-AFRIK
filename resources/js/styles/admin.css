@@ -469,6 +469,47 @@
   flex-wrap: wrap;
 }
 
+/* Product row action buttons: colored border, white fill */
+.admin-products-row-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.admin-products-btn {
+  background: #fff; /* keep interior white */
+  border: 1px solid var(--admin-accent-2); /* colored border (primary accent) */
+  color: var(--admin-accent-2);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.admin-products-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(46, 75, 255, 0.06);
+}
+
+.admin-products-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+}
+
+/* Outline modifier (keeps white fill but ensures border visibility) */
+.admin-products-btn.admin-products-btn--outline {
+  background: #fff;
+}
+
+/* Danger variant: red border + red text, white fill */
+.admin-products-btn.admin-products-danger {
+  border-color: rgba(239, 68, 68, 0.85);
+  color: #b91c1c;
+}
+
+
 .admin-pagination {
   display: flex;
   justify-content: center;

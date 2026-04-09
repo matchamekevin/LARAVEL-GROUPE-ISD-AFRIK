@@ -34,11 +34,15 @@ export default function ProduitCard({ produit, from }) {
   const location = useLocation();
   const back = from ?? (`${location.pathname}${location.search}` || "/produits");
 
+  const isGeovision = produit?.categorie?.segment === "geovision" || (produit?.marque && String(produit.marque).toLowerCase().includes("geovision"));
+  const detailLink = isGeovision && produit?.slug ? `/geovision/produit/${produit.slug}` : `/produits/${produit.id_produit}`;
+
   return (
-    <div className={`pc-card ${produit.stock === 0 ? "pc-card--rupture" : ""}`}>
+    <div className={`pc-card ${produit.stock === 0 ? "pc-card--rupture" : ""} ${isGeovision ? "pc-card--geovision" : ""}`}>
 
       {/* ── Badges ─────────────────────────────────── */}
       <div className="pc-badges">
+        {isGeovision && <span className="pc-badge pc-badge--geovision">GeoVision</span>}
         {produit.est_nouveau  && <span className="pc-badge pc-badge--nouveau">Nouveau</span>}
         {produit.en_promo     && reduction && (
           <span className="pc-badge pc-badge--promo">-{reduction}%</span>
@@ -59,7 +63,7 @@ export default function ProduitCard({ produit, from }) {
       </button>
 
       {/* ── Image ──────────────────────────────────── */}
-      <Link to={`/produits/${produit.id_produit}`} className="pc-image-link" state={{ from: back }}>
+      <Link to={detailLink} className="pc-image-link" state={{ from: back }}>
         <div className="pc-image-wrapper">
           <img
             src={produit.image_url || "/placeholder.webp"}
@@ -79,7 +83,7 @@ export default function ProduitCard({ produit, from }) {
           <span className="pc-marque">{produit.marque}</span>
         )}
 
-        <Link to={`/produits/${produit.id_produit}`} className="pc-titre-link" state={{ from: back }}>
+        <Link to={detailLink} className="pc-titre-link" state={{ from: back }}>
           <h3 className="pc-titre">{produit.titre}</h3>
         </Link>
 

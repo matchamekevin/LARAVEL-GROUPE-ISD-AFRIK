@@ -21,6 +21,17 @@
     box-shadow: 0 12px 35px rgba(23,34,67,0.15);
     border-color: #fb9c08;
   }
+
+  /* GeoVision specific styling */
+  .pc-card--geovision {
+    border-color: #fb9c08;
+    box-shadow: 0 12px 40px rgba(251,156,8,0.10);
+  }
+
+  .pc-card--geovision .pc-badge--geovision {
+    background: linear-gradient(90deg, #fb9c08, #f97316);
+    color: #fff;
+  }
   
   .pc-card--rupture {
     opacity: 0.75;
@@ -51,6 +62,7 @@
   .pc-badge--promo    { background: #fb9c08; color: #fff; }
   .pc-badge--rupture  { background: #dc3545; color: #fff; }
   .pc-badge--vedette  { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+  .pc-badge--geovision { background: #fb9c08; color: #fff; }
   
   /* ── Bouton favori ──────────────────────────────────── */
   .pc-favori {

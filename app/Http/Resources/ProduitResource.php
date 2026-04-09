@@ -120,6 +120,7 @@ class ProduitResource extends JsonResource
             'commentaires'  => CommentaireResource::collection($this->whenLoaded('commentaires')),
             'image_url'     => $this->normalizeImageUrl($this->images->first()?->url) ?? '/images/default.webp',
             'image_urls'    => $this->whenLoaded('images', fn () => $this->images->pluck('url')->map(fn ($url) => $this->normalizeImageUrl($url))->filter()->values()),
+            'segment'       => $this->segment ?? $this->categorie?->segment,
         ];
     }
 }
