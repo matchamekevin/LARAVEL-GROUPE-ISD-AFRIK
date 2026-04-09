@@ -42,6 +42,13 @@ return [
     'webhook_secret' => env('FEDAPAY_WEBHOOK_SECRET'),
 ],
 
-
+    // Brevo configuration (API)
+    'brevo' => [
+        'key' => env('BREVO_API_KEY'),
+        'sender' => [
+            'email' => env('BREVO_SENDER_EMAIL'),
+            'name' => env('BREVO_SENDER_NAME'),
+        ],
+    ],
 
 ];

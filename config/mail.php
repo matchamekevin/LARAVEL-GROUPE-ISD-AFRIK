@@ -49,6 +49,16 @@ return [
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
+        // Brevo API mailer (custom transport)
+        'brevo' => [
+            'transport' => 'brevo',
+            'key' => env('BREVO_API_KEY'),
+            'sender' => [
+                'email' => env('BREVO_SENDER_EMAIL'),
+                'name' => env('BREVO_SENDER_NAME'),
+            ],
+        ],
+
         'ses' => [
             'transport' => 'ses',
         ],
@@ -111,8 +121,9 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        // Prefer Brevo sender config when present, fallback to MAIL_FROM_* envs
+        'address' => env('BREVO_SENDER_EMAIL', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
+        'name' => env('BREVO_SENDER_NAME', env('MAIL_FROM_NAME', 'Example')),
     ],
 
 ];

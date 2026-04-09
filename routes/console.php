@@ -54,3 +54,55 @@ Artisan::command('catalog:ingenierie:sync {--with-products=1}', function () {
         '--with-products' => $this->option('with-products'),
     ]);
 })->purpose('Alias legacy vers catalog:produits:sync');
+
+
+Artisan::command('brevo:send-test {recipient?}', function (\App\Services\BrevoMailer $brevoMailer) {
+    $recipient = $this->argument('recipient') ?? env('TEST_BREVO_RECIPIENT');
+
+    if (empty($recipient)) {
+        $this->error('Aucun destinataire spécifié (argument ou TEST_BREVO_RECIPIENT).');
+        return 1;
+    }
+
+    $subject = 'Test Brevo - ' . config('app.name');
+    $html = '<p>Ceci est un email de test envoyé via l\'API Brevo.</p>';
+
+    try {
+        $result = $brevoMailer->send($recipient, $subject, $html);
+        $this->info('Email envoyé, réponse API: ' . json_encode($result));
+        return 0;
+    } catch (\Throwable $e) {
+        $this->error('Envoi échoué: ' . $e->getMessage());
+        return 1;
+    }
+})->purpose('Envoie un email de test via l\'API Brevo');
+
+
+Artisan::command('admin:login-test {email} {password}', function ($email, $password) {
+    $user = \App\Models\User::where('email', $email)->first();
+
+    if (! $user) {
+        $this->error('Utilisateur introuvable pour l\'email: ' . $email);
+        return 1;
+    }
+
+    $stored = $user->mot_de_passe ?? $user->getAuthPassword();
+
+    if (! $stored) {
+        $this->error('Aucun mot de passe enregistré pour cet utilisateur.');
+        return 1;
+    }
+
+    if (! \Illuminate\Support\Facades\Hash::check($password, $stored)) {
+        $this->error('Mot de passe invalide.');
+        return 1;
+    }
+
+    $this->info('Authentification réussie.');
+    $this->line('ID utilisateur: ' . ($user->id ?? $user->id_utilisateur));
+    $this->line('Email: ' . $user->email);
+    $this->line('is_admin: ' . (($user->is_admin) ? 'oui' : 'non'));
+    $this->line('role: ' . ($user->role ?? 'n/a'));
+
+    return 0;
+})->purpose('Teste localement les identifiants d\'un utilisateur (admin)');
