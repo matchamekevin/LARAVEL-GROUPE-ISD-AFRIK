@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use App\Http\Controllers\Auth\UtilisateurController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\ProduitController;
@@ -28,6 +29,38 @@ use App\Http\Controllers\AdminActivityController;
 // ======================================================
 Route::get('/test', fn() => response()->json(['message' => 'API OK']));
 Route::get('/ping', fn() => response()->json(['message' => 'pong']));
+
+// Endpoint interne sécurisé pour tester Brevo sans accès shell.
+// Usage: /api/internal/brevo-test?k=<CLE>&to=dest@exemple.com
+Route::get('/internal/brevo-test', function (Request $request) {
+    $key = trim((string) env('BREVO_TEST_KEY', ''), " \t\n\r\0\x0B\"'");
+    if ($key === '' || $request->query('k') !== $key) {
+        return response()->json(['error' => 'Forbidden'], 403);
+    }
+
+    $to = (string) $request->query('to', env('TEST_BREVO_RECIPIENT', 'dev@localhost'));
+
+    try {
+        $mailer = app(\App\Services\BrevoMailer::class);
+        $res = $mailer->send($to, 'Test Brevo (internal)', '<p>Test d\'envoi depuis /api/internal/brevo-test</p>');
+
+        return response()->json([
+            'ok' => true,
+            'mailer' => config('mail.default'),
+            'to' => $to,
+            'brevo' => $res,
+        ]);
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('api internal brevo-test failed', ['err' => $e->getMessage()]);
+
+        return response()->json([
+            'ok' => false,
+            'mailer' => config('mail.default'),
+            'to' => $to,
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+});
 
 // ======================================================
 // 🔓 AUTH — ROUTES PUBLIQUES

@@ -13,9 +13,18 @@ class BrevoMailer
 
     public function __construct()
     {
-        $this->apiKey = config('services.brevo.key') ?? env('BREVO_API_KEY');
-        $this->senderEmail = config('services.brevo.sender.email') ?? env('BREVO_SENDER_EMAIL');
-        $this->senderName = config('services.brevo.sender.name') ?? env('BREVO_SENDER_NAME');
+        $this->apiKey = $this->sanitizeEnvValue(config('services.brevo.key') ?? env('BREVO_API_KEY'));
+        $this->senderEmail = $this->sanitizeEnvValue(config('services.brevo.sender.email') ?? env('BREVO_SENDER_EMAIL'));
+        $this->senderName = $this->sanitizeEnvValue(config('services.brevo.sender.name') ?? env('BREVO_SENDER_NAME'));
+    }
+
+    private function sanitizeEnvValue(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return trim($value, " \t\n\r\0\x0B\"'");
     }
 
     /**

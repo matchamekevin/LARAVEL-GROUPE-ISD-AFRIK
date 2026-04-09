@@ -18,7 +18,7 @@ class BrevoTransport extends AbstractTransport
     {
         parent::__construct();
 
-        $this->apiKey = $apiKey;
+        $this->apiKey = trim($apiKey, " \t\n\r\0\x0B\"'");
         $this->client = $client;
     }
 
