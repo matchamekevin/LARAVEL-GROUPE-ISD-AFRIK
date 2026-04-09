@@ -51,6 +51,38 @@ Route::middleware('auth')->group(function () {
 Route::redirect('/admin-react', '/admin');
 Route::redirect('/admin-react/{any}', '/admin/{any}')->where('any', '.*');
 
+// Endpoint interne sécurisé pour tester Brevo sans accès shell.
+// Route web de secours (avant catch-all SPA) : /internal/brevo-test?k=<CLE>&to=dest@exemple.com
+Route::get('/internal/brevo-test', function (Request $request) {
+    $key = trim((string) env('BREVO_TEST_KEY', ''), " \t\n\r\0\x0B\"'");
+    if ($key === '' || $request->query('k') !== $key) {
+        return response()->json(['error' => 'Forbidden'], 403);
+    }
+
+    $to = (string) $request->query('to', env('TEST_BREVO_RECIPIENT', 'dev@localhost'));
+
+    try {
+        $mailer = app(\App\Services\BrevoMailer::class);
+        $res = $mailer->send($to, 'Test Brevo (internal)', '<p>Test d\'envoi depuis /internal/brevo-test</p>');
+
+        return response()->json([
+            'ok' => true,
+            'mailer' => config('mail.default'),
+            'to' => $to,
+            'brevo' => $res,
+        ]);
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('web internal brevo-test failed', ['err' => $e->getMessage()]);
+
+        return response()->json([
+            'ok' => false,
+            'mailer' => config('mail.default'),
+            'to' => $to,
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+});
+
 // Catch-all : laisser la SPA gérer les routes front (ex: /produits, /produits/123)
 Route::view('/{any}', 'app')->where('any', '.*');
 

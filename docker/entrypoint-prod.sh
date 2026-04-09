@@ -49,6 +49,10 @@ else
 	echo "Skipping migrations (set RUN_MIGRATIONS=true to enable)"
 fi
 
+# Nettoie les caches pour éviter un route cache obsolète lors des déploiements.
+php artisan route:clear || true
+php artisan cache:clear || true
+
 # Cache configuration and views (safe to run)
 php artisan config:cache || true
 php artisan view:cache || true
