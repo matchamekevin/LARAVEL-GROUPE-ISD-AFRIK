@@ -62,6 +62,23 @@ Route::get('/internal/brevo-test', function (Request $request) {
     }
 });
 
+// Vérifie si la variable BREVO_TEST_KEY est définie en prod et renvoie un hash tronqué
+// Usage: GET /api/internal/brevo-key-check
+Route::get('/internal/brevo-key-check', function (Request $request) {
+    $raw = env('BREVO_TEST_KEY');
+    if ($raw === null) {
+        return response()->json(['present' => false, 'hash' => null]);
+    }
+
+    $val = trim((string) $raw, " \t\n\r\0\x0B\"'");
+    if ($val === '') {
+        return response()->json(['present' => false, 'hash' => null]);
+    }
+
+    $h = hash('sha256', $val);
+    return response()->json(['present' => true, 'hash' => substr($h, 0, 12)]);
+});
+
 // ======================================================
 // 🔓 AUTH — ROUTES PUBLIQUES
 // ======================================================
