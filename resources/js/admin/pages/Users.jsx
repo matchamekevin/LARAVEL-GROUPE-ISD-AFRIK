@@ -3,23 +3,10 @@ import { createAdminAdjoint, getCountries, getUsers, me, updateUser, updateUserS
 import AdminToast, { useAdminToast } from '../components/AdminToast';
 import AdminNotice from '../components/AdminNotice';
 import Loader from '../components/Loader';
+import { ROLE_OPTIONS, ROLE_LABELS, normalizeRole } from '../utils/roles';
 import '../styles/admin-shared.css';
 import '../styles/users.css';
 
-const ROLE_OPTIONS = [
-  { value: 'client', label: 'Client (sans role admin)' },
-  { value: 'admin_adjoint', label: 'Admin adjoint' },
-  { value: 'superadmin', label: 'Super admin' },
-];
-
-const ROLE_LABELS = {
-  client: 'Client',
-  admin: 'Admin adjoint',
-  admin_pays: 'Admin adjoint',
-  admin_national: 'Admin adjoint',
-  admin_adjoint: 'Admin adjoint',
-  superadmin: 'Super admin',
-};
 
 const INITIAL_ADMIN_FORM = {
   nom: '',
@@ -47,11 +34,8 @@ const EMPTY_STATS = {
   suspended: 0,
 };
 
-function normalizeRole(value) {
-  const role = String(value || 'client');
-  if (['admin', 'admin_pays', 'admin_national'].includes(role)) return 'admin_adjoint';
-  return role;
-}
+// `normalizeRole`, `ROLE_OPTIONS` and `ROLE_LABELS` are imported from
+// resources/js/admin/utils/roles so they can be reused and kept DRY.
 
 function mergeUserState(baseUser, updatedUser = {}) {
   return {
