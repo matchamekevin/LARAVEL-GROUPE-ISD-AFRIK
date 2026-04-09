@@ -3,10 +3,11 @@
  * Gère le cache, offline-first, et updates invisibles
  */
 
-const CACHE_NAME = 'isd-afrik-v1';
-const RUNTIME_CACHE = 'isd-afrik-runtime';
-const API_CACHE = 'isd-afrik-api';
-const ASSET_CACHE = 'isd-afrik-assets';
+const CACHE_VERSION = '2026-04-09-1';
+const CACHE_NAME = `isd-afrik-${CACHE_VERSION}`;
+const RUNTIME_CACHE = `isd-afrik-runtime-${CACHE_VERSION}`;
+const API_CACHE = `isd-afrik-api-${CACHE_VERSION}`;
+const ASSET_CACHE = `isd-afrik-assets-${CACHE_VERSION}`;
 
 // Ressources à précacher au premier load
 const PRECACHE_URLS = [
@@ -34,9 +35,11 @@ self.addEventListener('activate', (event) => {
   console.log('[ServiceWorker] Activating...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
+      const activeCaches = new Set([CACHE_NAME, RUNTIME_CACHE, API_CACHE, ASSET_CACHE]);
+
       return Promise.all(
         cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME && !cacheName.includes(RUNTIME_CACHE) && !cacheName.includes(API_CACHE) && !cacheName.includes(ASSET_CACHE))
+          .filter((cacheName) => cacheName.startsWith('isd-afrik-') && !activeCaches.has(cacheName))
           .map((cacheName) => {
             console.log('[ServiceWorker] Deleting old cache:', cacheName);
             return caches.delete(cacheName);

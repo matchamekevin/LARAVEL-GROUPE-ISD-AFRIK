@@ -3,10 +3,49 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\CategorieProduitResource;
 
 class ProduitResource extends JsonResource
 {
+    private function extractStoragePath(string $url): ?string
+    {
+        if (str_starts_with($url, '/storage/')) {
+            $path = ltrim(substr($url, strlen('/storage/')), '/');
+            return $path !== '' ? $path : null;
+        }
+
+        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+            $parsedPath = parse_url($url, PHP_URL_PATH);
+            if (is_string($parsedPath) && str_starts_with($parsedPath, '/storage/')) {
+                $path = ltrim(substr($parsedPath, strlen('/storage/')), '/');
+                return $path !== '' ? $path : null;
+            }
+            return null;
+        }
+
+        if (!str_starts_with($url, '/')) {
+            $path = ltrim($url, '/');
+            return $path !== '' ? $path : null;
+        }
+
+        return null;
+    }
+
+    private function storageFileExists(string $path): bool
+    {
+        $candidate = ltrim(trim($path), '/');
+        if ($candidate === '') {
+            return false;
+        }
+
+        try {
+            return Storage::disk('public')->exists($candidate);
+        } catch (\Throwable $exception) {
+            return false;
+        }
+    }
+
     private function normalizeImageUrl(?string $value): ?string
     {
         $url = trim((string) ($value ?? ''));
@@ -14,11 +53,24 @@ class ProduitResource extends JsonResource
             return null;
         }
 
+        if (str_contains($url, '127.0.0.1') || str_contains($url, 'localhost')) {
+            return null;
+        }
+
+        $storagePath = $this->extractStoragePath($url);
+        if ($storagePath !== null) {
+            if (!$this->storageFileExists($storagePath)) {
+                return null;
+            }
+
+            return '/storage/' . ltrim($storagePath, '/');
+        }
+
         if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://') || str_starts_with($url, '/')) {
             return $url;
         }
 
-        return '/storage/' . ltrim($url, '/');
+        return null;
     }
 
     /**

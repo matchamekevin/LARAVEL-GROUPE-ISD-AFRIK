@@ -74,10 +74,33 @@ const statusClasses = {
   indisponible: "bg-rose-100 text-rose-800 border border-rose-200",
 };
 
+const LOCALHOST_IMAGE_PATTERN = /(?:127\.0\.0\.1|localhost)/i;
+
+const normalizeImageCandidate = (value) => {
+  const normalized = String(value || "").trim();
+  if (!normalized) return "";
+  if (LOCALHOST_IMAGE_PATTERN.test(normalized)) return "";
+  if (normalized === "/placeholder.webp") return "";
+  return normalized;
+};
+
+const getImageCandidates = (values, { allowDefault = false } = {}) => {
+  const candidates = values
+    .map((value) => normalizeImageCandidate(value))
+    .filter(Boolean);
+
+  if (allowDefault) {
+    return candidates;
+  }
+
+  return candidates.filter((value) => value !== "/images/default.webp");
+};
+
 const getProductImage = (produit) => {
-  const directImage = [produit.image_url, produit.images?.[0]?.url, produit.images?.[0]?.path]
-    .map((value) => String(value || "").trim())
-    .find((value) => value && value !== "/images/default.webp" && value !== "/placeholder.webp");
+  const directImage = getImageCandidates(
+    [produit.image_url, ...(Array.isArray(produit.image_urls) ? produit.image_urls : [])],
+    { allowDefault: true }
+  )[0];
 
   if (directImage) {
     return directImage;
@@ -104,15 +127,10 @@ const getProductImage = (produit) => {
 };
 
 const getDbProductImage = (produit) => {
-  const candidates = [
+  const candidates = getImageCandidates([
     produit.image_url,
     ...(Array.isArray(produit.image_urls) ? produit.image_urls : []),
-    produit.images?.[0]?.url,
-    produit.images?.[0]?.path,
-  ]
-    .map((value) => String(value || "").trim())
-    .filter(Boolean)
-    .filter((value) => value !== "/images/default.webp");
+  ]);
 
   return candidates[0] || null;
 };
@@ -770,6 +788,14 @@ export default function Produits() {
     }
   };
 
+  const handleImageError = (event, fallback = "/images/default.webp") => {
+    const img = event.currentTarget || event.target;
+    if (!img) return;
+    if (img.dataset.fallbackApplied === "1") return;
+    img.dataset.fallbackApplied = "1";
+    img.src = fallback;
+  };
+
   return (
     <section className="pcat-shell">
       <div className="pcat-bg-layer" aria-hidden="true" />
@@ -893,6 +919,7 @@ export default function Produits() {
                       alt={item.label}
                       loading="lazy"
                       onLoad={applyOrientationClass}
+                      onError={(event) => handleImageError(event, "/images/produits/proj.webp")}
                     />
                     <div className="pcat-sub-overlay" aria-hidden="true" />
                   </div>
@@ -943,7 +970,14 @@ export default function Produits() {
                 return (
                   <article key={`${selectedSubcategory.slug}-${item.name}`} className="pcat-model-card">
                     <div className="pcat-model-visual">
-                      <img src={item.image || "/images/produits/proj.webp"} alt={`Modele ${item.name}`} className="pcat-model-image" loading="lazy" onLoad={applyOrientationClass} />
+                      <img
+                        src={item.image || "/images/produits/proj.webp"}
+                        alt={`Modele ${item.name}`}
+                        className="pcat-model-image"
+                        loading="lazy"
+                        onLoad={applyOrientationClass}
+                        onError={(event) => handleImageError(event, "/images/produits/proj.webp")}
+                      />
 
                       <div className="pcat-model-badges" aria-hidden="true">
                         {isModelInCart && (
@@ -1030,7 +1064,14 @@ export default function Produits() {
                 return (
                   <article key={produit.id_produit} className="pcat-product-card">
                     <div className="pcat-product-image-wrap">
-                      <img src={getProductImage(produit)} alt={produit.titre} className="pcat-product-image" loading="lazy" onLoad={applyOrientationClass} />
+                      <img
+                        src={getProductImage(produit)}
+                        alt={produit.titre}
+                        className="pcat-product-image"
+                        loading="lazy"
+                        onLoad={applyOrientationClass}
+                        onError={handleImageError}
+                      />
 
                       <span className={`pcat-status-chip ${badgeClass}`}>{statusLabel(produit.statut)}</span>
 

@@ -217,6 +217,18 @@ api.interceptors.request.use(config => {
 // Response interceptor: normalize common error messages for the front
 api.interceptors.response.use(
   resp => {
+    const requestUrl = String(resp?.config?.url || '');
+    const contentType = String(resp?.headers?.['content-type'] || '');
+
+    // Some unauthenticated API calls can be redirected to /login and come back as HTML.
+    // Treat this as an invalid admin session instead of silently returning empty data.
+    if (requestUrl.includes('/api/') && contentType.includes('text/html')) {
+      const sessionError = new Error('Session admin invalide (réponse HTML inattendue).');
+      sessionError.response = resp;
+      invalidateAdminSession('Votre session administrateur a expiré. Veuillez vous reconnecter.');
+      return Promise.reject(sessionError);
+    }
+
     if (resp?.config?.method && resp.config.method.toLowerCase() !== 'get') {
       clearAdminGetCache();
     }

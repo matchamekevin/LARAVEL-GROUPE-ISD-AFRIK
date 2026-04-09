@@ -152,6 +152,23 @@ const formatPrice = (value) => {
   return `${n.toLocaleString('fr-FR')} FCFA`;
 };
 
+const LOCALHOST_IMAGE_PATTERN = /(?:127\.0\.0\.1|localhost)/i;
+
+const normalizeMediaUrl = (value) => {
+  const normalized = String(value || '').trim();
+  if (!normalized) return '';
+  if (LOCALHOST_IMAGE_PATTERN.test(normalized)) return '';
+  return normalized;
+};
+
+const handleImageError = (event, fallback = '/images/default.webp') => {
+  const img = event.currentTarget || event.target;
+  if (!img) return;
+  if (img.dataset.fallbackApplied === '1') return;
+  img.dataset.fallbackApplied = '1';
+  img.src = fallback;
+};
+
 const getProductImages = (product) => {
   if (!product) return [];
 
@@ -159,13 +176,14 @@ const getProductImages = (product) => {
     return product.images
       .map((image) => ({
         id: image?.id,
-        url: image?.url || image?.path,
+        url: normalizeMediaUrl(image?.url || image?.path),
         alt: image?.alt || product.title || product.titre || 'Produit',
       }))
       .filter((image) => Boolean(image.url));
   }
 
   return (Array.isArray(product.image_urls) ? product.image_urls : [])
+    .map((url) => normalizeMediaUrl(url))
     .filter(Boolean)
     .map((url, index) => ({
       id: `url-${index}`,
@@ -175,13 +193,13 @@ const getProductImages = (product) => {
 };
 
 const getProductImage = (product) => {
-  const direct = product?.image_url;
+  const direct = normalizeMediaUrl(product?.image_url);
   if (direct) return direct;
 
   const firstImage = getProductImages(product)[0];
   if (firstImage?.url) return firstImage.url;
 
-  return '/images/produits/proj.webp';
+  return '/images/default.webp';
 };
 
 const getCategoryImage = (category) => {
@@ -991,7 +1009,7 @@ export default function Products() {
                 <tr key={id} className={`${isTrashed ? 'is-trashed' : ''} ${isSelected ? 'is-selected' : ''}`}>
                   <td>
                     <div className="admin-products-product-cell">
-                      <img src={getProductImage(product)} alt={product.title || product.titre || 'Produit'} loading="lazy" />
+                      <img src={getProductImage(product)} alt={product.title || product.titre || 'Produit'} loading="lazy" onError={handleImageError} />
                       <div>
                         <strong>{product.title || product.titre || 'Sans titre'}</strong>
                         <span>#{id}</span>
@@ -1316,6 +1334,7 @@ export default function Products() {
                                 src={categoryThumb}
                                 alt={category.nom || 'Categorie'}
                                 loading="lazy"
+                                onError={(event) => handleImageError(event, '/images/produits/proj.webp')}
                               />
                             </td>
                           ) : null}
@@ -1385,7 +1404,12 @@ export default function Products() {
 
                 {isSubcategoryTab ? (
                   <div className="admin-products-summary admin-products-summary--compact">
-                    <img src={categoryImagePreview || getCategoryImage(categoryForm)} alt={categoryForm.nom || 'Categorie'} loading="lazy" />
+                    <img
+                      src={categoryImagePreview || getCategoryImage(categoryForm)}
+                      alt={categoryForm.nom || 'Categorie'}
+                      loading="lazy"
+                      onError={(event) => handleImageError(event, '/images/produits/proj.webp')}
+                    />
                     <div>
                       <p className="admin-products-summary-kicker">Apercu image</p>
                       <h3>{categoryForm.nom || 'Nouvelle sous-categorie'}</h3>
@@ -1475,9 +1499,9 @@ export default function Products() {
 
                         <div className="admin-products-image-preview" aria-hidden>
                           {categoryImagePreview ? (
-                            <img src={categoryImagePreview} alt={categoryForm.nom || 'Apercu'} />
+                            <img src={categoryImagePreview} alt={categoryForm.nom || 'Apercu'} onError={(event) => handleImageError(event, '/images/produits/proj.webp')} />
                           ) : categoryForm.image_url ? (
-                            <img src={getCategoryImage(categoryForm)} alt={categoryForm.nom || 'Image actuelle'} />
+                            <img src={getCategoryImage(categoryForm)} alt={categoryForm.nom || 'Image actuelle'} onError={(event) => handleImageError(event, '/images/produits/proj.webp')} />
                           ) : (
                             <div className="admin-products-image-placeholder" />
                           )}
@@ -1559,7 +1583,7 @@ export default function Products() {
 
             {selectedProduct ? (
               <div className="admin-products-summary">
-                <img src={getProductImage(selectedProduct)} alt={selectedProduct.title || selectedProduct.titre || 'Produit'} loading="lazy" />
+                <img src={getProductImage(selectedProduct)} alt={selectedProduct.title || selectedProduct.titre || 'Produit'} loading="lazy" onError={handleImageError} />
                 <div>
                   <p className="admin-products-summary-kicker">Selection courante</p>
                   <h3>{selectedProduct.title || selectedProduct.titre || 'Sans titre'}</h3>
@@ -1870,7 +1894,7 @@ export default function Products() {
                   <div className="admin-products-image-grid">
                     {selectedProductImages.map((image) => (
                       <figure key={`${image.id}-${image.url}`} className="admin-products-image-card">
-                        <img src={image.url} alt={image.alt || 'Image produit'} loading="lazy" />
+                        <img src={image.url} alt={image.alt || 'Image produit'} loading="lazy" onError={handleImageError} />
                         <figcaption>
                           <span>{image.alt || 'Image produit'}</span>
                           {typeof image.id === 'number' ? (
