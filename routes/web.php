@@ -79,3 +79,23 @@ Route::get('/test-notif', function () {
     return "Notification envoyée";
 });
 
+// Endpoint interne sécurisé pour tester l'envoi Brevo sans shell.
+// Usage: /internal/brevo-test?k=<CLE>&to=dest@exemple.com
+Route::get('/internal/brevo-test', function (Request $request) {
+    $key = env('BREVO_TEST_KEY');
+    if (empty($key) || $request->query('k') !== $key) {
+        return response()->json(['error' => 'Forbidden'], 403);
+    }
+
+    $to = $request->query('to', env('TEST_BREVO_RECIPIENT', 'dev@localhost'));
+
+    try {
+        $mailer = app(\App\Services\BrevoMailer::class);
+        $res = $mailer->send($to, 'Test Brevo (internal)', '<p>Test d\'envoi depuis /internal/brevo-test</p>');
+        return response()->json(['ok' => true, 'brevo' => $res]);
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('internal brevo-test failed', ['err' => $e->getMessage()]);
+        return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
+    }
+});
+

@@ -104,10 +104,37 @@ class UtilisateurController extends Controller
 
     private function dispatchTwoFactorCodeMail(Utilisateur $user, string $context = '2FA'): void
     {
+        $forceSync = filter_var((string) env('OTP_MAIL_FORCE_SYNC', false), FILTER_VALIDATE_BOOL);
+
+        if ($forceSync) {
+            Mail::to($user->email)->send(new TwoFactorCodeMail($user));
+            Log::info("OTP {$context} envoyé en synchrone (forcé)", [
+                'user_id' => $user->id_utilisateur,
+                'email' => $user->email,
+            ]);
+            return;
+        }
+
         try {
-            SendTwoFactorCodeJob::dispatchAfterResponse($user);
+            // Use regular queue dispatch to avoid lifecycle edge-cases on some prod stacks.
+            SendTwoFactorCodeJob::dispatch($user);
+            Log::info("OTP {$context} mis en file d'attente", [
+                'user_id' => $user->id_utilisateur,
+                'email' => $user->email,
+            ]);
         } catch (\Throwable $e) {
             Log::warning("Envoi OTP {$context} differe indisponible: " . $e->getMessage());
+
+            // Fallback safety: send immediately when queue dispatch fails.
+            try {
+                Mail::to($user->email)->send(new TwoFactorCodeMail($user));
+                Log::info("OTP {$context} envoyé en synchrone (fallback)", [
+                    'user_id' => $user->id_utilisateur,
+                    'email' => $user->email,
+                ]);
+            } catch (\Throwable $mailError) {
+                Log::error("Envoi OTP {$context} fallback échoué: " . $mailError->getMessage());
+            }
         }
     }
 
