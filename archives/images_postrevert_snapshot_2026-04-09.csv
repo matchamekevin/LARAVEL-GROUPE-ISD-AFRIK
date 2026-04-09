@@ -1,0 +1,9 @@
+id_image,url,path,imageable_type,imageable_id,created_at,updated_at
+1451,http://127.0.0.1:8000/storage/produits/KfivkEsR9xFVzTaHVq7QzBqhgTiwJ9g4nGWZSKe6.webp,produits/KfivkEsR9xFVzTaHVq7QzBqhgTiwJ9g4nGWZSKe6.webp,PRODUIT,183,2026-03-25 12:11:23,2026-03-25 12:11:23
+1454,http://127.0.0.1:8000/storage/formations/r9udMlaEByOWvBcJJrqEAOHnza4iJUZyixZ0kz7f.webp,formations/r9udMlaEByOWvBcJJrqEAOHnza4iJUZyixZ0kz7f.webp,FORMATION,32,2026-03-25 12:33:34,2026-03-25 12:33:34
+1455,http://127.0.0.1:8000/storage/formations/z0tNr4OIKOkV5Vy4SL8kdEjLP7AlEutKp6cIgHeo.webp,formations/z0tNr4OIKOkV5Vy4SL8kdEjLP7AlEutKp6cIgHeo.webp,FORMATION,32,2026-03-25 12:34:05,2026-03-25 12:34:05
+1456,http://127.0.0.1:8000/storage/formations/NgDGRXOWw9M34midC1xzxsZazht6y1acRVhhz4uJ.webp,formations/NgDGRXOWw9M34midC1xzxsZazht6y1acRVhhz4uJ.webp,FORMATION,32,2026-03-25 12:36:59,2026-03-25 12:36:59
+1457,http://127.0.0.1:8000/storage/produits/d9ufBN1ORhGjSLE3rjHGZ3pSbbZks7suT2OcahXv.webp,produits/d9ufBN1ORhGjSLE3rjHGZ3pSbbZks7suT2OcahXv.webp,PRODUIT,795,2026-03-25 12:42:08,2026-03-25 12:42:08
+1453,http://127.0.0.1:8000/storage/produits/vQmJJ6TIZlM3HQaTjJPH2CZvfnK9IIIuACGk35wQ.webp,produits/vQmJJ6TIZlM3HQaTjJPH2CZvfnK9IIIuACGk35wQ.webp,PRODUIT,793,2026-03-25 12:24:43,2026-04-09 04:13:42
+1458,http://127.0.0.1:8000/storage/produits/vQmJJ6TIZlM3HQaTjJPH2CZvfnK9IIIuACGk35wQ.webp,http://127.0.0.1:8000/storage/produits/vQmJJ6TIZlM3HQaTjJPH2CZvfnK9IIIuACGk35wQ.webp,PRODUIT,793,2026-04-09 04:13:42,2026-04-09 04:14:10
+1460,http://127.0.0.1:8000/storage/produits/vQmJJ6TIZlM3HQaTjJPH2CZvfnK9IIIuACGk35wQ.webp,http://127.0.0.1:8000/storage/produits/vQmJJ6TIZlM3HQaTjJPH2CZvfnK9IIIuACGk35wQ.webp,PRODUIT,793,2026-04-09 04:14:10,2026-04-09 04:14:10

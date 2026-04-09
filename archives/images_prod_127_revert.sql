@@ -1,0 +1,8 @@
+UPDATE images SET url='http://127.0.0.1:8000/storage/produits/KfivkEsR9xFVzTaHVq7QzBqhgTiwJ9g4nGWZSKe6.webp', path='produits/KfivkEsR9xFVzTaHVq7QzBqhgTiwJ9g4nGWZSKe6.webp' WHERE id_image=1451;
+UPDATE images SET url='http://127.0.0.1:8000/storage/formations/r9udMlaEByOWvBcJJrqEAOHnza4iJUZyixZ0kz7f.webp', path='formations/r9udMlaEByOWvBcJJrqEAOHnza4iJUZyixZ0kz7f.webp' WHERE id_image=1454;
+UPDATE images SET url='http://127.0.0.1:8000/storage/formations/z0tNr4OIKOkV5Vy4SL8kdEjLP7AlEutKp6cIgHeo.webp', path='formations/z0tNr4OIKOkV5Vy4SL8kdEjLP7AlEutKp6cIgHeo.webp' WHERE id_image=1455;
+UPDATE images SET url='http://127.0.0.1:8000/storage/formations/NgDGRXOWw9M34midC1xzxsZazht6y1acRVhhz4uJ.webp', path='formations/NgDGRXOWw9M34midC1xzxsZazht6y1acRVhhz4uJ.webp' WHERE id_image=1456;
+UPDATE images SET url='http://127.0.0.1:8000/storage/produits/d9ufBN1ORhGjSLE3rjHGZ3pSbbZks7suT2OcahXv.webp', path='produits/d9ufBN1ORhGjSLE3rjHGZ3pSbbZks7suT2OcahXv.webp' WHERE id_image=1457;
+UPDATE images SET url='http://127.0.0.1:8000/storage/produits/vQmJJ6TIZlM3HQaTjJPH2CZvfnK9IIIuACGk35wQ.webp', path='produits/vQmJJ6TIZlM3HQaTjJPH2CZvfnK9IIIuACGk35wQ.webp' WHERE id_image=1453;
+UPDATE images SET url='http://127.0.0.1:8000/storage/produits/vQmJJ6TIZlM3HQaTjJPH2CZvfnK9IIIuACGk35wQ.webp', path='http://127.0.0.1:8000/storage/produits/vQmJJ6TIZlM3HQaTjJPH2CZvfnK9IIIuACGk35wQ.webp' WHERE id_image=1458;
+UPDATE images SET url='http://127.0.0.1:8000/storage/produits/vQmJJ6TIZlM3HQaTjJPH2CZvfnK9IIIuACGk35wQ.webp', path='http://127.0.0.1:8000/storage/produits/vQmJJ6TIZlM3HQaTjJPH2CZvfnK9IIIuACGk35wQ.webp' WHERE id_image=1460;
