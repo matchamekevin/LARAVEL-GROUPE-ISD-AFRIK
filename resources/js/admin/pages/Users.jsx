@@ -661,7 +661,7 @@ export default function Users() {
                                         is_admin_adjoint: e.target.checked,
                                       },
                                     }))}
-                                    disabled={accessUpdating === u.id || cannotManageSuperAdmin || !actorIsSuperAdmin}
+                                    disabled={accessUpdating === u.id || cannotManageSuperAdmin}
                                   />
                                   Admin adjoint
                                 </label>
