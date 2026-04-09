@@ -237,7 +237,23 @@ export default function Produits() {
     ];
 
     if (!technicalRootId) {
-      return base;
+      // Fallback production-friendly: si la racine catalogue n'existe pas,
+      // utiliser directement les catégories top-level comme catégories principales.
+      const fallbackMain = topLevelCategories
+        .sort((a, b) => {
+          const orderDiff = Number(a.ordre || 0) - Number(b.ordre || 0);
+          if (orderDiff !== 0) return orderDiff;
+          return String(a.nom || "").localeCompare(String(b.nom || ""), "fr");
+        })
+        .map((item) => ({
+          slug: normalizeSlug(item.slug || item.nom),
+          label: item.nom,
+          id: Number(item.id_categorie || item.id),
+          node: item,
+          image: getCategoryImage(item),
+        }));
+
+      return [...base, ...fallbackMain];
     }
 
     const dbMain = categories
@@ -256,7 +272,7 @@ export default function Produits() {
       }));
 
     return [...base, ...dbMain];
-  }, [categories, technicalRootId]);
+  }, [categories, technicalRootId, topLevelCategories]);
 
   const mainCategorySlugs = useMemo(
     () => mainCategories.filter((item) => item.slug !== ALL_CATEGORY_SLUG).map((item) => item.slug),
@@ -281,8 +297,18 @@ export default function Produits() {
 
       const idSet = new Set(mainCategoryIds);
       source = categories.filter((item) => idSet.has(Number(item.parent_id || 0)));
+
+      // Fallback: si aucune catégorie enfant, afficher les catégories principales elles-mêmes.
+      if (source.length === 0) {
+        source = categories.filter((item) => idSet.has(Number(item.id_categorie || item.id)));
+      }
     } else if (activeCategory.id) {
       source = categories.filter((item) => Number(item.parent_id || 0) === Number(activeCategory.id));
+
+      // Fallback: catégorie principale sans enfants, la rendre cliquable comme sous-catégorie.
+      if (source.length === 0 && activeCategory.node) {
+        source = [activeCategory.node];
+      }
     }
 
     return source
@@ -544,13 +570,23 @@ export default function Produits() {
 
     if (categoryFromId) {
       const ownSlug = normalizeSlug(categoryFromId.slug || categoryFromId.nom);
+      const ownId = Number(categoryFromId.id_categorie || categoryFromId.id || 0);
       const parent = categoriesById[Number(categoryFromId.parent_id)];
       const parentSlug = normalizeSlug(parent?.slug || parent?.nom || "");
+      const hasChildren = categories.some((item) => Number(item.parent_id || 0) === ownId);
 
       if (mainCategorySlugs.includes(ownSlug)) {
-        setActiveCategorySlug(ownSlug);
-        setSelectedSubcategoryId("");
-        setSelectedSubcategorySlug("");
+        // Cas fallback: une catégorie principale peut aussi être sélectionnée
+        // comme sous-catégorie si elle n'a pas d'enfants.
+        if (subcategoryIdParam && ownId === subcategoryIdParam && !hasChildren) {
+          setActiveCategorySlug(ownSlug);
+          setSelectedSubcategoryId(String(ownId));
+          setSelectedSubcategorySlug(ownSlug);
+        } else {
+          setActiveCategorySlug(ownSlug);
+          setSelectedSubcategoryId("");
+          setSelectedSubcategorySlug("");
+        }
       } else if (mainCategorySlugs.includes(parentSlug)) {
         setActiveCategorySlug(parentSlug);
         setSelectedSubcategoryId(String(categoryFromId.id_categorie || categoryFromId.id));
@@ -565,13 +601,21 @@ export default function Produits() {
 
     if (!categoryFromId && categoryFromDb) {
       const ownSlug = normalizeSlug(categoryFromDb.slug || categoryFromDb.nom);
+      const ownId = Number(categoryFromDb.id_categorie || categoryFromDb.id || 0);
       const parent = categoriesById[Number(categoryFromDb.parent_id)];
       const parentSlug = normalizeSlug(parent?.slug || parent?.nom || "");
+      const hasChildren = categories.some((item) => Number(item.parent_id || 0) === ownId);
 
       if (mainCategorySlugs.includes(ownSlug)) {
-        setActiveCategorySlug(ownSlug);
-        setSelectedSubcategoryId("");
-        setSelectedSubcategorySlug("");
+        if (subcategoryIdParam && ownId === subcategoryIdParam && !hasChildren) {
+          setActiveCategorySlug(ownSlug);
+          setSelectedSubcategoryId(String(ownId));
+          setSelectedSubcategorySlug(ownSlug);
+        } else {
+          setActiveCategorySlug(ownSlug);
+          setSelectedSubcategoryId("");
+          setSelectedSubcategorySlug("");
+        }
       } else if (mainCategorySlugs.includes(parentSlug)) {
         setActiveCategorySlug(parentSlug);
         setSelectedSubcategoryId(String(categoryFromDb.id_categorie || categoryFromDb.id));
