@@ -269,26 +269,37 @@ export default function Users() {
     const draft = accessDrafts[selectedUser.id] || {
       can_access_client: Boolean(selectedUser.can_access_client),
       can_access_admin: Boolean(selectedUser.can_access_admin),
+      is_admin_adjoint: Boolean(selectedUser.is_admin_adjoint),
+      is_super_admin: Boolean(selectedUser.is_super_admin),
     };
 
     const unchanged = Boolean(selectedUser.can_access_client) === Boolean(draft.can_access_client)
-      && Boolean(selectedUser.can_access_admin) === Boolean(draft.can_access_admin);
+      && Boolean(selectedUser.can_access_admin) === Boolean(draft.can_access_admin)
+      && Boolean(selectedUser.is_admin_adjoint) === Boolean(draft.is_admin_adjoint)
+      && Boolean(selectedUser.is_super_admin) === Boolean(draft.is_super_admin);
     if (unchanged) return;
 
     const status = (!draft.can_access_client && !draft.can_access_admin) ? 'suspendu' : 'actif';
 
     setAccessUpdating(selectedUser.id);
     try {
-      const res = await updateUser(selectedUser.id, {
+      const payload = {
         can_access_client: draft.can_access_client,
         can_access_admin: draft.can_access_admin,
         statut: status,
-      });
+      };
+
+      if (typeof draft.is_admin_adjoint !== 'undefined') payload.is_admin_adjoint = draft.is_admin_adjoint;
+      if (typeof draft.is_super_admin !== 'undefined') payload.is_super_admin = draft.is_super_admin;
+
+      const res = await updateUser(selectedUser.id, payload);
 
       const updated = res?.data?.utilisateur || {
         can_access_client: draft.can_access_client,
         can_access_admin: draft.can_access_admin,
         statut: status,
+        is_admin_adjoint: draft.is_admin_adjoint,
+        is_super_admin: draft.is_super_admin,
       };
 
       const nextUser = mergeUserState(selectedUser, updated);
@@ -574,7 +585,6 @@ export default function Users() {
                     <th>ID</th>
                     <th>Utilisateur</th>
                     <th>Email</th>
-                    <th>Role</th>
                     <th>Acces</th>
                     <th>Statut</th>
                     <th>Actions</th>
@@ -604,13 +614,7 @@ export default function Users() {
                           <span className="admin-user-email">{u.email}</span>
                         </td>
 
-                        <td>
-                          <div className="admin-user-role-cell">
-                            <span className="admin-user-role-badge">
-                              {ROLE_LABELS[normalizeRole(u.role || u.admin_role)] || normalizeRole(u.role || u.admin_role)}
-                            </span>
-                          </div>
-                        </td>
+                        {/* Role column removed — accès gérés via cases à cocher ci-dessous */}
 
                         <td>
                           <div className="admin-user-role-cell">
@@ -643,26 +647,24 @@ export default function Users() {
                                     }))}
                                     disabled={accessUpdating === u.id || cannotManageSuperAdmin}
                                   />
-                                  Admin
+                                  Super admin
                                 </label>
 
-                                {actorIsSuperAdmin && (
-                                  <label className="admin-user-access-check">
-                                    <input
-                                      type="checkbox"
-                                      checked={Boolean(accessDrafts[u.id]?.is_admin_adjoint ?? u.is_admin_adjoint)}
-                                      onChange={(e) => setAccessDrafts((previous) => ({
-                                        ...previous,
-                                        [u.id]: {
-                                          ...(previous[u.id] || {}),
-                                          is_admin_adjoint: e.target.checked,
-                                        },
-                                      }))}
-                                      disabled={accessUpdating === u.id || cannotManageSuperAdmin}
-                                    />
-                                    Admin adjoint
-                                  </label>
-                                )}
+                                <label className="admin-user-access-check">
+                                  <input
+                                    type="checkbox"
+                                    checked={Boolean(accessDrafts[u.id]?.is_admin_adjoint ?? u.is_admin_adjoint)}
+                                    onChange={(e) => setAccessDrafts((previous) => ({
+                                      ...previous,
+                                      [u.id]: {
+                                        ...(previous[u.id] || {}),
+                                        is_admin_adjoint: e.target.checked,
+                                      },
+                                    }))}
+                                    disabled={accessUpdating === u.id || cannotManageSuperAdmin || !actorIsSuperAdmin}
+                                  />
+                                  Admin adjoint
+                                </label>
 
                                 {actorIsSuperAdmin && (
                                   <label className="admin-user-access-check">
@@ -678,7 +680,7 @@ export default function Users() {
                                       }))}
                                       disabled={accessUpdating === u.id || cannotManageSuperAdmin}
                                     />
-                                    Super admin
+                                    Super admin (rôle)
                                   </label>
                                 )}
                               </div>
@@ -731,9 +733,9 @@ export default function Users() {
                     );
                   })}
 
-                  {users.length === 0 && (
+                  {visibleUsers.length === 0 && (
                     <tr>
-                      <td colSpan="7" className="admin-users-empty-cell">
+                      <td colSpan="6" className="admin-users-empty-cell">
                         Aucun résultat pour cette recherche.
                       </td>
                     </tr>
