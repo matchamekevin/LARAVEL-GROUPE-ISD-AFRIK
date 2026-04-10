@@ -293,8 +293,27 @@ class ProduitService
 
     private function preparePayload(array $data, bool $isCreating = false): array
     {
-        // Le segment est utilise pour la validation metier, mais n'est pas une colonne produit.
-        unset($data['segment']);
+        // Conserver le segment (colonne produits.segment) avec normalisation stricte.
+        if (array_key_exists('segment', $data)) {
+            $segment = strtolower(trim((string) $data['segment']));
+            $data['segment'] = in_array($segment, ['general', 'geovision'], true)
+                ? $segment
+                : null;
+        }
+
+        // Si le segment n'est pas explicitement fourni, l'hériter de la catégorie.
+        if ((empty($data['segment']) || $data['segment'] === null) && !empty($data['id_categorie'])) {
+            $categorySegment = CategorieProduit::query()
+                ->where('id_categorie', $data['id_categorie'])
+                ->value('segment');
+
+            if (is_string($categorySegment) && $categorySegment !== '') {
+                $normalizedCategorySegment = strtolower(trim($categorySegment));
+                if (in_array($normalizedCategorySegment, ['general', 'geovision'], true)) {
+                    $data['segment'] = $normalizedCategorySegment;
+                }
+            }
+        }
 
         if (array_key_exists('specifications', $data) && is_array($data['specifications'])) {
             $data['specifications'] = $this->normalizeSpecifications($data['specifications']);
