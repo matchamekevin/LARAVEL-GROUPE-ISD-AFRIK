@@ -11,6 +11,7 @@ import {
   uploadProductImages,
   syncGeovisionCatalog,
 } from '../api';
+import { useLivePolling } from '../../hooks/useLivePolling';
 import Loader from '../components/Loader';
 import AdminToast, { useAdminToast } from '../components/AdminToast';
 import '../styles/admin-shared.css';
@@ -282,6 +283,14 @@ export default function CatalogueAdmin() {
   useEffect(() => {
     loadModels();
   }, [modelCategoryFilter]);
+
+  useLivePolling(
+    () => Promise.all([loadCategories(), loadModels()]),
+    {
+      intervalMs: 8000,
+      enabled: !savingCategory && !savingModel && !syncing,
+    }
+  );
 
   useEffect(() => {
     const categoriesSection = categoriesSectionRef.current;

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/home.css";
 import "../styles/geovision-categories.css";
 import { getCategories, getProduits } from "../services/ProduitService";
+import { useLivePolling } from "../hooks/useLivePolling";
 import {
   getCategoryChildren,
   matchCategory,
@@ -62,6 +63,7 @@ export default function Geovision() {
   const [modelLoading, setModelLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refreshToken, setRefreshToken] = useState(0);
   const deferredSearch = useDeferredValue(searchQuery);
 
   useEffect(() => {
@@ -100,7 +102,17 @@ export default function Geovision() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [refreshToken]);
+
+  useLivePolling(
+    () => {
+      setRefreshToken((token) => token + 1);
+    },
+    {
+      intervalMs: 15000,
+      enabled: !loading,
+    }
+  );
 
   useEffect(() => {
     if (families.length === 0) {

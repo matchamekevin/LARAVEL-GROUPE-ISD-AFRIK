@@ -7,7 +7,8 @@ const api = axios.create({
 });
 
 const ADMIN_CACHE_PREFIX = 'isd-afrik-admin-cache:';
-const ADMIN_CACHE_TTL_MS = 5 * 60 * 1000;
+// Cache court pour garder l'UI reactive aux changements DB multi-utilisateurs.
+const ADMIN_CACHE_TTL_MS = 5 * 1000;
 const adminCache = new Map();
 const adminPendingRequests = new Map();
 let adminCacheVersion = 0;

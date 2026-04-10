@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { getDashboardSummary, warmAdminCaches } from '../api';
+import { useLivePolling } from '../../hooks/useLivePolling';
 
 const CURRENCY = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
@@ -32,6 +33,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [summary, setSummary] = useState(EMPTY_SUMMARY);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -71,7 +73,17 @@ export default function Dashboard() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [refreshToken]);
+
+  useLivePolling(
+    () => {
+      setRefreshToken((token) => token + 1);
+    },
+    {
+      intervalMs: 10000,
+      enabled: true,
+    }
+  );
 
   const mergedRecentActivity = useMemo(() => {
     return Array.isArray(summary.recentActivity)

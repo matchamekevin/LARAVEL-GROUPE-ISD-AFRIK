@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../axios";
 import { getCategorie, getProduit, getProduits } from "../services/ProduitService";
+import { useLivePolling } from "../hooks/useLivePolling";
 import { addToCart, isFavorite, subscribeStoreUpdates, toggleFavorite } from "../utils/shopStorage";
 import { toastError } from "../utils/toast";
 import "../styles/produitdetail.css";
@@ -122,6 +123,7 @@ export default function ProduitDetail() {
   const [avisError, setAvisError] = useState("");
   const [modelGallery, setModelGallery] = useState([]);
   const [paiementLoading, setPaiementLoading] = useState(false);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   const getCurrentUserId = () => {
     try {
@@ -150,7 +152,17 @@ export default function ProduitDetail() {
         console.error("Erreur chargement produit", err);
         setLoading(false);
       });
-  }, [id]);
+  }, [id, refreshToken]);
+
+  useLivePolling(
+    () => {
+      setRefreshToken((token) => token + 1);
+    },
+    {
+      intervalMs: 8000,
+      enabled: Boolean(id) && !avisSubmitting && !paiementLoading,
+    }
+  );
 
   // Si le produit n'inclut pas l'objet categorie, tenter de le charger séparément
   useEffect(() => {

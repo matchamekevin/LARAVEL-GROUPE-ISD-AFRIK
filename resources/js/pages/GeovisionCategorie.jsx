@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import "../styles/home.css";
 import "../styles/geovision-categories.css";
 import { getCategorie, getCategorieBySlug, getProduits } from "../services/ProduitService";
+import { useLivePolling } from "../hooks/useLivePolling";
 import {
   getCategoryChildren,
   normalizeGeovisionKey,
@@ -111,6 +112,8 @@ export default function GeovisionCategorie() {
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearch = useDeferredValue(searchQuery);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [categoryRefreshToken, setCategoryRefreshToken] = useState(0);
+  const [productsRefreshToken, setProductsRefreshToken] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -143,7 +146,7 @@ export default function GeovisionCategorie() {
     return () => {
       isMounted = false;
     };
-  }, [slug]);
+  }, [slug, categoryRefreshToken]);
 
   useEffect(() => {
     if (!category?.slug) {
@@ -179,7 +182,27 @@ export default function GeovisionCategorie() {
     return () => {
       isMounted = false;
     };
-  }, [category?.slug]);
+  }, [category?.slug, productsRefreshToken]);
+
+  useLivePolling(
+    () => {
+      setProductsRefreshToken((token) => token + 1);
+    },
+    {
+      intervalMs: 8000,
+      enabled: Boolean(category?.slug) && !loadingProducts,
+    }
+  );
+
+  useLivePolling(
+    () => {
+      setCategoryRefreshToken((token) => token + 1);
+    },
+    {
+      intervalMs: 20000,
+      enabled: !loadingCategory,
+    }
+  );
 
   const parentFamily = category?.parent?.parent || category?.parent || null;
   const subtypes = getCategoryChildren(category);

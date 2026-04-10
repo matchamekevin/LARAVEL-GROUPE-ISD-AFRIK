@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createAdminAdjoint, getCountries, getUsers, me, updateUser, updateUserStatus } from '../api';
+import { useLivePolling } from '../../hooks/useLivePolling';
 import AdminToast, { useAdminToast } from '../components/AdminToast';
 import AdminNotice from '../components/AdminNotice';
 import Loader from '../components/Loader';
@@ -74,6 +75,26 @@ function mergeUserState(baseUser, updatedUser = {}) {
     role: adminLevel,
     is_super_admin: adminLevel === 'superadmin',
     is_admin_adjoint: adminLevel === 'admin_adjoint',
+  };
+}
+
+function normalizeDraftAccess(draft = {}, user = {}) {
+  const can_access_client = Boolean(draft.can_access_client ?? user.can_access_client);
+  let is_super_admin = Boolean(draft.is_super_admin ?? user.is_super_admin);
+  let is_admin_adjoint = Boolean(draft.is_admin_adjoint ?? user.is_admin_adjoint);
+
+  // Regle metier: un compte ne peut pas cumuler super admin + admin adjoint.
+  if (is_super_admin && is_admin_adjoint) {
+    is_admin_adjoint = false;
+  }
+
+  const can_access_admin = is_super_admin || is_admin_adjoint;
+
+  return {
+    can_access_client,
+    can_access_admin,
+    is_super_admin,
+    is_admin_adjoint,
   };
 }
 
@@ -211,6 +232,16 @@ export default function Users() {
     setRefreshToken((previous) => previous + 1);
   };
 
+  useLivePolling(
+    () => {
+      setRefreshToken((previous) => previous + 1);
+    },
+    {
+      intervalMs: 7000,
+      enabled: !creatingAdmin && accessUpdating === null && toggling === null,
+    }
+  );
+
   const handleSearchSubmit = (event) => {
     event.preventDefault();
     setPage(1);
@@ -266,40 +297,35 @@ export default function Users() {
   // Remplacé par handleApplyAccess qui gère les flags can_access_admin et admin_role
 
   async function handleApplyAccess(selectedUser) {
-    const draft = accessDrafts[selectedUser.id] || {
-      can_access_client: Boolean(selectedUser.can_access_client),
-      can_access_admin: Boolean(selectedUser.can_access_admin),
-      is_admin_adjoint: Boolean(selectedUser.is_admin_adjoint),
-      is_super_admin: Boolean(selectedUser.is_super_admin),
-    };
+    const currentAccess = normalizeDraftAccess(accessDrafts[selectedUser.id] || {}, selectedUser);
+    const persistedAccess = normalizeDraftAccess({}, selectedUser);
 
-    const unchanged = Boolean(selectedUser.can_access_client) === Boolean(draft.can_access_client)
-      && Boolean(selectedUser.can_access_admin) === Boolean(draft.can_access_admin)
-      && Boolean(selectedUser.is_admin_adjoint) === Boolean(draft.is_admin_adjoint)
-      && Boolean(selectedUser.is_super_admin) === Boolean(draft.is_super_admin);
+    const unchanged = persistedAccess.can_access_client === currentAccess.can_access_client
+      && persistedAccess.can_access_admin === currentAccess.can_access_admin
+      && persistedAccess.is_admin_adjoint === currentAccess.is_admin_adjoint
+      && persistedAccess.is_super_admin === currentAccess.is_super_admin;
     if (unchanged) return;
 
-    const status = (!draft.can_access_client && !draft.can_access_admin) ? 'suspendu' : 'actif';
+    const status = (!currentAccess.can_access_client && !currentAccess.can_access_admin) ? 'suspendu' : 'actif';
 
     setAccessUpdating(selectedUser.id);
     try {
       const payload = {
-        can_access_client: draft.can_access_client,
-        can_access_admin: draft.can_access_admin,
+        can_access_client: currentAccess.can_access_client,
+        can_access_admin: currentAccess.can_access_admin,
         statut: status,
+        is_admin_adjoint: currentAccess.is_admin_adjoint,
+        is_super_admin: currentAccess.is_super_admin,
       };
-
-      if (typeof draft.is_admin_adjoint !== 'undefined') payload.is_admin_adjoint = draft.is_admin_adjoint;
-      if (typeof draft.is_super_admin !== 'undefined') payload.is_super_admin = draft.is_super_admin;
 
       const res = await updateUser(selectedUser.id, payload);
 
       const updated = res?.data?.utilisateur || {
-        can_access_client: draft.can_access_client,
-        can_access_admin: draft.can_access_admin,
+        can_access_client: currentAccess.can_access_client,
+        can_access_admin: currentAccess.can_access_admin,
         statut: status,
-        is_admin_adjoint: draft.is_admin_adjoint,
-        is_super_admin: draft.is_super_admin,
+        is_admin_adjoint: currentAccess.is_admin_adjoint,
+        is_super_admin: currentAccess.is_super_admin,
       };
 
       const nextUser = mergeUserState(selectedUser, updated);
@@ -595,6 +621,8 @@ export default function Users() {
                     const isTargetSuperAdmin = normalizeRole(u.role || u.admin_role) === 'superadmin';
                     const actorIsAdjoint = actorRole === 'admin_adjoint';
                     const cannotManageSuperAdmin = isTargetSuperAdmin && actorIsAdjoint && !actorIsSuperAdmin;
+                    const rowAccess = normalizeDraftAccess(accessDrafts[u.id] || {}, u);
+                    const persistedRowAccess = normalizeDraftAccess({}, u);
 
                     return (
                       <tr key={u.id}>
@@ -622,7 +650,7 @@ export default function Users() {
                                 <label className="admin-user-access-check">
                                   <input
                                     type="checkbox"
-                                    checked={(accessDrafts[u.id]?.can_access_client ?? Boolean(u.can_access_client))}
+                                    checked={rowAccess.can_access_client}
                                     onChange={(e) => setAccessDrafts((previous) => ({
                                       ...previous,
                                       [u.id]: {
@@ -637,15 +665,16 @@ export default function Users() {
                                 <label className="admin-user-access-check">
                                   <input
                                     type="checkbox"
-                                    checked={(accessDrafts[u.id]?.can_access_admin ?? Boolean(u.can_access_admin))}
+                                    checked={rowAccess.is_super_admin}
                                     onChange={(e) => setAccessDrafts((previous) => ({
                                       ...previous,
                                       [u.id]: {
                                         ...(previous[u.id] || {}),
-                                        can_access_admin: e.target.checked,
+                                        is_super_admin: e.target.checked,
+                                        is_admin_adjoint: e.target.checked ? false : Boolean(previous[u.id]?.is_admin_adjoint ?? u.is_admin_adjoint),
                                       },
                                     }))}
-                                    disabled={accessUpdating === u.id || cannotManageSuperAdmin}
+                                    disabled={accessUpdating === u.id || cannotManageSuperAdmin || !actorIsSuperAdmin}
                                   />
                                   Super admin
                                 </label>
@@ -653,36 +682,19 @@ export default function Users() {
                                 <label className="admin-user-access-check">
                                   <input
                                     type="checkbox"
-                                    checked={Boolean(accessDrafts[u.id]?.is_admin_adjoint ?? u.is_admin_adjoint)}
+                                    checked={rowAccess.is_admin_adjoint}
                                     onChange={(e) => setAccessDrafts((previous) => ({
                                       ...previous,
                                       [u.id]: {
                                         ...(previous[u.id] || {}),
                                         is_admin_adjoint: e.target.checked,
+                                        is_super_admin: e.target.checked ? false : Boolean(previous[u.id]?.is_super_admin ?? u.is_super_admin),
                                       },
                                     }))}
                                     disabled={accessUpdating === u.id || cannotManageSuperAdmin}
                                   />
                                   Admin adjoint
                                 </label>
-
-                                {actorIsSuperAdmin && (
-                                  <label className="admin-user-access-check">
-                                    <input
-                                      type="checkbox"
-                                      checked={Boolean(accessDrafts[u.id]?.is_super_admin ?? u.is_super_admin)}
-                                      onChange={(e) => setAccessDrafts((previous) => ({
-                                        ...previous,
-                                        [u.id]: {
-                                          ...(previous[u.id] || {}),
-                                          is_super_admin: e.target.checked,
-                                        },
-                                      }))}
-                                      disabled={accessUpdating === u.id || cannotManageSuperAdmin}
-                                    />
-                                    Super admin (rôle)
-                                  </label>
-                                )}
                               </div>
                               <button
                                 type="button"
@@ -692,10 +704,10 @@ export default function Users() {
                                   cannotManageSuperAdmin
                                   || accessUpdating === u.id
                                   || (
-                                    Boolean(u.can_access_client) === Boolean(accessDrafts[u.id]?.can_access_client ?? u.can_access_client)
-                                    && Boolean(u.can_access_admin) === Boolean(accessDrafts[u.id]?.can_access_admin ?? u.can_access_admin)
-                                    && Boolean(u.is_admin_adjoint) === Boolean(accessDrafts[u.id]?.is_admin_adjoint ?? u.is_admin_adjoint)
-                                    && Boolean(u.is_super_admin) === Boolean(accessDrafts[u.id]?.is_super_admin ?? u.is_super_admin)
+                                    persistedRowAccess.can_access_client === rowAccess.can_access_client
+                                    && persistedRowAccess.can_access_admin === rowAccess.can_access_admin
+                                    && persistedRowAccess.is_admin_adjoint === rowAccess.is_admin_adjoint
+                                    && persistedRowAccess.is_super_admin === rowAccess.is_super_admin
                                   )
                                 }
                                 title="Appliquer les acces client/admin"

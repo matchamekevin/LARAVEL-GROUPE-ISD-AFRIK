@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import '../styles/catalogue-admin.css';
 import AdminToast, { useAdminToast } from '../components/AdminToast';
 import AdminNotice from '../components/AdminNotice';
+import { useLivePolling } from '../../hooks/useLivePolling';
 import '../styles/admin-shared.css';
 import '../styles/products.css';
 import {
@@ -536,6 +537,28 @@ export default function Products() {
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
+
+  useLivePolling(
+    () => {
+      if (editorMode !== 'idle') return;
+      return loadProducts();
+    },
+    {
+      intervalMs: 7000,
+      enabled: editorMode === 'idle' && !saving && !loading,
+    }
+  );
+
+  useLivePolling(
+    () => {
+      if (editorMode !== 'idle') return;
+      return loadLookups();
+    },
+    {
+      intervalMs: 30000,
+      enabled: editorMode === 'idle' && !lookupsLoading,
+    }
+  );
 
   const setFilter = (key, value) => {
     setFilters((previous) => {

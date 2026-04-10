@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getCategories, getProduits } from "../services/ProduitService";
 import { addToCart, getCartItems, isFavorite, subscribeStoreUpdates, toggleFavorite } from "../utils/shopStorage";
+import { useLivePolling } from "../hooks/useLivePolling";
 import "../styles/produit.css";
 
 const ALL_CATEGORY_SLUG = "tout";
@@ -529,19 +530,61 @@ export default function Produits() {
     return produitsModele.filter((item) => buildSearchBlob(item).includes(searchNormalized));
   }, [produitsModele, searchNormalized]);
 
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const response = await getCategories({ segment: "general", tree: 1 });
-        const tree = response.data?.data || response.data || [];
-        setCategories(flattenCategories(tree));
-      } catch {
-        setCategories([]);
-      }
-    };
+  const globalModelResults = useMemo(() => {
+    if (!searchNormalized) {
+      return [];
+    }
 
-    loadCategories();
+    const byModel = {};
+    produits.forEach((item) => {
+      const modelName = String(item.modele || "").trim();
+      if (!modelName) {
+        return;
+      }
+
+      const key = modelName.toLowerCase();
+      if (!byModel[key]) {
+        byModel[key] = {
+          name: modelName,
+          count: 0,
+          representativeProduct: item,
+          searchBlob: "",
+        };
+      }
+
+      byModel[key].count += 1;
+      byModel[key].searchBlob += ` ${buildSearchBlob(item)}`;
+    });
+
+    return Object.values(byModel)
+      .filter((item) => item.name.toLowerCase().includes(searchNormalized) || item.searchBlob.includes(searchNormalized))
+      .sort((a, b) => a.name.localeCompare(b.name, "fr"))
+      .slice(0, 10);
+  }, [produits, searchNormalized]);
+
+  const globalProductResults = useMemo(() => {
+    if (!searchNormalized) {
+      return [];
+    }
+
+    return produits
+      .filter((item) => buildSearchBlob(item).includes(searchNormalized))
+      .slice(0, 12);
+  }, [produits, searchNormalized]);
+
+  const loadCategories = useCallback(async () => {
+    try {
+      const response = await getCategories({ segment: "general", tree: 1 });
+      const tree = response.data?.data || response.data || [];
+      setCategories(flattenCategories(tree));
+    } catch {
+      setCategories([]);
+    }
   }, []);
+
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -653,55 +696,65 @@ export default function Produits() {
     return subscribeStoreUpdates(refreshStoreState);
   }, [produits]);
 
-  useEffect(() => {
-    const loadProduits = async () => {
-      if (!activeCategory) {
-        return;
+  const loadProduits = useCallback(async () => {
+    if (!activeCategory) {
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const params = {
+        segment: "general",
+        tri: "recent",
+        par_page: selectedModel ? 100 : 250,
+      };
+
+      const categoryIds = [];
+
+      if (selectedSubcategoryId) {
+        categoryIds.push(...getDescendantIds(Number(selectedSubcategoryId), categories));
+      } else if (activeCategory.id) {
+        const descendants = getDescendantIds(Number(activeCategory.id), categories);
+        descendants.forEach((id) => {
+          if (id !== Number(activeCategory.id)) {
+            categoryIds.push(id);
+          }
+        });
       }
 
-      setLoading(true);
-      setError("");
-
-      try {
-        const params = {
-          segment: "general",
-          tri: "recent",
-          par_page: selectedModel ? 100 : 250,
-        };
-
-        const categoryIds = [];
-
-        if (selectedSubcategoryId) {
-          categoryIds.push(...getDescendantIds(Number(selectedSubcategoryId), categories));
-        } else if (activeCategory.id) {
-          const descendants = getDescendantIds(Number(activeCategory.id), categories);
-          descendants.forEach((id) => {
-            if (id !== Number(activeCategory.id)) {
-              categoryIds.push(id);
-            }
-          });
-        }
-
-        if (categoryIds.length > 0) {
-          params.id_categorie = Array.from(new Set(categoryIds)).join(",");
-        }
-
-        if (selectedModel) {
-          params.modele = selectedModel;
-        }
-
-        const response = await getProduits(params);
-        setProduits(response.data?.data || []);
-      } catch {
-        setError("Impossible de charger les produits pour le moment.");
-        setProduits([]);
-      } finally {
-        setLoading(false);
+      if (categoryIds.length > 0) {
+        params.id_categorie = Array.from(new Set(categoryIds)).join(",");
       }
-    };
 
-    loadProduits();
+      if (selectedModel) {
+        params.modele = selectedModel;
+      }
+
+      const response = await getProduits(params);
+      setProduits(response.data?.data || []);
+    } catch {
+      setError("Impossible de charger les produits pour le moment.");
+      setProduits([]);
+    } finally {
+      setLoading(false);
+    }
   }, [activeCategory, categories, selectedModel, selectedSubcategoryId]);
+
+  useEffect(() => {
+    loadProduits();
+  }, [loadProduits]);
+
+  useLivePolling(loadProduits, {
+    intervalMs: 7000,
+    enabled: true,
+  });
+
+  useLivePolling(loadCategories, {
+    intervalMs: 20000,
+    enabled: true,
+  });
 
   const searchPlaceholder = selectedModel
     ? "Rechercher un produit dans ce modele"
@@ -944,6 +997,68 @@ export default function Produits() {
               {selectedSubcategory ? ` / ${selectedSubcategory.label}` : ""}
               {selectedModel ? ` / ${selectedModel}` : ""}
             </p>
+          </section>
+        )}
+
+        {searchNormalized && (
+          <section className="pcat-section pcat-search-global">
+            <div className="pcat-heading-row">
+              <h2>Recherche globale</h2>
+              <p>Résultats simultanés: sous-catégories, modèles et produits.</p>
+            </div>
+
+            <div className="pcat-search-global-grid">
+              <article className="pcat-search-global-card">
+                <h3>Sous-catégories</h3>
+                {filteredSubcategories.slice(0, 8).map((item) => (
+                  <button
+                    key={`search-sub-${item.id || item.slug}`}
+                    type="button"
+                    className="pcat-outline-btn"
+                    onClick={() => handleSubcategoryClick(item)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+                {filteredSubcategories.length === 0 && (
+                  <p className="pcat-search-global-empty">Aucune sous-catégorie.</p>
+                )}
+              </article>
+
+              <article className="pcat-search-global-card">
+                <h3>Modèles</h3>
+                {globalModelResults.map((item) => (
+                  <button
+                    key={`search-model-${item.name}`}
+                    type="button"
+                    className="pcat-outline-btn"
+                    onClick={() => handleModelClick(item.name)}
+                  >
+                    {item.name} ({item.count})
+                  </button>
+                ))}
+                {globalModelResults.length === 0 && (
+                  <p className="pcat-search-global-empty">Aucun modèle.</p>
+                )}
+              </article>
+
+              <article className="pcat-search-global-card">
+                <h3>Produits</h3>
+                {globalProductResults.map((produit) => (
+                  <button
+                    key={`search-product-${produit.id_produit}`}
+                    type="button"
+                    className="pcat-outline-btn"
+                    onClick={() => navigate(`/produits/${produit.id_produit}`)}
+                  >
+                    {produit.titre}
+                  </button>
+                ))}
+                {globalProductResults.length === 0 && (
+                  <p className="pcat-search-global-empty">Aucun produit.</p>
+                )}
+              </article>
+            </div>
           </section>
         )}
 

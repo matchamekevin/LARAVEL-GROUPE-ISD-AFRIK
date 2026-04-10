@@ -415,10 +415,10 @@
 
 .admin-products-btn {
   padding: var(--spacing-sm) var(--spacing-lg);
-  border: none;
+  border: 2px solid var(--color-info);
   border-radius: 8px;
-  background: var(--color-info);
-  color: var(--color-white);
+  background: var(--color-white);
+  color: var(--color-info);
   font-size: var(--font-size-sm);
   font-weight: 700;
   cursor: pointer;
@@ -427,7 +427,9 @@
 }
 
 .admin-products-btn:hover {
-  background: #2563eb;
+  background: rgba(59, 130, 246, 0.08);
+  border-color: #1d4ed8;
+  color: #1d4ed8;
   transform: translateY(-1px);
 }
 
@@ -444,8 +446,9 @@
 }
 
 .admin-products-danger {
-  background: var(--color-danger);
-  color: var(--color-white);
+  background: var(--color-white);
+  color: var(--color-danger);
+  border-color: var(--color-danger);
 }
 
 .admin-products-btn--outline.admin-products-danger {
@@ -461,7 +464,9 @@
 }
 
 .admin-products-danger:hover {
-  background: #dc2626;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: #b91c1c;
+  color: #b91c1c;
   transform: translateY(-1px);
 }
 

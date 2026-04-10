@@ -3,6 +3,7 @@ import { getOrders, getOrder, updateOrderStatus, updateOrderDeliveryStatus } fro
 import AdminToast, { useAdminToast } from '../components/AdminToast';
 import AdminNotice from '../components/AdminNotice';
 import Loader from '../components/Loader';
+import { useLivePolling } from '../../hooks/useLivePolling';
 import '../styles/admin-shared.css';
 import '../styles/orders.css';
 
@@ -103,6 +104,16 @@ export default function Orders() {
       mounted = false;
     };
   }, [page, refreshToken]);
+
+  useLivePolling(
+    () => {
+      setRefreshToken((token) => token + 1);
+    },
+    {
+      intervalMs: 7000,
+      enabled: !loading && updatingDeliveryId === null,
+    }
+  );
 
   async function handleView(id) {
     try {

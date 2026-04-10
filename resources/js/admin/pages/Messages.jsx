@@ -6,6 +6,7 @@ import {
   getRevendeurDemandes,
   updateRevendeurDemandeStatus,
 } from '../api';
+import { useLivePolling } from '../../hooks/useLivePolling';
 import Loader from '../components/Loader';
 import AdminToast, { useAdminToast } from '../components/AdminToast';
 import '../styles/admin-shared.css';
@@ -197,6 +198,17 @@ export default function Messages() {
   useEffect(() => {
     loadDemandes();
   }, [demandePage, demandeStatusFilter, demandeSearch, demandeRefreshToken]);
+
+  useLivePolling(
+    () => {
+      setContactRefreshToken((token) => token + 1);
+      setDemandeRefreshToken((token) => token + 1);
+    },
+    {
+      intervalMs: 8000,
+      enabled: !loading,
+    }
+  );
 
   return (
     <div className="admin-messages-page">

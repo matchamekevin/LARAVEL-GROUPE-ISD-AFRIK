@@ -11,6 +11,7 @@ import {
 } from '../api';
 import { resolveFormationImageUrl } from '../../utils/mediaUrl';
 import { getApiBase } from '../../utils/apiBase';
+import { useLivePolling } from '../../hooks/useLivePolling';
 import Loader from '../components/Loader';
 import AdminToast, { useAdminToast } from '../components/AdminToast';
 import '../styles/admin-shared.css';
@@ -119,6 +120,16 @@ export default function Formations() {
   useEffect(() => {
     loadFormations();
   }, [page, categorie, searchInput, refreshToken]);
+
+  useLivePolling(
+    () => {
+      setRefreshToken((token) => token + 1);
+    },
+    {
+      intervalMs: 8000,
+      enabled: !saving && !loading,
+    }
+  );
 
   async function handleCreate(e) {
     e.preventDefault();
