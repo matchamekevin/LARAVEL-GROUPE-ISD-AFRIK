@@ -8,6 +8,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Service métier pour la gestion des produits.
@@ -313,6 +314,17 @@ class ProduitService
                     $data['segment'] = $normalizedCategorySegment;
                 }
             }
+        }
+
+        // Si la colonne 'segment' n'existe pas dans la table (migration non appliquée),
+        // retirer la clé pour éviter une QueryException lors de l'update.
+        try {
+            if (!Schema::hasColumn('produits', 'segment')) {
+                unset($data['segment']);
+            }
+        } catch (\Throwable $e) {
+            // Ne pas empêcher l'exécution; en environnement de tests ou connexions particulières
+            // Schema::hasColumn pourrait échouer — on ignore proprement.
         }
 
         if (array_key_exists('specifications', $data) && is_array($data['specifications'])) {
