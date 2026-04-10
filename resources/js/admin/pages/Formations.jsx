@@ -121,10 +121,53 @@ export default function Formations() {
     loadFormations();
   }, [page, categorie, searchInput, refreshToken]);
 
+  const backgroundLoadFormations = async () => {
+    try {
+      const params = {
+        page,
+        per_page: FORMATIONS_PER_PAGE,
+      };
+
+      if (searchInput.trim() !== '') {
+        params.q = searchInput.trim();
+      }
+
+      if (categorie !== 'all') {
+        params.categorie = categorie;
+      }
+
+      const res = await getFormations(params);
+      const list = Array.isArray(res.data) ? res.data : [];
+      const nextMeta = res.meta || EMPTY_PAGINATION;
+      const nextStats = res.stats || {};
+
+      if (nextMeta.last_page && page > nextMeta.last_page) {
+        setPage(nextMeta.last_page);
+        return;
+      }
+
+      setFormations(list);
+      setPagination({
+        total: Number(nextMeta.total || list.length || 0),
+        per_page: Number(nextMeta.per_page || FORMATIONS_PER_PAGE),
+        current_page: Number(nextMeta.current_page || page),
+        last_page: Number(nextMeta.last_page || 1),
+        from: Number(nextMeta.from || 0),
+        to: Number(nextMeta.to || 0),
+      });
+      setStats({
+        total: Number(nextStats.total || nextMeta.total || list.length || 0),
+        particulier: Number(nextStats.particulier || 0),
+        etudiant: Number(nextStats.etudiant || 0),
+        entreprise: Number(nextStats.entreprise || 0),
+      });
+    } catch (err) {
+      // silent background refresh
+    }
+  };
+
   useLivePolling(
-    () => {
-      setRefreshToken((token) => token + 1);
-    },
+    () => backgroundLoadFormations(),
     {
       intervalMs: 8000,
       enabled: !saving && !loading,

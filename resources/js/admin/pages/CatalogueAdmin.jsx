@@ -256,6 +256,15 @@ export default function CatalogueAdmin() {
     }
   }
 
+  async function backgroundLoadCategories() {
+    try {
+      const res = await getCategories({ segment: GEOVISION_SEGMENT });
+      setCategories(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      // silent background refresh
+    }
+  }
+
   async function loadModels() {
     setLoadingModels(true);
     try {
@@ -276,6 +285,22 @@ export default function CatalogueAdmin() {
     }
   }
 
+  async function backgroundLoadModels() {
+    try {
+      const params = { segment: GEOVISION_SEGMENT };
+      if (modelCategoryFilter !== 'all') {
+        params.id_categorie = Number(modelCategoryFilter);
+      }
+      if (modelQuery.trim()) {
+        params.q = modelQuery.trim();
+      }
+      const res = await getProducts(params);
+      setModels(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      // silent background refresh
+    }
+  }
+
   useEffect(() => {
     loadCategories();
   }, []);
@@ -285,7 +310,7 @@ export default function CatalogueAdmin() {
   }, [modelCategoryFilter]);
 
   useLivePolling(
-    () => Promise.all([loadCategories(), loadModels()]),
+    () => Promise.all([backgroundLoadCategories(), backgroundLoadModels()]),
     {
       intervalMs: 8000,
       enabled: !savingCategory && !savingModel && !syncing,

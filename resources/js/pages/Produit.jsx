@@ -746,7 +746,45 @@ export default function Produits() {
     loadProduits();
   }, [loadProduits]);
 
-  useLivePolling(loadProduits, {
+  const backgroundLoadProduits = useCallback(async () => {
+    if (!activeCategory) return;
+
+    try {
+      const params = {
+        segment: "general",
+        tri: "recent",
+        par_page: selectedModel ? 100 : 250,
+      };
+
+      const categoryIds = [];
+
+      if (selectedSubcategoryId) {
+        categoryIds.push(...getDescendantIds(Number(selectedSubcategoryId), categories));
+      } else if (activeCategory.id) {
+        const descendants = getDescendantIds(Number(activeCategory.id), categories);
+        descendants.forEach((id) => {
+          if (id !== Number(activeCategory.id)) {
+            categoryIds.push(id);
+          }
+        });
+      }
+
+      if (categoryIds.length > 0) {
+        params.id_categorie = Array.from(new Set(categoryIds)).join(",");
+      }
+
+      if (selectedModel) {
+        params.modele = selectedModel;
+      }
+
+      const response = await getProduits(params);
+      setProduits(response.data?.data || []);
+    } catch (err) {
+      // silent background refresh
+    }
+  }, [activeCategory, categories, selectedModel, selectedSubcategoryId]);
+
+  useLivePolling(backgroundLoadProduits, {
     intervalMs: 7000,
     enabled: true,
   });

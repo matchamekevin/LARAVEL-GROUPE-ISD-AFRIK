@@ -105,10 +105,42 @@ export default function Orders() {
     };
   }, [page, refreshToken]);
 
+  const backgroundLoadOrders = async () => {
+    try {
+      const params = { page, per_page: ORDERS_PER_PAGE };
+      const res = await getOrders(params);
+
+      const list = Array.isArray(res.data) ? res.data : [];
+      const nextMeta = res.meta || EMPTY_PAGINATION;
+      const nextStats = res.stats || {};
+
+      if (nextMeta.last_page && page > nextMeta.last_page) {
+        setPage(nextMeta.last_page);
+        return;
+      }
+
+      setOrders(list);
+      setPagination({
+        total: Number(nextMeta.total || list.length || 0),
+        per_page: Number(nextMeta.per_page || ORDERS_PER_PAGE),
+        current_page: Number(nextMeta.current_page || page),
+        last_page: Number(nextMeta.last_page || 1),
+        from: Number(nextMeta.from || 0),
+        to: Number(nextMeta.to || 0),
+      });
+
+      setStats({
+        total: Number(nextStats.total || nextMeta.total || list.length || 0),
+        en_attente: Number(nextStats.en_attente || 0),
+        payee: Number(nextStats.payee || 0),
+      });
+    } catch (err) {
+      // silent background refresh
+    }
+  };
+
   useLivePolling(
-    () => {
-      setRefreshToken((token) => token + 1);
-    },
+    () => backgroundLoadOrders(),
     {
       intervalMs: 7000,
       enabled: !loading && updatingDeliveryId === null,

@@ -184,10 +184,39 @@ export default function GeovisionCategorie() {
     };
   }, [category?.slug, productsRefreshToken]);
 
+  const backgroundLoadProducts = async () => {
+    try {
+      if (!category?.slug) return;
+      const response = await getProduits({
+        segment: "geovision",
+        category_slug: category.slug,
+        include_descendants: 1,
+        par_page: 250,
+        tri: "recent",
+      });
+
+      setProducts(Array.isArray(response.data?.data) ? response.data.data : []);
+    } catch (requestError) {
+      // silent
+    }
+  };
+
+  const backgroundLoadCategory = async () => {
+    try {
+      const request = /^\d+$/.test(String(slug || ""))
+        ? getCategorie(slug, { tree: 1 })
+        : getCategorieBySlug(slug, { tree: 1 });
+
+      const response = await request;
+      const item = response.data?.data || response.data || null;
+      setCategory(item);
+    } catch (requestError) {
+      // silent
+    }
+  };
+
   useLivePolling(
-    () => {
-      setProductsRefreshToken((token) => token + 1);
-    },
+    () => backgroundLoadProducts(),
     {
       intervalMs: 8000,
       enabled: Boolean(category?.slug) && !loadingProducts,
@@ -195,9 +224,7 @@ export default function GeovisionCategorie() {
   );
 
   useLivePolling(
-    () => {
-      setCategoryRefreshToken((token) => token + 1);
-    },
+    () => backgroundLoadCategory(),
     {
       intervalMs: 20000,
       enabled: !loadingCategory,

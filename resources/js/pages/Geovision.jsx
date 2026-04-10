@@ -104,10 +104,29 @@ export default function Geovision() {
     };
   }, [refreshToken]);
 
+  const backgroundLoadFamilies = async () => {
+    try {
+      const response = await getCategories({ segment: "geovision", tree: 1, parent_id: "null" });
+      const items = Array.isArray(response.data?.data) ? response.data.data : (response.data || []);
+      const geovisionRoots = items.filter((item) => (item.segment || "").toLowerCase() === "geovision");
+
+      const bySlug = geovisionRoots.reduce((acc, item) => {
+        acc[item.slug] = item;
+        return acc;
+      }, {});
+
+      const nextFamilies = GEOVISION_FAMILY_ORDER
+        .map((slug) => bySlug[slug])
+        .filter(Boolean);
+
+      setFamilies(nextFamilies);
+    } catch (requestError) {
+      // silent background refresh: keep existing families
+    }
+  };
+
   useLivePolling(
-    () => {
-      setRefreshToken((token) => token + 1);
-    },
+    () => backgroundLoadFamilies(),
     {
       intervalMs: 15000,
       enabled: !loading,

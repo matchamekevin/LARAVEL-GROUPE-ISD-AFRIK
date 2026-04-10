@@ -154,10 +154,17 @@ export default function ProduitDetail() {
       });
   }, [id, refreshToken]);
 
+  const backgroundLoadProduit = async () => {
+    try {
+      const res = await getProduit(id);
+      setProduit(res.data.data);
+    } catch (err) {
+      // silent background refresh
+    }
+  };
+
   useLivePolling(
-    () => {
-      setRefreshToken((token) => token + 1);
-    },
+    () => backgroundLoadProduit(),
     {
       intervalMs: 8000,
       enabled: Boolean(id) && !avisSubmitting && !paiementLoading,

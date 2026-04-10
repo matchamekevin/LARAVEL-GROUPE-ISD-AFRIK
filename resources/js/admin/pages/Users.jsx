@@ -232,10 +232,47 @@ export default function Users() {
     setRefreshToken((previous) => previous + 1);
   };
 
+  const backgroundLoadUsers = React.useCallback(async () => {
+    try {
+      const params = {
+        page,
+        per_page: USERS_PER_PAGE,
+      };
+
+      const trimmedSearch = search.trim();
+      if (trimmedSearch !== '') params.q = trimmedSearch;
+
+      const res = await getUsers(params);
+      const list = Array.isArray(res.data) ? res.data : [];
+      const nextMeta = res.meta || EMPTY_PAGINATION;
+      const nextStats = res.stats || EMPTY_STATS;
+
+      if (nextMeta.last_page && page > nextMeta.last_page) {
+        setPage(nextMeta.last_page);
+        return;
+      }
+
+      setUsers(list.map((item) => mergeUserState(item, item)));
+      setPagination({
+        total: Number(nextMeta.total || list.length || 0),
+        per_page: Number(nextMeta.per_page || USERS_PER_PAGE),
+        current_page: Number(nextMeta.current_page || page),
+        last_page: Number(nextMeta.last_page || 1),
+        from: Number(nextMeta.from || 0),
+        to: Number(nextMeta.to || 0),
+      });
+      setStats({
+        total: Number(nextStats.total || nextMeta.total || list.length || 0),
+        active: Number(nextStats.active || 0),
+        suspended: Number(nextStats.suspended || 0),
+      });
+    } catch (err) {
+      // silent: background refresh should not show errors
+    }
+  }, [page, search]);
+
   useLivePolling(
-    () => {
-      setRefreshToken((previous) => previous + 1);
-    },
+    () => backgroundLoadUsers(),
     {
       intervalMs: 7000,
       enabled: !creatingAdmin && accessUpdating === null && toggling === null,

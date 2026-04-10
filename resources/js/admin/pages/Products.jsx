@@ -466,6 +466,26 @@ export default function Products() {
     }
   }, [ensureFormDefaults, showToast]);
 
+  const backgroundLoadLookups = useCallback(async () => {
+    try {
+      const [categoriesResponse, countriesResponse] = await Promise.all([
+        getCategories({ segment: 'general' }),
+        getCountries({ per_page: 250 }),
+      ]);
+
+      const nextCategories = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
+      const nextCountries = Array.isArray(countriesResponse.data) ? countriesResponse.data : [];
+
+      setCategories(nextCategories);
+      setCountries(nextCountries);
+      ensureFormDefaults(nextCategories, nextCountries);
+    } catch (error) {
+      // silent background refresh: do not surface errors
+      setCategories((prev) => prev || []);
+      setCountries((prev) => prev || []);
+    }
+  }, [ensureFormDefaults]);
+
   const loadProducts = useCallback(
     async () => {
       setLoading(true);
@@ -530,6 +550,59 @@ export default function Products() {
     [filters]
   );
 
+  const backgroundLoadProducts = useCallback(async () => {
+    try {
+      const params = {
+        segment: 'general',
+        page: filters.page,
+        per_page: filters.per_page,
+      };
+
+      if (filters.q.trim()) {
+        params.q = filters.q.trim();
+      }
+
+      if (filters.statut !== 'all') {
+        params.statut = filters.statut;
+      }
+
+      if (filters.id_categorie !== 'all') {
+        params.id_categorie = Number(filters.id_categorie);
+      }
+
+      if (filters.trashed) {
+        params.trashed = filters.trashed;
+      }
+
+      const res = await getProducts(params);
+      const nextProducts = Array.isArray(res.data) ? res.data : [];
+      const nextMeta = res.meta || EMPTY_META;
+
+      setProducts(nextProducts);
+      setMeta(nextMeta);
+      setProductStats({
+        total: Number(nextMeta.total || nextProducts.length || 0),
+        vedette: nextProducts.filter((item) => Boolean(item.est_en_vedette)).length,
+        lowStock: nextProducts.filter((item) => isLowStockProduct(item)).length,
+      });
+
+      setCurrentProductId((previous) => {
+        if (!previous) {
+          return nextProducts[0] ? Number(nextProducts[0].id ?? nextProducts[0].id_produit) : null;
+        }
+
+        const exists = nextProducts.some((item) => Number(item.id ?? item.id_produit) === Number(previous));
+        if (exists) {
+          return previous;
+        }
+
+        return nextProducts[0] ? Number(nextProducts[0].id ?? nextProducts[0].id_produit) : null;
+      });
+    } catch (error) {
+      // silent background refresh
+    }
+  }, [filters]);
+
   useEffect(() => {
     loadLookups();
   }, [loadLookups]);
@@ -541,7 +614,7 @@ export default function Products() {
   useLivePolling(
     () => {
       if (editorMode !== 'idle') return;
-      return loadProducts();
+      return backgroundLoadProducts();
     },
     {
       intervalMs: 7000,
@@ -552,7 +625,7 @@ export default function Products() {
   useLivePolling(
     () => {
       if (editorMode !== 'idle') return;
-      return loadLookups();
+      return backgroundLoadLookups();
     },
     {
       intervalMs: 30000,

@@ -75,10 +75,30 @@ export default function Dashboard() {
     };
   }, [refreshToken]);
 
+  const backgroundLoadDashboard = async () => {
+    try {
+      if (typeof window !== 'undefined') {
+        window.setTimeout(() => {
+          warmAdminCaches();
+        }, 0);
+      } else {
+        warmAdminCaches();
+      }
+
+      const res = await getDashboardSummary();
+      const data = res?.data || {};
+      setSummary({
+        ...EMPTY_SUMMARY,
+        ...data,
+        recentActivity: Array.isArray(data.recentActivity) ? data.recentActivity : [],
+      });
+    } catch (err) {
+      // silent background refresh: keep previous summary and avoid showing error
+    }
+  };
+
   useLivePolling(
-    () => {
-      setRefreshToken((token) => token + 1);
-    },
+    () => backgroundLoadDashboard(),
     {
       intervalMs: 10000,
       enabled: true,
