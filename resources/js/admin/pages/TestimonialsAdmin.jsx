@@ -7,6 +7,7 @@ import {
 } from '../api';
 import Loader from '../components/Loader';
 import AdminToast, { useAdminToast } from '../components/AdminToast';
+import DeleteIconButton from '../components/DeleteIconButton';
 import { pickDisplayMediaUrl } from '../../utils/mediaUrl';
 import '../styles/admin-shared.css';
 import '../styles/testimonials.css';
@@ -286,7 +287,7 @@ export default function TestimonialsAdmin() {
                   <td>{item.is_active ? 'Actif' : 'Inactif'}</td>
                   <td>
                     <button className="btn-secondary" onClick={() => startEdit(item)}>Editer</button>
-                    <button className="btn-secondary" onClick={() => handleDelete(item.id)}>Supprimer</button>
+                    <DeleteIconButton onClick={() => handleDelete(item.id)} className="btn-secondary" title="Supprimer" ariaLabel={`Supprimer l'avis ${item?.name || item.id}`} />
                   </td>
                 </tr>
               ))}

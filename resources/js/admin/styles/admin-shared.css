@@ -506,6 +506,30 @@ body, html {
   min-height: 50px;
 }
 
+/* Icon-only button used for delete actions (shows only the SVG) */
+.admin-icon-button {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  color: var(--color-danger) !important;
+  cursor: pointer !important;
+}
+
+.admin-icon-button svg {
+  display: block;
+}
+
+.admin-icon-button:focus {
+  outline: 2px solid rgba(236, 72, 153, 0.15);
+  outline-offset: 2px;
+}
+
 /* ========================================
    TABLES & LISTS
    ======================================== */

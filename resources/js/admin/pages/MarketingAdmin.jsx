@@ -7,6 +7,7 @@ import {
 } from '../api';
 import Loader from '../components/Loader';
 import AdminToast, { useAdminToast } from '../components/AdminToast';
+import DeleteIconButton from '../components/DeleteIconButton';
 import '../styles/admin-shared.css';
 import '../styles/marketing.css';
 
@@ -309,7 +310,7 @@ export default function MarketingAdmin() {
                       <td>{item.is_active ? 'Active' : 'Inactive'}</td>
                       <td>
                         <button className="btn-secondary" onClick={() => startEdit(item)}>Editer</button>
-                        <button className="btn-secondary" onClick={() => handleDelete(item.id)}>Supprimer</button>
+                        <DeleteIconButton onClick={() => handleDelete(item.id)} className="btn-secondary" title="Supprimer" ariaLabel={`Supprimer la carte ${item?.title || item.id}`} />
                       </td>
                     </tr>
                   ))}
@@ -352,7 +353,7 @@ export default function MarketingAdmin() {
                       <td>{item.is_active ? 'Active' : 'Inactive'}</td>
                       <td>
                         <button className="btn-secondary" onClick={() => startEdit(item)}>Editer</button>
-                        <button className="btn-secondary" onClick={() => handleDelete(item.id)}>Supprimer</button>
+                        <DeleteIconButton onClick={() => handleDelete(item.id)} className="btn-secondary" title="Supprimer" ariaLabel={`Supprimer la carte ${item?.title || item.id}`} />
                       </td>
                     </tr>
                   ))}

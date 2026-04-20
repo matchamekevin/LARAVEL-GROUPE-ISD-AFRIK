@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import '../styles/catalogue-admin.css';
 import AdminToast, { useAdminToast } from '../components/AdminToast';
 import AdminNotice from '../components/AdminNotice';
+import DeleteIconButton from '../components/DeleteIconButton';
 import { useLivePolling } from '../../hooks/useLivePolling';
 import '../styles/admin-shared.css';
 import '../styles/products.css';
@@ -387,9 +388,19 @@ export default function Products() {
     });
   }, [categories, categoryQuery]);
 
+  const getCategoryId = useCallback(
+    (category) => Number(category?.id ?? category?.id_categorie ?? 0),
+    []
+  );
+
+  const getCategoryParentId = useCallback(
+    (category) => Number(category?.parent_id ?? category?.parent?.id ?? category?.parent?.id_categorie ?? 0),
+    []
+  );
+
   const topLevelCategories = useMemo(
-    () => categories.filter((category) => Number(category.parent_id ?? category.parent?.id ?? 0) === 0),
-    [categories]
+    () => categories.filter((category) => getCategoryParentId(category) === 0),
+    [categories, getCategoryParentId]
   );
 
   const technicalRootCategory = useMemo(() => {
@@ -403,31 +414,55 @@ export default function Products() {
     );
     if (byName) return byName;
 
-    return topLevelCategories[0] || null;
+    return null;
   }, [topLevelCategories]);
 
-  const technicalRootId = Number(technicalRootCategory?.id ?? technicalRootCategory?.id_categorie ?? 0);
+  const technicalRootId = getCategoryId(technicalRootCategory);
+
+  const rootChildrenAll = useMemo(() => {
+    if (!technicalRootId) return [];
+    return categories.filter((category) => getCategoryParentId(category) === technicalRootId);
+  }, [categories, technicalRootId, getCategoryParentId]);
 
   const mainCategoriesAll = useMemo(() => {
-    if (!technicalRootId) return [];
-    return categories.filter((category) => Number(category.parent_id ?? category.parent?.id ?? 0) === technicalRootId);
-  }, [categories, technicalRootId]);
+    // Preferred mode: explicit tree under technical root.
+    if (rootChildrenAll.length > 0) {
+      return rootChildrenAll;
+    }
+
+    // Fallback mode for flat/mixed DB structures: show top-level categories.
+    if (topLevelCategories.length === 0) {
+      return [];
+    }
+
+    if (technicalRootId) {
+      const topLevelWithoutRoot = topLevelCategories.filter((category) => getCategoryId(category) !== technicalRootId);
+      if (topLevelWithoutRoot.length > 0) {
+        return topLevelWithoutRoot;
+      }
+    }
+
+    return topLevelCategories;
+  }, [rootChildrenAll, topLevelCategories, technicalRootId, getCategoryId]);
+
+  const mainCategoryIds = useMemo(
+    () => new Set(mainCategoriesAll.map((category) => getCategoryId(category)).filter(Boolean)),
+    [mainCategoriesAll, getCategoryId]
+  );
 
   const mainCategories = useMemo(() => {
-    if (!technicalRootId) return [];
-    return filteredCategories.filter((category) => Number(category.parent_id ?? category.parent?.id ?? 0) === technicalRootId);
-  }, [filteredCategories, technicalRootId]);
+    if (mainCategoryIds.size === 0) return [];
+    return filteredCategories.filter((category) => mainCategoryIds.has(getCategoryId(category)));
+  }, [filteredCategories, mainCategoryIds, getCategoryId]);
 
   const subCategories = useMemo(() => {
-    const mainIds = new Set(mainCategoriesAll.map((category) => Number(category.id ?? category.id_categorie)).filter(Boolean));
-    if (mainIds.size === 0) return [];
-
-    return filteredCategories.filter((category) => mainIds.has(Number(category.parent_id ?? category.parent?.id ?? 0)));
-  }, [filteredCategories, mainCategoriesAll]);
+    if (mainCategoryIds.size === 0) return [];
+    return filteredCategories.filter((category) => mainCategoryIds.has(getCategoryParentId(category)));
+  }, [filteredCategories, mainCategoryIds, getCategoryParentId]);
 
   const subcategoryParentCategories = useMemo(
-    () => mainCategoriesAll.filter((category) => Number(category.id ?? category.id_categorie) !== Number(editingCategoryId || 0)),
-    [mainCategoriesAll, editingCategoryId]
+    () => mainCategoriesAll.filter((category) => getCategoryId(category) !== Number(editingCategoryId || 0)),
+    [mainCategoriesAll, editingCategoryId, getCategoryId]
   );
 
   const isCategoryManagementTab = activeTab === 'categories' || activeTab === 'subcategories';
@@ -1038,12 +1073,6 @@ export default function Products() {
       return;
     }
 
-    if (!isSubcategoryMode && !technicalRootId) {
-      setCategoryErrorMessage('Categorie racine du catalogue introuvable. Impossible de creer une categorie principale.');
-      showToast('Categorie racine du catalogue introuvable. Impossible de creer une categorie principale.', 'error');
-      return;
-    }
-
     const isEditingCategory = Boolean(editingCategoryId);
 
     setSavingCategory(true);
@@ -1055,7 +1084,7 @@ export default function Products() {
         nom,
         slug: String(categoryForm.slug || '').trim() || undefined,
         description: String(categoryForm.description || '').trim() || null,
-        parent_id: isSubcategoryMode ? Number(categoryForm.parent_id) : technicalRootId,
+        parent_id: isSubcategoryMode ? Number(categoryForm.parent_id) : (technicalRootId || null),
         ordre: Number(categoryForm.ordre || 0),
         actif: Boolean(categoryForm.actif),
         segment: 'general',
@@ -1215,9 +1244,12 @@ export default function Products() {
                       ) : null}
 
                       {!isTrashed ? (
-                        <button type="button" className="admin-products-btn admin-products-danger" disabled={actionLoadingId === id} onClick={() => handleDelete(id)}>
-                          Supprimer
-                        </button>
+                        <DeleteIconButton
+                          onClick={() => handleDelete(id)}
+                          className="admin-products-btn admin-products-danger"
+                          title="Supprimer"
+                          ariaLabel={`Supprimer le produit ${product?.nom || product?.titre || id}`}
+                        />
                       ) : null}
 
                       {isTrashed ? (
@@ -1442,7 +1474,7 @@ export default function Products() {
               </div>
             </div>
 
-            {!isSubcategoryTab ? (
+            {!isSubcategoryTab && technicalRootCategory ? (
               <p className="admin-products-note admin-products-note--compact">
                 Catalogue parent: <strong>{technicalRootCategory?.nom || 'Non trouve en base'}</strong>
               </p>
@@ -1461,8 +1493,6 @@ export default function Products() {
 
             {lookupsLoading ? (
               <div className="admin-products-empty">{isSubcategoryTab ? 'Chargement des sous-categories...' : 'Chargement des categories...'}</div>
-            ) : !technicalRootId ? (
-              <div className="admin-products-empty">Racine catalogue introuvable dans la base de donnees.</div>
             ) : managedCategories.length === 0 ? (
               <div className="admin-products-empty">{isSubcategoryTab ? 'Aucune sous-categorie trouvee.' : 'Aucune categorie trouvee.'}</div>
             ) : (
@@ -1527,14 +1557,12 @@ export default function Products() {
                               >
                                 Editer
                               </button>
-                              <button
-                                type="button"
-                                className="admin-products-btn admin-products-btn--outline admin-products-danger"
-                                disabled={categoryActionLoadingId === id}
+                              <DeleteIconButton
                                 onClick={() => handleDeleteCategory(id)}
-                              >
-                                Supprimer
-                              </button>
+                                className="admin-products-btn admin-products-btn--outline admin-products-danger"
+                                title="Supprimer"
+                                ariaLabel={`Supprimer la categorie ${category?.nom || id}`}
+                              />
                             </div>
                           </td>
                         </tr>
@@ -2060,14 +2088,12 @@ export default function Products() {
                         <figcaption>
                           <span>{image.alt || 'Image produit'}</span>
                           {typeof image.id === 'number' ? (
-                            <button
-                              type="button"
-                              className="admin-products-btn admin-products-danger"
-                              disabled={actionLoadingId === Number(selectedProduct.id ?? selectedProduct.id_produit)}
+                            <DeleteIconButton
                               onClick={() => handleDeleteImage(Number(selectedProduct.id ?? selectedProduct.id_produit), image.id)}
-                            >
-                              Supprimer
-                            </button>
+                              className="admin-products-btn admin-products-danger"
+                              title="Supprimer"
+                              ariaLabel={`Supprimer l'image ${image?.id}`}
+                            />
                           ) : null}
                         </figcaption>
                       </figure>

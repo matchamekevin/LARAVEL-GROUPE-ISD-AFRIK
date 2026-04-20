@@ -9,6 +9,7 @@ import {
 import { useLivePolling } from '../../hooks/useLivePolling';
 import Loader from '../components/Loader';
 import AdminToast, { useAdminToast } from '../components/AdminToast';
+import DeleteIconButton from '../components/DeleteIconButton';
 import '../styles/admin-shared.css';
 import '../styles/messages.css';
 
@@ -308,9 +309,12 @@ export default function Messages() {
                                   {statut === 'lu' ? 'Marquer lu' : statut === 'traite' ? 'Traiter' : 'Nouveau'}
                                 </button>
                               ))}
-                              <button type="button" className="admin-messages-danger" onClick={() => handleDeleteContact(m.id)}>
-                                Supprimer
-                              </button>
+                              <DeleteIconButton
+                                onClick={() => handleDeleteContact(m.id)}
+                                className="admin-messages-danger"
+                                title="Supprimer"
+                                ariaLabel={`Supprimer le message de ${m?.nom_complet || m?.email || m.id}`}
+                              />
                             </div>
                           </td>
                         </tr>

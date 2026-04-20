@@ -7,6 +7,7 @@ import {
 } from '../api';
 import Loader from '../components/Loader';
 import AdminToast, { useAdminToast } from '../components/AdminToast';
+import DeleteIconButton from '../components/DeleteIconButton';
 import { pickDisplayMediaUrl } from '../../utils/mediaUrl';
 import '../styles/admin-shared.css';
 import '../styles/partners.css';
@@ -128,10 +129,10 @@ export default function PartnersAdmin() {
         Gere la section <strong>Nos partenaires technologiques</strong> affichee sur la page d'accueil.
       </p>
 
-      <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h2 style={{ marginBottom: '0.75rem' }}>{editingId ? 'Modifier un partenaire' : 'Nouveau partenaire'}</h2>
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '0.8rem' }}>
-          <div style={{ display: 'grid', gap: '0.8rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+      <div className="card">
+        <h2 style={{ marginBottom: '0.75rem' }}>{editingId ? 'Modifier partenaire' : 'Ajouter un partenaire'}</h2>
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gap: '0.75rem' }}>
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Nom
               <input
@@ -142,6 +143,7 @@ export default function PartnersAdmin() {
                 required
               />
             </label>
+
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Ordre
               <input
@@ -152,6 +154,7 @@ export default function PartnersAdmin() {
                 onChange={(e) => setField('sort_order', e.target.value)}
               />
             </label>
+
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', alignSelf: 'end' }}>
               <input
                 type="checkbox"
@@ -160,33 +163,33 @@ export default function PartnersAdmin() {
               />
               Actif
             </label>
-          </div>
 
-          <label style={{ display: 'grid', gap: '0.35rem' }}>
-            Logo partenaire
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setField('image', e.target.files?.[0] || null)}
-            />
-          </label>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            {form.existing_image ? (
-              <img
-                src={form.existing_image}
-                alt="Image actuelle"
-                style={{ width: '90px', height: '58px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#fff' }}
+            <label style={{ display: 'grid', gap: '0.35rem' }}>
+              Logo partenaire
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setField('image', e.target.files?.[0] || null)}
               />
-            ) : null}
-            <button className="btn-primary" type="submit" disabled={saving}>
-              {saving ? 'Enregistrement...' : (editingId ? 'Mettre a jour' : 'Creer')}
-            </button>
-            {editingId ? (
-              <button className="btn-secondary" type="button" onClick={resetForm}>
-                Annuler
+            </label>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              {form.existing_image ? (
+                <img
+                  src={form.existing_image}
+                  alt="Image actuelle"
+                  style={{ width: '90px', height: '58px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#fff' }}
+                />
+              ) : null}
+              <button className="btn-primary" type="submit" disabled={saving}>
+                {saving ? 'Enregistrement...' : (editingId ? 'Mettre a jour' : 'Creer')}
               </button>
-            ) : null}
+              {editingId ? (
+                <button className="btn-secondary" type="button" onClick={resetForm}>
+                  Annuler
+                </button>
+              ) : null}
+            </div>
           </div>
         </form>
       </div>
@@ -223,7 +226,7 @@ export default function PartnersAdmin() {
                   <td>{item.is_active ? 'Actif' : 'Inactif'}</td>
                   <td>
                     <button className="btn-secondary" onClick={() => startEdit(item)}>Editer</button>
-                    <button className="btn-secondary" onClick={() => handleDelete(item.id)}>Supprimer</button>
+                    <DeleteIconButton onClick={() => handleDelete(item.id)} className="btn-secondary" title="Supprimer" ariaLabel={`Supprimer le partenaire ${item?.name || item.id}`} />
                   </td>
                 </tr>
               ))}

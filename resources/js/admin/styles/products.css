@@ -615,6 +615,9 @@
   padding: clamp(0.75rem, 1.5vw, 1.1rem);
   align-items: center;
   overflow-y: auto;
+  background: rgba(15, 23, 42, 0.28);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .admin-products-modal-shell {

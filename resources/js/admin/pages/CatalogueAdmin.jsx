@@ -14,6 +14,7 @@ import {
 import { useLivePolling } from '../../hooks/useLivePolling';
 import Loader from '../components/Loader';
 import AdminToast, { useAdminToast } from '../components/AdminToast';
+import DeleteIconButton from '../components/DeleteIconButton';
 import '../styles/admin-shared.css';
 import '../styles/catalogue-admin.css';
 
@@ -682,7 +683,12 @@ export default function CatalogueAdmin() {
                           <td>
                             <div className="admin-catalogue-row-actions">
                               <button type="button" className="btn-secondary" onClick={() => startEditCategory(cat)}>Editer</button>
-                              <button type="button" className="admin-catalogue-danger" onClick={() => handleDeleteCategory(id)}>Supprimer</button>
+                              <DeleteIconButton
+                                onClick={() => handleDeleteCategory(id)}
+                                className="admin-catalogue-danger"
+                                title="Supprimer"
+                                ariaLabel={`Supprimer la categorie ${cat?.nom || id}`}
+                              />
                             </div>
                           </td>
                         </tr>
@@ -940,7 +946,12 @@ export default function CatalogueAdmin() {
                           <td>
                             <div className="admin-catalogue-row-actions">
                               <button type="button" className="btn-secondary" onClick={() => startEditModel(model)}>Editer</button>
-                              <button type="button" className="admin-catalogue-danger" onClick={() => handleDeleteModel(model.id)}>Supprimer</button>
+                              <DeleteIconButton
+                                onClick={() => handleDeleteModel(model.id)}
+                                className="admin-catalogue-danger"
+                                title="Supprimer"
+                                ariaLabel={`Supprimer le modele ${model?.title || model.id}`}
+                              />
                             </div>
                           </td>
                         </tr>

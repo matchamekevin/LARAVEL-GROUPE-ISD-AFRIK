@@ -7,6 +7,7 @@ import {
 } from '../api';
 import Loader from '../components/Loader';
 import AdminToast, { useAdminToast } from '../components/AdminToast';
+import DeleteIconButton from '../components/DeleteIconButton';
 import { HOME_MARKETING_SECTIONS, normalizeMarketingTarget } from '../../utils/homeMarketingCards';
 import '../styles/admin-shared.css';
 import '../styles/promotions.css';
@@ -372,9 +373,7 @@ export default function PromotionsAdmin() {
                               <button className="btn-secondary" type="button" onClick={() => startEdit(item)}>
                                 Editer
                               </button>
-                              <button className="btn-secondary" type="button" onClick={() => handleDelete(item.id)}>
-                                Supprimer
-                              </button>
+                              <DeleteIconButton onClick={() => handleDelete(item.id)} className="btn-secondary" title="Supprimer" ariaLabel={`Supprimer la promotion ${item?.title || item.id}`} />
                               {item.target_url ? (
                                 <a
                                   className="btn-secondary"
