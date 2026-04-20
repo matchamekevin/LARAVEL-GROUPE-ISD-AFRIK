@@ -472,6 +472,10 @@ class UtilisateurController extends Controller
     public function login(Request $request)
     {
         try {
+            // Compatibilité : certains clients envoient `password` au lieu de `mot_de_passe`.
+            if (!$request->has('mot_de_passe') && $request->has('password')) {
+                $request->merge(['mot_de_passe' => $request->input('password')]);
+            }
             // ✅ Validation des credentials
             $credentials = $request->validate([
                 'email'        => 'required|email',

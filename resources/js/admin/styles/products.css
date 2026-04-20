@@ -535,6 +535,28 @@
   justify-content: flex-end;
 }
 
+/* Ensure hero action buttons remain high-contrast on the dark hero background */
+.admin-products-hero .admin-products-hero-buttons .admin-products-btn:hover {
+  background: #ffffff;
+  color: var(--color-info);
+  border-color: var(--color-info);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(59, 130, 246, 0.06);
+}
+
+.admin-products-hero .admin-products-hero-buttons .admin-products-btn--outline:hover {
+  background: #ffffff;
+  color: var(--color-info);
+  border-color: var(--color-info);
+}
+
+.admin-products-hero .admin-products-hero-buttons .admin-products-btn.admin-products-danger:hover,
+.admin-products-hero .admin-products-hero-buttons .admin-products-btn--outline.admin-products-danger:hover {
+  background: #ffffff;
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
 .admin-products-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

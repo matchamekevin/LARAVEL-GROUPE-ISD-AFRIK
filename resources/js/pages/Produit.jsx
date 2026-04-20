@@ -77,12 +77,43 @@ const statusClasses = {
 
 const LOCALHOST_IMAGE_PATTERN = /(?:127\.0\.0\.1|localhost)/i;
 
+const extractStoragePathFromUrl = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  try {
+    const parsed = new URL(raw);
+    if (String(parsed.pathname || "").startsWith("/storage/")) {
+      return parsed.pathname;
+    }
+  } catch (error) {
+    // Ignore parsing errors for non-absolute URLs.
+  }
+
+  const match = raw.match(/\/storage\/[^?#]+/i);
+  return match ? match[0] : "";
+};
+
 const normalizeImageCandidate = (value) => {
   const normalized = String(value || "").trim();
   if (!normalized) return "";
-  if (LOCALHOST_IMAGE_PATTERN.test(normalized)) return "";
+
+  if (LOCALHOST_IMAGE_PATTERN.test(normalized)) {
+    const storagePath = extractStoragePathFromUrl(normalized);
+    return storagePath || "";
+  }
+
   if (normalized === "/placeholder.webp") return "";
-  return normalized;
+
+  if (normalized.startsWith("http://") || normalized.startsWith("https://") || normalized.startsWith("/")) {
+    return normalized;
+  }
+
+  if (normalized.startsWith("storage/")) {
+    return `/${normalized}`;
+  }
+
+  return `/storage/${normalized.replace(/^\/+/, "")}`;
 };
 
 const getImageCandidates = (values, { allowDefault = false } = {}) => {
@@ -574,8 +605,16 @@ export default function Produits() {
 
   const loadCategories = useCallback(async () => {
     try {
-      const response = await getCategories({ segment: "general", tree: 1 });
-      const tree = response.data?.data || response.data || [];
+      // Try with the 'general' segment first (production expectation).
+      let response = await getCategories({ segment: "general", tree: 1 });
+      let tree = response.data?.data || response.data || [];
+
+      // Fallback for local/dev DB where categories may not have a segment set.
+      if (!Array.isArray(tree) || tree.length === 0) {
+        response = await getCategories({ tree: 1 });
+        tree = response.data?.data || response.data || [];
+      }
+
       setCategories(flattenCategories(tree));
     } catch {
       setCategories([]);

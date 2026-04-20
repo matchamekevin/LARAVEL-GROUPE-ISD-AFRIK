@@ -155,11 +155,41 @@ const formatPrice = (value) => {
 
 const LOCALHOST_IMAGE_PATTERN = /(?:127\.0\.0\.1|localhost)/i;
 
+const extractStoragePathFromUrl = (value) => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+
+  try {
+    const parsed = new URL(raw);
+    if (String(parsed.pathname || '').startsWith('/storage/')) {
+      return parsed.pathname;
+    }
+  } catch (error) {
+    // Ignore parsing errors for non-absolute URLs.
+  }
+
+  const match = raw.match(/\/storage\/[^?#]+/i);
+  return match ? match[0] : '';
+};
+
 const normalizeMediaUrl = (value) => {
   const normalized = String(value || '').trim();
   if (!normalized) return '';
-  if (LOCALHOST_IMAGE_PATTERN.test(normalized)) return '';
-  return normalized;
+
+  if (LOCALHOST_IMAGE_PATTERN.test(normalized)) {
+    const storagePath = extractStoragePathFromUrl(normalized);
+    return storagePath || '';
+  }
+
+  if (normalized.startsWith('http://') || normalized.startsWith('https://') || normalized.startsWith('/')) {
+    return normalized;
+  }
+
+  if (normalized.startsWith('storage/')) {
+    return `/${normalized}`;
+  }
+
+  return `/storage/${normalized.replace(/^\/+/, '')}`;
 };
 
 const handleImageError = (event, fallback = '/images/default.webp') => {
@@ -175,11 +205,15 @@ const getProductImages = (product) => {
 
   if (Array.isArray(product.images) && product.images.length > 0) {
     return product.images
-      .map((image) => ({
-        id: image?.id,
-        url: normalizeMediaUrl(image?.url || image?.path),
-        alt: image?.alt || product.title || product.titre || 'Produit',
-      }))
+      .map((image) => {
+        const url = normalizeMediaUrl(image?.url) || normalizeMediaUrl(image?.path);
+
+        return {
+          id: image?.id,
+          url,
+          alt: image?.alt || product.title || product.titre || 'Produit',
+        };
+      })
       .filter((image) => Boolean(image.url));
   }
 
@@ -450,7 +484,21 @@ export default function Products() {
         getCountries({ per_page: 250 }),
       ]);
 
-      const nextCategories = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
+      // If admin categories for segment 'general' are empty, fall back to fetching without segment
+      let nextCategories = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
+      if (nextCategories.length === 0) {
+        try {
+          const fallback = await getCategories();
+          nextCategories = Array.isArray(fallback.data) ? fallback.data : nextCategories;
+          if (nextCategories.length > 0) {
+            // eslint-disable-next-line no-console
+            console.info('Categories: loaded fallback without segment');
+          }
+        } catch (fallbackErr) {
+          // ignore fallback error, we'll surface original error if any
+        }
+      }
+
       const nextCountries = Array.isArray(countriesResponse.data) ? countriesResponse.data : [];
 
       setCategories(nextCategories);
@@ -473,7 +521,16 @@ export default function Products() {
         getCountries({ per_page: 250 }),
       ]);
 
-      const nextCategories = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
+      let nextCategories = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
+      if (nextCategories.length === 0) {
+        try {
+          const fallback = await getCategories();
+          nextCategories = Array.isArray(fallback.data) ? fallback.data : nextCategories;
+        } catch (e) {
+          // silent fallback fail
+        }
+      }
+
       const nextCountries = Array.isArray(countriesResponse.data) ? countriesResponse.data : [];
 
       setCategories(nextCategories);
@@ -917,7 +974,7 @@ export default function Products() {
     setCategoryImagePreview(null);
   };
 
-  const handleOpenCategoryManagement = (tab) => {
+  const handleOpenCategoryManagement = async (tab) => {
     if (tab === 'products') {
       setActiveTab('products');
       setCategoryEditorOpen(false);
@@ -930,6 +987,15 @@ export default function Products() {
     setCategoryErrorMessage('');
     setCategorySuccessMessage('');
     setCategoryForm(buildDefaultCategoryForm(tab));
+
+    // If categories are not loaded yet (or were cleared), fetch them from the API
+    if (!categories || categories.length === 0) {
+      try {
+        await loadLookups();
+      } catch (e) {
+        // loadLookups already handles errors & toasts; noop here
+      }
+    }
   };
 
   const handleStartEditCategory = (category) => {

@@ -26,9 +26,9 @@ class TwoFactorCodeNotification extends Notification
     {
         return (new MailMessage)
             ->subject('Votre code de vérification')
-            ->line('Bonjour ' . $notifiable->prenom . ' ' . $notifiable->nom . ',')
-            ->line('Voici votre code de vérification : ' . $this->code)
-            ->line('Ce code expire dans 10 minutes.')
-            ->salutation('ISD AFRIK');
+            ->view('emails.twofactor', [
+                'code' => $this->code,
+                'nom'  => ($notifiable->prenom ?? '') . ' ' . ($notifiable->nom ?? ''),
+            ]);
     }
 }

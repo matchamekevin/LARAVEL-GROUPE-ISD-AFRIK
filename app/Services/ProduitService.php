@@ -7,7 +7,6 @@ use App\Models\Produit;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -34,7 +33,20 @@ class ProduitService
             $query->where('statut', $filters['statut']);
         } else {
             // Valeur par défaut tolérante: certains jeux de données utilisent "actif" au lieu de "disponible".
-            $query->whereIn('statut', ['disponible', 'actif']);
+            // En environnement local/testing, être plus permissif (ne pas filtrer) pour faciliter le développement.
+            $applyDefaultStatut = true;
+            try {
+                $env = env('APP_ENV', 'production');
+                if (in_array($env, ['local', 'testing'], true)) {
+                    $applyDefaultStatut = false;
+                }
+            } catch (\Throwable $e) {
+                $applyDefaultStatut = true;
+            }
+
+            if ($applyDefaultStatut) {
+                $query->whereIn('statut', ['disponible', 'actif']);
+            }
         }
 
         if (!empty($filters['id_categories']) && is_array($filters['id_categories'])) {
@@ -48,10 +60,19 @@ class ProduitService
                 $categorieQuery->where('segment', $filters['segment']);
             });
         } else {
-            // Par défaut, le catalogue public reste sur le segment général.
-            $query->whereHas('categorie', function ($categorieQuery) {
-                $categorieQuery->where('segment', 'general');
-            });
+            // Par défaut, filtrer sur 'general' seulement si ce segment existe en base.
+            // Certains environnements locaux ont des catégories avec `segment = null`.
+            try {
+                $hasGeneral = CategorieProduit::query()->where('segment', 'general')->exists();
+            } catch (\Throwable $e) {
+                $hasGeneral = false;
+            }
+
+            if ($hasGeneral) {
+                $query->whereHas('categorie', function ($categorieQuery) {
+                    $categorieQuery->where('segment', 'general');
+                });
+            } // sinon : absence de segment 'general' détectée -> ne pas restreindre par segment (compatibilité local)
         }
 
         if (!empty($filters['category_slug'])) {
@@ -246,7 +267,8 @@ class ProduitService
         $urls = [];
         foreach ($images as $image) {
             $path = $image->store('produits', 'public');
-            $publicUrl = Storage::disk('public')->url($path);
+            // Stocker un chemin web stable, indépendant de APP_URL (évite les URLs localhost en prod).
+            $publicUrl = '/storage/' . ltrim($path, '/');
             $produit->images()->create([
                 'url' => $publicUrl,
                 'path' => $path,
