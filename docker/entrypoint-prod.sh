@@ -6,6 +6,17 @@ PORT=${PORT:-10000}
 
 echo "🚀 Starting application on port $PORT..."
 
+# Rendre les logs PHP visibles dans les logs Render (stderr)
+export PHP_FPM_LOG_LEVEL=${PHP_FPM_LOG_LEVEL:-notice}
+
+# Vérification hard-fail des variables critiques: évite un 500 silencieux.
+if [ -z "${APP_KEY:-}" ] || [[ "${APP_KEY}" == "base64:REPLACE_WITH_YOUR_APP_KEY" ]]; then
+	echo "ERROR: APP_KEY est manquant ou vaut un placeholder."
+	echo "- Dans Render: Settings -> Environment -> ajoute APP_KEY (commande locale: php artisan key:generate --show)"
+	echo "- Exemple: base64:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx="
+	exit 1
+fi
+
 # Remplace le port dans la config Nginx (IPv4 et IPv6)
 sed -i "s/listen 0.0.0.0:10000;/listen 0.0.0.0:$PORT;/" /etc/nginx/conf.d/default.conf
 # Remplace aussi la ligne IPv6 en conservant la forme '[::]:PORT'
@@ -25,6 +36,9 @@ chown -R www-data:www-data storage bootstrap/cache public || true
 mkdir -p storage/framework/views storage/logs
 chown -R www-data:www-data storage bootstrap/cache public storage/framework storage/logs || true
 chmod -R 0777 storage bootstrap/cache public storage/framework storage/logs || true
+
+# Supprime les caches commités / obsolètes (cause fréquente de 500 en prod quand --no-dev).
+rm -f bootstrap/cache/*.php || true
 
 # Expose les uploads Laravel via /storage en prod.
 # Sans ce lien symbolique, les URLs d'images uploadées retombent sur la SPA.
@@ -49,13 +63,11 @@ else
 	echo "Skipping migrations (set RUN_MIGRATIONS=true to enable)"
 fi
 
-# Nettoie les caches pour éviter un route cache obsolète lors des déploiements.
-php artisan route:clear || true
-php artisan cache:clear || true
-
-# Cache configuration and views (safe to run)
-php artisan config:cache || true
-php artisan view:cache || true
+# Nettoyage + rebuild des caches. Si ça échoue, on préfère le voir dans les logs (et redémarrer) plutôt que servir un 500.
+php artisan optimize:clear
+php artisan package:discover --ansi
+php artisan config:cache
+php artisan view:cache
 
 echo "✓ Setup complete, launching supervisord..."
 
