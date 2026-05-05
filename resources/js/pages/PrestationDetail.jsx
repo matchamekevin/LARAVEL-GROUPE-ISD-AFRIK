@@ -145,9 +145,9 @@ export default function PrestationDetail() {
 
   return (
     <div className="prestation-detail-page">
-      <button className="prestation-back-btn" onClick={() => navigate(-1)}>
-        ← Retour
-      </button>
+      <Link to="/ingenierie" className="prestation-back-btn">
+        ← Ingénierie
+      </Link>
 
       <section className="prestation-hero">
         <img 
