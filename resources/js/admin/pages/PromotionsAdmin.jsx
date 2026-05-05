@@ -119,25 +119,6 @@ export default function PromotionsAdmin() {
      return () => URL.revokeObjectURL(url);
    }, [form.image]);
 
-   const visibleCardIds = useMemo(
-     () => filteredCards.map((item) => Number(item.id)).filter(Boolean),
-     [filteredCards]
-   );
-   const selectedVisibleCardIds = useMemo(
-     () => visibleCardIds.filter((id) => selectedCardIds.has(id)),
-     [visibleCardIds, selectedCardIds]
-   );
-   const selectedCardCount = selectedVisibleCardIds.length;
-   const allCardsSelected = visibleCardIds.length > 0 && selectedCardCount === visibleCardIds.length;
-   const isBulkCardActionDisabled = bulkDeleting || selectedCardCount === 0;
-
-   useEffect(() => {
-     const isIndeterminate = selectedCardCount > 0 && !allCardsSelected;
-     if (cardSelectionRef.current) {
-       cardSelectionRef.current.indeterminate = isIndeterminate;
-     }
-   }, [selectedCardCount, allCardsSelected]);
-
   function setField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
@@ -366,6 +347,13 @@ export default function PromotionsAdmin() {
   const selectedCardCount = selectedVisibleCardIds.length;
   const allCardsSelected = visibleCardIds.length > 0 && selectedCardCount === visibleCardIds.length;
   const isBulkCardActionDisabled = bulkDeleting || selectedCardCount === 0;
+
+  useEffect(() => {
+    const isIndeterminate = selectedCardCount > 0 && !allCardsSelected;
+    if (cardSelectionRef.current) {
+      cardSelectionRef.current.indeterminate = isIndeterminate;
+    }
+  }, [selectedCardCount, allCardsSelected]);
 
   const totalCount = cards.length;
   const activeCount = cards.filter((item) => Boolean(item?.is_active)).length;
