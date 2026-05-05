@@ -3,6 +3,7 @@ export const PAGE_ALIASES = {
   Ingenierie: "ingenierie",
   Fiabilite: "Fiablite",
   Developpement: "DeveloppementApplications",
+  PrestationDetail: "PrestationDetail",
 };
 
 export const PUBLIC_APP_ROUTES = [
@@ -15,6 +16,7 @@ export const PUBLIC_APP_ROUTES = [
   { path: "/projets", page: "Projets" },
   { path: "/actualites", page: "Actualites" },
   { path: "/contact", page: "Contact" },
+  { path: "/prestation/:slug", page: "PrestationDetail" },
   { path: "/details/:type/:slug", page: "DetailDomaine" },
   { path: "/inscription", page: "InscriptionFormulaire" },
   { path: "/devenir-vendeur", page: "DevenirVendeur" },

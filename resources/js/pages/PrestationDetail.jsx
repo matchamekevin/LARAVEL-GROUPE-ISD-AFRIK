@@ -1,9 +1,8 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import usePageMeta from "../hooks/usePageMeta";
-import "../styles/ingenierie-new.css";
+import "../styles/prestation-detail.css";
 
-// 12 Domaines de prestations
 const PRESTATIONS_DOMAINES = [
   {
     id: 1,
@@ -115,71 +114,105 @@ const PRESTATIONS_DOMAINES = [
   }
 ];
 
-export default function Ingenierie() {
-    usePageMeta(
-        "Ingénierie informatique et industrielle | Groupe ISD AFRIK",
-        "12 domaines d'expertise pour l'architecture SI, integration systemes et automatisation d'entreprise."
-    );
+export default function PrestationDetail() {
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  
+  const prestation = PRESTATIONS_DOMAINES.find(p => p.slug === slug);
 
+  usePageMeta(
+    prestation ? `${prestation.title} | Groupe ISD AFRIK` : "Prestation non trouvée",
+    prestation ? prestation.description : "Prestation non disponible"
+  );
+
+  if (!prestation) {
     return (
-        <div className="ingenierie-page ingenierie-modern"> 
-            <section className="ingenierie-hero-modern">
-                    <h1 className="ingenierie-hero-title">Nos 12 Domaines d'Expertise</h1>
-                    <p className="ingenierie-hero-subtitle">
-                        Ingénierie informatique et industrielle - Solutions complètes pour entreprises et projets d'infrastructure
-                    </p>
-                    <Link to="/contact" className="ingenierie-hero-cta">
-                        Demander un devis →
-                    </Link>
-                </section> 
-
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-                <div className="ingenierie-section-header mb-12 text-center">
-                    <h2>Nos 12 Domaines de Prestations</h2>
-                </div> 
-
-                <div className="ingenierie-grid"> 
-                    {PRESTATIONS_DOMAINES.map((domaine, index) => (
-                            <article 
-                            key={domaine.id} 
-                            className="ingenierie-card"
-                            style={{ animationDelay: `${0.05 * index}s` }}
-                        >
-                            <img 
-                                src={domaine.image} 
-                                alt={domaine.title}
-                                loading="lazy"
-                                className="ingenierie-card-image"
-                                onError={(e) => {
-                                    e.target.src = '/images/prestations/default.jpg';
-                                }}
-                            />
-                            <div className="ingenierie-card-overlay"></div>
-                            <div className="ingenierie-card-icon">{domaine.icon}</div>
-                            <div className="ingenierie-card-content">
-                                <h3 className="ingenierie-card-title">{domaine.title}</h3>
-                                <p className="ingenierie-card-desc">{domaine.description}</p>
-                                <Link 
-                                    to={`/prestation/${domaine.slug}`}
-                                    className="ingenierie-btn"
-                                >
-                                    Prestation →
-                                </Link>
-                            </div>
-                        </article> 
-                    ))}
-                </div>
-            </section>
-
-            <section className="ingenierie-cta">
-                    <h2 className="ingenierie-cta-title">Projet à réaliser ?</h2>
-                    <p className="ingenierie-cta-text">
-                        Nos experts analysent vos besoins et vous proposent la meilleure combinaison de prestation
-                    </p>
-                    <Link to="/contact" className="ingenierie-hero-cta">
-                        Nous contacter
-                    </Link>
-                </section>
+      <div className="prestation-not-found">
+        <div className="prestation-not-found-content">
+          <h1>Prestation non trouvée</h1>
+          <p>Désolé, nous n'avons pas trouvé cette prestation.</p>
+          <Link to="/ingenierie" className="prestation-back-btn">
+            ← Retour aux prestations
+          </Link>
         </div>
+      </div>
     );
-} 
+  }
+
+  const currentIndex = PRESTATIONS_DOMAINES.findIndex(p => p.slug === slug);
+  const prevPrestation = currentIndex > 0 ? PRESTATIONS_DOMAINES[currentIndex - 1] : null;
+  const nextPrestation = currentIndex < PRESTATIONS_DOMAINES.length - 1 ? PRESTATIONS_DOMAINES[currentIndex + 1] : null;
+
+  return (
+    <div className="prestation-detail-page">
+      <button className="prestation-back-btn" onClick={() => navigate(-1)}>
+        ← Retour
+      </button>
+
+      <section className="prestation-hero">
+        <img 
+          src={prestation.image} 
+          alt={prestation.title}
+          className="prestation-hero-image"
+          onError={(e) => {
+            e.target.src = '/images/produits/drone.webp';
+          }}
+        />
+        <div className="prestation-hero-overlay"></div>
+        <div className="prestation-hero-content">
+          <div className="prestation-hero-icon">{prestation.icon}</div>
+          <h1 className="prestation-hero-title">{prestation.title}</h1>
+        </div>
+      </section>
+
+      <section className="prestation-content">
+        <div className="prestation-container">
+          <div className="prestation-description">
+            <h2>À propos de cette prestation</h2>
+            <p className="prestation-intro">{prestation.description}</p>
+            <p className="prestation-details">{prestation.details}</p>
+          </div>
+
+          <div className="prestation-services">
+            <h2>Nos services incluent</h2>
+            <ul className="prestation-services-list">
+              <li>Audit et diagnostic complet</li>
+              <li>Conception et planification stratégique</li>
+              <li>Implémentation et déploiement</li>
+              <li>Formation et support utilisateurs</li>
+              <li>Maintenance et support continu</li>
+              <li>Optimisation et évolution</li>
+            </ul>
+          </div>
+
+          <div className="prestation-contact-cta">
+            <h3>Intéressé par cette prestation ?</h3>
+            <Link to="/contact" className="prestation-contact-btn">
+              Demander un devis →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="prestation-navigation">
+        <div className="prestation-container">
+          <div className="prestation-nav-grid">
+            {prevPrestation && (
+              <Link to={`/prestation/${prevPrestation.slug}`} className="prestation-nav-card prestation-nav-prev">
+                <span className="prestation-nav-arrow">← Précédent</span>
+                <span className="prestation-nav-title">{prevPrestation.title}</span>
+              </Link>
+            )}
+            <div></div>
+            {nextPrestation && (
+              <Link to={`/prestation/${nextPrestation.slug}`} className="prestation-nav-card prestation-nav-next">
+                <span className="prestation-nav-arrow">Suivant →</span>
+                <span className="prestation-nav-title">{nextPrestation.title}</span>
+              </Link>
+            )}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
