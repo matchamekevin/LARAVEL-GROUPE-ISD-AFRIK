@@ -36,7 +36,7 @@ IMPORTANT : remplacez les variables en MAJUSCULES par vos valeurs réelles avant
 - Confirmer la liste des fichiers médias locaux et comptages :
 
 ```bash
-wc -l tmp/local_counts.csv
+wc -l data/db_counts/local_counts.csv
 ls -la public/uploads | head
 ```
 
@@ -167,7 +167,7 @@ ssh USER@PROD "cd /var/www/html && php artisan storage:link && php artisan confi
 psql -h PROD_DB_HOST -U PROD_DB_USER -d PROD_DB_NAME -c "SELECT COUNT(*) FROM produits WHERE <VOTRE_CONDITION>;"
 ```
 
-- Comparer avec `local_counts.csv` (nombre attendu).
+- Comparer avec `data/db_counts/local_counts.csv` (nombre attendu).
 - Spot-check 10 produits aléatoires : vérifier que l'API renvoie les données et que les images sont accessibles par URL.
 
 11) Remise en ligne

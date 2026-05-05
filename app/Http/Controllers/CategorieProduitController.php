@@ -6,6 +6,7 @@ use App\Models\CategorieProduit;
 use App\Models\Produit;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -117,6 +118,7 @@ class CategorieProduitController extends Controller
         }
 
         $data = $this->preparePayload($data);
+        $this->validateCategoryHierarchy($data);
 
         $categorie = CategorieProduit::create($data);
 
@@ -151,6 +153,7 @@ class CategorieProduitController extends Controller
         }
 
         $data = $this->preparePayload($data, $categorie);
+        $this->validateCategoryHierarchy($data, $categorie);
 
         $categorie->update($data);
 
@@ -160,18 +163,54 @@ class CategorieProduitController extends Controller
         ]);
     }
 
-    /**
-     * DELETE /api/categories-produits/{id} (admin)
-     */
-    public function destroy($id)
-    {
-        $categorie = CategorieProduit::findOrFail($id);
-        $categorie->delete();
+     /**
+      * DELETE /api/categories-produits/{id} (admin)
+      */
+     public function destroy(Request $request, $id)
+     {
+         $categorie = CategorieProduit::findOrFail($id);
+         $forceDeleteProducts = $request->boolean('force');
 
-        return response()->json([
-            'message' => 'Catégorie supprimée',
-        ]);
-    }
+         if ($forceDeleteProducts) {
+             $deletedProducts = 0;
+
+             DB::transaction(function () use ($categorie, &$deletedProducts) {
+                 Produit::withTrashed()
+                     ->where('id_categorie', $categorie->id_categorie)
+                     ->chunkById(100, function ($products) use (&$deletedProducts) {
+                         foreach ($products as $produit) {
+                             $produit->forceDelete();
+                             $deletedProducts += 1;
+                         }
+                     }, 'id_produit');
+
+                 $categorie->delete();
+             });
+
+             return response()->json([
+                 'message' => 'Categorie supprimee avec ses produits.',
+                 'deleted_products' => $deletedProducts,
+             ]);
+         }
+
+         if ($categorie->produits()->exists()) {
+             return response()->json([
+                 'message' => 'Cette categorie contient des produits. Utilisez force=1 pour supprimer categorie et produits.',
+             ], 409);
+         }
+
+         if ($categorie->children()->exists()) {
+             return response()->json([
+                 'message' => 'Cette categorie contient des sous-categories. Veuillez les supprimer ou les deplacer avant.',
+             ], 409);
+         }
+
+         $categorie->delete();
+
+         return response()->json([
+             'message' => 'Categorie supprimee',
+         ]);
+     }
 
     /**
      * POST /api/admin/categories-produits/bootstrap-ingenierie (admin)
@@ -383,6 +422,101 @@ class CategorieProduitController extends Controller
                 'updated' => $updated,
             ],
         ]);
+    }
+
+    private function validateCategoryHierarchy(array $data, ?CategorieProduit $current = null): void
+    {
+        $segment = strtolower(trim((string) $this->resolveEffectiveSegment($data, $current)));
+        $parentId = $this->resolveEffectiveParentId($data, $current);
+
+        if (!$parentId) {
+            return;
+        }
+
+        if ($current && (int) $parentId === (int) $current->id_categorie) {
+            throw ValidationException::withMessages([
+                'parent_id' => ['Une catégorie ne peut pas être son propre parent.'],
+            ]);
+        }
+
+        $parent = CategorieProduit::query()
+            ->select(['id_categorie', 'parent_id', 'segment'])
+            ->find($parentId);
+
+        if (!$parent) {
+            return;
+        }
+
+        if ($current) {
+            $this->assertNoHierarchyCycle((int) $parentId, $current);
+        }
+
+        $parentSegment = strtolower(trim((string) ($parent->segment ?? '')));
+        if ($segment !== '' && $parentSegment !== '' && $parentSegment !== $segment) {
+            throw ValidationException::withMessages([
+                'parent_id' => ['Le parent doit appartenir au même segment de catalogue.'],
+            ]);
+        }
+
+        if ($segment === 'geovision') {
+            if (!empty($parent->parent_id)) {
+                throw ValidationException::withMessages([
+                    'parent_id' => ['GeoVision utilise uniquement 2 niveaux: famille (parent) puis sous-catégorie.'],
+                ]);
+            }
+
+            if ($current && $current->children()->exists()) {
+                throw ValidationException::withMessages([
+                    'parent_id' => ['Impossible de déplacer cette catégorie: elle contient déjà des sous-catégories.'],
+                ]);
+            }
+        }
+    }
+
+    private function resolveEffectiveSegment(array $data, ?CategorieProduit $current = null): ?string
+    {
+        if (array_key_exists('segment', $data) && filled($data['segment'])) {
+            return (string) $data['segment'];
+        }
+
+        if ($current) {
+            return (string) $current->segment;
+        }
+
+        return null;
+    }
+
+    private function resolveEffectiveParentId(array $data, ?CategorieProduit $current = null): ?int
+    {
+        if (array_key_exists('parent_id', $data)) {
+            return filled($data['parent_id']) ? (int) $data['parent_id'] : null;
+        }
+
+        if ($current && filled($current->parent_id)) {
+            return (int) $current->parent_id;
+        }
+
+        return null;
+    }
+
+    private function assertNoHierarchyCycle(int $parentId, CategorieProduit $current): void
+    {
+        $ancestorId = $parentId;
+        $guard = 0;
+
+        while ($ancestorId > 0 && $guard < 25) {
+            if ((int) $ancestorId === (int) $current->id_categorie) {
+                throw ValidationException::withMessages([
+                    'parent_id' => ['Hiérarchie invalide: boucle détectée dans les parents.'],
+                ]);
+            }
+
+            $ancestorId = (int) (CategorieProduit::query()
+                ->where('id_categorie', $ancestorId)
+                ->value('parent_id') ?? 0);
+
+            $guard += 1;
+        }
     }
 
     private function preparePayload(array $data, ?CategorieProduit $current = null): array

@@ -216,14 +216,56 @@ class UtilisateurController extends Controller
         return (bool) $user->can_access_client || $hasAdminAccess;
     }
 
-    private function invalidateUserSessions(Utilisateur $user): void
+    private function shouldPreserveCurrentAdminSession(Request $request, Utilisateur $target): bool
     {
-        $user->tokens()->delete();
+        $actor = $request->user();
+        if (!$actor) {
+            return false;
+        }
 
-        DB::table('sessions')
-            ->where('user_id', (string) $user->getAuthIdentifier())
-            ->orWhere('user_id', $user->getAuthIdentifier())
-            ->delete();
+        if ((int) $actor->getAuthIdentifier() !== (int) $target->getAuthIdentifier()) {
+            return false;
+        }
+
+        return $this->portalAccessAllowed($target, 'admin');
+    }
+
+    private function invalidateUserSessions(
+        Utilisateur $user,
+        ?Request $request = null,
+        bool $preserveCurrentContext = false
+    ): void {
+        $preservedTokenId = null;
+        $preservedSessionId = null;
+
+        if ($preserveCurrentContext && $request && $request->user()) {
+            $actor = $request->user();
+            if ((int) $actor->getAuthIdentifier() === (int) $user->getAuthIdentifier()) {
+                $preservedTokenId = $actor->currentAccessToken()?->id;
+                if ($request->hasSession()) {
+                    $preservedSessionId = $request->session()->getId();
+                }
+            }
+        }
+
+        $tokens = $user->tokens();
+        if ($preservedTokenId !== null) {
+            $tokens->where('id', '!=', $preservedTokenId);
+        }
+        $tokens->delete();
+
+        $sessions = DB::table('sessions')
+            ->where(function ($query) use ($user) {
+                $query
+                    ->where('user_id', (string) $user->getAuthIdentifier())
+                    ->orWhere('user_id', $user->getAuthIdentifier());
+            });
+
+        if ($preservedSessionId) {
+            $sessions->where('id', '!=', $preservedSessionId);
+        }
+
+        $sessions->delete();
     }
 
     private function dispatchTwoFactorCodeMail(Utilisateur $user, string $context = '2FA'): void
@@ -1026,7 +1068,11 @@ class UtilisateurController extends Controller
                 || (bool) $before->can_access_admin !== (bool) $user->can_access_admin;
 
             if ($roleChanged || $accessChanged || $statusChanged) {
-                $this->invalidateUserSessions($user);
+                $this->invalidateUserSessions(
+                    $user,
+                    $request,
+                    $this->shouldPreserveCurrentAdminSession($request, $user)
+                );
             }
 
             if ($statusChanged) {

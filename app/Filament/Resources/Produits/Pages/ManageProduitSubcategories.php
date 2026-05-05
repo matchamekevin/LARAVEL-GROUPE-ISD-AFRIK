@@ -159,27 +159,28 @@ class ManageProduitSubcategories extends Page
     public function deleteSubcategory(int $subcategoryId): void
     {
         $subcategory = CategorieProduit::query()
+            ->with(['produits', 'childrenRecursive'])
             ->withCount('produits')
             ->findOrFail($subcategoryId);
 
-        if ($subcategory->produits_count > 0) {
-            Notification::make()
-                ->title('Suppression impossible')
-                ->body('Cette sous-catégorie contient encore des produits.')
-                ->danger()
-                ->send();
+        $totalProducts = $subcategory->produits_count + $subcategory->childrenRecursive->sum('produits_count');
 
-            return;
-        }
+        // Cascade delete children first (recursive handled by relation)
+        $subcategory->children()->delete();
 
-        $subcategory->delete();
+        // Force delete all products (admin action, permanent)
+        $subcategory->produits()->forceDelete();
+
+        // Then delete category
+        $subcategory->forceDelete();
 
         if ($this->editingSubcategoryId === $subcategoryId) {
             $this->closeModals();
         }
 
         Notification::make()
-            ->title('Sous-catégorie supprimée.')
+            ->title('Catégorie supprimée avec succès')
+            ->body("{$totalProducts} produit(s) ont été supprimés en cascade.")
             ->success()
             ->send();
     }

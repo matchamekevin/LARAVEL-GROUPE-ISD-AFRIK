@@ -262,6 +262,9 @@ class ProduitController extends Controller
             ->when($status !== '' && strtolower($status) !== 'all', function ($query) use ($status) {
                 $query->where('statut', $status);
             })
+            ->when($request->filled('en_vedette'), function ($query) use ($request) {
+                $query->where('est_en_vedette', $request->boolean('en_vedette'));
+            })
             ->when($request->filled('modele'), function ($query) use ($request) {
                 $modele = $request->query('modele');
                 $query->where('modele', 'LIKE', "%{$modele}%");
@@ -429,8 +432,11 @@ class ProduitController extends Controller
      */
     public function uploadImages(Request $request, int $id): JsonResponse
     {
+        $replace = $request->boolean('replace');
+
         $request->validate([
-            'images'   => 'required|array|max:6',
+            'replace'  => 'nullable|boolean',
+            'images'   => 'required|array|max:' . ($replace ? 1 : 6),
             'images.*' => 'required|image|mimes:jpeg,png,jpg,webp|max:3072', // max 3MB
         ]);
 
@@ -440,10 +446,12 @@ class ProduitController extends Controller
             return response()->json(['message' => 'Produit introuvable'], 404);
         }
 
-        $urls = $this->service->uploadImages($produit, $request->file('images'));
+        $urls = $this->service->uploadImages($produit, $request->file('images'), $replace);
 
         return response()->json([
-            'message' => count($urls) . ' image(s) uploadée(s) avec succès',
+            'message' => $replace
+                ? 'Image remplacée avec succès'
+                : count($urls) . ' image(s) uploadée(s) avec succès',
             'images'  => $urls,
         ], 201);
     }

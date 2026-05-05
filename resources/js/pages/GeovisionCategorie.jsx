@@ -231,6 +231,17 @@ export default function GeovisionCategorie() {
     }
   );
 
+  useEffect(() => {
+    if (loadingCategory || !category?.slug) {
+      return;
+    }
+
+    // Root GeoVision categories behave as family filters on /geovision, not as model pages.
+    if (!category.parent_id) {
+      navigate(`/geovision?famille=${category.slug}`, { replace: true });
+    }
+  }, [category?.parent_id, category?.slug, loadingCategory, navigate]);
+
   const parentFamily = category?.parent?.parent || category?.parent || null;
   const subtypes = getCategoryChildren(category);
   const searchToken = normalizeGeovisionKey(deferredSearch);

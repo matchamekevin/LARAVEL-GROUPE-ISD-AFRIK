@@ -25,34 +25,6 @@ const GEOVISION_FAMILY_ORDER = [
 
 const ALL_FAMILY_SLUG = "all";
 
-// Mapping de noms français pour les familles / catégories GeoVision
-const CATEGORY_NAME_FR_MAP = {
-  "geovision-cameras": "Caméras",
-  "geovision-controle-acces": "Contrôle d'accès",
-  "geovision-lpr-anpr": "LPR / ANPR",
-  "geovision-vms-analytics": "VMS & Analytics",
-  "geovision-systemes-surveillance": "Systèmes de surveillance",
-  "geovision-enregistreurs-nvr": "Enregistreurs (NVR)",
-  "geovision-poe-reseau": "PoE & Réseau",
-  "geovision-ip-speaker-io": "Haut-parleurs IP & E/S",
-};
-
-function getFrenchCategoryName(category) {
-  if (!category) return "";
-
-  const slug = normalizeGeovisionKey(category.slug || "");
-  const nameKey = normalizeGeovisionKey(category.nom || "");
-
-  for (const [k, v] of Object.entries(CATEGORY_NAME_FR_MAP)) {
-    const short = k.replace(/^geovision-/, "");
-    if (slug === k || slug.startsWith(k) || slug.includes(short) || nameKey === k || nameKey.includes(short)) {
-      return v;
-    }
-  }
-
-  return category.nom || "";
-}
-
 export default function Geovision() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -216,10 +188,14 @@ export default function Geovision() {
   const visibleCategories = Array.from(
     new Map(
       familyPool
-        .flatMap((family) => getCategoryChildren(family))
-        .map((category) => [category.slug, category])
+        .flatMap((family) =>
+          getCategoryChildren(family).map((category) => [
+            category.slug,
+            { category, family },
+          ])
+        )
     ).values()
-  ).filter((category) => {
+  ).filter(({ category, family }) => {
     if (!normalizedSearch) {
       return true;
     }
@@ -227,6 +203,7 @@ export default function Geovision() {
     const haystack = normalizeGeovisionKey([
       category.nom,
       category.description,
+      family?.nom,
       ...getCategoryChildren(category).map((child) => child.nom),
     ].join(" "));
 
@@ -377,9 +354,8 @@ export default function Geovision() {
 
           {!loading && !error && visibleCategories.length > 0 && (
             <div className="pp-grid" aria-label="Catégories GeoVision">
-              {visibleCategories.map((category) => {
+              {visibleCategories.map(({ category, family }) => {
                 const childCount = getCategoryChildren(category).length;
-                const frenchName = getFrenchCategoryName(category);
 
                 return (
                   <article key={category.slug} className="pp-card">
@@ -389,17 +365,17 @@ export default function Geovision() {
                       onClick={() => navigate(`/geovision/categorie/${category.slug}`)}
                     >
                       <img
-                        alt={frenchName || category.nom}
+                        alt={category.nom}
                         className="pp-image"
                         loading="lazy"
                         src={resolveGeovisionImage(category)}
                       />
                       <div className="pp-image-overlay"></div>
-                      <span className="pp-badge pp-badge--neuf">{activeFamily?.nom}</span>
+                      <span className="pp-badge pp-badge--neuf">{family?.nom || activeFamily?.nom || "GeoVision"}</span>
                     </button>
 
                     <div className="pp-body">
-                      <h3 className="pp-title">{frenchName}</h3>
+                      <h3 className="pp-title">{category.nom}</h3>
                       <p className="pp-desc">{category.description}</p>
                       <div className="pp-meta-row">
                         <span className="pp-meta-chip">{childCount > 0 ? `${childCount} sous-types` : "Modèles disponibles"}</span>

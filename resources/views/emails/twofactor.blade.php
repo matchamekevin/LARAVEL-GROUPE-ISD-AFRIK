@@ -22,7 +22,7 @@
             <table class="container" width="600" cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
                     <td class="header">
-                        <h1 style="margin:0;font-size:20px">{{ config('app.name', 'ISD AFRIK') }}</h1>
+                        <h1 style="margin:0;font-size:20px">{{ config('mail.from.name', 'GROUP ISD Afrik Togo') }}</h1>
                     </td>
                 </tr>
                 <tr>
@@ -36,7 +36,7 @@
                 </tr>
                 <tr>
                     <td class="footer">
-                        <p style="margin:0">© {{ date('Y') }} {{ config('app.name', 'ISD AFRIK') }} — Besoin d'aide ? Répondez à cet e‑mail.</p>
+                        <p style="margin:0">© {{ date('Y') }} {{ config('mail.from.name', 'GROUP ISD Afrik') }} — Besoin d'aide ? Répondez à cet e‑mail.</p>
                     </td>
                 </tr>
             </table>

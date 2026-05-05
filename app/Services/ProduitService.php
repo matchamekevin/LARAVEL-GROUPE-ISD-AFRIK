@@ -262,8 +262,13 @@ class ProduitService
         return $produit ? (bool) $produit->forceDelete() : false;
     }
 
-    public function uploadImages(Produit $produit, array $images): array
+    public function uploadImages(Produit $produit, array $images, bool $replace = false): array
     {
+        if ($replace) {
+            $produit->images()->delete();
+            $images = array_slice($images, 0, 1);
+        }
+
         $urls = [];
         foreach ($images as $image) {
             $path = $image->store('produits', 'public');

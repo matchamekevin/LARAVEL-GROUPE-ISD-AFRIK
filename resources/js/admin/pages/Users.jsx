@@ -476,8 +476,9 @@ export default function Users() {
         <div className="admin-hero-content">
           <h1 style={{ color: '#ffffff' }}>👥 Gestion des Utilisateurs</h1>
           <p>
-            Les rôles et accès sont pilotés depuis la base de données. Toute modification coupe les sessions du compte ciblé,
-            et un email détaille ce qui a été retiré ainsi que ce qui lui reste.
+            Les rôles et accès sont pilotés depuis la base de données. Toute modification coupe les sessions du compte ciblé
+            (hors session admin en cours lors d'une auto-modification qui garde l'accès admin), et un email détaille ce qui
+            a été retiré ainsi que ce qui lui reste.
           </p>
           {!actorIsSuperAdmin && (
             <p className="admin-users-note">
@@ -510,9 +511,6 @@ export default function Users() {
           <div className="admin-users-list-card-header">
             <div>
               <h2>Créer un admin adjoint</h2>
-              <span className="admin-users-list-card-count">
-                Le compte est enregistré en DB et reçoit ses identifiants par email.
-              </span>
             </div>
           </div>
 

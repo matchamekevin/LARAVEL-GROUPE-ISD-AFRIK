@@ -654,8 +654,14 @@ export async function updateCategory(id, data) {
   return api.post(`/api/categories-produits/${id}`, formData);
 }
 
-export async function deleteCategory(id) {
-  return api.delete(`/api/categories-produits/${id}`);
+export async function deleteCategory(id, options = {}) {
+  const params = {};
+  if (options && options.force) {
+    params.force = 1;
+  }
+
+  const config = Object.keys(params).length > 0 ? { params } : undefined;
+  return api.delete(`/api/categories-produits/${id}`, config);
 }
 
 export async function syncGeovisionCatalog(payload = {}) {
@@ -696,12 +702,29 @@ export async function uploadImageFile(file, folder = 'uploads') {
   return res?.data || {};
 }
 
-export async function uploadProductImages(id, files) {
-  const list = Array.isArray(files) ? files : Array.from(files || []);
+export async function uploadProductImages(id, files, options = {}) {
+  const replace = Boolean(options?.replace);
+
+  let list = [];
+  if (Array.isArray(files)) {
+    list = files;
+  } else if (files && typeof files === 'object' && 'length' in files && typeof files.item === 'function') {
+    list = Array.from(files);
+  } else if (files) {
+    list = [files];
+  }
+
+  if (replace) {
+    list = list.slice(0, 1);
+  }
+
   const formData = new FormData();
   list.forEach((file) => {
     if (file) formData.append('images[]', file);
   });
+  if (replace) {
+    formData.append('replace', '1');
+  }
   return api.post(`/api/produits/${id}/images`, formData);
 }
 

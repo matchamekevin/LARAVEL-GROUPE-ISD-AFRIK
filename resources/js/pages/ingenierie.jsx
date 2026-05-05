@@ -1,271 +1,173 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import usePageMeta from "../hooks/usePageMeta";
-import { ENGINEERING_DELIVERY_STEPS, ENGINEERING_FAMILIES } from "../data/engineeringCatalog";
-import "../styles/marketing-premium.css";
-import "../../css/ingenierie.css";
+import "../styles/ingenierie-new.css";
+
+// 12 Domaines de prestations
+const PRESTATIONS_DOMAINES = [
+  {
+    id: 1,
+    slug: "drone-solutions",
+    title: "Solutions Drone",
+    description: "Acquisition de données aériennes, cartographie, inspection industrielle et surveillance pour projets d'infrastructure.",
+    image: "/images/prestations/drone.webp",
+    icon: "🛸"
+  },
+  {
+    id: 2,
+    slug: "tpe-systemes",
+    title: "Systèmes TPE",
+    description: "Déploiement et intégration terminaux de paiement électronique, solutions monétiques et gestion de flux financiers.",
+    image: "/images/prestations/tpe.webp",
+    icon: "💳"
+  },
+  {
+    id: 3,
+    slug: "archivage-numerique",
+    title: "Archivage Numérique",
+    description: "Digitalisation, GED sécurisée, conservation légale et gestion intelligente du patrimoine documentaire.",
+    image: "/images/prestations/archivage.webp",
+    icon: "📂"
+  },
+  {
+    id: 4,
+    slug: "materiel-informatique",
+    title: "Matériel Informatique",
+    description: "Fourniture, déploiement et maintenance parc informatique entreprise, postes, serveurs et infrastructures virtuelles.",
+    image: "/images/prestations/informatique.webp",
+    icon: "💻"
+  },
+  {
+    id: 5,
+    slug: "reseau-infrastructure",
+    title: "Infrastructure Réseau",
+    description: "Conception câblage structuré, fibre optique, WiFi entreprise, routage et sécurité réseau périmétrique.",
+    image: "/images/prestations/reseau.webp",
+    icon: "🌐"
+  },
+  {
+    id: 6,
+    slug: "securite-incendie",
+    title: "Sécurité Incendie",
+    description: "Détection, alarme, extinction, systèmes de désenfumage et maintenance installations conformes normes internationales.",
+    image: "/images/prestations/incendie.webp",
+    icon: "🔥"
+  },
+  {
+    id: 7,
+    slug: "energie-solutions",
+    title: "Solutions Énergie",
+    description: "Alimentation continue, groupes électrogènes, énergies renouvelables, supervision et optimisation consommation.",
+    image: "/images/prestations/energie.webp",
+    icon: "⚡"
+  },
+  {
+    id: 8,
+    slug: "telecommunications",
+    title: "Télécommunications",
+    description: "VoIP, centrales téléphoniques, visioconférence, connectivité dédiée et solutions unifiées communication.",
+    image: "/images/prestations/telecom.webp",
+    icon: "📞"
+  },
+  {
+    id: 9,
+    slug: "cybersecurite",
+    title: "Cybersécurité",
+    description: "Audit vulnérabilités, protection endpoints, SIEM, réponse incident et formation équipes sécurité.",
+    image: "/images/prestations/cybersecurite.webp",
+    icon: "🛡️"
+  },
+  {
+    id: 10,
+    slug: "controle-acces",
+    title: "Contrôle Accès",
+    description: "Systèmes biométriques, badges, vidéosurveillance IP, gestion présence et sécurité physique sites.",
+    image: "/images/prestations/acces.webp",
+    icon: "🔐"
+  },
+  {
+    id: 11,
+    slug: "automatisation-industrielle",
+    title: "Automatisation",
+    description: "Automatismes industriels, PLC, supervision SCADA, instrumentation et pilotage procédés fabrication.",
+    image: "/images/prestations/automatisation.webp",
+    icon: "⚙️"
+  },
+  {
+    id: 12,
+    slug: "formation-transfer",
+    title: "Formation & Transfert",
+    description: "Monter en compétence équipes, transfert savoir-faire technique et documentation exploitation complète.",
+    image: "/images/prestations/formation.webp",
+    icon: "🎓"
+  }
+];
 
 export default function Ingenierie() {
     usePageMeta(
-        "Ingeierie informatique et industrielle | Groupe ISD AFRIK",
-        "Architecture SI, integration systemes et automatisation pour renforcer la performance et la securite des entreprises."
+        "Ingénierie informatique et industrielle | Groupe ISD AFRIK",
+        "12 domaines d'expertise pour l'architecture SI, integration systemes et automatisation d'entreprise."
     );
 
-    const piliers = [
-        {
-            title: "Cadrage de la prestation",
-            text: "Analyse metier et technique pour identifier les familles de produits, les types et les modeles adaptes.",
-            image: "/images/solutions/im3.webp"
-        },
-        {
-            title: "Integration et deploiement",
-            text: "Mise en oeuvre sur site des equipements d'ingenierie : drone, TPE, reseau, incendie, energie, telecoms et plus.",
-            image: "/images/solutions/im2.webp"
-        },
-        {
-            title: "Support et evolution",
-            text: "Suivi operationnel, maintenance et renouvellement par gamme, type et modele pour maintenir la performance.",
-            image: "/images/solutions/im1.webp"
-        }
-    ];
-
-    const livrables = [
-        "Matrice familles / types / modeles",
-        "Plan de deploiement et gestion des risques",
-        "Documentation d'exploitation par equipement",
-        "Rapport de tests et mise en conformite",
-        "Formation et transfert de competence"
-    ];
-
-    const chiffres = [
-        { value: "15+", label: "Annees d'experience" },
-        { value: "500+", label: "Projets reussis" },
-        { value: "1000+", label: "Clients satisfaits" },
-        { value: "99.8%", label: "Taux de succes" }
-    ];
-
-    const engagements = [
-        "Audit de l'existant et recommandations sur mesure",
-        "Pilotage de projet avec approche terrain et suivi des delais",
-        "Integration multi-equipements et interoperabilite",
-        "Formation des equipes et accompagnement post-livraison"
-    ];
-
     return (
-        <div className="ingenierie-page premium-page">
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 mb-12 sm:mb-16 ingenierie-hero-shell">
-                <div className="ingenierie-hero premium-hero">
-                    <div className="ingenierie-hero-grid">
-                        <div className="ingenierie-hero-copy">
-                            <span className="premium-chip">Prestation Ingenierie</span>
-                            <h1 className="premium-title">Ingenierie informatique et industrielle</h1>
-                            <p className="premium-subtitle">
-                                Nous concevons, integrons et faisons evoluer des environnements techniques
-                                fiables pour les entreprises, institutions et projets industriels en Afrique
-                                de l'Ouest.
-                            </p>
+        <div className="ingenierie-page ingenierie-modern"> 
+            <section className="ingenierie-hero-modern">
+                    <h1 className="ingenierie-hero-title">Nos 12 Domaines d'Expertise</h1>
+                    <p className="ingenierie-hero-subtitle">
+                        Ingénierie informatique et industrielle - Solutions complètes pour entreprises et projets d'infrastructure
+                    </p>
+                    <Link to="/contact" className="ingenierie-hero-cta">
+                        Demander un devis →
+                    </Link>
+                </section> 
 
-                            <div className="ingenierie-hero-actions">
-                                <Link to="/contact" className="ingenierie-primary-btn">
-                                    Demarrer un projet
-                                </Link>
-                                <Link to="/produits" className="ingenierie-secondary-btn">
-                                    Voir le catalogue
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+                <div className="ingenierie-section-header mb-12 text-center">
+                    <h2>Nos 12 Domaines de Prestations</h2>
+                </div> 
+
+                <div className="ingenierie-grid"> 
+                    {PRESTATIONS_DOMAINES.map((domaine, index) => (
+                            <article 
+                            key={domaine.id} 
+                            className="ingenierie-card"
+                            style={{ animationDelay: `${0.05 * index}s` }}
+                        >
+                            <img 
+                                src={domaine.image} 
+                                alt={domaine.title}
+                                loading="lazy"
+                                className="ingenierie-card-image"
+                                onError={(e) => {
+                                    e.target.src = '/images/prestations/default.jpg';
+                                }}
+                            />
+                            <div className="ingenierie-card-overlay"></div>
+                            <div className="ingenierie-card-icon">{domaine.icon}</div>
+                            <div className="ingenierie-card-content">
+                                <h3 className="ingenierie-card-title">{domaine.title}</h3>
+                                <p className="ingenierie-card-desc">{domaine.description}</p>
+                                <Link 
+                                    to={`/prestation/${domaine.slug}`}
+                                    className="ingenierie-btn"
+                                >
+                                    Prestation →
                                 </Link>
                             </div>
-                        </div>
-
-                        <div className="ingenierie-hero-panel">
-                            <h2>Domaines couverts</h2>
-                            <p>
-                                Drone, TPE, archivage numerique, materiel informatique, reseau,
-                                incendie, energie, telecommunications et securite informatique.
-                            </p>
-
-                            <div className="ingenierie-hero-steps">
-                                {ENGINEERING_DELIVERY_STEPS.map((step, index) => (
-                                    <div
-                                        key={step}
-                                        className="ingenierie-hero-step"
-                                        style={{ animationDelay: `${0.1 * (index + 1)}s` }}
-                                    >
-                                        <span className="ingenierie-step-index">0{index + 1}</span>
-                                        <span>{step}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
+                        </article> 
+                    ))}
                 </div>
             </section>
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 flex flex-col gap-12 sm:gap-16 ingenierie-sections-stack">
-                <section className="ingenierie-overview-grid">
-                    <article className="premium-card ingenierie-highlight-card">
-                        <span className="ingenierie-section-kicker">Positionnement</span>
-                        <h2>Une expertise de bout en bout</h2>
-                        <p>
-                            De l'analyse initiale au maintien en conditions operationnelles,
-                            nous securisons chaque etape de votre transformation technique.
-                        </p>
-                    </article>
-
-                    <article className="premium-card ingenierie-highlight-card">
-                        <span className="ingenierie-section-kicker">Approche</span>
-                        <h2>Des solutions adaptees au terrain</h2>
-                        <p>
-                            Chaque prestation prend en compte vos contraintes metiers, votre niveau
-                            de maturite et la realite de vos infrastructures existantes.
-                        </p>
-                    </article>
-
-                    <article className="premium-card ingenierie-highlight-card">
-                        <span className="ingenierie-section-kicker">Impact</span>
-                        <h2>Performance, securite et continuite</h2>
-                        <p>
-                            Nos architectures visent la fiabilite des operations, la maitrise des risques
-                            et l'evolutivite de vos equipements.
-                        </p>
-                    </article>
+            <section className="ingenierie-cta">
+                    <h2 className="ingenierie-cta-title">Projet à réaliser ?</h2>
+                    <p className="ingenierie-cta-text">
+                        Nos experts analysent vos besoins et vous proposent la meilleure combinaison de prestation
+                    </p>
+                    <Link to="/contact" className="ingenierie-hero-cta">
+                        Nous contacter
+                    </Link>
                 </section>
-
-                <section className="premium-card ingenierie-section-shell">
-                    <div className="ingenierie-section-header">
-                        <span className="ingenierie-section-kicker">Expertise</span>
-                        <h2>Nos piliers d'intervention</h2>
-                        <p>
-                            Une demarche structuree pour transformer un besoin technique en solution
-                            operationnelle durable.
-                        </p>
-                    </div>
-
-                    <div className="ingenierie-pillars-grid">
-                        {piliers.map((item, index) => (
-                            <article
-                                key={item.title}
-                                className="pillar-card"
-                                style={{ animationDelay: `${0.1 * (index + 1)}s` }}
-                            >
-                                <img src={item.image} alt={item.title} className="pillar-image" />
-                                <div className="pillar-content">
-                                    <h3 className="pillar-title">{item.title}</h3>
-                                    <p className="pillar-description">{item.text}</p>
-                                </div>
-                            </article>
-                        ))}
-                    </div>
-                </section>
-
-                <section className="ingenierie-two-columns">
-                    <article className="premium-card ingenierie-section-shell">
-                        <div className="ingenierie-section-header">
-                            <span className="ingenierie-section-kicker">Livrables</span>
-                            <h2>Ce que vous obtenez</h2>
-                        </div>
-
-                        <ul className="ingenierie-deliverables-grid">
-                            {livrables.map((item, index) => (
-                                <li
-                                    key={item}
-                                    className="deliverable-item"
-                                    style={{ animationDelay: `${0.1 * (index + 1)}s` }}
-                                >
-                                    {item}
-                                </li>
-                            ))}
-                        </ul>
-                    </article>
-
-                    <article className="premium-card ingenierie-section-shell">
-                        <div className="ingenierie-section-header">
-                            <span className="ingenierie-section-kicker">Engagements</span>
-                            <h2>Notre methode projet</h2>
-                        </div>
-
-                        <ul className="ingenierie-engagement-list">
-                            {engagements.map((item) => (
-                                <li key={item} className="ingenierie-engagement-item">
-                                    <span className="ingenierie-engagement-bullet" />
-                                    <span>{item}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </article>
-                </section>
-
-                <section className="premium-card ingenierie-section-shell">
-                    <div className="ingenierie-section-header">
-                        <span className="ingenierie-section-kicker">Catalogue</span>
-                        <h2>Familles, types et modeles couverts</h2>
-                        <p>
-                            Explorez les differentes categories d'equipements et accedez directement
-                            aux produits associes.
-                        </p>
-                    </div>
-
-                    <div className="ingenierie-family-grid">
-                        {ENGINEERING_FAMILIES.map((item) => (
-                            <article key={item.slug} className="ingenierie-family-card">
-                                <div className="ingenierie-family-top">
-                                    <h3>{item.label}</h3>
-                                    <Link
-                                        to={`/produits?categories=${item.slug}`}
-                                        className="ingenierie-family-link"
-                                    >
-                                        Produits
-                                    </Link>
-                                </div>
-
-                                <p className="ingenierie-family-description">{item.description}</p>
-
-                                <ul className="ingenierie-family-types">
-                                    {item.types.map((type) => (
-                                        <li key={`${item.slug}-${type}`} className="ingenierie-family-type">
-                                            {type}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </article>
-                        ))}
-                    </div>
-                </section>
-
-                <section className="ingenierie-metrics">
-                    {chiffres.map((item, index) => (
-                        <article
-                            key={item.label}
-                            className="metric-card"
-                            style={{ animationDelay: `${0.1 * (index + 1)}s` }}
-                        >
-                            <div className="metric-value">{item.value}</div>
-                            <p className="metric-name">{item.label}</p>
-                        </article>
-                    ))}
-                </section>
-
-                <section className="ingenierie-cta">
-                    <div className="ingenierie-cta-copy">
-                        <span className="ingenierie-section-kicker ingenierie-section-kicker--light">
-                            Accompagnement
-                        </span>
-                        <h2>Pret a lancer votre projet d'ingenierie ?</h2>
-                        <p>
-                            Contactez nos experts pour definir la bonne combinaison famille,
-                            type et modele selon votre organisation, vos contraintes
-                            techniques et vos objectifs de croissance.
-                        </p>
-                    </div>
-
-                    <div className="ingenierie-cta-buttons">
-                        <Link to="/contact" className="ingenierie-primary-btn">
-                            Lancer un projet
-                        </Link>
-                        <Link to="/produits" className="ingenierie-secondary-btn ingenierie-secondary-btn--light">
-                            Voir le catalogue Ingenierie
-                        </Link>
-                    </div>
-                </section>
-            </div>
         </div>
     );
-}
+} 

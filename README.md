@@ -1,10 +1,20 @@
 # LARAVEL-GROUPE-ISD-AFRIK
 
-- la commande de ngrok = ~/ngrok http 8000
+## Démarrage local
 
+- Démarrer l'environnement local: `./start.sh`
+- Voir l'état des services: `./start.sh status`
+- Suivre les logs: `./start.sh logs`
+- Arrêter les services: `./start.sh stop`
 
-- l'api key render = rnd_gsyu59ONuD8Fcg8Mbw5IiMh4qSMe 
+## Commandes utiles
 
-- la commande pour nettoyer le cache = php artisan config:clear && php artisan cache:clear && php artisan config:cache
+- Nettoyage cache Laravel: `php artisan config:clear && php artisan cache:clear && php artisan config:cache`
+- Tunnel ngrok (optionnel): `ngrok http 8000`
+
+## Sécurité
+
+- Ne stockez pas les secrets (API keys, mots de passe, tokens) dans le dépôt.
+- Utilisez des variables d'environnement dans `.env` local et dans la plateforme de déploiement.
 
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   getHomeCollaboratorsAdmin,
   createHomeCollaborator,
@@ -27,6 +27,10 @@ export default function CollaboratorsAdmin() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
+  const [selectedItemIds, setSelectedItemIds] = useState(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const itemSelectionRef = useRef(null);
+  const itemHeaderSelectionRef = useRef(null);
   const { toast, showToast } = useAdminToast();
 
   function imageSrc(item) {
@@ -50,6 +54,45 @@ export default function CollaboratorsAdmin() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const visibleItemIds = useMemo(
+    () => items.map((item) => Number(item.id)).filter(Boolean),
+    [items]
+  );
+  const selectedVisibleItemIds = useMemo(
+    () => visibleItemIds.filter((id) => selectedItemIds.has(id)),
+    [visibleItemIds, selectedItemIds]
+  );
+  const selectedItemCount = selectedVisibleItemIds.length;
+  const allItemsSelected = visibleItemIds.length > 0 && selectedItemCount === visibleItemIds.length;
+  const isBulkActionDisabled = bulkDeleting || selectedItemCount === 0;
+
+  useEffect(() => {
+    setSelectedItemIds((previous) => {
+      if (visibleItemIds.length === 0) {
+        return new Set();
+      }
+
+      const next = new Set();
+      visibleItemIds.forEach((id) => {
+        if (previous.has(id)) {
+          next.add(id);
+        }
+      });
+
+      return next;
+    });
+  }, [visibleItemIds]);
+
+  useEffect(() => {
+    const isIndeterminate = selectedItemCount > 0 && !allItemsSelected;
+    if (itemSelectionRef.current) {
+      itemSelectionRef.current.indeterminate = isIndeterminate;
+    }
+    if (itemHeaderSelectionRef.current) {
+      itemHeaderSelectionRef.current.indeterminate = isIndeterminate;
+    }
+  }, [selectedItemCount, allItemsSelected]);
 
   function setField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -113,11 +156,99 @@ export default function CollaboratorsAdmin() {
     }
   }
 
+  const toggleItemSelection = (id) => {
+    setSelectedItemIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleAllItemSelection = () => {
+    setSelectedItemIds((previous) => {
+      const next = new Set(previous);
+      if (visibleItemIds.length === 0) {
+        return next;
+      }
+
+      const allSelected = visibleItemIds.every((id) => next.has(id));
+      if (allSelected) {
+        visibleItemIds.forEach((id) => next.delete(id));
+      } else {
+        visibleItemIds.forEach((id) => next.add(id));
+      }
+
+      return next;
+    });
+  };
+
+  const clearItemSelection = () => {
+    setSelectedItemIds(new Set());
+  };
+
+  const handleBulkDeleteItems = async () => {
+    if (bulkDeleting || selectedVisibleItemIds.length === 0) return;
+
+    const baseLabel = selectedVisibleItemIds.length > 1
+      ? `${selectedVisibleItemIds.length} collaborateurs`
+      : '1 collaborateur';
+
+    if (!confirm(`Supprimer ${baseLabel} selectionnee(s) ?`)) return;
+
+    setBulkDeleting(true);
+
+    let deletedCount = 0;
+    let failedCount = 0;
+    let lastErrorMessage = '';
+
+    for (const id of selectedVisibleItemIds) {
+      try {
+        await deleteHomeCollaborator(id);
+        deletedCount += 1;
+      } catch (err) {
+        failedCount += 1;
+        lastErrorMessage = err?.response?.data?.message || 'Erreur suppression collaborateur';
+      }
+    }
+
+    if (editingId && selectedVisibleItemIds.includes(Number(editingId))) {
+      resetForm();
+    }
+
+    await loadData();
+    setSelectedItemIds(new Set());
+
+    if (deletedCount > 0) {
+      showToast(
+        failedCount > 0
+          ? `${deletedCount} collaborateur(s) supprimee(s).`
+          : `${deletedCount} collaborateur(s) supprimee(s) avec succes.`,
+        'success'
+      );
+    }
+
+    if (failedCount > 0) {
+      showToast(lastErrorMessage || `${failedCount} collaborateur(s) non supprimee(s).`, 'error');
+    }
+
+    setBulkDeleting(false);
+  };
+
   async function handleDelete(id) {
+    if (bulkDeleting) return;
     if (!confirm('Supprimer ce collaborateur ?')) return;
     try {
       await deleteHomeCollaborator(id);
       setItems((prev) => prev.filter((x) => x.id !== id));
+      setSelectedItemIds((previous) => {
+        const next = new Set(previous);
+        next.delete(Number(id));
+        return next;
+      });
       if (editingId === id) resetForm();
       showToast('Collaborateur supprime.', 'success');
     } catch (err) {
@@ -198,9 +329,22 @@ export default function CollaboratorsAdmin() {
                 {saving ? 'Enregistrement...' : (editingId ? 'Mettre a jour' : 'Creer')}
               </button>
               {editingId ? (
-                <button className="btn-secondary" type="button" onClick={resetForm}>
-                  Annuler
-                </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  height="24px"
+                  viewBox="0 -960 960 960"
+                  width="24px"
+                  fill="#000000"
+                  role="button"
+                  tabIndex={0}
+                  onMouseDown={(e) => e.preventDefault()}
+                  aria-label="Annuler"
+                  onClick={() => { if (!saving) resetForm(); }}
+                  onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !saving) resetForm(); }}
+                  style={{ cursor: saving ? 'default' : 'pointer', verticalAlign: 'middle', border: 'none', background: 'transparent', padding: 0, outline: 'none' }}
+                >
+                  <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
+                </svg>
               ) : null}
             </div>
           </div>
@@ -209,10 +353,50 @@ export default function CollaboratorsAdmin() {
 
       <div className="card">
         <h2 style={{ marginBottom: '0.75rem' }}>Collaborateurs configures ({items.length})</h2>
+        <div className="admin-bulk-bar">
+          <label className="admin-bulk-select">
+            <input
+              type="checkbox"
+              ref={itemSelectionRef}
+              checked={allItemsSelected}
+              onChange={toggleAllItemSelection}
+              disabled={visibleItemIds.length === 0 || bulkDeleting}
+            />
+            <span>{selectedItemCount} selectionnee(s)</span>
+          </label>
+          <div className="admin-bulk-actions">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={clearItemSelection}
+              disabled={selectedItemCount === 0 || bulkDeleting}
+            >
+              Effacer la selection
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={handleBulkDeleteItems}
+              disabled={isBulkActionDisabled}
+            >
+              Supprimer la selection
+            </button>
+          </div>
+        </div>
         {loading ? <Loader /> : (
-          <table>
+          <table className="admin-bulk-table">
             <thead>
               <tr>
+                <th style={{ width: '40px' }}>
+                  <input
+                    type="checkbox"
+                    ref={itemHeaderSelectionRef}
+                    checked={allItemsSelected}
+                    onChange={toggleAllItemSelection}
+                    disabled={visibleItemIds.length === 0 || bulkDeleting}
+                    aria-label="Selectionner tous les collaborateurs"
+                  />
+                </th>
                 <th>ID</th>
                 <th>Image</th>
                 <th>Nom</th>
@@ -223,9 +407,21 @@ export default function CollaboratorsAdmin() {
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.id}</td>
+              {items.map((item) => {
+                const id = Number(item.id);
+                const isChecked = selectedItemIds.has(id);
+                return (
+                  <tr key={item.id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => toggleItemSelection(id)}
+                        disabled={bulkDeleting}
+                        aria-label={`Selectionner le collaborateur ${item?.name || id}`}
+                      />
+                    </td>
+                    <td>{item.id}</td>
                   <td>
                     {imageSrc(item) ? (
                       <img
@@ -240,11 +436,26 @@ export default function CollaboratorsAdmin() {
                   <td>{item.sort_order ?? 0}</td>
                   <td>{item.is_active ? 'Actif' : 'Inactif'}</td>
                   <td>
-                    <button className="btn-secondary" onClick={() => startEdit(item)}>Editer</button>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      height="24px"
+                      viewBox="0 -960 960 960"
+                      width="24px"
+                      fill="#274483"
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Editer le collaborateur ${item?.name || item.id}`}
+                      onClick={() => startEdit(item)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') startEdit(item); }}
+                      style={{ cursor: 'pointer', verticalAlign: 'middle' }}
+                    >
+                      <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
+                    </svg>
                     <DeleteIconButton onClick={() => handleDelete(item.id)} className="btn-secondary" title="Supprimer" ariaLabel={`Supprimer le collaborateur ${item?.name || item.id}`} />
                   </td>
-                </tr>
-              ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

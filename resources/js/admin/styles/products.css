@@ -286,6 +286,38 @@
   font-size: var(--font-size-base);
 }
 
+.admin-products-bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: var(--border-light);
+  border-radius: var(--border-radius);
+  background: var(--color-gray-50);
+}
+
+.admin-products-bulk-select {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-weight: 600;
+  color: var(--color-gray-700);
+}
+
+.admin-products-bulk-select input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+}
+
+.admin-products-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
 .admin-products-empty {
   border: 2px dashed var(--color-gray-300);
   background: var(--color-gray-50);
@@ -325,6 +357,11 @@
   padding: var(--spacing-lg) var(--spacing-lg);
   border-bottom: var(--border-light);
   vertical-align: top;
+}
+
+.admin-products-table input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
 }
 
 .admin-products-product-cell {
@@ -622,7 +659,11 @@
 
 .admin-products-modal-shell {
   width: min(980px, 92vw);
-  margin: 0.75rem auto;
+  margin: auto;
+  max-height: calc(100vh - 1.5rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .admin-products-category-modal-shell {
@@ -632,7 +673,8 @@
 .admin-products-modal {
   max-width: none;
   width: 100%;
-  max-height: min(860px, calc(100vh - 1.5rem));
+  max-height: min(860px, calc(100vh - 3rem));
+  overflow: auto;
 }
 
 .admin-products-modal .admin-products-grid {
@@ -1257,7 +1299,7 @@
 
   .admin-products-modal-shell {
     width: min(100%, 720px);
-    margin: 0.35rem auto;
+    margin: auto;
   }
 
   .admin-products-modal .admin-products-grid {

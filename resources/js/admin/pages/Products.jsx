@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import '../styles/catalogue-admin.css';
 import AdminToast, { useAdminToast } from '../components/AdminToast';
 import AdminNotice from '../components/AdminNotice';
@@ -307,6 +307,11 @@ const parseApiError = (err, fallbackMessage) => {
   return err?.response?.data?.message || fallbackMessage;
 };
 
+const resolveTotalFromMeta = (meta) => {
+  const total = Number(meta?.total);
+  return Number.isFinite(total) ? total : 0;
+};
+
 export default function Products() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -325,7 +330,7 @@ export default function Products() {
   const [successMessage, setSuccessMessage] = useState('');
   const { toast, showToast } = useAdminToast();
 
-  const [activeTab, setActiveTab] = useState('products');
+  const [activeTab, setActiveTab] = useState('categories');
 
   const [filters, setFilters] = useState({
     q: '',
@@ -334,12 +339,17 @@ export default function Products() {
     trashed: '',
     page: 1,
     per_page: 20,
+    vedette: false,
   });
 
   const [editorMode, setEditorMode] = useState('idle');
   const [currentProductId, setCurrentProductId] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
   const [uploadFiles, setUploadFiles] = useState([]);
+  const [selectedProductIds, setSelectedProductIds] = useState(new Set());
+  const [bulkProductDeleting, setBulkProductDeleting] = useState(false);
+  const productSelectionRef = useRef(null);
+  const productHeaderSelectionRef = useRef(null);
   const [categoryForm, setCategoryForm] = useState(INITIAL_CATEGORY_FORM);
   const [categoryQuery, setCategoryQuery] = useState('');
   const [editingCategoryId, setEditingCategoryId] = useState(null);
@@ -350,6 +360,10 @@ export default function Products() {
   const [categorySuccessMessage, setCategorySuccessMessage] = useState('');
   const [categoryImageFile, setCategoryImageFile] = useState(null);
   const [categoryImagePreview, setCategoryImagePreview] = useState(null);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState(new Set());
+  const [bulkCategoryDeleting, setBulkCategoryDeleting] = useState(false);
+  const categorySelectionRef = useRef(null);
+  const categoryHeaderSelectionRef = useRef(null);
 
   const categoriesById = useMemo(() => {
     const map = new Map();
@@ -375,6 +389,20 @@ export default function Products() {
   );
 
   const selectedProductImages = useMemo(() => getProductImages(selectedProduct), [selectedProduct]);
+
+  const visibleProductIds = useMemo(
+    () => products.map((product) => Number(product.id ?? product.id_produit)).filter(Boolean),
+    [products]
+  );
+
+  const selectedVisibleProductIds = useMemo(
+    () => visibleProductIds.filter((id) => selectedProductIds.has(id)),
+    [visibleProductIds, selectedProductIds]
+  );
+
+  const selectedProductCount = selectedVisibleProductIds.length;
+  const allProductsSelected = visibleProductIds.length > 0 && selectedProductCount === visibleProductIds.length;
+  const isBulkProductActionDisabled = bulkProductDeleting || selectedProductCount === 0;
 
   const filteredCategories = useMemo(() => {
     const query = categoryQuery.trim().toLowerCase();
@@ -476,6 +504,21 @@ export default function Products() {
       ? 'Gestion des sous-categories'
       : 'Gestion des categories principales';
 
+  const managedCategoryIds = useMemo(
+    () => managedCategories.map((category) => getCategoryId(category)).filter(Boolean),
+    [managedCategories, getCategoryId]
+  );
+
+  const selectedManagedCategoryIds = useMemo(
+    () => managedCategoryIds.filter((id) => selectedCategoryIds.has(id)),
+    [managedCategoryIds, selectedCategoryIds]
+  );
+
+  const selectedManagedCategoryCount = selectedManagedCategoryIds.length;
+  const allManagedCategoriesSelected =
+    managedCategoryIds.length > 0 && selectedManagedCategoryCount === managedCategoryIds.length;
+  const isBulkCategoryActionDisabled = bulkCategoryDeleting || selectedManagedCategoryCount === 0;
+
   const buildDefaultCategoryForm = useCallback(
     (targetTab = activeTab) => {
       const defaultParentId =
@@ -490,6 +533,64 @@ export default function Products() {
     },
     [activeTab, subcategoryParentCategories, technicalRootId]
   );
+
+  useEffect(() => {
+    setSelectedProductIds((previous) => {
+      if (visibleProductIds.length === 0) {
+        return new Set();
+      }
+
+      const next = new Set();
+      visibleProductIds.forEach((id) => {
+        if (previous.has(id)) {
+          next.add(id);
+        }
+      });
+
+      return next;
+    });
+  }, [visibleProductIds]);
+
+  useEffect(() => {
+    const isIndeterminate = selectedProductCount > 0 && !allProductsSelected;
+
+    if (productSelectionRef.current) {
+      productSelectionRef.current.indeterminate = isIndeterminate;
+    }
+
+    if (productHeaderSelectionRef.current) {
+      productHeaderSelectionRef.current.indeterminate = isIndeterminate;
+    }
+  }, [selectedProductCount, allProductsSelected]);
+
+  useEffect(() => {
+    setSelectedCategoryIds((previous) => {
+      if (managedCategoryIds.length === 0) {
+        return new Set();
+      }
+
+      const next = new Set();
+      managedCategoryIds.forEach((id) => {
+        if (previous.has(id)) {
+          next.add(id);
+        }
+      });
+
+      return next;
+    });
+  }, [managedCategoryIds]);
+
+  useEffect(() => {
+    const isIndeterminate = selectedManagedCategoryCount > 0 && !allManagedCategoriesSelected;
+
+    if (categorySelectionRef.current) {
+      categorySelectionRef.current.indeterminate = isIndeterminate;
+    }
+
+    if (categoryHeaderSelectionRef.current) {
+      categoryHeaderSelectionRef.current.indeterminate = isIndeterminate;
+    }
+  }, [selectedManagedCategoryCount, allManagedCategoriesSelected]);
 
   const ensureFormDefaults = useCallback((nextCategories, nextCountries) => {
     setForm((previous) => {
@@ -606,6 +707,10 @@ export default function Products() {
           params.trashed = filters.trashed;
         }
 
+        if (filters.vedette) {
+          params.en_vedette = 1;
+        }
+
         const res = await getProducts(params);
         const nextProducts = Array.isArray(res.data) ? res.data : [];
         const nextMeta = res.meta || EMPTY_META;
@@ -613,7 +718,7 @@ export default function Products() {
         setProducts(nextProducts);
         setMeta(nextMeta);
         setProductStats({
-          total: Number(nextMeta.total || nextProducts.length || 0),
+          total: resolveTotalFromMeta(nextMeta),
           vedette: nextProducts.filter((item) => Boolean(item.est_en_vedette)).length,
           lowStock: nextProducts.filter((item) => isLowStockProduct(item)).length,
         });
@@ -666,6 +771,10 @@ export default function Products() {
         params.trashed = filters.trashed;
       }
 
+      if (filters.vedette) {
+        params.en_vedette = 1;
+      }
+
       const res = await getProducts(params);
       const nextProducts = Array.isArray(res.data) ? res.data : [];
       const nextMeta = res.meta || EMPTY_META;
@@ -673,7 +782,7 @@ export default function Products() {
       setProducts(nextProducts);
       setMeta(nextMeta);
       setProductStats({
-        total: Number(nextMeta.total || nextProducts.length || 0),
+        total: resolveTotalFromMeta(nextMeta),
         vedette: nextProducts.filter((item) => Boolean(item.est_en_vedette)).length,
         lowStock: nextProducts.filter((item) => isLowStockProduct(item)).length,
       });
@@ -743,6 +852,7 @@ export default function Products() {
       trashed: '',
       page: 1,
       per_page: 20,
+      vedette: false,
     });
   };
 
@@ -883,7 +993,115 @@ export default function Products() {
     }
   };
 
+  const toggleProductSelection = useCallback((id) => {
+    setSelectedProductIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleAllProductSelection = useCallback(() => {
+    setSelectedProductIds((previous) => {
+      const next = new Set(previous);
+      if (visibleProductIds.length === 0) {
+        return next;
+      }
+
+      const allSelected = visibleProductIds.every((id) => next.has(id));
+      if (allSelected) {
+        visibleProductIds.forEach((id) => next.delete(id));
+      } else {
+        visibleProductIds.forEach((id) => next.add(id));
+      }
+
+      return next;
+    });
+  }, [visibleProductIds]);
+
+  const clearProductSelection = useCallback(() => {
+    setSelectedProductIds(new Set());
+  }, []);
+
+  const handleBulkDeleteProducts = async () => {
+    if (bulkProductDeleting || selectedVisibleProductIds.length === 0) return;
+
+    const productsByIdMap = new Map();
+    products.forEach((product) => {
+      const id = Number(product.id ?? product.id_produit);
+      if (id) {
+        productsByIdMap.set(id, product);
+      }
+    });
+
+    const selectedProducts = selectedVisibleProductIds
+      .map((id) => productsByIdMap.get(id))
+      .filter(Boolean);
+
+    if (selectedProducts.length === 0) {
+      setSelectedProductIds(new Set());
+      return;
+    }
+
+    const trashedCount = selectedProducts.filter((product) => isTrashedProduct(product)).length;
+    const baseLabel = selectedProducts.length > 1 ? `${selectedProducts.length} produits` : '1 produit';
+    const confirmMessage = trashedCount > 0
+      ? `Vous allez supprimer ${baseLabel} dont ${trashedCount} deja supprime(s). Ces produits seront supprimes definitivement. Continuer ?`
+      : `Supprimer ${baseLabel} selectionne(s) ?`;
+
+    if (!window.confirm(confirmMessage)) return;
+
+    setBulkProductDeleting(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    let deletedCount = 0;
+    let failedCount = 0;
+    let lastErrorMessage = '';
+
+    for (const product of selectedProducts) {
+      const id = Number(product.id ?? product.id_produit);
+      if (!id) continue;
+
+      try {
+        if (isTrashedProduct(product)) {
+          await forceDeleteProduct(id);
+        } else {
+          await deleteProduct(id);
+        }
+        deletedCount += 1;
+      } catch (error) {
+        failedCount += 1;
+        lastErrorMessage = parseApiError(error, 'Suppression impossible.');
+      }
+    }
+
+    await loadProducts();
+    setSelectedProductIds(new Set());
+
+    if (deletedCount > 0) {
+      const message = failedCount > 0
+        ? `${deletedCount} produit(s) supprime(s).`
+        : `${deletedCount} produit(s) supprime(s) avec succes.`;
+      setSuccessMessage(message);
+      showToast(message, 'success');
+    }
+
+    if (failedCount > 0) {
+      const message = lastErrorMessage || `${failedCount} produit(s) non supprime(s).`;
+      setErrorMessage(message);
+      showToast(message, 'error');
+    }
+
+    setBulkProductDeleting(false);
+  };
+
   const handleDelete = async (id) => {
+    if (bulkProductDeleting) return;
     if (!window.confirm('Supprimer ce produit ?')) return;
     setActionLoadingId(id);
     setErrorMessage('');
@@ -893,6 +1111,11 @@ export default function Products() {
       await deleteProduct(id);
       setSuccessMessage('Produit supprime.');
       showToast('Produit supprime.', 'success');
+      setSelectedProductIds((previous) => {
+        const next = new Set(previous);
+        next.delete(Number(id));
+        return next;
+      });
       await loadProducts();
     } catch (error) {
       const message = parseApiError(error, 'Suppression impossible.');
@@ -1134,18 +1357,74 @@ export default function Products() {
     }
   };
 
+  const toggleCategorySelection = useCallback((id) => {
+    setSelectedCategoryIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleAllCategorySelection = useCallback(() => {
+    setSelectedCategoryIds((previous) => {
+      const next = new Set(previous);
+      if (managedCategoryIds.length === 0) {
+        return next;
+      }
+
+      const allSelected = managedCategoryIds.every((id) => next.has(id));
+      if (allSelected) {
+        managedCategoryIds.forEach((id) => next.delete(id));
+      } else {
+        managedCategoryIds.forEach((id) => next.add(id));
+      }
+
+      return next;
+    });
+  }, [managedCategoryIds]);
+
+  const clearCategorySelection = useCallback(() => {
+    setSelectedCategoryIds(new Set());
+  }, []);
+
   const handleDeleteCategory = async (id) => {
-    if (!window.confirm('Supprimer cette categorie ?')) return;
+    if (bulkCategoryDeleting) return;
+    const category = categories.find(cat => Number(cat.id ?? cat.id_categorie) === Number(id));
+    const productCount = Number(category?.produits_count ?? 0);
+
+    let forceDelete = false;
+
+    if (productCount > 0) {
+      const confirmDelete = window.confirm(
+        `Cette categorie contient ${productCount} produit(s). Voulez-vous supprimer la categorie ET ces produits ? Cette action est irreversible.`
+      );
+      if (!confirmDelete) return;
+      forceDelete = true;
+    } else if (!window.confirm('Supprimer cette categorie ?')) {
+      return;
+    }
 
     setCategoryActionLoadingId(id);
     setCategoryErrorMessage('');
     setCategorySuccessMessage('');
 
     try {
-      await deleteCategory(id);
-      const message = 'Categorie supprimee avec succes.';
+      await deleteCategory(id, { force: forceDelete });
+      const message = forceDelete
+        ? `Categorie et ${productCount} produit(s) supprimes.`
+        : 'Categorie supprimee avec succes.';
       setCategorySuccessMessage(message);
       showToast(message, 'success');
+
+      setSelectedCategoryIds((previous) => {
+        const next = new Set(previous);
+        next.delete(Number(id));
+        return next;
+      });
 
       if (Number(editingCategoryId) === Number(id)) {
         handleCancelCategoryEdit();
@@ -1153,12 +1432,94 @@ export default function Products() {
 
       await loadLookups();
     } catch (error) {
-      const message = parseApiError(error, 'Suppression de la categorie impossible.');
+      let message = parseApiError(error, 'Suppression de la categorie impossible.');
+      
+      // Détecter spécifiquement l'erreur de contrainte étrangère PostgreSQL
+      if (message.includes('foreign key violation') || message.includes('violates foreign key constraint') || message.includes('still referenced from table')) {
+        message = 'Impossible de supprimer cette catégorie: des produits sont toujours associés à elle. Veuillez d\'abord modifier ou supprimer ces produits.';
+      }
+      
       setCategoryErrorMessage(message);
       showToast(message, 'error');
     } finally {
       setCategoryActionLoadingId(null);
     }
+  };
+
+  const handleBulkDeleteCategories = async () => {
+    if (bulkCategoryDeleting || selectedManagedCategoryIds.length === 0) return;
+
+    const selectedCategories = selectedManagedCategoryIds
+      .map((id) => categoriesById.get(id))
+      .filter(Boolean);
+
+    if (selectedCategories.length === 0) {
+      setSelectedCategoryIds(new Set());
+      return;
+    }
+
+    const categoryLabel = isSubcategoryTab ? 'sous-categorie' : 'categorie';
+    const categoryLabelPlural = isSubcategoryTab ? 'sous-categories' : 'categories';
+    const categoriesWithProducts = selectedCategories.filter(
+      (category) => Number(category?.produits_count ?? 0) > 0
+    );
+    const totalProducts = categoriesWithProducts
+      .reduce((sum, category) => sum + Number(category?.produits_count ?? 0), 0);
+
+    const baseLabel =
+      selectedCategories.length > 1 ? `${selectedCategories.length} ${categoryLabelPlural}` : `1 ${categoryLabel}`;
+
+    const confirmMessage = categoriesWithProducts.length > 0
+      ? `Vous allez supprimer ${baseLabel} dont ${categoriesWithProducts.length} avec ${totalProducts} produit(s). Confirmer la suppression de toutes ces categories et produits ? Cette action est irreversible.`
+      : `Supprimer ${baseLabel} selectionne(e)(s) ?`;
+
+    if (!window.confirm(confirmMessage)) return;
+
+    setBulkCategoryDeleting(true);
+    setCategoryErrorMessage('');
+    setCategorySuccessMessage('');
+
+    let deletedCount = 0;
+    let failedCount = 0;
+    let lastErrorMessage = '';
+
+    for (const category of selectedCategories) {
+      const id = getCategoryId(category);
+      if (!id) continue;
+
+      const hasProducts = Number(category?.produits_count ?? 0) > 0;
+
+      try {
+        await deleteCategory(id, { force: hasProducts });
+        deletedCount += 1;
+      } catch (error) {
+        failedCount += 1;
+        lastErrorMessage = parseApiError(error, 'Suppression de la categorie impossible.');
+      }
+    }
+
+    if (Number(editingCategoryId || 0) && selectedManagedCategoryIds.includes(Number(editingCategoryId))) {
+      handleCancelCategoryEdit();
+    }
+
+    await loadLookups();
+    setSelectedCategoryIds(new Set());
+
+    if (deletedCount > 0) {
+      const message = failedCount > 0
+        ? `${deletedCount} ${deletedCount > 1 ? categoryLabelPlural : categoryLabel} supprimee(s).`
+        : `${deletedCount} ${deletedCount > 1 ? categoryLabelPlural : categoryLabel} supprimee(s) avec succes.`;
+      setCategorySuccessMessage(message);
+      showToast(message, 'success');
+    }
+
+    if (failedCount > 0) {
+      const message = lastErrorMessage || `${failedCount} ${failedCount > 1 ? categoryLabelPlural : categoryLabel} non supprimee(s).`;
+      setCategoryErrorMessage(message);
+      showToast(message, 'error');
+    }
+
+    setBulkCategoryDeleting(false);
   };
 
   const renderTable = () => {
@@ -1175,6 +1536,16 @@ export default function Products() {
         <table className="admin-products-table">
           <thead>
             <tr>
+              <th style={{ width: '40px' }}>
+                <input
+                  type="checkbox"
+                  ref={productHeaderSelectionRef}
+                  checked={allProductsSelected}
+                  onChange={toggleAllProductSelection}
+                  disabled={visibleProductIds.length === 0 || bulkProductDeleting}
+                  aria-label="Selectionner tous les produits"
+                />
+              </th>
               <th>Produit</th>
               <th>Categorie</th>
               <th>Prix / Stock</th>
@@ -1187,6 +1558,7 @@ export default function Products() {
               const id = Number(product.id ?? product.id_produit);
               const isTrashed = isTrashedProduct(product);
               const isSelected = Number(currentProductId) === id;
+              const isChecked = selectedProductIds.has(id);
               const categoryName =
                 categoriesById.get(Number(product.category_id ?? product.id_categorie))?.nom ||
                 product.category_name ||
@@ -1198,6 +1570,15 @@ export default function Products() {
 
               return (
                 <tr key={id} className={`${isTrashed ? 'is-trashed' : ''} ${isSelected ? 'is-selected' : ''}`}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggleProductSelection(id)}
+                      disabled={bulkProductDeleting}
+                      aria-label={`Selectionner le produit ${product?.title || product?.titre || id}`}
+                    />
+                  </td>
                   <td>
                     <div className="admin-products-product-cell">
                       <img src={getProductImage(product)} alt={product.title || product.titre || 'Produit'} loading="lazy" onError={handleImageError} />
@@ -1232,9 +1613,22 @@ export default function Products() {
                   <td>
                     <div className="admin-products-row-actions">
                       {!isTrashed ? (
-                        <button type="button" className="admin-products-btn" disabled={actionLoadingId === id} onClick={() => handleStartEdit(product)}>
-                          Editer
-                        </button>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          height="20px"
+                          viewBox="0 -960 960 960"
+                          width="20px"
+                          fill="#274483"
+                          role="button"
+                          tabIndex={0}
+                          onMouseDown={(e) => e.preventDefault()}
+                          aria-label={`Editer le produit ${product?.title || id}`}
+                          onClick={() => { if (actionLoadingId !== id) handleStartEdit(product); }}
+                          onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && actionLoadingId !== id) handleStartEdit(product); }}
+                          style={{ cursor: actionLoadingId === id ? 'default' : 'pointer', verticalAlign: 'middle', border: 'none', background: 'transparent', padding: 0, outline: 'none' }}
+                        >
+                          <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
+                        </svg>
                       ) : null}
 
                       {!isTrashed ? (
@@ -1282,14 +1676,6 @@ export default function Products() {
         </div>
         <div className="admin-products-hero-actions">
           <span className="admin-products-count">{loading ? 'Chargement...' : `${productStats.total} produit(s)`}</span>
-          <div className="admin-products-hero-buttons">
-            <button type="button" className="admin-products-btn" onClick={loadProducts} disabled={loading || lookupsLoading}>
-              Actualiser
-            </button>
-            <button type="button" className="admin-products-btn" onClick={handleStartCreate} disabled={saving || lookupsLoading}>
-              Nouveau produit
-            </button>
-          </div>
         </div>
       </header>
 
@@ -1313,38 +1699,46 @@ export default function Products() {
 
       <section className="admin-products-workspace">
         <div className="admin-products-list-panel">
+          {(activeTab === 'products' || isCategoryManagementTab) && (
+            <section className="admin-catalogue-tabs admin-products-tabs admin-products-tabs--primary">
+              <button
+                type="button"
+                className={activeTab === 'categories' ? 'is-active' : ''}
+                onClick={() => handleOpenCategoryManagement('categories')}
+              >
+                Catégories
+              </button>
+
+              <button
+                type="button"
+                className={activeTab === 'subcategories' ? 'is-active' : ''}
+                onClick={() => handleOpenCategoryManagement('subcategories')}
+              >
+                Sous-catégories
+              </button>
+
+              <button
+                type="button"
+                className={activeTab === 'products' ? 'is-active' : ''}
+                onClick={() => handleOpenCategoryManagement('products')}
+              >
+                Produits
+              </button>
+            </section>
+          )}
+
           {activeTab === 'products' && (
             <section className="admin-products-card">
-            <div className="admin-products-card-head">
-              <h2>Liste des produits</h2>
-              <span className="admin-products-count">{meta?.total || 0} au total</span>
-            </div>
-
-              <section className="admin-catalogue-tabs admin-products-tabs admin-products-tabs--primary">
-                <button
-                  type="button"
-                  className={activeTab === 'products' ? 'is-active' : ''}
-                  onClick={() => handleOpenCategoryManagement('products')}
-                >
-                  Produits
-                </button>
-
-                <button
-                  type="button"
-                  className={activeTab === 'categories' ? 'is-active' : ''}
-                  onClick={() => handleOpenCategoryManagement('categories')}
-                >
-                  Catégories
-                </button>
-
-                <button
-                  type="button"
-                  className={activeTab === 'subcategories' ? 'is-active' : ''}
-                  onClick={() => handleOpenCategoryManagement('subcategories')}
-                >
-                  Sous-catégories
-                </button>
-              </section>
+                <div className="admin-products-card-head">
+                  <h2>Liste des produits</h2>
+                  <div className="admin-products-card-head-actions">
+                      <div className="admin-products-inline-actions">
+                        <button type="button" className="admin-products-btn" onClick={handleStartCreate} disabled={saving || lookupsLoading}>
+                          Nouveau produit
+                        </button>
+                      </div>
+                    </div>
+                </div>
 
             <div className="admin-products-searchbar">
               <input
@@ -1381,11 +1775,51 @@ export default function Products() {
                 ))}
               </select>
 
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(filters.vedette)}
+                  onChange={(event) => setFilter('vedette', event.target.checked)}
+                />
+                <span>Vedette seulement</span>
+              </label>
+
               <select value={filters.per_page} onChange={(event) => setFilter('per_page', Number(event.target.value))}>
                 <option value={10}>10 / page</option>
                 <option value={20}>20 / page</option>
                 <option value={50}>50 / page</option>
               </select>
+            </div>
+
+            <div className="admin-products-bulk-bar">
+              <label className="admin-products-bulk-select">
+                <input
+                  type="checkbox"
+                  ref={productSelectionRef}
+                  checked={allProductsSelected}
+                  onChange={toggleAllProductSelection}
+                  disabled={visibleProductIds.length === 0 || bulkProductDeleting}
+                />
+                <span>{selectedProductCount} selectionnee(s)</span>
+              </label>
+              <div className="admin-products-bulk-actions">
+                <button
+                  type="button"
+                  className="admin-products-btn admin-products-btn--outline"
+                  onClick={clearProductSelection}
+                  disabled={selectedProductCount === 0 || bulkProductDeleting}
+                >
+                  Effacer la selection
+                </button>
+                <button
+                  type="button"
+                  className="admin-products-btn admin-products-btn--outline admin-products-danger"
+                  onClick={handleBulkDeleteProducts}
+                  disabled={isBulkProductActionDisabled}
+                >
+                  Supprimer la selection
+                </button>
+              </div>
             </div>
 
             <AdminNotice type="error" message={errorMessage} className="admin-products-notice" />
@@ -1417,42 +1851,9 @@ export default function Products() {
 
           {isCategoryManagementTab && (
             <section id="admin-products-categories" className="admin-products-card admin-products-categories-card">
-              <section className="admin-catalogue-tabs admin-products-tabs">
-                <button
-                  type="button"
-                  className={activeTab === 'products' ? 'is-active' : ''}
-                  onClick={() => handleOpenCategoryManagement('products')}
-                >
-                  Produits
-                </button>
-
-                <button
-                  type="button"
-                  className={activeTab === 'categories' ? 'is-active' : ''}
-                  onClick={() => handleOpenCategoryManagement('categories')}
-                >
-                  Catégories
-                </button>
-
-                <button
-                  type="button"
-                  className={activeTab === 'subcategories' ? 'is-active' : ''}
-                  onClick={() => handleOpenCategoryManagement('subcategories')}
-                >
-                  Sous-catégories
-                </button>
-              </section>
             <div className="admin-products-card-head">
               <h2>{categoryManagementTitle}</h2>
               <div className="admin-products-category-toolbar">
-                <button
-                  type="button"
-                  className="admin-products-btn admin-products-btn--outline"
-                  onClick={loadLookups}
-                  disabled={lookupsLoading || savingCategory}
-                >
-                  {isSubcategoryTab ? 'Actualiser sous-categories' : 'Actualiser categories'}
-                </button>
                 <button
                   type="button"
                   className="admin-products-btn admin-products-btn--outline"
@@ -1488,6 +1889,37 @@ export default function Products() {
               />
             </div>
 
+            <div className="admin-products-bulk-bar">
+              <label className="admin-products-bulk-select">
+                <input
+                  type="checkbox"
+                  ref={categorySelectionRef}
+                  checked={allManagedCategoriesSelected}
+                  onChange={toggleAllCategorySelection}
+                  disabled={managedCategoryIds.length === 0 || bulkCategoryDeleting}
+                />
+                <span>{selectedManagedCategoryCount} selectionnee(s)</span>
+              </label>
+              <div className="admin-products-bulk-actions">
+                <button
+                  type="button"
+                  className="admin-products-btn admin-products-btn--outline"
+                  onClick={clearCategorySelection}
+                  disabled={selectedManagedCategoryCount === 0 || bulkCategoryDeleting}
+                >
+                  Effacer la selection
+                </button>
+                <button
+                  type="button"
+                  className="admin-products-btn admin-products-btn--outline admin-products-danger"
+                  onClick={handleBulkDeleteCategories}
+                  disabled={isBulkCategoryActionDisabled}
+                >
+                  Supprimer la selection
+                </button>
+              </div>
+            </div>
+
             <AdminNotice type="error" message={categoryErrorMessage} className="admin-products-notice" />
             <AdminNotice type="success" message={categorySuccessMessage} className="admin-products-notice" />
 
@@ -1500,6 +1932,16 @@ export default function Products() {
                 <table className="admin-products-table">
                   <thead>
                     <tr>
+                      <th style={{ width: '40px' }}>
+                        <input
+                          type="checkbox"
+                          ref={categoryHeaderSelectionRef}
+                          checked={allManagedCategoriesSelected}
+                          onChange={toggleAllCategorySelection}
+                          disabled={managedCategoryIds.length === 0 || bulkCategoryDeleting}
+                          aria-label="Selectionner toutes les categories"
+                        />
+                      </th>
                       <th>ID</th>
                       {isSubcategoryTab ? <th>Image</th> : null}
                       <th>{isSubcategoryTab ? 'Sous-categorie' : 'Categorie'}</th>
@@ -1513,11 +1955,21 @@ export default function Products() {
                   <tbody>
                     {managedCategories.map((category) => {
                       const id = Number(category.id ?? category.id_categorie);
+                      const isChecked = selectedCategoryIds.has(id);
                       const parentName = category.parent?.nom || categoriesById.get(Number(category.parent_id || 0))?.nom || '-';
                       const categoryThumb = getCategoryImage(category);
 
                       return (
                         <tr key={id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleCategorySelection(id)}
+                              disabled={bulkCategoryDeleting}
+                              aria-label={`Selectionner la categorie ${category?.nom || id}`}
+                            />
+                          </td>
                           <td>#{id}</td>
                           {isSubcategoryTab ? (
                             <td>
@@ -1549,14 +2001,22 @@ export default function Products() {
                           </td>
                           <td>
                             <div className="admin-products-category-actions">
-                              <button
-                                type="button"
-                                className="admin-products-btn admin-products-btn--outline"
-                                disabled={categoryActionLoadingId === id}
-                                onClick={() => handleStartEditCategory(category)}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                height="20px"
+                                viewBox="0 -960 960 960"
+                                width="20px"
+                                fill="#274483"
+                                role="button"
+                                tabIndex={0}
+                                onMouseDown={(e) => e.preventDefault()}
+                                aria-label={`Editer la categorie ${category?.nom || id}`}
+                                onClick={() => { if (categoryActionLoadingId !== id) handleStartEditCategory(category); }}
+                                onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && categoryActionLoadingId !== id) handleStartEditCategory(category); }}
+                                style={{ cursor: categoryActionLoadingId === id ? 'default' : 'pointer', verticalAlign: 'middle', border: 'none', background: 'transparent', padding: 0, outline: 'none' }}
                               >
-                                Editer
-                              </button>
+                                <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
+                              </svg>
                               <DeleteIconButton
                                 onClick={() => handleDeleteCategory(id)}
                                 className="admin-products-btn admin-products-btn--outline admin-products-danger"
@@ -1582,14 +2042,22 @@ export default function Products() {
               <section className="admin-products-card admin-modal admin-products-modal admin-products-category-modal" role="dialog" aria-modal="true" aria-label="Edition categorie">
                 <div className="admin-products-card-head">
                   <h2>{editingCategoryId ? categoryManagementTitle : isSubcategoryTab ? 'Creer une sous-categorie' : 'Creer une categorie principale'}</h2>
-                  <button
-                    type="button"
-                    className="admin-products-btn admin-products-btn--outline"
-                    onClick={handleCancelCategoryEdit}
-                    disabled={savingCategory}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    height="24px"
+                    viewBox="0 -960 960 960"
+                    width="24px"
+                    fill="#000000"
+                    role="button"
+                    tabIndex={0}
+                    onMouseDown={(e) => e.preventDefault()}
+                    aria-label="Fermer"
+                    onClick={() => { if (!savingCategory) handleCancelCategoryEdit(); }}
+                    onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !savingCategory) handleCancelCategoryEdit(); }}
+                    style={{ cursor: savingCategory ? 'default' : 'pointer', verticalAlign: 'middle', border: 'none', background: 'transparent', padding: 0, outline: 'none' }}
                   >
-                    Fermer
-                  </button>
+                    <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
+                  </svg>
                 </div>
 
                 {isSubcategoryTab ? (
@@ -1720,15 +2188,15 @@ export default function Products() {
                     />
                   </label>
 
-                  <div className="admin-products-actions admin-products-category-actions-bar">
-                    <button
-                      type="button"
-                      className="admin-products-btn admin-products-btn--outline"
-                      onClick={handleCancelCategoryEdit}
-                      disabled={savingCategory}
-                    >
-                      Annuler
-                    </button>
+                    <div className="admin-products-actions admin-products-category-actions-bar">
+                      <button
+                        type="button"
+                        className="admin-products-btn admin-products-btn--outline"
+                        onClick={handleCancelCategoryEdit}
+                        disabled={savingCategory}
+                      >
+                        Annuler
+                      </button>
                     <button
                       type="submit"
                       className="admin-products-btn admin-products-btn--outline"
@@ -1764,9 +2232,22 @@ export default function Products() {
                   Nouveau
                 </button>
                 {editorMode !== 'idle' ? (
-                  <button type="button" className="admin-products-btn" onClick={handleCancelEdit} disabled={saving}>
-                    Annuler
-                  </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    height="24px"
+                    viewBox="0 -960 960 960"
+                    width="24px"
+                    fill="#000000"
+                    role="button"
+                    tabIndex={0}
+                    onMouseDown={(e) => e.preventDefault()}
+                    aria-label="Annuler"
+                    onClick={() => { if (!saving) handleCancelEdit(); }}
+                    onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !saving) handleCancelEdit(); }}
+                    style={{ cursor: saving ? 'default' : 'pointer', verticalAlign: 'middle', border: 'none', background: 'transparent', padding: 0, outline: 'none' }}
+                  >
+                    <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
+                  </svg>
                 ) : null}
               </div>
             </div>

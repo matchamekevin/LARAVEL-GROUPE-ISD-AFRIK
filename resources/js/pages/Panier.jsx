@@ -155,11 +155,11 @@ export default function Panier() {
 
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "flex-end", justifyContent: "center" }}>
                     <div style={{ display: "inline-flex", alignItems: "center", border: "1px solid #cbd5e1", borderRadius: "8px" }}>
-                      <button type="button" onClick={() => setCartItemQuantity(productId, quantity - 1)} style={{ border: "none", background: "transparent", width: "32px", height: "32px", cursor: "pointer" }}>-</button>
+                      <button type="button" onClick={() => { const next = setCartItemQuantity(productId, quantity - 1); setItems(next); }} style={{ border: "none", background: "transparent", width: "32px", height: "32px", cursor: "pointer" }}>-</button>
                       <span style={{ minWidth: "28px", textAlign: "center", fontWeight: 700 }}>{quantity}</span>
-                      <button type="button" onClick={() => setCartItemQuantity(productId, quantity + 1)} style={{ border: "none", background: "transparent", width: "32px", height: "32px", cursor: "pointer" }}>+</button>
+                      <button type="button" onClick={() => { const next = setCartItemQuantity(productId, quantity + 1); setItems(next); }} style={{ border: "none", background: "transparent", width: "32px", height: "32px", cursor: "pointer" }}>+</button>
                     </div>
-                    <button type="button" onClick={() => { removeFromCart(productId); setItems(getCartItems()); }} style={{ border: "none", background: "transparent", color: "#dc2626", cursor: "pointer", fontWeight: 700 }}>
+                    <button type="button" onClick={() => { const next = removeFromCart(productId); setItems(next); }} style={{ border: "none", background: "transparent", color: "#dc2626", cursor: "pointer", fontWeight: 700 }}>
                       Retirer
                     </button>
                     <Link to={`/produits/${productId}`} style={{ color: "#1d4ed8", fontWeight: 600 }}>Voir</Link>
@@ -175,7 +175,7 @@ export default function Panier() {
               <p style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800, color: "#172243" }}>{formatPrice(summary.totalAmount)}</p>
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
-              <button type="button" onClick={clearCart} style={{ border: "1px solid #cbd5e1", background: "#fff", borderRadius: "8px", padding: "8px 12px", cursor: "pointer", fontWeight: 700 }}>
+              <button type="button" onClick={() => { clearCart(); setItems([]); }} style={{ border: "1px solid #cbd5e1", background: "#fff", borderRadius: "8px", padding: "8px 12px", cursor: "pointer", fontWeight: 700 }}>
                 Vider le panier
               </button>
               <button

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   getFormations,
   createFormation,
@@ -50,6 +50,10 @@ export default function Formations() {
   const [saving, setSaving] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [newFormation, setNewFormation] = useState(INITIAL_FORM);
+  const [selectedFormationIds, setSelectedFormationIds] = useState(new Set());
+  const [bulkFormationDeleting, setBulkFormationDeleting] = useState(false);
+  const formationSelectionRef = useRef(null);
+  const formationHeaderSelectionRef = useRef(null);
   const { toast, showToast } = useAdminToast();
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -71,6 +75,19 @@ export default function Formations() {
   const [stats, setStats] = useState({ total: 0, particulier: 0, etudiant: 0, entreprise: 0 });
   const [refreshToken, setRefreshToken] = useState(0);
   const [categorie, setCategorie] = useState('all');
+
+  const visibleFormationIds = useMemo(
+    () => formations.map((formation) => Number(formation.id ?? formation.id_formation)).filter(Boolean),
+    [formations]
+  );
+  const selectedVisibleFormationIds = useMemo(
+    () => visibleFormationIds.filter((id) => selectedFormationIds.has(id)),
+    [visibleFormationIds, selectedFormationIds]
+  );
+  const selectedFormationCount = selectedVisibleFormationIds.length;
+  const allFormationsSelected =
+    visibleFormationIds.length > 0 && selectedFormationCount === visibleFormationIds.length;
+  const isBulkFormationActionDisabled = bulkFormationDeleting || selectedFormationCount === 0;
 
   async function loadFormations() {
     setLoading(true);
@@ -126,6 +143,33 @@ export default function Formations() {
   useEffect(() => {
     loadFormations();
   }, [page, categorie, searchInput, refreshToken]);
+
+  useEffect(() => {
+    setSelectedFormationIds((previous) => {
+      if (visibleFormationIds.length === 0) {
+        return new Set();
+      }
+
+      const next = new Set();
+      visibleFormationIds.forEach((id) => {
+        if (previous.has(id)) {
+          next.add(id);
+        }
+      });
+
+      return next;
+    });
+  }, [visibleFormationIds]);
+
+  useEffect(() => {
+    const isIndeterminate = selectedFormationCount > 0 && !allFormationsSelected;
+    if (formationSelectionRef.current) {
+      formationSelectionRef.current.indeterminate = isIndeterminate;
+    }
+    if (formationHeaderSelectionRef.current) {
+      formationHeaderSelectionRef.current.indeterminate = isIndeterminate;
+    }
+  }, [selectedFormationCount, allFormationsSelected]);
 
   const backgroundLoadFormations = async () => {
     try {
@@ -218,10 +262,94 @@ export default function Formations() {
     }
   }
 
+  const toggleFormationSelection = (id) => {
+    setSelectedFormationIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleAllFormationSelection = () => {
+    setSelectedFormationIds((previous) => {
+      const next = new Set(previous);
+      if (visibleFormationIds.length === 0) {
+        return next;
+      }
+
+      const allSelected = visibleFormationIds.every((id) => next.has(id));
+      if (allSelected) {
+        visibleFormationIds.forEach((id) => next.delete(id));
+      } else {
+        visibleFormationIds.forEach((id) => next.add(id));
+      }
+
+      return next;
+    });
+  };
+
+  const clearFormationSelection = () => {
+    setSelectedFormationIds(new Set());
+  };
+
+  const handleBulkDeleteFormations = async () => {
+    if (bulkFormationDeleting || selectedVisibleFormationIds.length === 0) return;
+
+    const baseLabel = selectedVisibleFormationIds.length > 1
+      ? `${selectedVisibleFormationIds.length} formations`
+      : '1 formation';
+
+    if (!confirm(`Supprimer ${baseLabel} selectionnee(s) ?`)) return;
+
+    setBulkFormationDeleting(true);
+
+    let deletedCount = 0;
+    let failedCount = 0;
+    let lastErrorMessage = '';
+
+    for (const id of selectedVisibleFormationIds) {
+      try {
+        await deleteFormation(id);
+        deletedCount += 1;
+      } catch (err) {
+        failedCount += 1;
+        lastErrorMessage = err?.response?.data?.message || 'Erreur suppression formation';
+      }
+    }
+
+    await loadFormations();
+    setSelectedFormationIds(new Set());
+
+    if (deletedCount > 0) {
+      showToast(
+        failedCount > 0
+          ? `${deletedCount} formation(s) supprimee(s).`
+          : `${deletedCount} formation(s) supprimee(s) avec succes.`,
+        'success'
+      );
+    }
+
+    if (failedCount > 0) {
+      showToast(lastErrorMessage || `${failedCount} formation(s) non supprimee(s).`, 'error');
+    }
+
+    setBulkFormationDeleting(false);
+  };
+
   async function handleDelete(id) {
+    if (bulkFormationDeleting) return;
     if (!confirm('Supprimer cette formation ?')) return;
     try {
       await deleteFormation(id);
+      setSelectedFormationIds((previous) => {
+        const next = new Set(previous);
+        next.delete(Number(id));
+        return next;
+      });
       setRefreshToken((t) => t + 1);
       showToast('Formation supprimee.', 'success');
     } catch (err) {
@@ -412,6 +540,37 @@ export default function Formations() {
           </select>
         </div>
 
+        <div className="admin-bulk-bar">
+          <label className="admin-bulk-select">
+            <input
+              type="checkbox"
+              ref={formationSelectionRef}
+              checked={allFormationsSelected}
+              onChange={toggleAllFormationSelection}
+              disabled={visibleFormationIds.length === 0 || bulkFormationDeleting}
+            />
+            <span>{selectedFormationCount} selectionnee(s)</span>
+          </label>
+          <div className="admin-bulk-actions">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={clearFormationSelection}
+              disabled={selectedFormationCount === 0 || bulkFormationDeleting}
+            >
+              Effacer la selection
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={handleBulkDeleteFormations}
+              disabled={isBulkFormationActionDisabled}
+            >
+              Supprimer la selection
+            </button>
+          </div>
+        </div>
+
         {loading ? (
           <Loader text="Chargement des formations..." />
         ) : (pagination.total === 0 && formations.length === 0) ? (
@@ -419,9 +578,19 @@ export default function Formations() {
         ) : (
           <>
             <div className="admin-formations-table-wrap">
-              <table className="admin-formations-table">
+              <table className="admin-formations-table admin-bulk-table">
                 <thead>
                   <tr>
+                    <th style={{ width: '40px' }}>
+                      <input
+                        type="checkbox"
+                        ref={formationHeaderSelectionRef}
+                        checked={allFormationsSelected}
+                        onChange={toggleAllFormationSelection}
+                        disabled={visibleFormationIds.length === 0 || bulkFormationDeleting}
+                        aria-label="Selectionner toutes les formations"
+                      />
+                    </th>
                     <th>ID</th>
                     <th>Image</th>
                     <th>Titre et description</th>
@@ -436,9 +605,20 @@ export default function Formations() {
                   {formations.map((f) => {
                     const image = getFirstImage(f);
                     const imageUrl = resolveFormationImageUrl(image?.url, getApiBase());
+                    const id = Number(f.id ?? f.id_formation);
+                    const isChecked = selectedFormationIds.has(id);
 
                     return (
                       <tr key={f.id}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleFormationSelection(id)}
+                            disabled={bulkFormationDeleting}
+                            aria-label={`Selectionner la formation ${f.titre || id}`}
+                          />
+                        </td>
                         <td>#{f.id}</td>
 
                         <td>
@@ -479,17 +659,21 @@ export default function Formations() {
 
                         <td>
                           <div className="admin-formations-row-actions">
-                            <button
-                              type="button"
-                              className="btn-secondary"
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              height="24px"
+                              viewBox="0 -960 960 960"
+                              width="24px"
+                              fill="#274483"
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`Editer la formation ${f.titre || f.id}`}
                               onClick={() => startEdit(f.id)}
-                              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') startEdit(f.id); }}
+                              style={{ cursor: 'pointer', verticalAlign: 'middle' }}
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#EA3323" aria-hidden="true">
-                                <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
-                              </svg>
-                              <span>Editer</span>
-                            </button>
+                              <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
+                            </svg>
                             <DeleteIconButton
                               className="admin-formations-danger"
                               onClick={() => handleDelete(f.id)}
@@ -538,14 +722,33 @@ export default function Formations() {
       </section>
 
       {createModalOpen && (
-        <div className="admin-products-modal-overlay" role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="admin-products-modal-shell">
+        <div
+          className="admin-products-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => { if (!saving) setCreateModalOpen(false); }}
+          style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <div className="admin-products-modal-shell" onClick={(event) => event.stopPropagation()}>
             <div className="admin-products-category-modal admin-products-modal">
               <div className="admin-products-card-head" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <h2>Créer une formation</h2>
-                <div style={{ marginLeft: 'auto' }}>
-                  <button type="button" className="btn-secondary" onClick={() => setCreateModalOpen(false)}>Fermer</button>
-                </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  height="24px"
+                  viewBox="0 -960 960 960"
+                  width="24px"
+                  fill="#000000"
+                  role="button"
+                  tabIndex={0}
+                  onMouseDown={(e) => e.preventDefault()}
+                  aria-label="Fermer"
+                  onClick={() => { if (!saving) setCreateModalOpen(false); }}
+                  onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !saving) setCreateModalOpen(false); }}
+                  style={{ cursor: saving ? 'default' : 'pointer', verticalAlign: 'middle', border: 'none', background: 'transparent', padding: 0, outline: 'none' }}
+                >
+                  <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
+                </svg>
               </div>
 
               <form className="admin-products-category-form" onSubmit={handleCreate}>
@@ -604,7 +807,9 @@ export default function Formations() {
                 </label>
 
                 <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                  <button type="button" className="btn-secondary" onClick={() => setCreateModalOpen(false)}>Annuler</button>
+                  <button type="button" className="btn-secondary" onClick={() => setCreateModalOpen(false)} disabled={saving}>
+                    Annuler
+                  </button>
                   <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Creation...' : 'Creer la formation'}</button>
                 </div>
               </form>
@@ -614,14 +819,33 @@ export default function Formations() {
       )}
 
       {editModalOpen && editForm && (
-        <div className="admin-products-modal-overlay" role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="admin-products-modal-shell">
+        <div
+          className="admin-products-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => { if (!saving) { setEditModalOpen(false); setEditForm(null); } }}
+          style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <div className="admin-products-modal-shell" onClick={(event) => event.stopPropagation()}>
             <div className="admin-products-category-modal admin-products-modal">
               <div className="admin-products-card-head" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <h2>Modifier la formation</h2>
-                <div style={{ marginLeft: 'auto' }}>
-                  <button type="button" className="btn-secondary" onClick={() => { setEditModalOpen(false); setEditForm(null); }}>Fermer</button>
-                </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  height="24px"
+                  viewBox="0 -960 960 960"
+                  width="24px"
+                  fill="#000000"
+                  role="button"
+                  tabIndex={0}
+                  onMouseDown={(e) => e.preventDefault()}
+                  aria-label="Fermer"
+                  onClick={() => { if (!saving) { setEditModalOpen(false); setEditForm(null); } }}
+                  onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !saving) { setEditModalOpen(false); setEditForm(null); } }}
+                  style={{ cursor: saving ? 'default' : 'pointer', verticalAlign: 'middle', border: 'none', background: 'transparent', padding: 0, outline: 'none' }}
+                >
+                  <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
+                </svg>
               </div>
 
               <form className="admin-products-category-form" onSubmit={handleUpdate}>
@@ -680,7 +904,9 @@ export default function Formations() {
                 </label>
 
                 <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                  <button type="button" className="btn-secondary" onClick={() => { setEditModalOpen(false); setEditForm(null); }}>Annuler</button>
+                  <button type="button" className="btn-secondary" onClick={() => { setEditModalOpen(false); setEditForm(null); }} disabled={saving}>
+                    Annuler
+                  </button>
                   <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Enregistrement...' : 'Enregistrer'}</button>
                 </div>
               </form>

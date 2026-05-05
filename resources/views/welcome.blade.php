@@ -7,7 +7,7 @@
         <link rel="shortcut icon" href="{{ asset('logo.webp') }}">
         <link rel="apple-touch-icon" href="{{ asset('logo.webp') }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('app.name', 'GROUP ISD Afrik ') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

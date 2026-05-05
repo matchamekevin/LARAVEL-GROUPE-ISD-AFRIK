@@ -458,7 +458,8 @@ export default function App() {
             <Route path="/orders" element={<Orders />} />
             <Route path="/formations" element={<Formations />} />
             <Route path="/messages" element={<Messages />} />
-            <Route path="/catalogue" element={<CatalogueAdmin />} />
+            <Route path="/catalogue" element={<Navigate to="/catalogue/familles" replace />} />
+            <Route path="/catalogue/:section" element={<CatalogueAdmin />} />
             <Route path="/ventes-assets" element={<Navigate to="/promotions" replace />} />
             <Route path="/promotions" element={<PromotionsAdmin />} />
             <Route path="/marketing" element={<MarketingAdmin />} />

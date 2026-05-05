@@ -53,10 +53,15 @@ function buildKey(prefix, scope) {
   return `${prefix}:${scope}`;
 }
 
+function getProductId(item) {
+  return Number(item?.id_produit || item?.id || 0);
+}
+
 function normalizeProductSnapshot(product) {
-  const id = Number(product?.id_produit || product?.id);
+  const id = getProductId(product);
   return {
     id_produit: id,
+    id,
     slug: product?.slug || "",
     titre: product?.titre || product?.title || "Produit",
     prix: Number(product?.prix || product?.price || 0),
@@ -75,6 +80,19 @@ function readArray(prefix, scope) {
   const raw = localStorage.getItem(key);
   const parsed = safeParse(raw, []);
   return Array.isArray(parsed) ? parsed : [];
+}
+
+function normalizeStoredCartItems(items) {
+  return (Array.isArray(items) ? items : [])
+    .map((item) => {
+      const id = getProductId(item);
+      if (!Number.isFinite(id) || id <= 0) return null;
+      return {
+        ...item,
+        id_produit: id,
+      };
+    })
+    .filter(Boolean);
 }
 
 function writeArray(prefix, scope, data, shouldNotify = true) {
@@ -98,21 +116,35 @@ function mergeGuestDataForUser(userId) {
   const userFavorites = readArray(FAVORITES_KEY_PREFIX, userScope);
   const favoriteMap = new Map();
   [...userFavorites, ...guestFavorites].forEach((item) => {
-    favoriteMap.set(Number(item.id_produit), item);
+    const id = getProductId(item);
+    if (id > 0) {
+      favoriteMap.set(id, {
+        ...item,
+        id_produit: id,
+      });
+    }
   });
   writeArray(FAVORITES_KEY_PREFIX, userScope, Array.from(favoriteMap.values()), false);
 
-  const guestCart = readArray(CART_KEY_PREFIX, guestScope);
-  const userCart = readArray(CART_KEY_PREFIX, userScope);
+  const guestCart = normalizeStoredCartItems(readArray(CART_KEY_PREFIX, guestScope));
+  const userCart = normalizeStoredCartItems(readArray(CART_KEY_PREFIX, userScope));
   const cartMap = new Map();
-  userCart.forEach((item) => cartMap.set(Number(item.id_produit), { ...item }));
+  userCart.forEach((item) => {
+    const id = getProductId(item);
+    if (id > 0) {
+      cartMap.set(id, { ...item, id_produit: id });
+    }
+  });
   guestCart.forEach((item) => {
-    const existing = cartMap.get(Number(item.id_produit));
+    const id = getProductId(item);
+    if (id <= 0) return;
+
+    const existing = cartMap.get(id);
     if (existing) {
       existing.quantite = Number(existing.quantite || 0) + Number(item.quantite || 0);
-      cartMap.set(Number(item.id_produit), existing);
+      cartMap.set(id, existing);
     } else {
-      cartMap.set(Number(item.id_produit), { ...item });
+      cartMap.set(id, { ...item, id_produit: id });
     }
   });
   writeArray(CART_KEY_PREFIX, userScope, Array.from(cartMap.values()), false);
@@ -141,7 +173,7 @@ export function getFavorites() {
 
 export function isFavorite(productId) {
   const id = Number(productId);
-  return getFavorites().some((item) => Number(item.id_produit) === id);
+  return getFavorites().some((item) => getProductId(item) === id);
 }
 
 export function toggleFavorite(product) {
@@ -150,9 +182,9 @@ export function toggleFavorite(product) {
   const snapshot = normalizeProductSnapshot(product);
   const id = Number(snapshot.id_produit);
 
-  const exists = list.some((item) => Number(item.id_produit) === id);
+  const exists = list.some((item) => getProductId(item) === id);
   const next = exists
-    ? list.filter((item) => Number(item.id_produit) !== id)
+    ? list.filter((item) => getProductId(item) !== id)
     : [snapshot, ...list];
 
   writeArray(FAVORITES_KEY_PREFIX, scope, next);
@@ -169,17 +201,17 @@ export function getFavoritesCount() {
 
 export function getCartItems() {
   const scope = ensureScopeReady();
-  return readArray(CART_KEY_PREFIX, scope);
+  return normalizeStoredCartItems(readArray(CART_KEY_PREFIX, scope));
 }
 
 export function addToCart(product, quantite = 1) {
   const scope = ensureScopeReady();
-  const list = readArray(CART_KEY_PREFIX, scope);
+  const list = normalizeStoredCartItems(readArray(CART_KEY_PREFIX, scope));
   const snapshot = normalizeProductSnapshot(product);
   const id = Number(snapshot.id_produit);
   const qtyToAdd = Math.max(1, Number(quantite || 1));
 
-  const index = list.findIndex((item) => Number(item.id_produit) === id);
+  const index = list.findIndex((item) => getProductId(item) === id);
   if (index >= 0) {
     const current = list[index];
     const maxStock = Number(snapshot.stock || current.stock || 9999);
@@ -203,14 +235,14 @@ export function addToCart(product, quantite = 1) {
 export function setCartItemQuantity(productId, quantite) {
   const scope = ensureScopeReady();
   const id = Number(productId);
-  const qty = Number(quantite || 1);
-  let list = readArray(CART_KEY_PREFIX, scope);
+  const qty = Number(quantite ?? 1);
+  let list = normalizeStoredCartItems(readArray(CART_KEY_PREFIX, scope));
 
   if (qty <= 0) {
-    list = list.filter((item) => Number(item.id_produit) !== id);
+    list = list.filter((item) => getProductId(item) !== id);
   } else {
     list = list.map((item) =>
-      Number(item.id_produit) === id
+      getProductId(item) === id
         ? { ...item, quantite: Math.max(1, qty) }
         : item
     );

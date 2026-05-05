@@ -109,24 +109,35 @@ const FormationRegister = () => {
 
   return (
     <div className="register-page">
-      {formation ? (
-        <>
-          <header className="formation-header">
-            <h1>📝 Inscription à la formation</h1>
-            <h2>{formation.titre}</h2>
-          </header>
+      <div className="register-bg-glow register-bg-glow--left" aria-hidden />
+      <div className="register-bg-glow register-bg-glow--right" aria-hidden />
+      <div className="register-shell">
+        {formation ? (
+          <>
+            <header className="formation-header">
+              <p className="formation-header-kicker">Formulaire officiel</p>
+              <h1>Inscription a la formation</h1>
+              <h2>{formation.titre}</h2>
+              <div className="formation-header-chips">
+                <span className="formation-header-chip">Etape 1/2: inscription</span>
+                <span className="formation-header-chip">Paiement apres validation</span>
+              </div>
+            </header>
 
-          {message && (
-            <div className={`alert ${message.includes("⚠️") ? "alert-warning" : "alert-error"}`}>
-              <p>{message}</p>
-            </div>
-          )}
+            {message && (
+              <div className={`alert ${message.includes("⚠️") ? "alert-warning" : "alert-error"}`}>
+                <p>{message}</p>
+              </div>
+            )}
 
-          <form onSubmit={handleSubmit} className="register-form">
+            <form onSubmit={handleSubmit} className="register-form">
 
             {/* Responsable */}
-            <section className="form-section">
-              <h2>👤 Responsable de l'inscription</h2>
+              <section className="form-section">
+                <h2>
+                  <span className="section-index">01</span>
+                  <span>Responsable de l'inscription</span>
+                </h2>
               <div className="form-grid">
                 <input
                   type="text"
@@ -181,15 +192,21 @@ const FormationRegister = () => {
                   onChange={handleChange}
                 />
               </div>
-            </section>
+              </section>
 
             {/* Participants */}
-            <section className="form-section">
-              <h2>👥 Participant(s)</h2>
+              <section className="form-section">
+                <h2>
+                  <span className="section-index">02</span>
+                  <span>Participant(s)</span>
+                </h2>
               {formData.participants.map((p, i) => (
                 <div key={i} className="participant-block">
                   <div className="participant-header">
-                    <h3>Participant {i + 1}</h3>
+                    <h3>
+                      <span className="participant-number-badge">{i + 1}</span>
+                      Participant {i + 1}
+                    </h3>
                     {formData.participants.length > 1 && (
                       <button
                         type="button"
@@ -248,11 +265,14 @@ const FormationRegister = () => {
               >
                 <i className="fas fa-plus"></i> Ajouter un participant
               </button>
-            </section>
+              </section>
 
             {/* Facturation */}
-            <section className="form-section">
-              <h2>💳 Facturation</h2>
+              <section className="form-section">
+                <h2>
+                  <span className="section-index">03</span>
+                  <span>Facturation</span>
+                </h2>
               <div className="radio-group">
                 <label className="radio-label">
                   <input
@@ -275,29 +295,30 @@ const FormationRegister = () => {
                   <span>À la société</span>
                 </label>
               </div>
-            </section>
+              </section>
 
-            <div className="form-actions">
-              <button type="button" className="btn-cancel" onClick={() => navigate(-1)}>
-                Annuler
-              </button>
-              <button type="submit" className="btn-inscrire" disabled={loading}>
-                {loading ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin"></i> Traitement en cours...
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-check-circle"></i> Confirmer l'inscription
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </>
-      ) : (
-        <p>{message || "Chargement en cours..."}</p>
-      )}
+              <div className="form-actions">
+                <button type="button" className="btn-cancel" onClick={() => navigate(-1)}>
+                  Annuler
+                </button>
+                <button type="submit" className="btn-inscrire" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i> Traitement en cours...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-check-circle"></i> Confirmer l'inscription
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </>
+        ) : (
+          <p className="register-loading-text">{message || "Chargement en cours..."}</p>
+        )}
+      </div>
     </div>
   );
 };

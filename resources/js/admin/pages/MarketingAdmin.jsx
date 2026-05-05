@@ -265,9 +265,22 @@ export default function MarketingAdmin() {
               {saving ? 'Enregistrement...' : (editingId ? 'Mettre à jour' : 'Créer')}
             </button>
             {editingId ? (
-              <button className="btn-secondary" type="button" onClick={resetForm}>
-                Annuler
-              </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                height="24px"
+                viewBox="0 -960 960 960"
+                width="24px"
+                fill="#000000"
+                role="button"
+                tabIndex={0}
+                onMouseDown={(e) => e.preventDefault()}
+                aria-label="Annuler"
+                onClick={() => { if (!saving) resetForm(); }}
+                onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !saving) resetForm(); }}
+                style={{ cursor: saving ? 'default' : 'pointer', verticalAlign: 'middle', border: 'none', background: 'transparent', padding: 0, outline: 'none' }}
+              >
+                <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
+              </svg>
             ) : null}
           </div>
         </form>
@@ -309,7 +322,21 @@ export default function MarketingAdmin() {
                       <td>{item.sort_order ?? 0}</td>
                       <td>{item.is_active ? 'Active' : 'Inactive'}</td>
                       <td>
-                        <button className="btn-secondary" onClick={() => startEdit(item)}>Editer</button>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          height="24px"
+                          viewBox="0 -960 960 960"
+                          width="24px"
+                          fill="#274483"
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Editer la carte ${item?.title || item.id}`}
+                          onClick={() => startEdit(item)}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') startEdit(item); }}
+                          style={{ cursor: 'pointer', verticalAlign: 'middle' }}
+                        >
+                          <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
+                        </svg>
                         <DeleteIconButton onClick={() => handleDelete(item.id)} className="btn-secondary" title="Supprimer" ariaLabel={`Supprimer la carte ${item?.title || item.id}`} />
                       </td>
                     </tr>
@@ -352,7 +379,21 @@ export default function MarketingAdmin() {
                       <td>{item.sort_order ?? 0}</td>
                       <td>{item.is_active ? 'Active' : 'Inactive'}</td>
                       <td>
-                        <button className="btn-secondary" onClick={() => startEdit(item)}>Editer</button>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          height="24px"
+                          viewBox="0 -960 960 960"
+                          width="24px"
+                          fill="#274483"
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Editer la carte ${item?.title || item.id}`}
+                          onClick={() => startEdit(item)}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') startEdit(item); }}
+                          style={{ cursor: 'pointer', verticalAlign: 'middle' }}
+                        >
+                          <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
+                        </svg>
                         <DeleteIconButton onClick={() => handleDelete(item.id)} className="btn-secondary" title="Supprimer" ariaLabel={`Supprimer la carte ${item?.title || item.id}`} />
                       </td>
                     </tr>

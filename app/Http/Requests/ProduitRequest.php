@@ -58,7 +58,33 @@ class ProduitRequest extends FormRequest
         $referenceRules[] = Rule::unique('produits', 'reference')->ignore($produitId, 'id_produit');
         $slugRules[] = Rule::unique('produits', 'slug')->ignore($produitId, 'id_produit');
 
-    return [
+        $geoVisionLeafCategoryRule = function ($attribute, $value, $fail) {
+            $category = CategorieProduit::query()
+                ->select(['id_categorie', 'segment', 'parent_id'])
+                ->find($value);
+
+            if (!$category) {
+                return;
+            }
+
+            $requestedSegment = strtolower(trim((string) $this->input('segment', '')));
+            $categorySegment = strtolower(trim((string) ($category->segment ?? '')));
+            $isGeoVision = $requestedSegment === 'geovision' || $categorySegment === 'geovision';
+
+            if (!$isGeoVision) {
+                return;
+            }
+
+            $hasChildren = CategorieProduit::query()
+                ->where('parent_id', $category->id_categorie)
+                ->exists();
+
+            if (empty($category->parent_id) || $hasChildren) {
+                $fail('Pour GeoVision, veuillez choisir une sous-catégorie finale (pas une famille parent).');
+            }
+        };
+
+        return [
         'titre'              => 'required|string|max:200',
         'reference'          => $referenceRules,
         'description'        => 'nullable|string',
@@ -71,7 +97,7 @@ class ProduitRequest extends FormRequest
         'stock_alerte'       => 'nullable|integer|min:0',
         'statut'             => 'nullable|string|in:disponible,indisponible,rupture,actif',
         'date_creation'      => 'nullable|date',
-        'id_categorie'       => ['required', 'integer', $categoryRule],
+        'id_categorie'       => ['required', 'integer', $categoryRule, $geoVisionLeafCategoryRule],
         'id_pays'            => 'required|integer|exists:pays,id_pays',
         'id_utilisateur'     => 'nullable|integer|exists:utilisateurs,id_utilisateur',
         'segment'            => 'nullable|string|in:general,geovision',
@@ -108,8 +134,8 @@ class ProduitRequest extends FormRequest
         'specifications.taxonomy.category' => 'nullable|string|max:255',
         'specifications.taxonomy.subcategory' => 'nullable|string|max:255',
         'specifications.taxonomy.series' => 'nullable|string|max:255',
-    ];
-}
+        ];
+    }
 
     protected function prepareForValidation(): void
     {

@@ -249,6 +249,47 @@ body, html {
 }
 
 /* ========================================
+   BULK ACTIONS
+   ======================================== */
+
+.admin-bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: var(--border-light);
+  border-radius: var(--border-radius);
+  background: var(--color-gray-50);
+  margin-bottom: var(--spacing-lg);
+}
+
+.admin-bulk-select {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-weight: 600;
+  color: var(--color-gray-700);
+}
+
+.admin-bulk-select input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+}
+
+.admin-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.admin-bulk-table input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+}
+
+/* ========================================
    FORMS
    ======================================== */
 
