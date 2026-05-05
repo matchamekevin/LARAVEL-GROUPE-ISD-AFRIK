@@ -1,0 +1,6 @@
+version: 2
+authtoken: CHANGE_ME_WITH_NGROK_AUTHTOKEN
+tunnels:
+  web:
+    proto: http
+    addr: 8000

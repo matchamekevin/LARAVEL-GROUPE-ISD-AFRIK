@@ -1,12 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 timestamp=$(date +%Y%m%d_%H%M%S)
-OUT_DIR="$(pwd)/tmp"
+OUT_DIR="${OUT_DIR:-$ROOT_DIR/data/tmp}"
 mkdir -p "$OUT_DIR"
 
-LOCAL_DSN='postgresql://root:root@127.0.0.1:5432/isd_group_afrik'
-PROD_DSN='postgresql://isd_afrik_db_user:n08Wvqt5LXrSjF83hCvRg3n0qa9TUL6n@dpg-d6qlsrdm5p6s73e5onig-a.oregon-postgres.render.com:5432/isd_afrik_db'
+LOCAL_DSN="${LOCAL_DSN:-}"
+PROD_DSN="${PROD_DSN:-}"
+
+if [[ -z "$LOCAL_DSN" || -z "$PROD_DSN" ]]; then
+	cat >&2 <<'EOF'
+Erreur: variables manquantes.
+Définissez LOCAL_DSN et PROD_DSN avant exécution.
+
+Exemple:
+	export LOCAL_DSN='postgresql://user:pass@127.0.0.1:5432/db'
+	export PROD_DSN='postgresql://user:pass@host:5432/db?sslmode=require'
+EOF
+	exit 1
+fi
 
 PRODUITS_CSV="$OUT_DIR/produits_general_${timestamp}.csv"
 IMAGES_CSV="$OUT_DIR/images_general_${timestamp}.csv"
@@ -14,19 +27,19 @@ CATEGORIES_CSV="$OUT_DIR/categories_general_${timestamp}.csv"
 PROD_PRODUITS_BACKUP="$OUT_DIR/prod_produits_${timestamp}.csv"
 PROD_IMAGES_BACKUP="$OUT_DIR/prod_images_${timestamp}.csv"
 
-echo "[1/8] Exporter produits locaux (segment=general) -> $PRODUITS_CSV"
+echo "[1/10] Exporter produits locaux (segment=general) -> $PRODUITS_CSV"
 # Exporter sans id_produit : on utilisera uuid pour lier les images en prod
 psql "$LOCAL_DSN" -v ON_ERROR_STOP=1 -c "\copy (SELECT p.uuid, p.titre, p.slug, p.reference, p.description, p.description_courte, p.prix, p.prix_promo, p.promo_debut, p.promo_fin, p.stock, p.stock_alerte, p.statut, p.marque, p.modele, p.poids, p.specifications::text, p.garantie, p.est_en_vedette, p.est_nouveau, p.en_promo, p.vues, p.note_moyenne, p.nombre_avis, p.id_categorie, cp.slug AS categorie_slug, p.id_pays, p.id_utilisateur, p.date_creation, p.deleted_at, cp.segment FROM produits p JOIN categories_produits cp ON p.id_categorie = cp.id_categorie WHERE cp.segment = 'general' ORDER BY p.uuid) TO '${PRODUITS_CSV}' WITH CSV HEADER;"
 
-echo "[2/8] Exporter images locales -> $IMAGES_CSV"
+echo "[2/10] Exporter images locales -> $IMAGES_CSV"
 # Exporter images avec le UUID du produit pour permettre le mapping en prod
 psql "$LOCAL_DSN" -v ON_ERROR_STOP=1 -c "\copy (SELECT i.url, i.path, i.alt, i.imageable_type, p.uuid AS product_uuid, i.created_at, i.updated_at FROM images i JOIN produits p ON i.imageable_type='PRODUIT' AND i.imageable_id = p.id_produit JOIN categories_produits cp ON p.id_categorie = cp.id_categorie WHERE cp.segment='general') TO '${IMAGES_CSV}' WITH CSV HEADER;"
 
-echo "[3/8] Exporter catégories locales utilisées -> $CATEGORIES_CSV"
+echo "[3/10] Exporter catégories locales utilisées -> $CATEGORIES_CSV"
 # Exporter les catégories référencées par les produits 'general' locaux
 psql "$LOCAL_DSN" -v ON_ERROR_STOP=1 -c "\copy (SELECT DISTINCT cp.id_categorie, cp.nom, cp.slug, cp.description, cp.icone, cp.image, cp.parent_id, pcp.slug AS parent_slug, cp.ordre, cp.actif, cp.segment, cp.image_url, cp.created_at, cp.updated_at FROM produits p JOIN categories_produits cp ON p.id_categorie = cp.id_categorie LEFT JOIN categories_produits pcp ON cp.parent_id = pcp.id_categorie WHERE cp.segment='general') TO '${CATEGORIES_CSV}' WITH CSV HEADER;"
 
-echo "[4/8] Importer/mettre à jour catégories en prod depuis $CATEGORIES_CSV"
+echo "[4/10] Importer/mettre à jour catégories en prod depuis $CATEGORIES_CSV"
 psql "$PROD_DSN" -v ON_ERROR_STOP=1 <<SQL
 BEGIN;
 DROP TABLE IF EXISTS import_categories;
@@ -57,14 +70,14 @@ WHERE cp.slug = ic.slug AND ic.parent_slug IS NOT NULL;
 COMMIT;
 SQL
 
-echo "[5/8] Sauvegarder prod (tables produits+images) -> $PROD_PRODUITS_BACKUP, $PROD_IMAGES_BACKUP"
+echo "[5/10] Sauvegarder prod (tables produits+images) -> $PROD_PRODUITS_BACKUP, $PROD_IMAGES_BACKUP"
 psql "$PROD_DSN" -v ON_ERROR_STOP=1 -c "\copy (SELECT * FROM produits) TO '${PROD_PRODUITS_BACKUP}' WITH CSV HEADER;"
 psql "$PROD_DSN" -v ON_ERROR_STOP=1 -c "\copy (SELECT * FROM images) TO '${PROD_IMAGES_BACKUP}' WITH CSV HEADER;"
 
-echo "[6/8] Supprimer images et produits 'general' en prod"
+echo "[6/10] Supprimer images et produits 'general' en prod"
 psql "$PROD_DSN" -v ON_ERROR_STOP=1 -c "BEGIN; DELETE FROM images WHERE imageable_type='PRODUIT' AND imageable_id IN (SELECT p.id_produit FROM produits p JOIN categories_produits cp ON p.id_categorie=cp.id_categorie WHERE cp.segment='general'); DELETE FROM produits p USING categories_produits cp WHERE p.id_categorie=cp.id_categorie AND cp.segment='general'; COMMIT;"
 
-echo "[5/8] Importer produits sur prod depuis $PRODUITS_CSV"
+echo "[7/10] Importer produits sur prod depuis $PRODUITS_CSV"
 # Import via table temporaire + upsert sur uuid pour éviter conflits de PK
 psql "$PROD_DSN" -v ON_ERROR_STOP=1 <<SQL
 BEGIN;
@@ -113,7 +126,7 @@ ON CONFLICT (uuid) DO UPDATE SET
 COMMIT;
 SQL
 
-echo "[6/8] Importer images sur prod depuis $IMAGES_CSV (mapping via product uuid)"
+echo "[8/10] Importer images sur prod depuis $IMAGES_CSV (mapping via product uuid)"
 # Importer images dans une table temporaire puis mapper product_uuid -> id_produit
 psql "$PROD_DSN" -v ON_ERROR_STOP=1 <<SQL
 BEGIN;
@@ -129,13 +142,12 @@ WHERE ii.imageable_type = 'PRODUIT';
 COMMIT;
 SQL
 
-echo "Mettre à jour la séquence images.id_image"
+echo "[9/10] Mettre à jour les séquences"
 psql "$PROD_DSN" -v ON_ERROR_STOP=1 -c "SELECT setval(pg_get_serial_sequence('images','id_image'), (SELECT COALESCE(MAX(id_image), 1) FROM images));"
 
-echo "[7/8] Mettre à jour la séquence id_produit"
 psql "$PROD_DSN" -v ON_ERROR_STOP=1 -c "SELECT setval(pg_get_serial_sequence('produits','id_produit'), (SELECT COALESCE(MAX(id_produit), 1) FROM produits));"
 
-echo "[8/8] Vérifier les comptes"
+echo "[10/10] Vérifier les comptes"
 psql "$PROD_DSN" -v ON_ERROR_STOP=1 -c "SELECT COUNT(*) AS total_general FROM produits p JOIN categories_produits cp ON p.id_categorie=cp.id_categorie WHERE cp.segment='general'; SELECT COUNT(*) AS images_count FROM images WHERE imageable_type='PRODUIT' AND imageable_id IN (SELECT p.id_produit FROM produits p JOIN categories_produits cp ON p.id_categorie=cp.id_categorie WHERE cp.segment='general');"
 
 echo "Terminé. CSVs: $PRODUITS_CSV, $IMAGES_CSV ; backups: $PROD_PRODUITS_BACKUP, $PROD_IMAGES_BACKUP"
