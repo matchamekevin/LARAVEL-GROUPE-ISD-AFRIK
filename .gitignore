@@ -13,13 +13,25 @@
 /.zed
 /auth.json
 /node_modules
+/db_checks
 /public/build
 /public/hot
 /public/storage
 /storage/*.key
 /storage/pail
 /vendor
+.venv/
+
+# Generated data exports / diagnostics (keep directory skeleton only)
+/data/archives/*
+/data/tmp/*
+/data/db_checks/*
+/data/db_counts/*
+!/data/archives/.gitkeep
+!/data/tmp/.gitkeep
+!/data/db_checks/.gitkeep
+!/data/db_counts/.gitkeep
+
 Homestead.json
 Homestead.yaml
 Thumbs.db
-.venv/

@@ -1,13 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ManifestController;
-
-// Note: removed forcing redirect of '/login' to admin login to allow front SPA login
-
 
 // Serve la SPA React à la racine
 Route::view('/', 'app');
@@ -30,8 +25,7 @@ Route::get('/status', function () {
 Route::get('/manifest.json', [ManifestController::class, 'show']);
 // =================================
 
-// Catch-all : laisser la SPA gérer les routes front (ex: /produits, /produits/123)
-// Charger les routes d'authentification (Breeze) avant le catch-all SPA
+// Charger les routes d'authentification (Breeze) avant le catch-all SPA.
 if (file_exists(__DIR__ . '/auth.php')) {
     require __DIR__ . '/auth.php';
 }
@@ -51,65 +45,5 @@ Route::middleware('auth')->group(function () {
 Route::redirect('/admin-react', '/admin');
 Route::redirect('/admin-react/{any}', '/admin/{any}')->where('any', '.*');
 
-// Endpoint interne sécurisé pour tester Brevo sans accès shell.
-// Route web de secours (avant catch-all SPA) : /internal/brevo-test?k=<CLE>&to=dest@exemple.com
-Route::get('/internal/brevo-test', function (Request $request) {
-    $key = trim((string) env('BREVO_TEST_KEY', ''), " \t\n\r\0\x0B\"'");
-    if ($key === '' || $request->query('k') !== $key) {
-        return response()->json(['error' => 'Forbidden'], 403);
-    }
-
-    $to = (string) $request->query('to', env('TEST_BREVO_RECIPIENT', 'dev@localhost'));
-
-    try {
-        $mailer = app(\App\Services\BrevoMailer::class);
-        $res = $mailer->send($to, 'Test Brevo (internal)', '<p>Test d\'envoi depuis /internal/brevo-test</p>');
-
-        return response()->json([
-            'ok' => true,
-            'mailer' => config('mail.default'),
-            'to' => $to,
-            'brevo' => $res,
-        ]);
-    } catch (\Throwable $e) {
-        \Illuminate\Support\Facades\Log::error('web internal brevo-test failed', ['err' => $e->getMessage()]);
-
-        return response()->json([
-            'ok' => false,
-            'mailer' => config('mail.default'),
-            'to' => $to,
-            'error' => $e->getMessage(),
-        ], 500);
-    }
-});
-
-// Catch-all : laisser la SPA gérer les routes front (ex: /produits, /produits/123)
+// Catch-all : laisser la SPA gérer les routes front (ex: /produits, /produits/123).
 Route::view('/{any}', 'app')->where('any', '.*');
-
-// Route de développement pour servir l'application React depuis Blade
-Route::view('/app', 'app');
-Route::view('/app/{any}', 'app')->where('any', '.*');
-
-// ✅ Route de test pour vérifier la session utilisateur
-Route::get('/test-user', function () {
-    return auth()->check() ? auth()->user()->getUserName() : 'Aucun utilisateur connecté';
-});
-
-Route::post('/logout', function () {
-    Auth::logout(); // ✅ déconnecte l'utilisateur
-    request()->session()->invalidate(); // ✅ détruit la session
-    request()->session()->regenerateToken(); // ✅ évite les erreurs CSRF
-
-    return redirect('/admin/login'); // ✅ redirige vers la page de login
-})->name('logout');
-
-
-
-Route::get('/test-notif', function () {
-    $user = \App\Models\User::first();
-    $user->notify(new \App\Notifications\BienvenueNotification());
-    return "Notification envoyée";
-});
-
-
-

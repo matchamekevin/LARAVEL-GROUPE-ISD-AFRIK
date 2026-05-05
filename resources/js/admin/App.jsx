@@ -15,8 +15,28 @@ import CollaboratorsAdmin from './pages/CollaboratorsAdmin';
 import PartnersAdmin from './pages/PartnersAdmin';
 import Login from './pages/Login';
 import Loader from './components/Loader';
+import { ADMIN_NAV_ITEMS } from './config/navigation';
 
 import { clearAdminToken, hasAdminToken, logout, me } from './api';
+
+const navListItemStyle = { marginBottom: '0.75rem' };
+const navIconStyle = { marginRight: '0.5rem' };
+
+function navLinkStyle({ isActive }) {
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '0.75rem 1rem',
+    color: isActive ? '#ffffff' : '#D1D5DB',
+    textDecoration: 'none',
+    borderRadius: '0.5rem',
+    transition: 'all 0.3s ease',
+    borderLeft: `3px solid ${isActive ? '#667eea' : 'transparent'}`,
+    fontSize: '0.95rem',
+    fontWeight: 500,
+    background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
+  };
+}
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -173,235 +193,21 @@ export default function App() {
             </p>
           </div>
 
-          <nav>
-            <ul style={{
-              listStyle: 'none',
-              margin: 0,
-              padding: 0,
-            }}>
-              <li style={{marginBottom: '0.75rem'}}>
-                <NavLink to="/" style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  color: isActive ? '#ffffff' : '#D1D5DB',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  transition: 'all 0.3s ease',
-                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
-                  fontSize: '0.95rem',
-                  fontWeight: 500,
-                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
-                })}>
-                  <i className="fas fa-chart-line" style={{marginRight: '0.5rem'}}></i>Dashboard
-                </NavLink>
-              </li>
-              <li style={{marginBottom: '0.75rem'}}>
-                <NavLink to="/users" style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  color: isActive ? '#ffffff' : '#D1D5DB',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  transition: 'all 0.3s ease',
-                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
-                  fontSize: '0.95rem',
-                  fontWeight: 500,
-                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
-                })}>
-                  <i className="fas fa-users" style={{marginRight: '0.5rem'}}></i>Utilisateurs
-                </NavLink>
-              </li>
-              <li style={{marginBottom: '0.75rem'}}>
-                <NavLink to="/products" style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  color: isActive ? '#ffffff' : '#D1D5DB',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  transition: 'all 0.3s ease',
-                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
-                  fontSize: '0.95rem',
-                  fontWeight: 500,
-                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
-                })}>
-                  <i className="fas fa-box" style={{marginRight: '0.5rem'}}></i>Produits
-                </NavLink>
-              </li>
-              <li style={{marginBottom: '0.75rem'}}>
-                <NavLink to="/orders" style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  color: isActive ? '#ffffff' : '#D1D5DB',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  transition: 'all 0.3s ease',
-                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
-                  fontSize: '0.95rem',
-                  fontWeight: 500,
-                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
-                })}>
-                  <i className="fas fa-shopping-cart" style={{marginRight: '0.5rem'}}></i>Commandes
-                </NavLink>
-              </li>
-              <li style={{marginBottom: '0.75rem'}}>
-                <NavLink to="/formations" style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  color: isActive ? '#ffffff' : '#D1D5DB',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  transition: 'all 0.3s ease',
-                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
-                  fontSize: '0.95rem',
-                  fontWeight: 500,
-                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
-                })}>
-                  <i className="fas fa-graduation-cap" style={{marginRight: '0.5rem'}}></i>Formations
-                </NavLink>
-              </li>
-              <li style={{marginBottom: '0.75rem'}}>
-                <NavLink to="/messages" style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  color: isActive ? '#ffffff' : '#D1D5DB',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  transition: 'all 0.3s ease',
-                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
-                  fontSize: '0.95rem',
-                  fontWeight: 500,
-                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
-                })}>
-                  <i className="fas fa-envelope" style={{marginRight: '0.5rem'}}></i>Messages
-                </NavLink>
-              </li>
-              <li style={{marginBottom: '0.75rem'}}>
-                <NavLink to="/catalogue" style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  color: isActive ? '#ffffff' : '#D1D5DB',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  transition: 'all 0.3s ease',
-                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
-                  fontSize: '0.95rem',
-                  fontWeight: 500,
-                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
-                })}>
-                  <i className="fas fa-puzzle-piece" style={{marginRight: '0.5rem'}}></i>Catalogue
-                </NavLink>
-              </li>
-              <li style={{marginBottom: '0.75rem'}}>
-                <NavLink to="/promotions" style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  color: isActive ? '#ffffff' : '#D1D5DB',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  transition: 'all 0.3s ease',
-                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
-                  fontSize: '0.95rem',
-                  fontWeight: 500,
-                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
-                })}>
-                  <i className="fas fa-images" style={{marginRight: '0.5rem'}}></i>Promotions
-                </NavLink>
-              </li>
-              <li style={{marginBottom: '0.75rem'}}>
-                <NavLink to="/marketing" style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  color: isActive ? '#ffffff' : '#D1D5DB',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  transition: 'all 0.3s ease',
-                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
-                  fontSize: '0.95rem',
-                  fontWeight: 500,
-                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
-                })}>
-                  <i className="fas fa-bullhorn" style={{marginRight: '0.5rem'}}></i>Marketing Accueil
-                </NavLink>
-              </li>
-              <li style={{marginBottom: '0.75rem'}}>
-                <NavLink to="/testimonials" style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  color: isActive ? '#ffffff' : '#D1D5DB',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  transition: 'all 0.3s ease',
-                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
-                  fontSize: '0.95rem',
-                  fontWeight: 500,
-                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
-                })}>
-                  <i className="fas fa-comments" style={{marginRight: '0.5rem'}}></i>Avis Clients
-                </NavLink>
-              </li>
-              <li style={{marginBottom: '0.75rem'}}>
-                <NavLink to="/collaborators" style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  color: isActive ? '#ffffff' : '#D1D5DB',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  transition: 'all 0.3s ease',
-                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
-                  fontSize: '0.95rem',
-                  fontWeight: 500,
-                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
-                })}>
-                  <i className="fas fa-handshake" style={{marginRight: '0.5rem'}}></i>Collaborateurs
-                </NavLink>
-              </li>
-              <li style={{marginBottom: '0.75rem'}}>
-                <NavLink to="/partners" style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  color: isActive ? '#ffffff' : '#D1D5DB',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  transition: 'all 0.3s ease',
-                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
-                  fontSize: '0.95rem',
-                  fontWeight: 500,
-                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
-                })}>
-                  <i className="fas fa-building" style={{marginRight: '0.5rem'}}></i>Partenaires
-                </NavLink>
-              </li>
-              <li style={{marginBottom: '0.75rem'}}>
-                <NavLink to="/settings" style={({ isActive }) => ({
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  color: isActive ? '#ffffff' : '#D1D5DB',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  transition: 'all 0.3s ease',
-                  borderLeft: '3px solid ' + (isActive ? '#667eea' : 'transparent'),
-                  fontSize: '0.95rem',
-                  fontWeight: 500,
-                  background: isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
-                })}>
-                  <i className="fas fa-gear" style={{marginRight: '0.5rem'}}></i>Paramètres
-                </NavLink>
-              </li>
-            </ul>
-          </nav>
+	          <nav>
+	            <ul style={{
+	              listStyle: 'none',
+	              margin: 0,
+	              padding: 0,
+	            }}>
+                {ADMIN_NAV_ITEMS.map((item) => (
+                  <li key={item.to} style={navListItemStyle}>
+                    <NavLink to={item.to} style={navLinkStyle}>
+                      <i className={item.icon} style={navIconStyle}></i>{item.label}
+                    </NavLink>
+                  </li>
+                ))}
+	            </ul>
+	          </nav>
 
           <div style={{
             marginTop: 'auto',
