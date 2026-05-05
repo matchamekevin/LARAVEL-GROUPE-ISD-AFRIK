@@ -13,10 +13,7 @@ services:
         value: production
       - key: APP_DEBUG
         value: 'false'
-      - key: APP_KEY
-        # IMPORTANT: ne laissez pas un placeholder ici.
-        # Définissez APP_KEY dans Render (Environment) avec: php artisan key:generate --show
-        value: ''
+      # IMPORTANT: Définissez APP_KEY dans Render UI (Environment) avec: php artisan key:generate --show
       - key: APP_URL
         value: https://laravel-groupe-isd-afrik.onrender.com
       - key: VITE_API_BASE
@@ -64,6 +61,11 @@ services:
           property: password
       - key: QUEUE_CONNECTION
         value: sync
+      # Évite que le démarrage dépende de Postgres (cache/sessions en DB) si la DB n'est pas encore prête.
+      - key: CACHE_STORE
+        value: file
+      - key: SESSION_DRIVER
+        value: file
       - key: RUN_MIGRATIONS
         value: 'true'
 

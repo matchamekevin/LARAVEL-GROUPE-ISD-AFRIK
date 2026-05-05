@@ -63,8 +63,11 @@ else
 	echo "Skipping migrations (set RUN_MIGRATIONS=true to enable)"
 fi
 
-# Nettoyage + rebuild des caches. Si ça échoue, on préfère le voir dans les logs (et redémarrer) plutôt que servir un 500.
-php artisan optimize:clear
+# Nettoyage + rebuild des caches.
+# NOTE: certains drivers (cache/session en database) nécessitent la DB; si la DB/DNS n'est pas prête, on ne doit pas faire tomber le conteneur.
+if ! php artisan optimize:clear; then
+	echo "WARN: php artisan optimize:clear a échoué (souvent dû à DB_HOST/CACHE_STORE=database). On continue le démarrage." >&2
+fi
 php artisan package:discover --ansi
 php artisan config:cache
 php artisan view:cache
