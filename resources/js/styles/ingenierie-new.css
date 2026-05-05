@@ -1,27 +1,27 @@
-/* ===== INGENIERIE - STYLE MODERNE FORMATIONS ===== */
+/* ===== INGENIERIE - STYLE MODERNE FORMATIONS (LIGHT - NO ANIMATION) ===== */
 
 .ingenierie-modern {
   --primary-blue: #172243;
   --secondary-blue: #1a2847;
-  --dark-bg: #0f1829;
+  --bg-white: #ffffff;
+  --light-bg: #f8fafc;
   --primary-orange: #fb923c;
-  --text-white: #ffffff;
-  --text-gray: #94a3b8;
-  --text-light-gray: #e2e8f0;
-  --shadow-glow: 0 25px 50px rgba(251, 146, 60, 0.3);
+  --text-dark: #0f172a;
+  --text-gray: #64748b;
+  --text-light-gray: #475569;
 }
 
 .ingenierie-modern {
-  background: var(--dark-bg);
+  background: var(--bg-white);
   min-height: 100vh;
   overflow-x: hidden;
-  color: var(--text-white);
+  color: var(--text-dark);
 }
 
 /* Hero */
 .ingenierie-hero-modern {
   position: relative;
-  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 50%, var(--dark-bg) 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #ffffff 100%);
   padding: 80px 20px 120px;
   text-align: center;
 }
@@ -29,54 +29,29 @@
 .ingenierie-hero-modern::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background-image: 
     radial-gradient(circle at 20% 30%, var(--primary-orange) 0%, transparent 50%),
     radial-gradient(circle at 80% 70%, var(--primary-orange) 0%, transparent 50%);
-  opacity: 0.08;
-  animation: float 20s ease-in-out infinite;
+  opacity: 0.05;
+  /* ❌ animation supprimée */
 }
 
 .ingenierie-hero-title {
   font-size: clamp(2.5rem, 6vw, 4.5rem);
   font-weight: 900;
-  background: linear-gradient(135deg, var(--text-white) 0%, var(--primary-orange) 100%);
+  background: linear-gradient(135deg, var(--primary-blue), var(--primary-orange));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 1rem;
-  letter-spacing: -0.02em;
 }
 
 .ingenierie-hero-subtitle {
   font-size: clamp(1.1rem, 2.5vw, 1.4rem);
   color: var(--text-gray);
-  max-width: 600px;
-  margin: 0 auto 2rem;
-  line-height: 1.7;
 }
 
-.ingenierie-hero-cta {
-  background: linear-gradient(135deg, var(--primary-orange), #f97316);
-  color: var(--text-white);
-  padding: 1rem 2rem;
-  border: none;
-  border-radius: 50px;
-  font-weight: 700;
-  font-size: 1.1rem;
-  cursor: pointer;
-  box-shadow: var(--shadow-glow);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.ingenierie-hero-cta:hover {
-  transform: translateY(-4px) scale(1.05);
-  box-shadow: 0 30px 60px rgba(251, 146, 60, 0.5);
-}
-
-/* Cards Grid */
+/* Grid */
 .ingenierie-grid {
   padding: 4rem 20px;
   max-width: 1400px;
@@ -86,23 +61,20 @@
   gap: 2rem;
 }
 
+/* Cards */
 .ingenierie-card {
   position: relative;
   height: 420px;
   border-radius: 24px;
   overflow: hidden;
-  cursor: pointer;
-  background: rgba(15, 24, 41, 0.8);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(251, 146, 60, 0.3);
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  /* ❌ transition supprimée */
 }
 
 .ingenierie-card:hover {
-  transform: translateY(-16px) scale(1.02);
-  border-color: var(--primary-orange);
-  box-shadow: var(--shadow-glow), 0 0 0 1px rgba(251, 146, 60, 0.5);
+  /* ❌ effet hover supprimé */
 }
 
 .ingenierie-card-image {
@@ -111,17 +83,13 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.8s ease;
-}
-
-.ingenierie-card:hover .ingenierie-card-image {
-  transform: scale(1.15);
+  /* ❌ transition supprimée */
 }
 
 .ingenierie-card-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(15, 24, 41, 0.95) 0%, transparent 50%);
+  background: linear-gradient(to top, rgba(255,255,255,0.95) 0%, transparent 60%);
 }
 
 .ingenierie-card-content {
@@ -145,24 +113,14 @@
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  box-shadow: 0 10px 30px rgba(251, 146, 60, 0.5);
-  transition: transform 0.4s ease;
-}
-
-.ingenierie-card:hover .ingenierie-card-icon {
-  transform: scale(1.2);
+  color: white;
 }
 
 .ingenierie-card-title {
   font-size: 1.5rem;
   font-weight: 800;
   margin-bottom: 0.75rem;
-  line-height: 1.2;
-}
-
-.ingenierie-card:hover .ingenierie-card-title {
-  color: var(--primary-orange);
-  text-shadow: 0 0 20px rgba(251, 146, 60, 0.5);
+  color: var(--text-dark);
 }
 
 .ingenierie-card-desc {
@@ -170,32 +128,24 @@
   line-height: 1.6;
   color: var(--text-light-gray);
   margin-bottom: 1.5rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
-.ingenierie-btn {
-  width: 100%;
+/* Buttons */
+.ingenierie-btn,
+.ingenierie-hero-cta {
   background: linear-gradient(135deg, var(--primary-orange), #f97316);
-  color: var(--text-white);
+  color: white;
   padding: 0.8rem;
   border: none;
   border-radius: 12px;
   font-weight: 700;
-  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.4s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  text-decoration: none; /* 🔥 enlève soulignement */
 }
 
-.ingenierie-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 15px 35px rgba(251, 146, 60, 0.6);
+.ingenierie-btn:hover,
+.ingenierie-hero-cta:hover {
+  text-decoration: none; /* 🔥 sécurité */
 }
 
 /* CTA */
@@ -203,6 +153,7 @@
   padding: 4rem 20px;
   text-align: center;
   background: linear-gradient(135deg, var(--primary-orange), #f97316);
+  color: white;
 }
 
 .ingenierie-cta-title {
@@ -213,29 +164,21 @@
 
 .ingenierie-cta-text {
   font-size: 1.2rem;
-  color: rgba(255,255,255,0.95);
   margin-bottom: 2rem;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-}
-
+/* Responsive */
 @media (max-width: 768px) {
   .ingenierie-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
     padding: 2rem 16px;
   }
-  
+
   .ingenierie-card {
     height: 380px;
   }
-  
+
   .ingenierie-card-content {
     padding: 1.5rem;
   }
