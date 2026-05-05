@@ -6,6 +6,26 @@ PORT=${PORT:-10000}
 
 echo "🚀 Starting application on port $PORT..."
 
+# Defaults sûrs pour Render (évite dépendance DB au boot).
+: "${CACHE_STORE:=file}"
+: "${CACHE_DRIVER:=${CACHE_STORE}}"
+: "${SESSION_DRIVER:=file}"
+: "${QUEUE_CONNECTION:=sync}"
+
+# Si des anciennes variables Render forcent encore le cache/sessions en DB, on les neutralise ici.
+# Sinon l'app renverra 500 si les tables cache/sessions/jobs ne sont pas migrées.
+if [ "${CACHE_STORE}" = "database" ] || [ "${CACHE_DRIVER}" = "database" ]; then
+	echo "WARN: CACHE_STORE/CACHE_DRIVER=database en prod -> override en file pour éviter 500 (table cache)." >&2
+	export CACHE_STORE=file
+	export CACHE_DRIVER=file
+fi
+if [ "${SESSION_DRIVER}" = "database" ]; then
+	echo "WARN: SESSION_DRIVER=database en prod -> override en file pour éviter 500 (table sessions)." >&2
+	export SESSION_DRIVER=file
+fi
+
+echo "Effective env: CACHE_STORE=${CACHE_STORE}, SESSION_DRIVER=${SESSION_DRIVER}, QUEUE_CONNECTION=${QUEUE_CONNECTION}"
+
 # Rendre les logs PHP visibles dans les logs Render (stderr)
 export PHP_FPM_LOG_LEVEL=${PHP_FPM_LOG_LEVEL:-notice}
 
@@ -73,6 +93,74 @@ php artisan config:cache
 php artisan view:cache
 
 echo "✓ Setup complete, launching supervisord..."
+
+# Render free tier: ne pas lancer worker/scheduler par défaut.
+# (Les activer explicitement quand une queue/cron est configurée.)
+ENABLE_QUEUE_WORKER=${ENABLE_QUEUE_WORKER:-false}
+ENABLE_SCHEDULER=${ENABLE_SCHEDULER:-false}
+
+SUPERVISOR_CONF=/etc/supervisor/conf.d/supervisord.conf
+cat >"$SUPERVISOR_CONF" <<'EOF'
+[supervisord]
+nodaemon=true
+user=root
+logfile=/dev/null
+logfile_maxbytes=0
+
+[program:php-fpm]
+command=/usr/local/sbin/php-fpm
+autostart=true
+autorestart=true
+stderr_logfile=/dev/stderr
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+stderr_logfile_maxbytes=0
+user=root
+
+[program:nginx]
+command=/usr/sbin/nginx -g "daemon off;"
+autostart=true
+autorestart=true
+stderr_logfile=/dev/stderr
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+stderr_logfile_maxbytes=0
+user=root
+EOF
+
+if [ "$ENABLE_QUEUE_WORKER" = "true" ] && [ "${QUEUE_CONNECTION}" != "sync" ]; then
+	cat >>"$SUPERVISOR_CONF" <<'EOF'
+
+[program:queue-worker]
+command=/usr/local/bin/php /var/www/html/artisan queue:work --sleep=3 --tries=3 --timeout=90 --env=production
+autostart=true
+autorestart=true
+stderr_logfile=/dev/stderr
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+stderr_logfile_maxbytes=0
+user=root
+EOF
+else
+	echo "Queue worker disabled (ENABLE_QUEUE_WORKER=$ENABLE_QUEUE_WORKER, QUEUE_CONNECTION=$QUEUE_CONNECTION)" >&2
+fi
+
+if [ "$ENABLE_SCHEDULER" = "true" ]; then
+	cat >>"$SUPERVISOR_CONF" <<'EOF'
+
+[program:scheduler]
+command=/usr/local/bin/php /var/www/html/artisan schedule:work --env=production
+autostart=true
+autorestart=true
+stderr_logfile=/dev/stderr
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+stderr_logfile_maxbytes=0
+user=root
+EOF
+else
+	echo "Scheduler disabled (set ENABLE_SCHEDULER=true to enable)" >&2
+fi
 
 # Lance supervisord
 exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf

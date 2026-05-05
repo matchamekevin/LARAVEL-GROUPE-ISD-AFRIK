@@ -1,7 +1,7 @@
 services:
   - type: web
     name: isd-afrik-backend
-    env: docker
+    runtime: docker
     plan: free
     repo: https://github.com/your-username/your-repo
     branch: main
@@ -69,18 +69,20 @@ services:
       - key: RUN_MIGRATIONS
         value: 'true'
 
-  - type: postgres
-    name: isd-afrik-db
-    plan: free
-
-  - type: static
+  - type: web
     name: isd-afrik-frontend
+    runtime: static
     repo: https://github.com/your-username/your-repo
     branch: main
     buildCommand: npm install && npm run build
-    publishPath: public/build
+    staticPublishPath: public/build
     envVars:
       - key: VITE_API_BASE
         value: https://laravel-groupe-isd-afrik.onrender.com
       - key: NODE_ENV
         value: production
+
+databases:
+  - name: isd-afrik-db
+    plan: free
+    ipAllowList: []
