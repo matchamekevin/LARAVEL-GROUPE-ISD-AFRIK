@@ -78,7 +78,7 @@ fi
 # Exécute les migrations seulement si explicitement demandé (par sécurité en prod)
 if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
 	echo "Running migrations because RUN_MIGRATIONS=true"
-	php artisan migrate --force || true
+	php artisan migrate --force
 else
 	echo "Skipping migrations (set RUN_MIGRATIONS=true to enable)"
 fi

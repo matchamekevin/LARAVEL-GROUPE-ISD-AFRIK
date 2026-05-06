@@ -8,10 +8,20 @@ const api = axios.create({
 
 const ADMIN_CACHE_PREFIX = 'isd-afrik-admin-cache:';
 // Cache court pour garder l'UI reactive aux changements DB multi-utilisateurs.
-const ADMIN_CACHE_TTL_MS = 5 * 1000;
+const ADMIN_CACHE_TTL_MS = 1200;
 const adminCache = new Map();
 const adminPendingRequests = new Map();
 let adminCacheVersion = 0;
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === `${ADMIN_CACHE_PREFIX}version`) {
+      adminCacheVersion += 1;
+      adminCache.clear();
+      adminPendingRequests.clear();
+    }
+  });
+}
 
 function hashString(value) {
   let hash = 2166136261;
@@ -47,26 +57,6 @@ function readAdminCacheEntry(cacheKey) {
   if (memoryEntry) {
     adminCache.delete(cacheKey);
   }
-
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  try {
-    const raw = window.localStorage.getItem(`${ADMIN_CACHE_PREFIX}${cacheKey}`);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw);
-    if (parsed && parsed.version === adminCacheVersion && parsed.expiresAt > Date.now()) {
-      adminCache.set(cacheKey, parsed);
-      return parsed;
-    }
-
-    window.localStorage.removeItem(`${ADMIN_CACHE_PREFIX}${cacheKey}`);
-  } catch (error) {
-    // ignore malformed cache entries
-  }
-
   return null;
 }
 
@@ -78,16 +68,6 @@ function writeAdminCacheEntry(cacheKey, data, ttlMs = ADMIN_CACHE_TTL_MS) {
   };
 
   adminCache.set(cacheKey, entry);
-
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    window.localStorage.setItem(`${ADMIN_CACHE_PREFIX}${cacheKey}`, JSON.stringify(entry));
-  } catch (error) {
-    // ignore storage quota or availability errors
-  }
 }
 
 function clearAdminGetCache() {
@@ -99,18 +79,11 @@ function clearAdminGetCache() {
     return;
   }
 
+  // Broadcast local invalidation to other tabs
   try {
-    const keysToRemove = [];
-    for (let index = 0; index < window.localStorage.length; index += 1) {
-      const key = window.localStorage.key(index);
-      if (key && key.startsWith(ADMIN_CACHE_PREFIX)) {
-        keysToRemove.push(key);
-      }
-    }
-
-    keysToRemove.forEach((key) => window.localStorage.removeItem(key));
-  } catch (error) {
-    // ignore storage cleanup failures
+    window.localStorage.setItem(`${ADMIN_CACHE_PREFIX}version`, String(Date.now()));
+  } catch (_error) {
+    // ignore
   }
 }
 

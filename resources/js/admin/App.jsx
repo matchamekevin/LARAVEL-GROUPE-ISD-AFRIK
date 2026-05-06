@@ -13,8 +13,10 @@ import PromotionsAdmin from './pages/PromotionsAdmin';
 import TestimonialsAdmin from './pages/TestimonialsAdmin';
 import CollaboratorsAdmin from './pages/CollaboratorsAdmin';
 import PartnersAdmin from './pages/PartnersAdmin';
+import IngenieriePageAdmin from './pages/IngenieriePageAdmin';
 import Login from './pages/Login';
 import Loader from './components/Loader';
+import ScrollToTop from '../components/ScrollToTop';
 import { ADMIN_NAV_ITEMS } from './config/navigation';
 
 import { clearAdminToken, hasAdminToken, logout, me } from './api';
@@ -118,6 +120,7 @@ export default function App() {
   if (!user) {
     return (
       <BrowserRouter basename="/admin">
+        <ScrollToTop />
         <Routes>
           <Route path="/login" element={<Login onLogin={() => window.location.href = '/admin'} />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
@@ -128,6 +131,7 @@ export default function App() {
 
   return (
     <BrowserRouter basename="/admin">
+      <ScrollToTop />
       <div style={{
         display: 'flex',
         minHeight: '100vh',
@@ -272,6 +276,7 @@ export default function App() {
             <Route path="/testimonials" element={<TestimonialsAdmin />} />
             <Route path="/collaborators" element={<CollaboratorsAdmin />} />
             <Route path="/partners" element={<PartnersAdmin />} />
+            <Route path="/ingenierie-page" element={<IngenieriePageAdmin />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

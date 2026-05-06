@@ -8,6 +8,7 @@ export const ADMIN_NAV_ITEMS = [
   { to: "/catalogue", icon: "fas fa-puzzle-piece", label: "Catalogue" },
   { to: "/promotions", icon: "fas fa-images", label: "Promotions" },
   { to: "/marketing", icon: "fas fa-bullhorn", label: "Marketing Accueil" },
+  { to: "/ingenierie-page", icon: "fas fa-sitemap", label: "Page Ingenierie" },
   { to: "/testimonials", icon: "fas fa-comments", label: "Avis Clients" },
   { to: "/collaborators", icon: "fas fa-handshake", label: "Collaborateurs" },
   { to: "/partners", icon: "fas fa-building", label: "Partenaires" },

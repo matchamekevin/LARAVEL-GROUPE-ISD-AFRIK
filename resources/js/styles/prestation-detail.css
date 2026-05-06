@@ -71,11 +71,6 @@
   text-align: center;
 }
 
-.prestation-hero-icon {
-  font-size: 4rem;
-  margin-bottom: 1.5rem;
-}
-
 .prestation-hero-title {
   font-size: clamp(2rem, 5vw, 3.5rem);
   font-weight: 900;
@@ -160,6 +155,39 @@
   color: var(--primary-orange);
   font-weight: 900;
   font-size: 1.3rem;
+}
+
+.prestation-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 3rem;
+}
+
+.prestation-info-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.prestation-info-card h3 {
+  margin: 0 0 1rem;
+  color: var(--primary-blue);
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.prestation-info-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.prestation-info-card li {
+  color: var(--text-light-gray);
+  line-height: 1.6;
 }
 
 /* CTA Contact */
@@ -305,6 +333,10 @@
   .prestation-services-list li {
     font-size: 0.95rem;
     padding-left: 2rem;
+  }
+
+  .prestation-info-grid {
+    grid-template-columns: 1fr;
   }
 
   .prestation-contact-cta {

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import useContentVersionSync from '../hooks/useContentVersionSync';
 import { initAutoRefresh } from '../utils/autoRefresh';
 
 /**
@@ -9,6 +10,9 @@ import { initAutoRefresh } from '../utils/autoRefresh';
 export const AutoRefreshProvider = ({ children }) => {
   // Initialiser le hook
   useAutoRefresh();
+  useContentVersionSync({
+    intervalMs: 2500,
+  });
 
   // Initialiser le Service Worker et système complet
   useEffect(() => {

@@ -10,7 +10,7 @@ export function useLivePolling(
   refreshFn,
   {
     enabled = true,
-    intervalMs = 8000,
+    intervalMs = 2500,
     runOnFocus = true,
     runOnOnline = true,
     runOnVisibility = true,
@@ -51,9 +51,11 @@ export function useLivePolling(
       return;
     }
 
+    safeRefresh();
+
     const timerId = window.setInterval(() => {
       safeRefresh();
-    }, Math.max(2000, Number(intervalMs) || 8000));
+    }, Math.max(1200, Number(intervalMs) || 2500));
 
     return () => {
       window.clearInterval(timerId);

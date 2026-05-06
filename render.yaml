@@ -66,6 +66,7 @@ services:
         value: file
       - key: SESSION_DRIVER
         value: file
+      # Active l'execution automatique des migrations Laravel au demarrage du conteneur (entrypoint-prod.sh)
       - key: RUN_MIGRATIONS
         value: 'true'
 

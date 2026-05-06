@@ -1,12 +1,41 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { useLocation, useNavigationType } from "react-router-dom";
 
+const STORAGE_KEY = "isd-scroll-positions-v1";
+
+function readStoredPositions() {
+  if (typeof window === "undefined") return new Map();
+  try {
+    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return new Map();
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return new Map();
+    return new Map(Object.entries(parsed).map(([key, value]) => [key, Number(value) || 0]));
+  } catch {
+    return new Map();
+  }
+}
+
+function writeStoredPositions(map) {
+  if (typeof window === "undefined") return;
+  try {
+    const data = Object.fromEntries(map.entries());
+    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    // ignore storage errors
+  }
+}
+
 export default function ScrollToTop() {
   const location = useLocation();
   const navigationType = useNavigationType();
   const isFirstRender = useRef(true);
   const previousPathnameRef = useRef("");
-  const positionsByKeyRef = useRef(new Map());
+  const positionsRef = useRef(readStoredPositions());
+
+  const getRouteStorageKey = (entry) => `${entry.pathname || ""}${entry.search || ""}${entry.hash || ""}`;
+  const keyByLocationKey = `key:${location.key}`;
+  const keyByRoute = `route:${getRouteStorageKey(location)}`;
 
   const scrollInstant = (top) => {
     const root = document.documentElement;
@@ -37,9 +66,26 @@ export default function ScrollToTop() {
 
   useEffect(() => {
     return () => {
-      positionsByKeyRef.current.set(location.key, window.scrollY || window.pageYOffset || 0);
+      const top = window.scrollY || window.pageYOffset || 0;
+      positionsRef.current.set(keyByLocationKey, top);
+      positionsRef.current.set(keyByRoute, top);
+      writeStoredPositions(positionsRef.current);
     };
-  }, [location.key]);
+  }, [keyByLocationKey, keyByRoute]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const top = window.scrollY || window.pageYOffset || 0;
+      positionsRef.current.set(keyByLocationKey, top);
+      positionsRef.current.set(keyByRoute, top);
+      writeStoredPositions(positionsRef.current);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [keyByLocationKey, keyByRoute]);
 
   useLayoutEffect(() => {
     const currentPathname = location.pathname;
@@ -52,7 +98,8 @@ export default function ScrollToTop() {
     }
 
     if (navigationType === "POP") {
-      const savedTop = positionsByKeyRef.current.get(location.key);
+      const savedTop = positionsRef.current.get(keyByLocationKey)
+        ?? positionsRef.current.get(keyByRoute);
       scrollInstant(typeof savedTop === "number" ? savedTop : 0);
       previousPathnameRef.current = currentPathname;
       return;
@@ -64,7 +111,7 @@ export default function ScrollToTop() {
     }
 
     previousPathnameRef.current = currentPathname;
-  }, [location.key, location.pathname, navigationType]);
+  }, [keyByLocationKey, keyByRoute, location.pathname, navigationType]);
 
 
   return null;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import AutoRefreshProvider from '../providers/AutoRefreshProvider';
 import './admin.css';
 
 function waitForStylesheet(partialHref, timeout = 3000) {
@@ -28,7 +29,9 @@ if (el) {
     const root = createRoot(el);
     root.render(
       <React.StrictMode>
-        <App />
+        <AutoRefreshProvider>
+          <App />
+        </AutoRefreshProvider>
       </React.StrictMode>
     );
   });
