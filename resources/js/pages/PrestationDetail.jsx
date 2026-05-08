@@ -1,13 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import usePageMeta from "../hooks/usePageMeta";
 import { getCategories } from "../services/ProduitService";
 import { INGENIERIE_DEFAULT_DOMAINES, resolveIngenierieDomaines } from "../data/ingenierieDomains";
+import AdminToast, { useAdminToast } from "../admin/components/AdminToast";
 import "../styles/prestation-detail.css";
 
 export default function PrestationDetail() {
   const { slug } = useParams();
+  const navigate = useNavigate();
+  const { showToast } = useAdminToast();
   const [domaines, setDomaines] = useState(INGENIERIE_DEFAULT_DOMAINES);
+  const [selectedServices, setSelectedServices] = useState(new Set());
+  const [selectedTechnologies, setSelectedTechnologies] = useState(new Set());
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -37,6 +43,66 @@ export default function PrestationDetail() {
     prestation ? `${prestation.title} | Groupe ISD AFRIK` : "Prestation non trouvee",
     prestation ? prestation.description : "Prestation non disponible"
   );
+
+  const toggleService = (service) => {
+    const updated = new Set(selectedServices);
+    if (updated.has(service)) {
+      updated.delete(service);
+    } else {
+      updated.add(service);
+    }
+    setSelectedServices(updated);
+  };
+
+  const toggleTechnology = (tech) => {
+    const updated = new Set(selectedTechnologies);
+    if (updated.has(tech)) {
+      updated.delete(tech);
+    } else {
+      updated.add(tech);
+    }
+    setSelectedTechnologies(updated);
+  };
+
+  const handleDevisSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (selectedServices.size === 0 && selectedTechnologies.size === 0) {
+      showToast("Selectionnez au moins un service ou une technologie", "error");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const response = await fetch("/api/devis-prestation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prestation_slug: prestation.slug,
+          prestation_name: prestation.title,
+          services: Array.from(selectedServices),
+          technologies: Array.from(selectedTechnologies),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Erreur lors de l'envoi du devis");
+      }
+
+      showToast("Devis envoyé avec succès! Vous pouvez aussi remplir le formulaire de contact.", "success");
+      setSelectedServices(new Set());
+      setSelectedTechnologies(new Set());
+      
+      // Redirect to contact form after 2 seconds
+      setTimeout(() => navigate("/contact"), 2000);
+    } catch (error) {
+      showToast(error.message || "Erreur lors de l'envoi du devis", "error");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   if (!prestation) {
     return (
@@ -88,43 +154,52 @@ export default function PrestationDetail() {
           {!!prestation.services?.length && (
             <div className="prestation-services">
               <h2>Services inclus</h2>
-              <ul className="prestation-services-list">
+              <form className="prestation-services-selector">
                 {prestation.services.map((service) => (
-                  <li key={service}>{service}</li>
+                  <label key={service} className="prestation-service-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedServices.has(service)}
+                      onChange={() => toggleService(service)}
+                    />
+                    <span>{service}</span>
+                  </label>
                 ))}
-              </ul>
+              </form>
             </div>
           )}
 
-          <div className="prestation-info-grid">
-            {!!prestation.deliverables?.length && (
-              <article className="prestation-info-card">
-                <h3>Livrables projet</h3>
-                <ul>
-                  {prestation.deliverables.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </article>
-            )}
-
-            {!!prestation.technologies?.length && (
+          {!!prestation.technologies?.length && (
+            <div className="prestation-info-grid">
               <article className="prestation-info-card">
                 <h3>Technologies et environnements</h3>
-                <ul>
-                  {prestation.technologies.map((item) => (
-                    <li key={item}>{item}</li>
+                <form className="prestation-technologies-selector">
+                  {prestation.technologies.map((tech) => (
+                    <label key={tech} className="prestation-tech-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={selectedTechnologies.has(tech)}
+                        onChange={() => toggleTechnology(tech)}
+                      />
+                      <span>{tech}</span>
+                    </label>
                   ))}
-                </ul>
+                </form>
               </article>
-            )}
-          </div>
+            </div>
+          )}
 
           <div className="prestation-contact-cta">
             <h3>Interesse par cette prestation ?</h3>
-            <Link to="/contact" className="prestation-contact-btn">
-              Demander un devis →
-            </Link>
+            <form onSubmit={handleDevisSubmit} className="prestation-devis-form">
+              <button
+                type="submit"
+                className="prestation-contact-btn"
+                disabled={submitting || (selectedServices.size === 0 && selectedTechnologies.size === 0)}
+              >
+                {submitting ? "Envoi en cours..." : "Demander un devis →"}
+              </button>
+            </form>
           </div>
         </div>
       </section>

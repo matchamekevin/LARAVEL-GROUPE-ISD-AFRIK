@@ -8,6 +8,7 @@ use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RevendeurDemandeController;
 use App\Http\Controllers\ContactMessageController;
+use App\Http\Controllers\DevisPrestationController;
 use App\Http\Controllers\HomeMarketingCardController;
 use App\Http\Controllers\HomeTestimonialController;
 use App\Http\Controllers\HomeCollaboratorController;
@@ -71,6 +72,11 @@ Route::post('/revendeur-demandes', [RevendeurDemandeController::class, 'store'])
 // 📩 CONTACT (public)
 // ======================================================
 Route::post('/contact-messages', [ContactMessageController::class, 'store']);
+
+// ======================================================
+// 📋 DEVIS PRESTATIONS (public)
+// ======================================================
+Route::post('/devis-prestation', [DevisPrestationController::class, 'store']);
 
 // ======================================================
 // 🏠 MARKETING HOMEPAGE CARDS (public)

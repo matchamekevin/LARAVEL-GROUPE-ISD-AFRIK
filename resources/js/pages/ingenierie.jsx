@@ -7,6 +7,7 @@ import "../styles/ingenierie-new.css";
 
 export default function Ingenierie() {
     const [domaines, setDomaines] = useState(INGENIERIE_DEFAULT_DOMAINES);
+    const [imageLoaded, setImageLoaded] = useState({});
 
     usePageMeta(
         "Ingénierie informatique et industrielle | Groupe ISD AFRIK",
@@ -35,6 +36,10 @@ export default function Ingenierie() {
         };
     }, []);
 
+    const handleImageLoad = (slug) => {
+        setImageLoaded(prev => ({ ...prev, [slug]: true }));
+    };
+
     return (
         <div className="ingenierie-page ingenierie-modern"> 
             <section className="ingenierie-hero-modern">
@@ -59,8 +64,14 @@ export default function Ingenierie() {
                                 alt={domaine.title}
                                 loading="lazy"
                                 className="ingenierie-card-image"
+                                style={{
+                                    opacity: imageLoaded[domaine.slug] ? 1 : 0,
+                                    transition: 'opacity 0.3s ease-in'
+                                }}
+                                onLoad={() => handleImageLoad(domaine.slug)}
                                 onError={(e) => {
-                                    e.target.src = '/images/prestations/default.jpg';
+                                    e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect fill="%23f0f0f0" width="400" height="300"/%3E%3C/svg%3E';
+                                    handleImageLoad(domaine.slug);
                                 }}
                             />
                             <div className="ingenierie-card-overlay"></div>

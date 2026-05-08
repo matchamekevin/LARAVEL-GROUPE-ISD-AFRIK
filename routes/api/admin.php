@@ -18,6 +18,7 @@ use App\Http\Controllers\HomeTestimonialController;
 use App\Http\Controllers\HomeCollaboratorController;
 use App\Http\Controllers\HomePartnerController;
 use App\Http\Controllers\AdminActivityController;
+use App\Http\Controllers\DevisPrestationController;
 
 // ======================================================
 // 🔐 ROUTES ADMIN
@@ -81,6 +82,12 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     Route::get('/admin/contact-messages/{id}',       [ContactMessageController::class, 'show'])->where('id', '[0-9]+');
     Route::patch('/admin/contact-messages/{id}/statut', [ContactMessageController::class, 'updateStatus'])->where('id', '[0-9]+');
     Route::delete('/admin/contact-messages/{id}',    [ContactMessageController::class, 'destroy'])->where('id', '[0-9]+');
+
+    // 📋 DEVIS PRESTATIONS (admin)
+    Route::get('/admin/devis-prestations',            [DevisPrestationController::class, 'index']);
+    Route::get('/admin/devis-prestations/{id}',       [DevisPrestationController::class, 'show'])->where('id', '[0-9]+');
+    Route::patch('/admin/devis-prestations/{id}/statut', [DevisPrestationController::class, 'updateStatus'])->where('id', '[0-9]+');
+    Route::delete('/admin/devis-prestations/{id}',    [DevisPrestationController::class, 'destroy'])->where('id', '[0-9]+');
 
     // 🤝 DEMANDES REVENDEURS (admin)
     Route::get('/admin/revendeur-demandes',          [RevendeurDemandeController::class, 'index']);
