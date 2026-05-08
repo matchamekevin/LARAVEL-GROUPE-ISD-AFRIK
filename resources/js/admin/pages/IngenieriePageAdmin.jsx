@@ -637,7 +637,11 @@ export default function IngenieriePageAdmin() {
                       className="admin-form-input"
                       type="file"
                       accept="image/*"
-                      onChange={(event) => setDomainForm((prev) => ({ ...prev, image_file: event.target.files?.[0] || null }))}
+                      onChange={(event) => setDomainForm((prev) => ({ 
+                        ...prev, 
+                        image_file: event.target.files?.[0] || null,
+                        existing_image: ''
+                      }))}
                     />
                   </div>
 
