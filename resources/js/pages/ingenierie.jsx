@@ -32,6 +32,7 @@ export default function Ingenierie() {
     const [isLoading, setIsLoading] = useState(true);
     const [imageLoaded, setImageLoaded] = useState({});
     const [imageHidden, setImageHidden] = useState({});
+    const [imageFallbackIndex, setImageFallbackIndex] = useState({});
 
     usePageMeta(
         "Ingénierie informatique et industrielle | Groupe ISD AFRIK",
@@ -93,6 +94,46 @@ export default function Ingenierie() {
         setImageLoaded(prev => ({ ...prev, [slug]: true }));
     };
 
+    const getImageCandidates = (src) => {
+        const s = String(src || '').trim();
+        const candidates = [];
+        if (!s) return candidates;
+        candidates.push(s);
+        try {
+            const origin = window?.location?.origin || '';
+            if (s.startsWith('/')) {
+                candidates.push(origin + s);
+            } else if (!s.startsWith('http')) {
+                candidates.push('/' + s);
+                candidates.push(origin + '/' + s);
+            }
+            if (s.startsWith('/storage/')) {
+                candidates.push(s.replace('/storage/', '/storage/app/public/'));
+            }
+            if (s.startsWith('storage/')) {
+                candidates.push('/' + s);
+                candidates.push('/storage/' + s.replace(/^storage\//, ''));
+            }
+            // public folder fallback
+            candidates.push('/public' + (s.startsWith('/') ? s : '/' + s));
+        } catch (e) {}
+        // unique
+        return Array.from(new Set(candidates));
+    };
+
+    const handleImageError = (e, slug) => {
+        const orig = e.target.dataset?.original || e.target.getAttribute('src') || '';
+        const candidates = getImageCandidates(orig);
+        const idx = imageFallbackIndex[slug] || 0;
+        if (idx + 1 < candidates.length) {
+            const next = candidates[idx + 1];
+            setImageFallbackIndex(prev => ({ ...prev, [slug]: idx + 1 }));
+            e.target.src = next;
+            return;
+        }
+        setImageHidden((prev) => ({ ...prev, [slug]: true }));
+    };
+
     return (
         <div className="ingenierie-page ingenierie-modern"> 
             <section className="ingenierie-hero-modern">
@@ -131,14 +172,13 @@ export default function Ingenierie() {
                                         alt={domaine.title}
                                         loading="lazy"
                                         className="ingenierie-card-image"
-                                        style={{
-                                            opacity: imageLoaded[domaine.slug] ? 1 : 0,
-                                            transition: "opacity 0.4s ease-in-out"
-                                        }}
-                                        onLoad={() => handleImageLoad(domaine.slug)}
-                                        onError={() => {
-                                            setImageHidden((prev) => ({ ...prev, [domaine.slug]: true }));
-                                        }}
+                                            data-original={domaine.image}
+                                            style={{
+                                                opacity: imageLoaded[domaine.slug] ? 1 : 0,
+                                                transition: "opacity 0.4s ease-in-out"
+                                            }}
+                                            onLoad={() => handleImageLoad(domaine.slug)}
+                                            onError={(e) => handleImageError(e, domaine.slug)}
                                     />
                                 ) : (
                                     <div className="ingenierie-card-image ingenierie-card-image--empty" aria-hidden="true"></div>
@@ -147,6 +187,7 @@ export default function Ingenierie() {
                                 <div className="ingenierie-card-content">
                                     <h3 className="ingenierie-card-title">{domaine.title}</h3>
                                     <p className="ingenierie-card-desc">{domaine.description}</p>
+
                                     <div className="ingenierie-card-actions">
                                         <Link 
                                             to={`/prestation/${domaine.slug}`}
