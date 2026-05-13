@@ -1,7 +1,48 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useLocation, Link } from "react-router-dom";
+import toast from "react-hot-toast";
+import { tokenService } from "../services/tokenService";
+import { apiClient, API_BASE } from "../api/axiosConfig";
 // Styles imported globally in app.jsx
+
+function getSafeRedirectTarget(locationState) {
+  const target = String(locationState?.from || "/").trim();
+  if (!target.startsWith("/") || target.startsWith("//")) {
+    return "/";
+  }
+  return target;
+}
+
+function buildPostLoginState(locationState) {
+  if (!locationState) return {};
+
+  const payload = {};
+  if (locationState.post_login_intent) {
+    payload.post_login_intent = locationState.post_login_intent;
+  }
+  if (locationState.post_login_payload !== undefined) {
+    payload.post_login_payload = locationState.post_login_payload;
+  }
+  return payload;
+}
+
+function normalizeAuthMessage(err, fallback) {
+  const status = err?.response?.status;
+  const raw = err?.response?.data?.message || err?.response?.data?.error || err?.response?.data?.errors || '';
+
+  if (typeof raw === 'string') {
+    if (raw.includes('These credentials do not match')) return 'Identifiants invalides';
+    if (raw.includes('Ces identifiants ne correspondent pas')) return 'Identifiants invalides';
+    if (raw.includes('Identifiants invalides')) return 'Identifiants invalides';
+  }
+
+  if (status === 401) return 'Identifiants invalides';
+  if (status === 422) return 'Données invalides, veuillez vérifier vos informations';
+  if (status === 500) return 'Erreur serveur, veuillez réessayer';
+
+  return raw || err?.message || fallback;
+}
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -9,37 +50,17 @@ export default function Login() {
     mot_de_passe: ""
   });
 
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
-  const API_BASE = (() => {
-    if (typeof window !== "undefined") {
-      const { protocol, hostname } = window.location;
-      if (["localhost", "127.0.0.1"].includes(hostname)) {
-        // In local dev, always stick to the current host to avoid localhost/127 cross-site issues.
-        return `${protocol}//${hostname}:8000`;
-      }
-      if (import.meta.env.VITE_API_BASE) {
-        const envBase = import.meta.env.VITE_API_BASE.replace(/\/$/, "");
-        const envLooksLocal = /localhost|127\.0\.0\.1/i.test(envBase);
-        const hostIsLocal = ["localhost", "127.0.0.1"].includes(hostname);
-        if (!envLooksLocal || hostIsLocal) return envBase;
-      }
-      return window.location.origin;
-    }
-    return "";
-  })();
 
   useEffect(() => {
     if (location.state?.success) {
-      setSuccess(location.state.success);
-      setTimeout(() => setSuccess(null), 3000);
+      toast.success(location.state.success);
     }
     if (location.state?.error) {
-      setError(location.state.error);
+      toast.error(location.state.error);
     }
   }, [location.state]);
 
@@ -68,63 +89,67 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+
+    const redirectTarget = getSafeRedirectTarget(location.state);
+    const postLoginState = buildPostLoginState(location.state);
 
     try {
-      // Obtenir le cookie CSRF pour les requêtes stateful (Sanctum)
+      // 🔐 Obtenir le cookie CSRF pour Sanctum
       await axios.get(`${API_BASE}/sanctum/csrf-cookie`, { withCredentials: true });
 
+      // 📤 Envoi des credentials avec axios (avant le token)
       const res = await axios.post(`${API_BASE}/api/auth/login`, {
         ...formData,
         portal: "client",
       }, { withCredentials: true });
 
-      console.log("Réponse login:", res.data); // ✅ debug
-
-      // 🔐 Si 2FA est requis, rediriger vers la page OTP
+      // 🔐 Si 2FA est requis
       if (res.data.requires_2fa === true) {
-        navigate("/verify-otp", { state: { user_id: res.data.user_id, email: res.data.email, portal: "client" } });
+        navigate("/verify-otp", { 
+          state: { 
+            user_id: res.data.user_id, 
+            email: res.data.email, 
+            portal: "client",
+            from: redirectTarget,
+            ...postLoginState,
+          } 
+        });
         return;
       }
 
-      // ✅ Connexion classique
+      // ✅ Connexion classique - Stocker le token
       if (res.data.token) {
-        localStorage.setItem("token", res.data.token);
+        tokenService.setToken(res.data.token);
 
-        const profil = await axios.get(`${API_BASE}/api/auth/profile`, {
-          headers: {
-            Authorization: `Bearer ${res.data.token}`,
-          },
-          params: {
-            portal: "client",
-          },
+        // 👤 Récupérer le profil complet
+        const profileRes = await apiClient.get('/api/auth/profile', {
+          params: { portal: "client" },
         });
 
-        const user = profil.data.user ? profil.data.user : profil.data;
+        const user = profileRes.data?.user || profileRes.data;
 
         if (user) {
-          localStorage.setItem("user", JSON.stringify(user));
+          tokenService.setUser(user);
           if (user.id_pays) {
-            localStorage.setItem("pays", user.id_pays);
+            tokenService.setPays(user.id_pays);
           }
           window.dispatchEvent(new Event("userUpdated"));
         }
 
-        setSuccess("Connexion réussie ✅");
-        setTimeout(() => navigate("/"), 1000);
+        toast.success("Connexion réussie ✅");
+        setTimeout(() => navigate(redirectTarget, { replace: true, state: postLoginState }), 500);
+      } else {
+        throw new Error('No token in response');
       }
     } catch (err) {
-      console.error("Erreur Axios:", err);
-      if (err.response && err.response.data) {
-        setError(
-          err.response.data.errors ||
-          err.response.data.message ||
-          "Erreur serveur"
-        );
-      } else {
-        setError("Erreur réseau");
-      }
+      console.error("[Login] ❌ ERREUR DÉTAILS:");
+      console.error("  Status:", err.response?.status);
+      console.error("  Message:", err.response?.data?.message);
+      console.error("  Errors:", err.response?.data?.errors);
+      console.error("  Full Response:", err.response?.data);
+
+      const errorMsg = normalizeAuthMessage(err, 'Erreur de connexion');
+      toast.error(errorMsg);
     }
   };
 
@@ -134,8 +159,6 @@ export default function Login() {
         <section className="login-box" aria-label="Formulaire de connexion">
           <h1 id="login-heading" className="login-title">Connexion</h1>
           <p className="login-subtitle">Accédez à votre espace en toute sécurité.</p>
-
-          {success && <div className="success-msg">✅ {success}</div>}
 
           <form onSubmit={handleSubmit} className="login-form" noValidate autoComplete="off" spellCheck={false} autoCapitalize="off">
             <label className="sr-only" htmlFor="email">Email</label>
@@ -202,12 +225,6 @@ export default function Login() {
           <div className="register-row">
             <Link to="/register" className="register-link">Créer un compte</Link>
           </div>
-
-          {error && (
-            <div className="error-msg" role="alert">
-              ❌ {typeof error === "object" ? JSON.stringify(error) : error}
-            </div>
-          )}
         </section>
       </div>
     </div>

@@ -60,25 +60,19 @@ class Utilisateur extends Authenticatable implements FilamentUser
     protected $casts = [
         'email_verified_at'     => 'datetime',
         'is_admin'              => 'boolean',
-        'statut'                => 'string',   // ✅ corrigé
+        'statut'                => 'string',
         'can_access_client'     => 'boolean',
         'can_access_admin'      => 'boolean',
         'two_factor_enabled'    => 'boolean',
         'two_factor_expires_at' => 'datetime',
         'last_login'            => 'datetime',
+        'mot_de_passe'          => 'hashed',
     ];
 
     /** Authentification : mot de passe personnalisé */
     public function getAuthPassword(): string
     {
         return $this->mot_de_passe;
-    }
-
-    public function setMotDePasseAttribute($value): void
-    {
-        if (!empty($value)) {
-            $this->attributes['mot_de_passe'] = Hash::make($value);
-        }
     }
 
     /** Notifications de reset password */

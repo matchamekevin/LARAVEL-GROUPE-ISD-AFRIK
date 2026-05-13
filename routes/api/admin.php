@@ -28,6 +28,7 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     Route::get('/admin/categories-produits',         [CategorieProduitController::class, 'index']);
     Route::get('/admin/categories-produits/{id}',    [CategorieProduitController::class, 'show'])->where('id', '[0-9]+');
     Route::post('/admin/categories-produits/bootstrap-ingenierie', [CategorieProduitController::class, 'bootstrapIngenierie']);
+    Route::post('/admin/categories-produits/bootstrap-ingenierie-page', [CategorieProduitController::class, 'bootstrapIngenieriePage']);
 
     // 📦 PRODUITS (admin)
     Route::get('/admin/produits',                     [ProduitController::class, 'adminIndex']);

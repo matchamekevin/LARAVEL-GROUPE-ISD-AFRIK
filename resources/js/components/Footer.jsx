@@ -11,10 +11,10 @@ export default function Footer() {
   // Liste des pays avec drapeaux et contacts
   const countries = [
     { code: "TG", name: "Togo", flag: "/flags/tg.png", phone: "+228 70 73 83 19" },
-    { code: "BJ", name: "Bénin", flag: "/flags/be.png", phone: "+229  96 12 19 03" },
-    { code: "BF", name: "Burkina Faso", flag: "/flags/bk.png", phone: "+ 226   66 00 66 54" },
-    { code: "CI", name: "Côte d'Ivoire", flag: "/flags/co.png", phone: "+227 97  76 07 29" },
-    { code: "NE", name: "Niger", flag: "/flags/ni.png", phone: "+ 225 03 71 18 42" },
+    { code: "BJ", name: "Bénin", flag: "/flags/be.png", phone: "+229 96 12 19 03" },
+    { code: "BF", name: "Burkina Faso", flag: "/flags/bk.png", phone: "+226 66 00 66 54" },
+    { code: "CI", name: "Côte d'Ivoire", flag: "/flags/co.png", phone: "+225 03 71 18 42" },
+    { code: "NE", name: "Niger", flag: "/flags/ni.png", phone: "+227 97 76 07 29" },
   ];
 
   // Services du groupe avec liens vers leurs pages

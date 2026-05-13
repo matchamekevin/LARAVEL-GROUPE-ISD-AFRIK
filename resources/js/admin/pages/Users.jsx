@@ -15,7 +15,7 @@ const INITIAL_ADMIN_FORM = {
   email: '',
   telephone: '',
   id_pays: '',
-  can_access_client: false,
+  admin_role: 'admin_adjoint', // default
   two_factor_enabled: true,
 };
 
@@ -37,22 +37,22 @@ const EMPTY_STATS = {
 
 function normalizeAdminLevel(value) {
   const level = String(value || 'client').toLowerCase().trim();
-  if (['superadmin', 'super-admin'].includes(level)) return 'superadmin';
-  if (['admin', 'admin_pays', 'admin_national', 'admin_adjoint'].includes(level)) return 'admin_adjoint';
+  if (['superadmin', 'super-admin', 'admin'].includes(level)) return 'superadmin';
+  if (['admin_pays', 'admin_national'].includes(level)) return 'admin_pays';
+  if (level === 'admin_adjoint') return 'admin_adjoint';
   return 'client';
 }
 
 function deriveAdminLevel(user = {}) {
   const explicitLevel = normalizeAdminLevel(user?.admin_level || user?.admin_role || user?.role || 'client');
-  if (explicitLevel === 'superadmin' && Boolean(user?.is_admin) && Boolean(user?.can_access_admin)) {
-    return 'superadmin';
+  const isAdmin = Boolean(user?.is_admin);
+  const canAccessAdmin = Boolean(user?.can_access_admin);
+
+  if (!isAdmin || !canAccessAdmin) {
+    return 'client';
   }
 
-  if (Boolean(user?.is_admin) && Boolean(user?.can_access_admin)) {
-    return explicitLevel === 'superadmin' ? 'superadmin' : 'admin_adjoint';
-  }
-
-  return 'client';
+  return explicitLevel;
 }
 
 function mergeUserState(baseUser, updatedUser = {}) {
@@ -62,7 +62,6 @@ function mergeUserState(baseUser, updatedUser = {}) {
     id: updatedUser?.id ?? updatedUser?.id_utilisateur ?? baseUser?.id,
     admin_role: updatedUser?.admin_role ?? baseUser?.admin_role,
     is_admin: updatedUser?.is_admin ?? baseUser?.is_admin ?? false,
-    can_access_client: updatedUser?.can_access_client ?? baseUser?.can_access_client ?? false,
     can_access_admin: updatedUser?.can_access_admin ?? baseUser?.can_access_admin ?? false,
     statut: updatedUser?.statut ?? baseUser?.statut ?? 'actif',
   };
@@ -74,26 +73,30 @@ function mergeUserState(baseUser, updatedUser = {}) {
     admin_level: adminLevel,
     role: adminLevel,
     is_super_admin: adminLevel === 'superadmin',
+    is_admin_pays: adminLevel === 'admin_pays',
     is_admin_adjoint: adminLevel === 'admin_adjoint',
   };
 }
 
 function normalizeDraftAccess(draft = {}, user = {}) {
-  const can_access_client = Boolean(draft.can_access_client ?? user.can_access_client);
   let is_super_admin = Boolean(draft.is_super_admin ?? user.is_super_admin);
+  let is_admin_pays = Boolean(draft.is_admin_pays ?? user.is_admin_pays);
   let is_admin_adjoint = Boolean(draft.is_admin_adjoint ?? user.is_admin_adjoint);
 
-  // Regle metier: un compte ne peut pas cumuler super admin + admin adjoint.
-  if (is_super_admin && is_admin_adjoint) {
+  // Regle metier: un compte ne peut avoir qu'un seul role admin.
+  if (is_super_admin) {
+    is_admin_pays = false;
+    is_admin_adjoint = false;
+  } else if (is_admin_pays) {
     is_admin_adjoint = false;
   }
 
-  const can_access_admin = is_super_admin || is_admin_adjoint;
+  const can_access_admin = is_super_admin || is_admin_pays || is_admin_adjoint;
 
   return {
-    can_access_client,
     can_access_admin,
     is_super_admin,
+    is_admin_pays,
     is_admin_adjoint,
   };
 }
@@ -111,6 +114,7 @@ export default function Users() {
   const [users, setUsers] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('all'); // 'all', 'clients', 'admins'
   const [pagination, setPagination] = useState(EMPTY_PAGINATION);
   const [stats, setStats] = useState(EMPTY_STATS);
   const [countries, setCountries] = useState([]);
@@ -179,6 +183,12 @@ export default function Users() {
           params.q = trimmedSearch;
         }
 
+        if (filter === 'clients') {
+            params.is_admin = 0;
+        } else if (filter === 'admins') {
+            params.is_admin = 1;
+        }
+
         const res = await getUsers(params);
 
         if (!mounted) return;
@@ -222,7 +232,7 @@ export default function Users() {
     return () => {
       mounted = false;
     };
-  }, [search, page, refreshToken]);
+  }, [search, page, refreshToken, filter]);
 
   const activeCount = stats.active;
   const suspendedCount = stats.suspended;
@@ -241,6 +251,12 @@ export default function Users() {
 
       const trimmedSearch = search.trim();
       if (trimmedSearch !== '') params.q = trimmedSearch;
+
+      if (filter === 'clients') {
+        params.is_admin = 0;
+      } else if (filter === 'admins') {
+        params.is_admin = 1;
+      }
 
       const res = await getUsers(params);
       const list = Array.isArray(res.data) ? res.data : [];
@@ -269,7 +285,7 @@ export default function Users() {
     } catch (err) {
       // silent: background refresh should not show errors
     }
-  }, [page, search]);
+  }, [page, search, filter]);
 
   useLivePolling(
     () => backgroundLoadUsers(),
@@ -337,31 +353,31 @@ export default function Users() {
     const currentAccess = normalizeDraftAccess(accessDrafts[selectedUser.id] || {}, selectedUser);
     const persistedAccess = normalizeDraftAccess({}, selectedUser);
 
-    const unchanged = persistedAccess.can_access_client === currentAccess.can_access_client
-      && persistedAccess.can_access_admin === currentAccess.can_access_admin
+    const unchanged = persistedAccess.can_access_admin === currentAccess.can_access_admin
       && persistedAccess.is_admin_adjoint === currentAccess.is_admin_adjoint
+      && persistedAccess.is_admin_pays === currentAccess.is_admin_pays
       && persistedAccess.is_super_admin === currentAccess.is_super_admin;
     if (unchanged) return;
 
-    const status = (!currentAccess.can_access_client && !currentAccess.can_access_admin) ? 'suspendu' : 'actif';
+    const status = (!currentAccess.can_access_admin) ? 'suspendu' : 'actif';
 
     setAccessUpdating(selectedUser.id);
     try {
       const payload = {
-        can_access_client: currentAccess.can_access_client,
         can_access_admin: currentAccess.can_access_admin,
         statut: status,
         is_admin_adjoint: currentAccess.is_admin_adjoint,
+        is_admin_pays: currentAccess.is_admin_pays,
         is_super_admin: currentAccess.is_super_admin,
       };
 
       const res = await updateUser(selectedUser.id, payload);
 
       const updated = res?.data?.utilisateur || {
-        can_access_client: currentAccess.can_access_client,
         can_access_admin: currentAccess.can_access_admin,
         statut: status,
         is_admin_adjoint: currentAccess.is_admin_adjoint,
+        is_admin_pays: currentAccess.is_admin_pays,
         is_super_admin: currentAccess.is_super_admin,
       };
 
@@ -402,7 +418,10 @@ export default function Users() {
         payload.telephone = normalized;
       }
 
-      const res = await createAdminAdjoint(payload);
+      const res = await createAdminAdjoint({
+        ...payload,
+        admin_role: adminForm.admin_role
+      });
       const created = res?.data?.utilisateur;
       setAdminForm((previous) => ({
         ...INITIAL_ADMIN_FORM,
@@ -471,6 +490,7 @@ export default function Users() {
     }
   });
   return (
+    <>
     <div className="admin-users-page">
       <div className="admin-users-hero">
         <div className="admin-hero-content">
@@ -510,126 +530,195 @@ export default function Users() {
         <div className="admin-users-create-card">
           <div className="admin-users-list-card-header">
             <div>
-              <h2>Créer un admin adjoint</h2>
+              <h2>Créer un compte administratif</h2>
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                L&apos;utilisateur recevra ses accès temporaires par email.
+              </p>
             </div>
           </div>
 
           <form className="admin-users-create-form" onSubmit={handleCreateAdminAdjoint}>
-            <input
-              className="admin-user-role-select"
-              type="text"
-              placeholder="Nom"
-              value={adminForm.nom}
-              onChange={(e) => setAdminForm((previous) => ({ ...previous, nom: e.target.value }))}
-              required
-            />
-            <input
-              className="admin-user-role-select"
-              type="text"
-              placeholder="Prénom"
-              value={adminForm.prenom}
-              onChange={(e) => setAdminForm((previous) => ({ ...previous, prenom: e.target.value }))}
-              required
-            />
-            <input
-              className="admin-user-role-select"
-              type="email"
-              placeholder="Email"
-              value={adminForm.email}
-              onChange={(e) => setAdminForm((previous) => ({ ...previous, email: e.target.value }))}
-              required
-            />
-            <input
-              className="admin-user-role-select"
-              type="text"
-              placeholder="Téléphone"
-              value={adminForm.telephone}
-              onChange={(e) => {
-                setPhoneError(null);
-                setAdminForm((previous) => ({ ...previous, telephone: e.target.value }));
-              }}
-            />
-            {phoneError && (
-              <div style={{ color: '#DC2626', fontSize: '0.9rem' }}>{phoneError}</div>
-            )}
-
-            {countries.length > 0 ? (
-              <select
-                className="admin-user-role-select"
-                value={adminForm.id_pays}
-                onChange={(e) => setAdminForm((previous) => ({ ...previous, id_pays: e.target.value }))}
-                required
-              >
-                <option value="">Choisir un pays</option>
-                {countries.map((country) => (
-                  <option key={country.id} value={country.id}>
-                    {country.nom}
-                  </option>
-                ))}
-              </select>
-            ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
               <input
                 className="admin-user-role-select"
-                type="number"
-                min="1"
-                placeholder="ID pays"
-                value={adminForm.id_pays}
-                onChange={(e) => setAdminForm((previous) => ({ ...previous, id_pays: e.target.value }))}
+                type="text"
+                placeholder="Nom"
+                value={adminForm.nom}
+                onChange={(e) => setAdminForm((previous) => ({ ...previous, nom: e.target.value }))}
                 required
               />
+              <input
+                className="admin-user-role-select"
+                type="text"
+                placeholder="Prénom"
+                value={adminForm.prenom}
+                onChange={(e) => setAdminForm((previous) => ({ ...previous, prenom: e.target.value }))}
+                required
+              />
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+              <input
+                className="admin-user-role-select"
+                type="email"
+                placeholder="Email professionnel"
+                value={adminForm.email}
+                onChange={(e) => setAdminForm((previous) => ({ ...previous, email: e.target.value }))}
+                required
+              />
+              <input
+                className="admin-user-role-select"
+                type="text"
+                placeholder="Téléphone"
+                value={adminForm.telephone}
+                onChange={(e) => {
+                  setPhoneError(null);
+                  setAdminForm((previous) => ({ ...previous, telephone: e.target.value }));
+                }}
+              />
+            </div>
+            {phoneError && (
+              <div style={{ color: '#DC2626', fontSize: '0.9rem', marginTop: '0.5rem' }}>{phoneError}</div>
             )}
 
-            <div className="admin-users-create-actions">
-              <label className="admin-user-access-check">
+            <div style={{ marginTop: '1rem' }}>
+              {countries.length > 0 ? (
+                <select
+                  className="admin-user-role-select"
+                  value={adminForm.id_pays}
+                  onChange={(e) => setAdminForm((previous) => ({ ...previous, id_pays: e.target.value }))}
+                  required
+                >
+                  <option value="">Choisir le pays d&apos;affectation</option>
+                  {countries.map((country) => (
+                    <option key={country.id} value={country.id}>
+                      {country.nom}
+                    </option>
+                  ))}
+                </select>
+              ) : (
                 <input
-                  type="checkbox"
-                  checked={adminForm.can_access_client}
-                  onChange={(e) => setAdminForm((previous) => ({ ...previous, can_access_client: e.target.checked }))}
+                  className="admin-user-role-select"
+                  type="number"
+                  min="1"
+                  placeholder="ID pays"
+                  value={adminForm.id_pays}
+                  onChange={(e) => setAdminForm((previous) => ({ ...previous, id_pays: e.target.value }))}
+                  required
                 />
-                Lui laisser aussi l'acces client
-              </label>
+              )}
+            </div>
+
+            <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '0.75rem', border: '1px solid #e2e8f0' }}>
+              <p style={{ margin: '0 0 1rem 0', fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>Type de compte admin :</p>
+              <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>
+                  <input 
+                    type="radio" 
+                    name="admin_role" 
+                    value="admin_pays" 
+                    checked={adminForm.admin_role === 'admin_pays'} 
+                    onChange={(e) => setAdminForm(prev => ({ ...prev, admin_role: e.target.value }))}
+                  />
+                  Admin Pays / National
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>
+                  <input 
+                    type="radio" 
+                    name="admin_role" 
+                    value="admin_adjoint" 
+                    checked={adminForm.admin_role === 'admin_adjoint'} 
+                    onChange={(e) => setAdminForm(prev => ({ ...prev, admin_role: e.target.value }))}
+                  />
+                  Admin Adjoint
+                </label>
+              </div>
+            </div>
+
+            <div className="admin-users-create-actions" style={{ marginTop: '1.5rem' }}>
               <label className="admin-user-access-check">
                 <input
                   type="checkbox"
                   checked={adminForm.two_factor_enabled}
                   onChange={(e) => setAdminForm((previous) => ({ ...previous, two_factor_enabled: e.target.checked }))}
                 />
-                Activer le 2FA
+                Activer la double authentification (2FA)
               </label>
               <button type="submit" className="admin-user-action-btn reactivate" disabled={creatingAdmin}>
-                {creatingAdmin ? '⏳ Création...' : "Creer l'admin adjoint"}
+                {creatingAdmin ? '⏳ Création...' : "Créer le compte administratif"}
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {visibleUsers.length === 0 ? (
-        <div className="admin-users-empty">
-          <div className="admin-users-empty-icon">👥</div>
-          <h3>Aucun utilisateur trouvé</h3>
-          <p>Aucun utilisateur n'est actuellement enregistré sur la plateforme.</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', background: '#f1f5f9', padding: '4px', borderRadius: '0.75rem', border: '1px solid #e2e8f0' }}>
+          <button 
+            onClick={() => setFilter('all')} 
+            className={`admin-filter-tab ${filter === 'all' ? 'active' : ''}`}
+            style={{ 
+              padding: '0.5rem 1.25rem', 
+              borderRadius: '0.6rem', 
+              border: 'none', 
+              fontSize: '0.88rem', 
+              fontWeight: 700,
+              cursor: 'pointer',
+              background: filter === 'all' ? '#ffffff' : 'transparent',
+              color: filter === 'all' ? '#0f172a' : '#64748b',
+              boxShadow: filter === 'all' ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
+            }}
+          >
+            Tous
+          </button>
+          <button 
+            onClick={() => setFilter('clients')} 
+            className={`admin-filter-tab ${filter === 'clients' ? 'active' : ''}`}
+            style={{ 
+              padding: '0.5rem 1.25rem', 
+              borderRadius: '0.6rem', 
+              border: 'none', 
+              fontSize: '0.88rem', 
+              fontWeight: 700,
+              cursor: 'pointer',
+              background: filter === 'clients' ? '#ffffff' : 'transparent',
+              color: filter === 'clients' ? '#0f172a' : '#64748b',
+              boxShadow: filter === 'clients' ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
+            }}
+          >
+            Clients
+          </button>
+          <button 
+            onClick={() => setFilter('admins')} 
+            className={`admin-filter-tab ${filter === 'admins' ? 'active' : ''}`}
+            style={{ 
+              padding: '0.5rem 1.25rem', 
+              borderRadius: '0.6rem', 
+              border: 'none', 
+              fontSize: '0.88rem', 
+              fontWeight: 700,
+              cursor: 'pointer',
+              background: filter === 'admins' ? '#ffffff' : 'transparent',
+              color: filter === 'admins' ? '#0f172a' : '#64748b',
+              boxShadow: filter === 'admins' ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
+            }}
+          >
+            Administrateurs
+          </button>
         </div>
-      ) : (
-        <>
-          <form className="admin-users-search" onSubmit={handleSearchSubmit}>
-            <div className="admin-users-search-input">
-              <input
-                type="text"
-                placeholder="Rechercher par nom, prénom ou email..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-              />
-            </div>
-            <div className="admin-users-search-actions" style={{ display: 'flex', gap: '0.75rem' }}>
-              <button type="submit" className="admin-user-action-btn reactivate">
-                Rechercher
-              </button>
-              <button type="button" className="admin-user-action-btn suspend" onClick={handleSearchReset}>
-                Réinitialiser
-              </button>
-            </div>
-          </form>
+
+        <form className="admin-users-search" onSubmit={handleSearchSubmit} style={{ marginBottom: 0, flex: 1, maxWidth: '500px' }}>
+          <div className="admin-users-search-input" style={{ width: '100%' }}>
+            <input
+              type="text"
+              placeholder="Rechercher un nom ou email..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              style={{ width: '100%' }}
+            />
+          </div>
+        </form>
+      </div>
 
           <div className="admin-users-list-card">
             <div className="admin-users-list-card-header">
@@ -670,6 +759,20 @@ export default function Users() {
                             <span className="admin-user-name">
                               {u.prenom} {u.nom}
                             </span>
+                            {u.is_admin && (
+                              <span style={{ 
+                                display: 'inline-block', 
+                                padding: '2px 8px', 
+                                background: u.admin_level === 'superadmin' ? '#fef2f2' : '#f0f9ff',
+                                color: u.admin_level === 'superadmin' ? '#dc2626' : '#0369a1',
+                                borderRadius: '999px',
+                                fontSize: '0.7rem',
+                                fontWeight: 800,
+                                marginLeft: '0.5rem'
+                              }}>
+                                {u.admin_level === 'superadmin' ? 'SUPER' : u.admin_level === 'admin_pays' ? 'PAYS' : 'ADJOINT'}
+                              </span>
+                            )}
                           </div>
                         </td>
 
@@ -677,27 +780,10 @@ export default function Users() {
                           <span className="admin-user-email">{u.email}</span>
                         </td>
 
-                        {/* Role column removed — accès gérés via cases à cocher ci-dessous */}
-
                         <td>
                           <div className="admin-user-role-cell">
-                              <div className="admin-user-role-controls">
-                                <label className="admin-user-access-check">
-                                  <input
-                                    type="checkbox"
-                                    checked={rowAccess.can_access_client}
-                                    onChange={(e) => setAccessDrafts((previous) => ({
-                                      ...previous,
-                                      [u.id]: {
-                                        ...(previous[u.id] || {}),
-                                        can_access_client: e.target.checked,
-                                      },
-                                    }))}
-                                    disabled={accessUpdating === u.id || cannotManageSuperAdmin}
-                                  />
-                                  Client
-                                </label>
-                                <label className="admin-user-access-check">
+                              <div className="admin-user-role-controls" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                <label className="admin-user-access-check" title="Accès total plateforme">
                                   <input
                                     type="checkbox"
                                     checked={rowAccess.is_super_admin}
@@ -706,6 +792,7 @@ export default function Users() {
                                       [u.id]: {
                                         ...(previous[u.id] || {}),
                                         is_super_admin: e.target.checked,
+                                        is_admin_pays: e.target.checked ? false : Boolean(previous[u.id]?.is_admin_pays ?? u.is_admin_pays),
                                         is_admin_adjoint: e.target.checked ? false : Boolean(previous[u.id]?.is_admin_adjoint ?? u.is_admin_adjoint),
                                       },
                                     }))}
@@ -714,7 +801,25 @@ export default function Users() {
                                   Super admin
                                 </label>
 
-                                <label className="admin-user-access-check">
+                                <label className="admin-user-access-check" title="Admin rattaché à son pays">
+                                  <input
+                                    type="checkbox"
+                                    checked={rowAccess.is_admin_pays}
+                                    onChange={(e) => setAccessDrafts((previous) => ({
+                                      ...previous,
+                                      [u.id]: {
+                                        ...(previous[u.id] || {}),
+                                        is_admin_pays: e.target.checked,
+                                        is_super_admin: e.target.checked ? false : Boolean(previous[u.id]?.is_super_admin ?? u.is_super_admin),
+                                        is_admin_adjoint: e.target.checked ? false : Boolean(previous[u.id]?.is_admin_adjoint ?? u.is_admin_adjoint),
+                                      },
+                                    }))}
+                                    disabled={accessUpdating === u.id || cannotManageSuperAdmin}
+                                  />
+                                  Admin Pays
+                                </label>
+
+                                <label className="admin-user-access-check" title="Support administratif">
                                   <input
                                     type="checkbox"
                                     checked={rowAccess.is_admin_adjoint}
@@ -724,11 +829,12 @@ export default function Users() {
                                         ...(previous[u.id] || {}),
                                         is_admin_adjoint: e.target.checked,
                                         is_super_admin: e.target.checked ? false : Boolean(previous[u.id]?.is_super_admin ?? u.is_super_admin),
+                                        is_admin_pays: e.target.checked ? false : Boolean(previous[u.id]?.is_admin_pays ?? u.is_admin_pays),
                                       },
                                     }))}
                                     disabled={accessUpdating === u.id || cannotManageSuperAdmin}
                                   />
-                                  Admin adjoint
+                                  Adjoint
                                 </label>
                               </div>
                               <button
@@ -739,15 +845,15 @@ export default function Users() {
                                   cannotManageSuperAdmin
                                   || accessUpdating === u.id
                                   || (
-                                    persistedRowAccess.can_access_client === rowAccess.can_access_client
-                                    && persistedRowAccess.can_access_admin === rowAccess.can_access_admin
+                                    persistedRowAccess.can_access_admin === rowAccess.can_access_admin
                                     && persistedRowAccess.is_admin_adjoint === rowAccess.is_admin_adjoint
+                                    && persistedRowAccess.is_admin_pays === rowAccess.is_admin_pays
                                     && persistedRowAccess.is_super_admin === rowAccess.is_super_admin
                                   )
                                 }
-                                title="Appliquer les acces client/admin"
+                                title="Appliquer les changements"
                               >
-                                {accessUpdating === u.id ? '⏳ En cours...' : 'Appliquer'}
+                                {accessUpdating === u.id ? '⏳' : 'Appliquer'}
                               </button>
                           </div>
                         </td>
@@ -818,10 +924,9 @@ export default function Users() {
               </div>
             </div>
           </div>
-        </>
-      )}
+        </div>
 
       <AdminToast toast={toast} />
-    </div>
+    </>
   );
 }

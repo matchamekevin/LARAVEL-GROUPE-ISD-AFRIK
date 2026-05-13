@@ -21,6 +21,13 @@
   box-sizing: border-box;
 }
 
+.otp-page-wrapper *,
+.otp-page-wrapper *::before,
+.otp-page-wrapper *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
 /* ==========================================
    BACKGROUND & CONTAINER
    ========================================== */
@@ -49,16 +56,6 @@
   top: -140px;
   left: -100px;
   pointer-events: none;
-  animation: float 6s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(20px);
-  }
 }
 
 .otp-container {
@@ -68,19 +65,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: slideUp 0.7s ease-out;
   z-index: 10;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* ==========================================
@@ -128,18 +113,6 @@
   color: var(--otp-primary);
   margin: 0;
   letter-spacing: -0.4px;
-  animation: fadeInDown 0.45s ease-out;
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .otp-subtitle {
@@ -175,20 +148,8 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  animation: bounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   margin: 0;
   border: 1px solid;
-}
-
-@keyframes bounceIn {
-  0% {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
 }
 
 .alert i {
@@ -228,7 +189,6 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  animation: bounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   margin: 0;
 }
 
@@ -243,7 +203,6 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  animation: bounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   margin: 0;
 }
 
@@ -264,7 +223,7 @@
   gap: 0.75rem;
 }
 
-.input-group {
+.otp-input-group {
   position: relative;
   display: flex;
   align-items: center;
@@ -276,25 +235,25 @@
   height: 56px;
 }
 
-.input-group:focus-within {
+.otp-input-group:focus-within {
   border-color: var(--otp-accent);
   background: linear-gradient(135deg, #fffbf0 0%, #fffef0 100%);
   box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12), 0 4px 12px rgba(245, 158, 11, 0.15);
 }
 
-.input-group .icon {
+.otp-input-group .icon {
   color: var(--otp-accent);
   font-size: 1.3rem;
   margin-right: 0.8rem;
   transition: all 0.3s ease;
 }
 
-.input-group:focus-within .icon {
+.otp-input-group:focus-within .icon {
   color: var(--otp-accent-dark);
   transform: scale(1.1);
 }
 
-.input-group .input {
+.otp-input-group .otp-input {
   flex: 1;
   border: none;
   background: transparent;
@@ -307,7 +266,7 @@
   font-family: 'Monaco', 'Courier New', monospace;
 }
 
-.input-group .input::placeholder {
+.otp-input-group .otp-input::placeholder {
   color: var(--otp-text-muted);
   letter-spacing: 0.1em;
   opacity: 0.6;
@@ -356,7 +315,7 @@
    SUBMIT BUTTON
    ========================================== */
 
-.submit-btn {
+.otp-submit-btn {
   width: 100%;
   height: 52px;
   background: linear-gradient(135deg, var(--otp-accent) 0%, var(--otp-accent-dark) 100%);
@@ -379,7 +338,8 @@
   font-size: 0.95rem;
 }
 
-.submit-btn::before {
+/* DÉSACTIVER les animations au survol */
+/* .otp-submit-btn::before {
   content: '';
   position: absolute;
   top: 50%;
@@ -392,37 +352,33 @@
   transition: width 0.6s, height 0.6s;
 }
 
-.submit-btn:hover:not(:disabled)::before {
+.otp-submit-btn:hover:not(:disabled)::before {
   width: 300px;
   height: 300px;
-}
+} */
 
-.submit-btn:hover:not(:disabled) {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(245, 158, 11, 0.35);
+.otp-submit-btn:hover:not(:disabled) {
+  /* Désactiver translateY */
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.25);
   background: linear-gradient(135deg, var(--otp-accent-light) 0%, var(--otp-accent) 100%);
 }
 
-.submit-btn:active:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.submit-btn:disabled {
+.otp-submit-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.submit-btn:focus-visible {
+.otp-submit-btn:focus-visible {
   outline: 2px solid var(--otp-accent);
   outline-offset: 2px;
 }
 
-.submit-btn i {
+.otp-submit-btn i {
   font-size: 1.1rem;
   transition: transform 0.3s ease;
 }
 
-.submit-btn:disabled i {
+.otp-submit-btn:disabled i {
   animation: spin 1s linear infinite;
 }
 
@@ -491,13 +447,9 @@
 .otp-resend-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--otp-accent) 0%, var(--otp-accent-dark) 100%);
   color: #ffffff;
-  transform: translateY(-2px);
+  /* Supprimer : transform: translateY(-2px); */
   box-shadow: 0 6px 20px rgba(245, 158, 11, 0.25);
   border-color: var(--otp-accent-dark);
-}
-
-.otp-resend-btn:active:not(:disabled) {
-  transform: translateY(0);
 }
 
 .otp-resend-btn:disabled {
@@ -565,15 +517,15 @@
     font-size: 0.85rem;
   }
 
-  .input-group {
+  .otp-input-group {
     height: 52px;
   }
 
-  .input-group .input {
+  .otp-input-group .otp-input {
     font-size: 1.1rem;
   }
 
-  .submit-btn {
+  .otp-submit-btn {
     height: 48px;
     font-size: 0.9rem;
   }
@@ -618,16 +570,16 @@
     padding: 0.6rem 0.875rem;
   }
 
-  .input-group {
+  .otp-input-group {
     height: 48px;
     padding: 0 0.875rem;
   }
 
-  .input-group .input {
+  .otp-input-group .otp-input {
     font-size: 1rem;
   }
 
-  .input-group .icon {
+  .otp-input-group .icon {
     font-size: 1.1rem;
     margin-right: 0.6rem;
   }
@@ -636,7 +588,7 @@
     font-size: 0.95rem;
   }
 
-  .submit-btn {
+  .otp-submit-btn {
     height: 46px;
     font-size: 0.85rem;
     padding: 0 1rem;
@@ -669,7 +621,7 @@
   }
 
   /* Prevent zoom on iOS focus */
-  .input-group .input {
+  .otp-input-group .otp-input {
     font-size: 16px;
   }
 }
@@ -717,20 +669,20 @@
     color: #cbd5e1;
   }
 
-  .input-group {
+  .otp-input-group {
     background: #0f172a;
     border-color: #334155;
   }
 
-  .input-group:focus-within {
+  .otp-input-group:focus-within {
     background: linear-gradient(135deg, #1e293b 0%, #172043 100%);
   }
 
-  .input-group .input {
+  .otp-input-group .otp-input {
     color: #f1f5f9;
   }
 
-  .input-group .input::placeholder {
+  .otp-input-group .otp-input::placeholder {
     color: #94a3b8;
   }
 

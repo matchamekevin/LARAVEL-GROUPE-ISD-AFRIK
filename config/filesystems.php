@@ -1,5 +1,12 @@
 <?php
 
+$appUrl = rtrim((string) env('APP_URL', 'http://localhost'), '/');
+$appEnv = $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'production';
+$appHost = parse_url($appUrl, PHP_URL_HOST);
+$publicDiskUrl = (in_array($appEnv, ['local', 'testing'], true) || in_array($appHost, ['localhost', '127.0.0.1', '::1'], true))
+    ? '/storage'
+    : $appUrl.'/storage';
+
 return [
 
     /*
@@ -41,7 +48,7 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'url' => $publicDiskUrl,
             'visibility' => 'public',
             'throw' => false,
             'report' => false,

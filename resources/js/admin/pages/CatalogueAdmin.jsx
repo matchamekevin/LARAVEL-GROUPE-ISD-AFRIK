@@ -173,6 +173,27 @@ const matchesSearchQuery = (query, values) => {
 const getCategoryId = (category) => Number(category?.id || category?.id_categorie || 0);
 const getCategoryParentId = (category) => Number(category?.parent_id || category?.parent?.id || category?.parent?.id_categorie || 0);
 
+const normalizeImageSrc = (value) => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+
+  if (raw.startsWith('/storage/')) return raw;
+
+  if (raw.startsWith('http://') || raw.startsWith('https://')) {
+    try {
+      const parsed = new URL(raw);
+      const isLocal = /^(localhost|127\.0\.0\.1|::1)$/i.test(window.location.hostname);
+      if (parsed.pathname.startsWith('/storage/') && (parsed.origin === window.location.origin || isLocal)) {
+        return parsed.pathname;
+      }
+    } catch (_error) {
+      // keep original
+    }
+  }
+
+  return raw;
+};
+
 export default function CatalogueAdmin() {
   const navigate = useNavigate();
   const { section } = useParams();
@@ -620,9 +641,9 @@ export default function CatalogueAdmin() {
       description: category.description || '',
       parent_id: kind === 'famille' ? '' : (category.parent_id || ''),
       ordre: category.ordre ?? 10,
-      image_url: category.image_url || category.image || '',
+      image_url: normalizeImageSrc(category.image_url || category.image || ''),
       image_file: null,
-      existing_image: category.image_url || category.image || '',
+      existing_image: normalizeImageSrc(category.image_url || category.image || ''),
       actif: category.actif !== false,
     });
     setCategoryEditorKind(kind);
@@ -1203,7 +1224,7 @@ export default function CatalogueAdmin() {
                           <td>{cat.parent?.nom || '—'}</td>
                           <td>
                             {cat.image_url || cat.image ? (
-                              <img className="admin-catalogue-thumb" src={cat.image_url || cat.image} alt={cat.nom} />
+                              <img className="admin-catalogue-thumb" src={normalizeImageSrc(cat.image_url || cat.image)} alt={cat.nom} />
                             ) : (
                               <span className="admin-catalogue-muted">Aucune</span>
                             )}

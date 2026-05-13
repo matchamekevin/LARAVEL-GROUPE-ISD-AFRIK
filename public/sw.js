@@ -3,11 +3,18 @@
  * Gère le cache, offline-first, et updates invisibles
  */
 
-const CACHE_VERSION = '2026-04-09-1';
+const CACHE_VERSION = '2026-05-13-2';
 const CACHE_NAME = `isd-afrik-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `isd-afrik-runtime-${CACHE_VERSION}`;
 const API_CACHE = `isd-afrik-api-${CACHE_VERSION}`;
 const ASSET_CACHE = `isd-afrik-assets-${CACHE_VERSION}`;
+
+const NON_CACHEABLE_API_PATHS = [
+  '/api/categories-produits',
+  '/api/content-version',
+  '/api/auth/profile',
+  '/api/sanctum',
+];
 
 // Ressources à précacher au premier load
 const PRECACHE_URLS = [
@@ -52,18 +59,31 @@ self.addEventListener('activate', (event) => {
 
 // Stratégie Network First pour API (données fraîches d'abord)
 const networkFirstStrategy = async (request) => {
+  const url = new URL(request.url);
+  const isApiRequest = url.pathname.includes('/api/');
   const cacheName = request.url.includes('/api/') ? API_CACHE : RUNTIME_CACHE;
+  const requestMethod = String(request.method || 'GET').toUpperCase();
+  const bypassCache = NON_CACHEABLE_API_PATHS.some((path) => url.pathname.startsWith(path));
 
   try {
     const networkResponse = await fetch(request);
 
-    if (networkResponse.ok) {
+    const shouldStore =
+      requestMethod === 'GET' &&
+      networkResponse.ok &&
+      (!isApiRequest || !bypassCache) &&
+      !/no-store/i.test(String(networkResponse.headers.get('cache-control') || ''));
+
+    if (shouldStore) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
     }
 
     return networkResponse;
   } catch (error) {
+    if (requestMethod !== 'GET' || bypassCache) {
+      throw error;
+    }
     console.log('[ServiceWorker] Network failed, trying cache:', request.url);
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
@@ -97,14 +117,38 @@ const cacheFirstStrategy = async (request) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+  const isSameOrigin = url.origin === self.location.origin;
 
   // Ignorer les requêtes chrome-extension et autres non-http
   if (!url.protocol.startsWith('http')) {
     return;
   }
 
+  if (!isSameOrigin) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Always bypass SW caching for user-uploaded media.
+  // These files can be large and change frequently; caching them caused aborted
+  // fetches in some browsers/proxies (e.g. ngrok + Firefox).
+  if (url.pathname.startsWith('/storage/')) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   // API calls: Network First (données fraîches)
   if (url.pathname.includes('/api/')) {
+    const bypassCache = NON_CACHEABLE_API_PATHS.some((path) => url.pathname.startsWith(path));
+    if (bypassCache) {
+      event.respondWith(
+        fetch(request, { cache: 'no-store' }).catch(() => {
+          return new Response('Network error', { status: 408 });
+        })
+      );
+      return;
+    }
+
     event.respondWith(networkFirstStrategy(request).catch(() => {
       if (request.method === 'GET') {
         return caches.match(request);

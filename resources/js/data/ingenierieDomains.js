@@ -277,13 +277,14 @@ const appendVersionToImage = (url, versionSeed) => {
 
 const withDefaults = (item) => ({
   ...item,
-  image: item.image || FALLBACK_IMAGE,
+  image: item.image || "",
   services: Array.isArray(item.services) ? item.services : [],
   deliverables: Array.isArray(item.deliverables) ? item.deliverables : [],
   technologies: Array.isArray(item.technologies) ? item.technologies : [],
 });
 
-export const resolveIngenierieDomaines = (categories = []) => {
+export const resolveIngenierieDomaines = (categories = [], options = {}) => {
+  const { fallbackToDefaults = true, includeBaseImageFallback = true } = options || {};
   const roots = (Array.isArray(categories) ? categories : [])
     .filter((category) => !category?.parent_id && category?.actif !== false)
     .sort((a, b) => {
@@ -294,7 +295,7 @@ export const resolveIngenierieDomaines = (categories = []) => {
     });
 
   if (!roots.length) {
-    return INGENIERIE_DEFAULT_DOMAINES.map(withDefaults);
+    return fallbackToDefaults ? INGENIERIE_DEFAULT_DOMAINES.map(withDefaults) : [];
   }
 
   return roots.map((category) => {
@@ -325,7 +326,12 @@ export const resolveIngenierieDomaines = (categories = []) => {
       slug,
       title: category?.nom || base.title || "Domaine d'expertise",
       description: category?.description || base.description || "Accompagnement technique et operationnel sur mesure.",
-      image: appendVersionToImage(category?.image_url || category?.image || base.image || FALLBACK_IMAGE, category?.updated_at || category?.created_at || ""),
+      image: appendVersionToImage(
+        category?.image_url || category?.image || (includeBaseImageFallback ? base.image || FALLBACK_IMAGE : ""),
+        category?.updated_at || category?.created_at || ""
+      ),
+      // Si on ne veut pas de fallback et que l'image résolue est une image par défaut locale, on la vide
+      ...(!includeBaseImageFallback && (category?.image_url || category?.image) ? {} : !includeBaseImageFallback ? { image: "" } : {}),
       details:
         String(meta?.details || "").trim() ||
         base.details ||

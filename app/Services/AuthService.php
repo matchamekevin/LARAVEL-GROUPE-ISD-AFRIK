@@ -25,7 +25,6 @@ class AuthService
     {
         $data['date_creation'] = now();
         $data['statut'] = 'actif';
-        $data['mot_de_passe'] = Hash::make($data['mot_de_passe']);
 
         return Utilisateur::create($data);
     }
@@ -130,7 +129,7 @@ class AuthService
         }
 
         $user->update([
-            'mot_de_passe' => Hash::make($new)
+            'mot_de_passe' => $new
         ]);
 
         return true;

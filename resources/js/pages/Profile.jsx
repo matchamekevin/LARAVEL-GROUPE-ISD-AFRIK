@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../styles/profile.css";
+import { getApiBase } from "../utils/apiBase";
+import usePageMeta from "../hooks/usePageMeta";
 
 function formatDate(value) {
   if (!value) return "Non disponible";
@@ -22,24 +24,14 @@ function formatMoney(value) {
 }
 
 export default function Profile() {
+  usePageMeta(
+    "Mon Profil | Groupe ISD AFRIK",
+    "Gérez vos informations personnelles, consultez vos formations et suivez vos commandes sur votre espace client ISD AFRIK."
+  );
+
   const [utilisateur, setUtilisateur] = useState(null);
   const [preview, setPreview] = useState(null);
-  const API_BASE = (() => {
-    if (typeof window !== "undefined") {
-      const { protocol, hostname } = window.location;
-      if (["localhost", "127.0.0.1"].includes(hostname)) {
-        return `${protocol}//${hostname}:8000`;
-      }
-      if (import.meta.env.VITE_API_BASE) {
-        const envBase = import.meta.env.VITE_API_BASE.replace(/\/$/, "");
-        const envLooksLocal = /localhost|127\.0\.0\.1/i.test(envBase);
-        const hostIsLocal = ["localhost", "127.0.0.1"].includes(hostname);
-        if (!envLooksLocal || hostIsLocal) return envBase;
-      }
-      return window.location.origin;
-    }
-    return "";
-  })();
+  const API_BASE = getApiBase();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,7 +44,7 @@ export default function Profile() {
       })
       .then((res) => setUtilisateur(res.data))
       .catch((err) => console.error("Erreur API :", err));
-  }, []);
+  }, [API_BASE]);
 
   // ✅ Upload avatar
   const handleAvatarChange = (e) => {
@@ -82,7 +74,7 @@ export default function Profile() {
   const handleChangePassword = () => navigate("/profile/password");
 
   const handleDeleteAccount = async () => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer votre compte ?")) {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.")) {
       try {
         await axios.delete(`${API_BASE}/api/auth/delete-account`, {
           headers: {
@@ -91,6 +83,7 @@ export default function Profile() {
           },
         });
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
         navigate("/register");
       } catch (err) {
         console.error("Erreur suppression :", err);
@@ -107,6 +100,8 @@ export default function Profile() {
         },
       });
       localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.dispatchEvent(new Event("userUpdated"));
       navigate("/login");
     } catch (err) {
       console.error("Erreur déconnexion :", err);
@@ -114,7 +109,14 @@ export default function Profile() {
   };
 
   if (!utilisateur) {
-    return <div className="profile-container">Chargement du profil...</div>;
+    return (
+      <div className="profile-page-wrapper premium-page">
+        <div className="profile-container" style={{ textAlign: 'center', padding: '100px 20px' }}>
+           <i className="fas fa-circle-notch fa-spin fa-3x" style={{ color: '#f59e0b', marginBottom: '20px' }}></i>
+           <p>Chargement de votre espace personnel...</p>
+        </div>
+      </div>
+    );
   }
 
   const avatarSrc =
@@ -129,189 +131,212 @@ export default function Profile() {
   const totalFormationAmount = formations.reduce((sum, item) => sum + Number(item.prix || 0), 0);
 
   return (
-    <div className="profile-container">
-      <section className="profile-hero">
-        <div className="profile-hero-grid">
-          <div className="profile-hero-main">
-            <div className="avatar-block">
-              <label htmlFor="avatar-upload" className="avatar-label" title="Changer la photo de profil">
-                <img
-                  src={avatarSrc}
-                  alt="Avatar"
-                  className="profile-avatar clickable"
+    <div className="profile-page-wrapper premium-page">
+      <div className="profile-container">
+        {/* HERO SECTION */}
+        <section className="profile-hero">
+          <div className="profile-hero-grid">
+            <div className="profile-hero-main">
+              <div className="avatar-block">
+                <label htmlFor="avatar-upload" className="avatar-label" title="Changer la photo de profil">
+                  <img
+                    src={avatarSrc}
+                    alt="Avatar"
+                    className="profile-avatar"
+                  />
+                  <span className="avatar-edit-hint">
+                    <i className="fas fa-camera"></i> Modifier
+                  </span>
+                </label>
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  name="avatar"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={handleAvatarChange}
                 />
-                <span className="avatar-edit-hint">Cliquer pour changer</span>
-              </label>
-              <input
-                id="avatar-upload"
-                type="file"
-                name="avatar"
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={handleAvatarChange}
-              />
-              <button
-                className="btn-primary btn-avatar"
-                onClick={() => document.getElementById("avatar-upload").click()}
-              >
-                Changer la photo
-              </button>
+                <button
+                  className="btn-avatar"
+                  onClick={() => document.getElementById("avatar-upload").click()}
+                >
+                  <i className="fas fa-upload"></i> Photo
+                </button>
+              </div>
+
+              <div className="header-texts">
+                <p className="profile-chip">Espace Client Sécurisé</p>
+                <h1>Mon Profil</h1>
+                <p className="welcome">
+                  Heureux de vous revoir, <span>{utilisateur.nom} {utilisateur.prenom}</span>
+                </p>
+              </div>
             </div>
 
-            <div className="header-texts">
-              <p className="profile-chip">Espace personnel</p>
-              <h1>Mon Profil</h1>
-              <p className="welcome">
-                Bienvenue, <span>{utilisateur.nom} {utilisateur.prenom}</span>
-              </p>
+            <div className="profile-hero-metrics">
+              <article className="metric-card">
+                <p>Formations</p>
+                <strong>{formations.length}</strong>
+                <span>Inscriptions</span>
+              </article>
+              <article className="metric-card">
+                <p>Produits</p>
+                <strong>{produits.length}</strong>
+                <span>Articles</span>
+              </article>
+              <article className="metric-card">
+                <p>Commandes</p>
+                <strong>{commandes.length}</strong>
+                <span>Historique</span>
+              </article>
+              <article className="metric-card">
+                <p>Total Investi</p>
+                <strong>{formatMoney(totalFormationAmount)}</strong>
+                <span>Formations</span>
+              </article>
             </div>
           </div>
+        </section>
 
-          <div className="profile-hero-metrics">
-            <article className="metric-card">
-              <p>Formations</p>
-              <strong>{formations.length}</strong>
-              <span>Inscriptions actives</span>
+        {/* IDENTITY CARD */}
+        <section className="profile-card">
+          <div className="profile-card-head">
+            <h2><i className="fas fa-user-circle"></i> Informations personnelles</h2>
+            <span className="profile-role-badge">{utilisateur.role || "client"}</span>
+          </div>
+          <div className="profile-info-grid">
+            <article className="profile-info-item">
+              <span>Nom complet</span>
+              <strong>{utilisateur.nom} {utilisateur.prenom}</strong>
             </article>
-            <article className="metric-card">
-              <p>Produits</p>
-              <strong>{produits.length}</strong>
-              <span>Éléments enregistrés</span>
+            <article className="profile-info-item">
+              <span>Email</span>
+              <strong>{utilisateur.email || "Non renseigné"}</strong>
             </article>
-            <article className="metric-card">
-              <p>Commandes</p>
-              <strong>{commandes.length}</strong>
-              <span>Historique client</span>
+            <article className="profile-info-item">
+              <span>Téléphone</span>
+              <strong>{utilisateur.telephone || "Non renseigné"}</strong>
             </article>
-            <article className="metric-card">
-              <p>Budget formations</p>
-              <strong>{formatMoney(totalFormationAmount)}</strong>
-              <span>Volume total</span>
+            <article className="profile-info-item">
+              <span>Date d'inscription</span>
+              <strong>{formatDate(utilisateur.created_at)}</strong>
+            </article>
+            <article className="profile-info-item">
+              <span>Dernière connexion</span>
+              <strong>{formatDateTime(utilisateur.last_login)}</strong>
+            </article>
+            <article className="profile-info-item">
+              <span>Statut Compte</span>
+              <strong style={{ color: '#10b981' }}>{utilisateur.statut || "Actif"}</strong>
             </article>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="profile-card profile-card--identity">
-        <div className="profile-card-head">
-          <h2>Informations personnelles</h2>
-          <span className="profile-role-badge">{utilisateur.role || "client"}</span>
-        </div>
-        <div className="profile-info-grid">
-          <article className="profile-info-item">
-            <span>Nom complet</span>
-            <strong>{utilisateur.nom} {utilisateur.prenom}</strong>
-          </article>
-          <article className="profile-info-item">
-            <span>Email</span>
-            <strong>{utilisateur.email || "Non disponible"}</strong>
-          </article>
-          <article className="profile-info-item">
-            <span>Téléphone</span>
-            <strong>{utilisateur.telephone || "Non disponible"}</strong>
-          </article>
-          <article className="profile-info-item">
-            <span>Date de création</span>
-            <strong>{formatDate(utilisateur.created_at)}</strong>
-          </article>
-          <article className="profile-info-item">
-            <span>Dernière connexion</span>
-            <strong>{formatDateTime(utilisateur.last_login)}</strong>
-          </article>
-        </div>
-      </section>
-
-      <section className="profile-card">
-        <div className="profile-card-head">
-          <h2>Mes Formations</h2>
-          <span className="section-meta">{formations.length} élément(s)</span>
-        </div>
-        {formations.length > 0 ? (
-          <div className="formation-grid">
-            {formations.map((f) => (
-              <div key={f.id_formation} className="formation-box">
-                <div className="formation-header">
-                  <i className="fas fa-graduation-cap icon"></i>
-                  <h3>{f.titre}</h3>
-                </div>
-                <p className="formation-description">{f.description}</p>
-                <div className="formation-details">
-                  <span><strong>Début :</strong> {formatDate(f.date_debut)}</span>
-                  <span><strong>⏱ Durée :</strong> {f.duree}h</span>
-                  <span><strong>Prix :</strong> {formatMoney(f.prix)}</span>
-                </div>
-              </div>
-            ))}
+        {/* FORMATIONS */}
+        <section className="profile-card">
+          <div className="profile-card-head">
+            <h2><i className="fas fa-graduation-cap"></i> Mes Formations</h2>
+            <span className="section-meta">{formations.length} formation(s)</span>
           </div>
-        ) : (
-          <p className="no-formation">Aucune formation enregistrée.</p>
-        )}
-      </section>
+          {formations.length > 0 ? (
+            <div className="formation-grid">
+              {formations.map((f) => (
+                <div key={f.id_formation} className="formation-box">
+                  <div className="formation-header">
+                    <i className="fas fa-certificate icon"></i>
+                    <h3>{f.titre}</h3>
+                  </div>
+                  <p className="formation-description">{f.description}</p>
+                  <div className="formation-details">
+                    <span><strong>Début :</strong> {formatDate(f.date_debut)}</span>
+                    <span><strong>Durée :</strong> {f.duree}h</span>
+                    <span><strong>Prix :</strong> {formatMoney(f.prix)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="no-formation">
+              <i className="fas fa-info-circle fa-2x" style={{ marginBottom: '10px' }}></i>
+              <p>Vous n'avez pas encore de formation enregistrée.</p>
+            </div>
+          )}
+        </section>
 
-      <section className="profile-card">
-        <div className="profile-card-head">
-          <h2>Mes Produits</h2>
-          <span className="section-meta">{produits.length} élément(s)</span>
-        </div>
-        {produits.length > 0 ? (
-          <div className="formation-grid">
-            {produits.map((p) => (
-              <div key={p.id} className="formation-box">
-                <div className="formation-header">
-                  <i className="fas fa-box icon"></i>
-                  <h3>{p.nom}</h3>
-                </div>
-                <div className="formation-details">
-                  <span><strong>Prix :</strong> {formatMoney(p.prix)}</span>
-                  <span><strong>Référence :</strong> #{p.id}</span>
-                </div>
-              </div>
-            ))}
+        {/* PRODUITS */}
+        <section className="profile-card">
+          <div className="profile-card-head">
+            <h2><i className="fas fa-box-open"></i> Mes Produits</h2>
+            <span className="section-meta">{produits.length} produit(s)</span>
           </div>
-        ) : (
-          <p className="no-formation">Aucun produit enregistré.</p>
-        )}
-      </section>
+          {produits.length > 0 ? (
+            <div className="formation-grid">
+              {produits.map((p) => (
+                <div key={p.id} className="formation-box">
+                  <div className="formation-header">
+                    <i className="fas fa-tag icon"></i>
+                    <h3>{p.nom}</h3>
+                  </div>
+                  <div className="formation-details">
+                    <span><strong>Prix :</strong> {formatMoney(p.prix)}</span>
+                    <span><strong>Référence :</strong> #{p.id}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="no-formation">
+               <i className="fas fa-shopping-bag fa-2x" style={{ marginBottom: '10px' }}></i>
+               <p>Aucun produit dans votre catalogue personnel.</p>
+            </div>
+          )}
+        </section>
 
-      <section className="profile-card">
-        <div className="profile-card-head">
-          <h2>Mes Commandes</h2>
-          <span className="section-meta">{commandes.length} élément(s)</span>
-        </div>
-        {commandes.length > 0 ? (
-          <div className="formation-grid">
-            {commandes.map((c) => (
-              <div key={c.id} className="formation-box">
-                <div className="formation-header">
-                  <i className="fas fa-file-invoice icon"></i>
-                  <h3>Commande #{c.id}</h3>
-                </div>
-                <div className="formation-details">
-                  <span><strong>Date :</strong> {formatDate(c.created_at)}</span>
-                  <span><strong>Statut :</strong> {c.status || "En attente"}</span>
-                </div>
-              </div>
-            ))}
+        {/* COMMANDES */}
+        <section className="profile-card">
+          <div className="profile-card-head">
+            <h2><i className="fas fa-file-invoice-dollar"></i> Mes Commandes</h2>
+            <span className="section-meta">{commandes.length} commande(s)</span>
           </div>
-        ) : (
-          <p className="no-formation">Aucune commande enregistrée.</p>
-        )}
-      </section>
+          {commandes.length > 0 ? (
+            <div className="formation-grid">
+              {commandes.map((c) => (
+                <div key={c.id} className="formation-box">
+                  <div className="formation-header">
+                    <i className="fas fa-receipt icon"></i>
+                    <h3>Commande #{c.id}</h3>
+                  </div>
+                  <div className="formation-details">
+                    <span><strong>Date :</strong> {formatDate(c.created_at)}</span>
+                    <span><strong>Statut :</strong> <strong style={{ color: c.status === 'Payé' ? '#10b981' : '#f59e0b' }}>{c.status || "En attente"}</strong></span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="no-formation">
+               <i className="fas fa-history fa-2x" style={{ marginBottom: '10px' }}></i>
+               <p>Aucun historique de commande disponible.</p>
+            </div>
+          )}
+        </section>
 
-      <section className="profile-actions">
-        <button className="btn-primary" onClick={handleEditProfile}>
-          Modifier mon profil
-        </button>
-        <button className="btn-secondary" onClick={handleChangePassword}>
-          Changer mon mot de passe
-        </button>
-        <button className="btn-danger" onClick={handleDeleteAccount}>
-          Supprimer mon compte
-        </button>
-        <button className="btn-logout" onClick={handleLogout}>
-          Déconnexion
-        </button>
-      </section>
+        {/* ACTIONS SECTION */}
+        <section className="profile-actions">
+          <button className="btn-primary" onClick={handleEditProfile}>
+            <i className="fas fa-user-edit"></i> Modifier mon profil
+          </button>
+          <button className="btn-secondary" onClick={handleChangePassword}>
+            <i className="fas fa-key"></i> Changer mon mot de passe
+          </button>
+          <button className="btn-logout" onClick={handleLogout}>
+            <i className="fas fa-sign-out-alt"></i> Déconnexion
+          </button>
+          <button className="btn-danger" onClick={handleDeleteAccount}>
+            <i className="fas fa-trash-alt"></i> Supprimer mon compte
+          </button>
+        </section>
+      </div>
     </div>
   );
 }

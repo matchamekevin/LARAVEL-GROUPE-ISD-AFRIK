@@ -22,7 +22,7 @@ return [
     ],
 
     'ses' => [
-        'key'    => env('AWS_ACCESS_KEY_ID'),
+        'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
@@ -30,17 +30,18 @@ return [
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
-            'channel'              => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
+            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
 
-   // ✅ Configuration FedaPay
-'fedapay' => [
-    'secret' => env('FEDAPAY_SECRET_KEY'),
-    'public' => env('FEDAPAY_PUBLIC_KEY'),
-    'env'    => env('FEDAPAY_ENVIRONMENT'),
-    'webhook_secret' => env('FEDAPAY_WEBHOOK_SECRET'),
-],
+    // ✅ Configuration FedaPay
+    'fedapay' => [
+        'secret' => env('FEDAPAY_SECRET_KEY'),
+        'public' => env('FEDAPAY_PUBLIC_KEY'),
+        'env' => env('FEDAPAY_ENVIRONMENT', 'live'),
+        'webhook_secret' => env('FEDAPAY_WEBHOOK_SECRET'),
+        'callback_url' => env('FEDAPAY_CALLBACK_URL'),
+    ],
 
     // Brevo configuration (API)
     'brevo' => [

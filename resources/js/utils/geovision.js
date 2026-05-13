@@ -1,4 +1,5 @@
 export const GEOVISION_FALLBACK_IMAGE = "/images/geovision/cam1.webp";
+const ABSOLUTE_URL_REGEX = /^https?:\/\//i;
 
 export function normalizeGeovisionKey(value = "") {
   return String(value)
@@ -24,9 +25,32 @@ export function resolveGeovisionImage(entity, fallback = GEOVISION_FALLBACK_IMAG
     return fallback;
   }
 
-  return String(candidate).startsWith("http") || String(candidate).startsWith("/")
-    ? candidate
-    : `/${candidate}`;
+  const normalized = String(candidate).trim();
+  if (!normalized) {
+    return fallback;
+  }
+
+  if (ABSOLUTE_URL_REGEX.test(normalized)) {
+    try {
+      const parsed = new URL(normalized);
+      if (parsed.pathname.startsWith("/storage/")) {
+        return parsed.pathname;
+      }
+      return normalized;
+    } catch {
+      return normalized;
+    }
+  }
+
+  if (normalized.startsWith("/")) {
+    return normalized;
+  }
+
+  if (normalized.startsWith("storage/") || normalized.startsWith("images/")) {
+    return `/${normalized}`;
+  }
+
+  return `/${normalized}`;
 }
 
 export function getCategoryChildren(category) {

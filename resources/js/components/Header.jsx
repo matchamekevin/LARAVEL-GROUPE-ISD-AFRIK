@@ -16,13 +16,13 @@ function Header() {
   const [lang, setLang] = useState(localStorage.getItem("lang") || "fr");
   const [isOpen, setIsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [token, setToken] = useState(localStorage.getItem("token"));
   const [userName, setUserName] = useState(null);
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [cartCount, setCartCount] = useState(0);
   const accountRef = useRef();
   const navigate = useNavigate();
   const location = useLocation();
-  const token = localStorage.getItem("token");
 
   const countryMap = {
     "1": "TG",
@@ -36,6 +36,7 @@ function Header() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    window.dispatchEvent(new Event("userUpdated"));
     setUserName(null);
     setCountry("TG");
     navigate("/");
@@ -50,15 +51,45 @@ function Header() {
 
   useEffect(() => {
     const updateUser = () => {
+      const storedToken = localStorage.getItem("token");
+      setToken(storedToken);
+
       const storedUser = localStorage.getItem("user");
-      if (storedUser) {
+      if (!storedUser) {
+        setUserName(null);
+        setCountry("TG");
+        return;
+      }
+
+      try {
         const u = JSON.parse(storedUser);
-        setUserName(`${u.nom || ""} ${u.prenom || ""}`.trim() || u.name);
+        setUserName(`${u.nom || ""} ${u.prenom || ""}`.trim() || u.name || null);
         setCountry(countryMap[u.id_pays] || "TG");
-        setLang(u.langue || lang);
+        if (u.langue) {
+          setLang(u.langue);
+        }
+      } catch {
+        setUserName(null);
+        setCountry("TG");
       }
     };
+
     updateUser();
+
+    const handleUserUpdated = () => updateUser();
+    const handleStorage = (e) => {
+      if (!e || e.key === "token" || e.key === "user") {
+        updateUser();
+      }
+    };
+
+    window.addEventListener("userUpdated", handleUserUpdated);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener("userUpdated", handleUserUpdated);
+      window.removeEventListener("storage", handleStorage);
+    };
   }, []);
 
   useEffect(() => {

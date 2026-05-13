@@ -8,11 +8,17 @@
 const isDev = import.meta.env.DEV;
 const isProd = import.meta.env.PROD;
 
+const isLocalHost = (() => {
+  if (typeof window === 'undefined') return false;
+  const host = String(window.location?.hostname || '').toLowerCase();
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+})();
+
 /**
  * Enregistrer le Service Worker en production
  */
 export const initServiceWorker = async () => {
-  if (isDev) {
+  if (isDev || isLocalHost) {
     try {
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
@@ -31,7 +37,7 @@ export const initServiceWorker = async () => {
       console.warn('[AutoRefresh] Dev cleanup failed:', error);
     }
 
-    console.log('[AutoRefresh] Dev mode - Service Worker disabled and old caches cleared');
+    console.log('[AutoRefresh] Local/dev mode - Service Worker disabled and old caches cleared');
     return;
   }
 

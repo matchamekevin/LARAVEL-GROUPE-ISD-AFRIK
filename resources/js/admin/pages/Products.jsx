@@ -250,7 +250,20 @@ const getCategoryImage = (category) => {
     category?.image;
 
   if (typeof rawImage === 'string' && rawImage.trim()) {
-    return rawImage.trim();
+    const trimmed = rawImage.trim();
+    if (trimmed.startsWith('/storage/')) return trimmed;
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      try {
+        const parsed = new URL(trimmed);
+        const isLocal = /^(localhost|127\.0\.0\.1|::1)$/i.test(window.location.hostname);
+        if (parsed.pathname.startsWith('/storage/') && (parsed.origin === window.location.origin || isLocal)) {
+          return parsed.pathname;
+        }
+      } catch (_error) {
+        // keep original
+      }
+    }
+    return trimmed;
   }
 
   return '/images/produits/proj.webp';
@@ -1266,7 +1279,7 @@ export default function Products() {
       description: category.description || '',
       parent_id: category.parent_id ? String(category.parent_id) : '',
       ordre: Number(category.ordre ?? 0),
-      image_url: category.image_url || category.image || '',
+      image_url: getCategoryImage(category),
       actif: category.actif !== false,
     });
     setCategoryErrorMessage('');

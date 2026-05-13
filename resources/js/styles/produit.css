@@ -993,6 +993,15 @@
   min-height: 52px;
 }
 
+.pcat-sub-content .pcat-sub-path {
+  margin-top: 6px;
+  color: #1d4ed8;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.4;
+  min-height: 0;
+}
+
 .pcat-sub-footer {
   margin-top: 14px;
   display: flex;

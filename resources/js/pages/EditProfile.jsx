@@ -1,24 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { getApiBase } from "../utils/apiBase";
+import usePageMeta from "../hooks/usePageMeta";
+import "../styles/profile.css";
 
 export default function EditProfile() {
-  const API_BASE = (() => {
-    if (typeof window !== "undefined") {
-      const { protocol, hostname } = window.location;
-      if (["localhost", "127.0.0.1"].includes(hostname)) {
-        return `${protocol}//${hostname}:8000`;
-      }
-      if (import.meta.env.VITE_API_BASE) {
-        const envBase = import.meta.env.VITE_API_BASE.replace(/\/$/, "");
-        const envLooksLocal = /localhost|127\.0\.0\.1/i.test(envBase);
-        const hostIsLocal = ["localhost", "127.0.0.1"].includes(hostname);
-        if (!envLooksLocal || hostIsLocal) return envBase;
-      }
-      return window.location.origin;
-    }
-    return "";
-  })();
+  usePageMeta(
+    "Modifier mon profil | Groupe ISD AFRIK",
+    "Mettez à jour vos informations personnelles sur votre espace client ISD AFRIK."
+  );
+
+  const API_BASE = getApiBase();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -38,9 +31,17 @@ export default function EditProfile() {
           Accept: "application/json",
         },
       })
-      .then((res) => setForm(res.data))
+      .then((res) => {
+        const user = res.data?.user || res.data;
+        setForm({
+          nom: user.nom || "",
+          prenom: user.prenom || "",
+          email: user.email || "",
+          telephone: user.telephone || "",
+        });
+      })
       .catch(() => setError("Impossible de charger le profil"));
-  }, []);
+  }, [API_BASE]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -58,6 +59,15 @@ export default function EditProfile() {
           Accept: "application/json",
         },
       });
+      
+      // Update local storage if user info is stored there
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        localStorage.setItem("user", JSON.stringify({ ...user, ...form }));
+        window.dispatchEvent(new Event("userUpdated"));
+      }
+
       alert("Profil mis à jour avec succès !");
       navigate("/profile");
     } catch {
@@ -68,150 +78,83 @@ export default function EditProfile() {
   };
 
   return (
-    <>
-      {/* ===== CSS INTÉGRÉ ===== */}
-      <style>{`
-        .page {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          min-height: 100vh;
-          background-color: #f3f4f6;
-        }
+    <div className="profile-page-wrapper premium-page">
+      <div className="profile-container" style={{ maxWidth: '600px' }}>
+        <div className="profile-card">
+          <div className="profile-card-head">
+            <h2><i className="fas fa-user-edit"></i> Modifier mon profil</h2>
+          </div>
 
-        .card {
-          width: 100%;
-          max-width: 500px;
-          background: #ffffff;
-          padding: 32px;
-          border-radius: 10px;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
+          {error && (
+            <div style={{ background: '#fef2f2', color: '#dc2626', padding: '12px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #fee2e2' }}>
+              <i className="fas fa-exclamation-circle"></i> {error}
+            </div>
+          )}
 
-        .title {
-          text-align: center;
-          font-size: 24px;
-          font-weight: bold;
-          color: #1e3a8a;
-          margin-bottom: 24px;
-        }
-
-        .error {
-          color: #dc2626;
-          font-weight: 600;
-          margin-bottom: 16px;
-          text-align: center;
-        }
-
-        .form {
-          display: flex;
-          flex-direction: column;
-          gap: 18px;
-        }
-
-        .field label {
-          display: block;
-          margin-bottom: 6px;
-          font-weight: 600;
-          color: #374151;
-        }
-
-        .input {
-          width: 100%;
-          padding: 12px 16px;
-          border: 1px solid #d1d5db;
-          border-radius: 6px;
-          font-size: 16px;
-        }
-
-        .input:focus {
-          outline: none;
-          border-color: #1e3a8a;
-          box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.2);
-        }
-
-        .button {
-          background-color: #1e3a8a;
-          color: white;
-          padding: 14px;
-          border: none;
-          border-radius: 6px;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
-
-        .button:hover {
-          background-color: #1d4ed8;
-        }
-
-        .button:disabled {
-          background-color: #9ca3af;
-          cursor: not-allowed;
-        }
-      `}</style>
-
-      <div className="page">
-        <div className="card">
-          <h2 className="title">Modifier mon profil</h2>
-
-          {error && <p className="error">{error}</p>}
-
-          <form onSubmit={handleSubmit} className="form">
-            <div className="field">
-              <label>Nom</label>
+          <form onSubmit={handleSubmit} className="profile-form-layout">
+            <div className="profile-info-item" style={{ marginBottom: '15px', background: 'transparent' }}>
+              <span>Nom</span>
               <input
                 type="text"
                 name="nom"
                 value={form.nom}
                 onChange={handleChange}
                 required
-                className="input"
+                className="btn-secondary"
+                style={{ width: '100%', padding: '12px', textAlign: 'left', fontWeight: '500' }}
               />
             </div>
 
-            <div className="field">
-              <label>Prénom</label>
+            <div className="profile-info-item" style={{ marginBottom: '15px', background: 'transparent' }}>
+              <span>Prénom</span>
               <input
                 type="text"
                 name="prenom"
                 value={form.prenom}
                 onChange={handleChange}
                 required
-                className="input"
+                className="btn-secondary"
+                style={{ width: '100%', padding: '12px', textAlign: 'left', fontWeight: '500' }}
               />
             </div>
 
-            <div className="field">
-              <label>Email</label>
+            <div className="profile-info-item" style={{ marginBottom: '15px', background: 'transparent' }}>
+              <span>Email</span>
               <input
                 type="email"
                 name="email"
                 value={form.email}
                 onChange={handleChange}
                 required
-                className="input"
+                className="btn-secondary"
+                style={{ width: '100%', padding: '12px', textAlign: 'left', fontWeight: '500' }}
               />
             </div>
 
-            <div className="field">
-              <label>Téléphone</label>
+            <div className="profile-info-item" style={{ marginBottom: '20px', background: 'transparent' }}>
+              <span>Téléphone</span>
               <input
                 type="text"
                 name="telephone"
                 value={form.telephone || ""}
                 onChange={handleChange}
-                className="input"
+                className="btn-secondary"
+                style={{ width: '100%', padding: '12px', textAlign: 'left', fontWeight: '500' }}
               />
             </div>
 
-            <button type="submit" disabled={loading} className="button">
-              {loading ? "Enregistrement..." : "Enregistrer"}
-            </button>
+            <div className="profile-actions" style={{ marginTop: '20px' }}>
+              <button type="submit" disabled={loading} className="btn-primary" style={{ flex: 1 }}>
+                {loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-save"></i>}
+                <span>{loading ? "Enregistrement..." : "Enregistrer"}</span>
+              </button>
+              <button type="button" onClick={() => navigate("/profile")} className="btn-secondary">
+                Annuler
+              </button>
+            </div>
           </form>
         </div>
       </div>
-    </>
+    </div>
   );
 }

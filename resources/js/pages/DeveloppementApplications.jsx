@@ -1,158 +1,85 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import "../styles/application.css";
 import usePageMeta from "../hooks/usePageMeta";
+import "../styles/service-pages-new.css";
 
 export default function DeveloppementApplications() {
   usePageMeta(
-    "Developpement d'applications | Groupe ISD AFRIK",
-    "Conception de sites web, applications mobiles et solutions cloud sur mesure pour entreprises et institutions."
+    "Développement d'applications | Groupe ISD AFRIK",
+    "Conception de sites web, applications mobiles et solutions cloud sur mesure pour entreprises et institutions en Afrique."
   );
 
   return (
-    <div className="service-page premium-page">
+    <div className="service-page-modern">
       {/* Hero Section */}
-      <section className="service-hero">
-        <div className="service-hero-content">
-          <h1>Développement d'Applications</h1>
-          <p>Sites web, applications mobiles et solutions cloud pour accelerer votre transformation digitale</p>
-        </div>
+      <section className="service-hero-modern">
+        <h1>Développement d'Applications & Logiciels</h1>
+        <p>Transformez vos idées en solutions numériques performantes, évolutives et sécurisées.</p>
       </section>
 
-      {/* Contenu principal */}
-      <div className="service-container">
-        
-        {/* Introduction */}
-        <section className="service-intro">
-          <h2>Notre Expertise en Développement</h2>
-          <p>
-            Le Groupe ISD AFRIK conçoit des applications metier robustes et evolutives,
-            adaptees aux besoins des entreprises et institutions en Afrique de l'Ouest.
-          </p>
-        </section>
-
-        {/* Nos solutions */}
-        <section className="service-solutions">
-          <h2>Nos Solutions</h2>
-          <div className="solutions-grid">
-            
-            <div className="solution-card">
-              <div className="solution-icon">
-                <i className="fas fa-desktop"></i>
-              </div>
-              <h3>Applications Web</h3>
-              <p>Développement de plateformes web robustes et évolutives avec les dernières technologies (Laravel, React, Vue.js)</p>
-              <ul>
-                <li>Sites e-commerce</li>
-                <li>Plateformes SaaS</li>
-                <li>Portails d'entreprise</li>
-                <li>Applications métier</li>
-              </ul>
-            </div>
-
-            <div className="solution-card">
-              <div className="solution-icon">
-                <i className="fas fa-mobile-alt"></i>
-              </div>
-              <h3>Applications Mobiles</h3>
-              <p>Création d'applications natives et hybrides pour iOS et Android</p>
-              <ul>
-                <li>Applications natives (Swift, Kotlin)</li>
-                <li>Applications hybrides (React Native, Flutter)</li>
-                <li>Progressive Web Apps (PWA)</li>
-                <li>Maintenance et évolution</li>
-              </ul>
-            </div>
-
-            <div className="solution-card">
-              <div className="solution-icon">
-                <i className="fas fa-cogs"></i>
-              </div>
-              <h3>Logiciels Métier</h3>
-              <p>Solutions sur mesure adaptées à votre secteur d'activité</p>
-              <ul>
-                <li>ERP personnalisés</li>
-                <li>Systèmes de gestion</li>
-                <li>Outils de reporting</li>
-                <li>Automatisation de processus</li>
-              </ul>
-            </div>
-
+      {/* Main Content */}
+      <div className="service-section">
+        <div className="service-grid-2">
+          <div className="service-text-content">
+            <h2>L'ingénierie logicielle au service de votre croissance</h2>
+            <p>
+              Le Groupe ISD AFRIK conçoit des applications métier robustes, adaptées aux défis 
+              spécifiques des entreprises et institutions en Afrique de l'Ouest. Nous ne nous 
+              contentons pas de coder ; nous bâtissons des outils stratégiques qui optimisent 
+              vos opérations quotidiennes.
+            </p>
+            <p>
+              De l'audit de vos besoins à la mise en production, notre approche agile garantit 
+              une livraison itérative, centrée sur l'utilisateur final et la valeur métier.
+            </p>
           </div>
-        </section>
-
-        {/* Technologies */}
-        <section className="service-technologies">
-          <h2>Technologies Maîtrisées</h2>
-          <div className="tech-grid">
-            <div className="tech-item">
-              <i className="fab fa-laravel"></i>
-              <span>Laravel</span>
-            </div>
-            <div className="tech-item">
-              <i className="fab fa-react"></i>
-              <span>React</span>
-            </div>
-            <div className="tech-item">
-              <i className="fab fa-node-js"></i>
-              <span>Node.js</span>
-            </div>
-            <div className="tech-item">
-              <i className="fab fa-python"></i>
-              <span>Python</span>
-            </div>
-            <div className="tech-item">
-              <i className="fab fa-android"></i>
-              <span>Android</span>
-            </div>
-            <div className="tech-item">
-              <i className="fab fa-apple"></i>
-              <span>iOS</span>
-            </div>
+          <div className="service-image-placeholder" style={{ background: '#f8fafc', height: '300px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '1.2rem', border: '1px dashed #cbd5e1' }}>
+             <i className="fas fa-code-branch fa-4x"></i>
           </div>
-        </section>
+        </div>
 
-        {/* Processus */}
-        <section className="service-process">
-          <h2>Notre Méthodologie</h2>
-          <div className="process-steps">
-            <div className="process-step">
-              <div className="step-number">1</div>
-              <h3>Analyse des besoins</h3>
-              <p>Étude approfondie de vos besoins et de votre environnement</p>
-            </div>
-            <div className="process-step">
-              <div className="step-number">2</div>
-              <h3>Conception</h3>
-              <p>Design UX/UI et architecture technique</p>
-            </div>
-            <div className="process-step">
-              <div className="step-number">3</div>
-              <h3>Développement</h3>
-              <p>Développement agile avec livraisons itératives</p>
-            </div>
-            <div className="process-step">
-              <div className="step-number">4</div>
-              <h3>Tests & Déploiement</h3>
-              <p>Tests rigoureux et mise en production</p>
-            </div>
-            <div className="process-step">
-              <div className="step-number">5</div>
-              <h3>Maintenance</h3>
-              <p>Support et évolutions continues</p>
-            </div>
-          </div>
-        </section>
+        {/* Solutions Grid */}
+        <div className="service-cards-grid">
+          <article className="service-card-item">
+            <div className="service-card-icon"><i className="fas fa-desktop"></i></div>
+            <h3>Écosystèmes Web</h3>
+            <p>Plateformes SaaS, sites e-commerce et portails institutionnels bâtis sur des architectures modernes.</p>
+            <ul className="service-card-list">
+              <li><i className="fas fa-check"></i> Laravel & React Expertise</li>
+              <li><i className="fas fa-check"></i> Architectures Cloud-Native</li>
+              <li><i className="fas fa-check"></i> Haute Performance & Sécurité</li>
+            </ul>
+          </article>
 
-        {/* CTA */}
-        <section className="service-cta">
-          <h2>Prêt à démarrer votre projet ?</h2>
-          <p>Contactez-nous pour discuter de vos besoins et obtenir un devis personnalisé</p>
-          <Link to="/contact" className="cta-button">
-            <i className="fas fa-envelope"></i> Nous contacter
-          </Link>
-        </section>
+          <article className="service-card-item">
+            <div className="service-card-icon"><i className="fas fa-mobile-alt"></i></div>
+            <h3>Mobilité Totale</h3>
+            <p>Applications iOS et Android natives ou hybrides pour rester connecté à vos clients et collaborateurs partout.</p>
+            <ul className="service-card-list">
+              <li><i className="fas fa-check"></i> Flutter & React Native</li>
+              <li><i className="fas fa-check"></i> UX/UI Centrée Utilisateur</li>
+              <li><i className="fas fa-check"></i> Mode Hors-ligne Intelligent</li>
+            </ul>
+          </article>
 
+          <article className="service-card-item">
+            <div className="service-card-icon"><i className="fas fa-cogs"></i></div>
+            <h3>Logiciels Sur-Mesure</h3>
+            <p>Parce que vos processus sont uniques, nous créons des ERP et outils de gestion qui s'adaptent à vous.</p>
+            <ul className="service-card-list">
+              <li><i className="fas fa-check"></i> Automatisation de Workflows</li>
+              <li><i className="fas fa-check"></i> Interconnexion API & Legacy</li>
+              <li><i className="fas fa-check"></i> Tableaux de Bord Temps Réel</li>
+            </ul>
+          </article>
+        </div>
+
+        {/* CTA Banner */}
+        <div className="service-cta-banner">
+          <h2>Prêt à accélérer votre digitalisation ?</h2>
+          <p>Discutons de votre architecture technique et de vos objectifs de développement.</p>
+          <Link to="/contact" className="service-cta-btn">Lancer mon projet de développement</Link>
+        </div>
       </div>
     </div>
   );

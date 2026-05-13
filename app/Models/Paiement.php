@@ -10,11 +10,14 @@ class Paiement extends Model
 {
     use HasFactory;
 
-    protected $table      = 'paiements';
+    protected $table = 'paiements';
+
     protected $primaryKey = 'id_paiement';
-    public $timestamps    = true;
+
+    public $timestamps = true;
 
     protected $fillable = [
+        'uuid',
         'reference_transaction',
         'moyen_paiement',
         'statut_paiement',
@@ -22,12 +25,15 @@ class Paiement extends Model
         'date_paiement',
         'id_commande',
         'id_formation',
+        'id_produit',   // ✅ AJOUTÉ
+        'quantite',     // ✅ AJOUTÉ
         'id_utilisateur',
     ];
 
     protected $casts = [
         'date_paiement' => 'datetime',
-        'montant'       => 'float',
+        'montant' => 'float',
+        'quantite' => 'integer',
     ];
 
     protected static function booted()
@@ -39,7 +45,8 @@ class Paiement extends Model
         });
     }
 
-    // ✅ Relation avec la formation — utilisée par FacturePage
+    // ─── Relations ───────────────────────────────────────────────────
+
     public function formation()
     {
         return $this->belongsTo(Formation::class, 'id_formation', 'id_formation');
@@ -50,7 +57,12 @@ class Paiement extends Model
         return $this->belongsTo(Commande::class, 'id_commande', 'id_commande');
     }
 
-    // Relation avec l'utilisateur
+    // ✅ AJOUTÉ — Relation avec le produit
+    public function produit()
+    {
+        return $this->belongsTo(Produit::class, 'id_produit', 'id_produit');
+    }
+
     public function utilisateur()
     {
         return $this->belongsTo(Utilisateur::class, 'id_utilisateur', 'id_utilisateur');

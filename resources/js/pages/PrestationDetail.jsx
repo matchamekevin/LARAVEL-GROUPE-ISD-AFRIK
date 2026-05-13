@@ -2,15 +2,38 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import usePageMeta from "../hooks/usePageMeta";
 import { getCategories } from "../services/ProduitService";
-import { INGENIERIE_DEFAULT_DOMAINES, resolveIngenierieDomaines } from "../data/ingenierieDomains";
+import { resolveIngenierieDomaines } from "../data/ingenierieDomains";
 import AdminToast, { useAdminToast } from "../admin/components/AdminToast";
 import "../styles/prestation-detail.css";
+
+const sanitizeImageUrl = (value) => {
+  const source = String(value || "").trim();
+  if (!source) return "";
+  if (source.startsWith("http://") || source.startsWith("https://") || source.startsWith("/")) return source;
+  if (source.startsWith("storage/") || source.startsWith("images/")) return `/${source}`;
+  return "";
+};
+
+const normalizeCategoryPayload = (response) => {
+  const body = response?.data ?? response;
+  if (Array.isArray(body)) return body;
+  if (Array.isArray(body?.data)) return body.data;
+  if (Array.isArray(body?.categories)) return body.categories;
+  return [];
+};
+
+const sanitizeDomaines = (list = []) =>
+  list.map((domaine) => ({
+    ...domaine,
+    image: sanitizeImageUrl(domaine.image),
+  }));
 
 export default function PrestationDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { showToast } = useAdminToast();
-  const [domaines, setDomaines] = useState(INGENIERIE_DEFAULT_DOMAINES);
+  const [domaines, setDomaines] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedServices, setSelectedServices] = useState(new Set());
   const [selectedTechnologies, setSelectedTechnologies] = useState(new Set());
   const [submitting, setSubmitting] = useState(false);
@@ -20,13 +43,38 @@ export default function PrestationDetail() {
 
     const loadDomaines = async () => {
       try {
-        const response = await getCategories({ segment: "ingenierie-page", tree: 1 });
-        const resolved = resolveIngenierieDomaines(response?.data || []);
-        if (mounted && Array.isArray(resolved) && resolved.length) {
-          setDomaines(resolved);
+        const response = await getCategories({
+          segment: "ingenierie-page",
+          tree: 1,
+          _t: Date.now(),
+        });
+        const categories = normalizeCategoryPayload(response);
+        const resolved = resolveIngenierieDomaines(categories, {
+          fallbackToDefaults: true,
+          includeBaseImageFallback: true,
+        });
+        if (!mounted) return;
+
+        if (Array.isArray(resolved) && resolved.length) {
+          setDomaines(sanitizeDomaines(resolved));
+        } else {
+          setDomaines([]);
         }
       } catch (_error) {
-        // fallback data already loaded
+        if (mounted) {
+          const fallback = resolveIngenierieDomaines([], {
+            fallbackToDefaults: true,
+            includeBaseImageFallback: true,
+          });
+          setDomaines(sanitizeDomaines(fallback));
+        }
+      } finally {
+        if (mounted) {
+          // On laisse un petit temps pour que React process le state avant de masquer le loader
+          setTimeout(() => {
+            if (mounted) setIsLoading(false);
+          }, 150);
+        }
       }
     };
 
@@ -43,6 +91,16 @@ export default function PrestationDetail() {
     prestation ? `${prestation.title} | Groupe ISD AFRIK` : "Prestation non trouvee",
     prestation ? prestation.description : "Prestation non disponible"
   );
+
+  if (isLoading) {
+    return (
+      <div className="prestation-not-found">
+        <div className="prestation-not-found-content">
+          <p>Chargement de la prestation...</p>
+        </div>
+      </div>
+    );
+  }
 
   const toggleService = (service) => {
     const updated = new Set(selectedServices);
@@ -118,28 +176,29 @@ export default function PrestationDetail() {
     );
   }
 
-  const currentIndex = domaines.findIndex((item) => item.slug === slug);
-  const prevPrestation = currentIndex > 0 ? domaines[currentIndex - 1] : null;
-  const nextPrestation = currentIndex < domaines.length - 1 ? domaines[currentIndex + 1] : null;
-
   return (
     <div className="prestation-detail-page">
-      <Link to="/ingenierie" className="prestation-back-btn">
-        ← Ingenierie
-      </Link>
-
       <section className="prestation-hero">
-        <img
-          src={prestation.image}
-          alt={prestation.title}
-          className="prestation-hero-image"
-          onError={(event) => {
-            event.target.src = "/images/prestations/default.jpg";
-          }}
-        />
+        {prestation.image ? (
+          <img
+            src={prestation.image}
+            alt={prestation.title}
+            className="prestation-hero-image"
+          />
+        ) : (
+          <div className="prestation-hero-image prestation-hero-image--empty" aria-hidden="true"></div>
+        )}
         <div className="prestation-hero-overlay"></div>
         <div className="prestation-hero-content">
           <h1 className="prestation-hero-title">{prestation.title}</h1>
+        </div>
+      </section>
+
+      <section className="prestation-back-row">
+        <div className="prestation-container">
+          <Link to="/ingenierie" className="prestation-back-btn">
+            ← Retour
+          </Link>
         </div>
       </section>
 
@@ -204,26 +263,6 @@ export default function PrestationDetail() {
         </div>
       </section>
 
-      <section className="prestation-navigation">
-        <div className="prestation-container">
-          <div className="prestation-nav-grid">
-            {prevPrestation && (
-              <Link to={`/prestation/${prevPrestation.slug}`} className="prestation-nav-card prestation-nav-prev">
-                <span className="prestation-nav-arrow">← Precedent</span>
-                <span className="prestation-nav-title">{prevPrestation.title}</span>
-              </Link>
-            )}
-            <div></div>
-            {nextPrestation && (
-              <Link to={`/prestation/${nextPrestation.slug}`} className="prestation-nav-card prestation-nav-next">
-                <span className="prestation-nav-arrow">Suivant →</span>
-                <span className="prestation-nav-title">{nextPrestation.title}</span>
-              </Link>
-            )}
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
-

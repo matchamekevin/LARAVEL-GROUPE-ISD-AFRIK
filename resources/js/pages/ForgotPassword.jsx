@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function ForgotPassword() {
   const API_BASE = (() => {
@@ -37,8 +38,6 @@ export default function ForgotPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
-    setError("");
 
     try {
       const res = await axios.post(
@@ -46,14 +45,12 @@ export default function ForgotPassword() {
         { email },
         { withCredentials: true }
       );
-      setMessage(res.data.message || "passwords.sent");
+      const msg = res.data.message || "passwords.sent";
+      toast.success(translateMessage(msg));
       setEmail("");
-
-      setTimeout(() => setMessage(""), 4000);
     } catch (err) {
       const msg = err.response?.data?.message || "passwords.user";
-      setError(msg);
-      setTimeout(() => setError(""), 4000);
+      toast.error(translateMessage(msg));
     }
   };
 
@@ -81,9 +78,6 @@ export default function ForgotPassword() {
 
             <button type="submit" className="submit-btn">Envoyer le lien</button>
           </form>
-
-          {message && <div className="success-msg">{translateMessage(message)}</div>}
-          {error && <div className="error-msg">{translateMessage(error)}</div>}
 
           <div className="forgot-row">
             <Link to="/login" className="forgot-link">Retour à la connexion</Link>

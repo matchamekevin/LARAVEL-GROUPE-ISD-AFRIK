@@ -1,4 +1,4 @@
-import React, { useDeferredValue, useEffect, useState } from "react";
+import React, { useCallback, useDeferredValue, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import "../styles/home.css";
 import "../styles/geovision-categories.css";
@@ -115,93 +115,46 @@ export default function GeovisionCategorie() {
   const [categoryRefreshToken, setCategoryRefreshToken] = useState(0);
   const [productsRefreshToken, setProductsRefreshToken] = useState(0);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    setLoadingCategory(true);
-    setError("");
-    setFilters(EMPTY_FILTERS);
-    setSearchQuery("");
-
-    const request = /^\d+$/.test(String(slug || ""))
-      ? getCategorie(slug, { tree: 1 })
-      : getCategorieBySlug(slug, { tree: 1 });
-
-    request
-      .then((response) => {
-        if (!isMounted) return;
-
-        const item = response.data?.data || response.data || null;
-        setCategory(item);
-      })
-      .catch((requestError) => {
-        if (!isMounted) return;
-        setCategory(null);
-        setError(requestError.response?.data?.message || "Catégorie GeoVision introuvable.");
-      })
-      .finally(() => {
-        if (isMounted) setLoadingCategory(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [slug, categoryRefreshToken]);
-
-  useEffect(() => {
+  const fetchProducts = useCallback(async (isSilent = false) => {
     if (!category?.slug) {
-      setProducts([]);
-      setLoadingProducts(false);
+      if (!isSilent) {
+        setProducts([]);
+        setLoadingProducts(false);
+      }
       return;
     }
 
-    let isMounted = true;
+    if (!isSilent) {
+      setLoadingProducts(true);
+    }
 
-    setLoadingProducts(true);
-
-    getProduits({
-      segment: "geovision",
-      category_slug: category.slug,
-      include_descendants: 1,
-      par_page: 250,
-      tri: "recent",
-    })
-      .then((response) => {
-        if (!isMounted) return;
-        setProducts(Array.isArray(response.data?.data) ? response.data.data : []);
-      })
-      .catch((requestError) => {
-        if (!isMounted) return;
-        setProducts([]);
-        setError(requestError.response?.data?.message || "Impossible de charger les modèles GeoVision.");
-      })
-      .finally(() => {
-        if (isMounted) setLoadingProducts(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [category?.slug, productsRefreshToken]);
-
-  const backgroundLoadProducts = async () => {
     try {
-      if (!category?.slug) return;
       const response = await getProduits({
         segment: "geovision",
         category_slug: category.slug,
         include_descendants: 1,
-        par_page: 250,
+        par_page: 100, // Réduit de 250 à 100
         tri: "recent",
       });
-
       setProducts(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (requestError) {
-      // silent
+      if (!isSilent) {
+        setProducts([]);
+        setError(requestError.response?.data?.message || "Impossible de charger les modèles GeoVision.");
+      }
+    } finally {
+      if (!isSilent) {
+        setLoadingProducts(false);
+      }
     }
-  };
+  }, [category?.slug]);
 
-  const backgroundLoadCategory = async () => {
+  const fetchCategory = useCallback(async (isSilent = false) => {
+    if (!isSilent) {
+      setLoadingCategory(true);
+      setError("");
+    }
+
     try {
       const request = /^\d+$/.test(String(slug || ""))
         ? getCategorie(slug, { tree: 1 })
@@ -211,25 +164,37 @@ export default function GeovisionCategorie() {
       const item = response.data?.data || response.data || null;
       setCategory(item);
     } catch (requestError) {
-      // silent
+      if (!isSilent) {
+        setCategory(null);
+        setError(requestError.response?.data?.message || "Catégorie GeoVision introuvable.");
+      }
+    } finally {
+      if (!isSilent) {
+        setLoadingCategory(false);
+      }
     }
-  };
+  }, [slug]);
 
-  useLivePolling(
-    () => backgroundLoadProducts(),
-    {
-      intervalMs: 8000,
-      enabled: Boolean(category?.slug) && !loadingProducts,
-    }
-  );
+  // Chargement initial de la catégorie
+  useEffect(() => {
+    fetchCategory(false);
+  }, [fetchCategory]);
 
-  useLivePolling(
-    () => backgroundLoadCategory(),
-    {
-      intervalMs: 20000,
-      enabled: !loadingCategory,
-    }
-  );
+  // Chargement initial des produits
+  useEffect(() => {
+    fetchProducts(false);
+  }, [fetchProducts]);
+
+  // Polling silencieux
+  useLivePolling(() => fetchProducts(true), {
+    intervalMs: 30000,
+    enabled: Boolean(category?.slug) && !loadingProducts,
+  });
+
+  useLivePolling(() => fetchCategory(true), {
+    intervalMs: 60000,
+    enabled: !loadingCategory,
+  });
 
   useEffect(() => {
     if (loadingCategory || !category?.slug) {
@@ -446,6 +411,10 @@ export default function GeovisionCategorie() {
                                 className="pp-image"
                                 loading="lazy"
                                 src={resolveGeovisionImage(product)}
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = "/images/geovision/cam1.webp";
+                                }}
                               />
                               <div className="pp-image-overlay"></div>
                               <span className="pp-badge pp-badge--neuf">{product.categorie?.nom || specs.taxonomy.subcategory || category?.nom}</span>

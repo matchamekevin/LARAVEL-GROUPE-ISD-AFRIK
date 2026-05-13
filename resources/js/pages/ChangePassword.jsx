@@ -1,8 +1,16 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { getApiBase } from "../utils/apiBase";
+import usePageMeta from "../hooks/usePageMeta";
+import "../styles/profile.css";
 
 export default function ChangePassword() {
+  usePageMeta(
+    "Changer mon mot de passe | Groupe ISD AFRIK",
+    "Sécurisez votre compte en mettant à jour votre mot de passe sur votre espace client ISD AFRIK."
+  );
+
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [show, setShow] = useState(false);
@@ -11,22 +19,7 @@ export default function ChangePassword() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const API_BASE = (() => {
-    if (typeof window !== "undefined") {
-      const { protocol, hostname } = window.location;
-      if (["localhost", "127.0.0.1"].includes(hostname)) {
-        return `${protocol}//${hostname}:8000`;
-      }
-      if (import.meta.env.VITE_API_BASE) {
-        const envBase = import.meta.env.VITE_API_BASE.replace(/\/$/, "");
-        const envLooksLocal = /localhost|127\.0\.0\.1/i.test(envBase);
-        const hostIsLocal = ["localhost", "127.0.0.1"].includes(hostname);
-        if (!envLooksLocal || hostIsLocal) return envBase;
-      }
-      return window.location.origin;
-    }
-    return "";
-  })();
+  const API_BASE = getApiBase();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,6 +48,7 @@ export default function ChangePassword() {
       setTimeout(() => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        window.dispatchEvent(new Event("userUpdated"));
         navigate("/login");
       }, 1500);
     } catch (err) {
@@ -68,178 +62,73 @@ export default function ChangePassword() {
   };
 
   return (
-    <>
-      {/* ===== CSS INTÉGRÉ ===== */}
-      <style>{`
-        .page {
-          min-height: 100vh;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          background-color: #f3f4f6;
-          padding: 16px;
-        }
+    <div className="profile-page-wrapper premium-page">
+      <div className="profile-container" style={{ maxWidth: '500px' }}>
+        <div className="profile-card">
+          <div className="profile-card-head">
+            <h2><i className="fas fa-key"></i> Changer mon mot de passe</h2>
+          </div>
 
-        .card {
-          width: 100%;
-          max-width: 420px;
-          background: #ffffff;
-          border-radius: 14px;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-          padding: 24px;
-        }
-
-        .title {
-          text-align: center;
-          font-size: 22px;
-          font-weight: 700;
-          margin-bottom: 24px;
-          color: #1f2937;
-        }
-
-        .form {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        label {
-          font-size: 14px;
-          font-weight: 600;
-          color: #374151;
-          margin-bottom: 4px;
-          display: block;
-        }
-
-        .input {
-          width: 100%;
-          padding: 10px 14px;
-          border: 1px solid #d1d5db;
-          border-radius: 8px;
-          font-size: 14px;
-        }
-
-        .input:focus {
-          outline: none;
-          border-color: #1e3a8a;
-          box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.2);
-        }
-
-        .show {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 13px;
-          color: #4b5563;
-        }
-
-        .message-error {
-          background: #fee2e2;
-          color: #b91c1c;
-          padding: 10px;
-          border-radius: 6px;
-          font-size: 13px;
-        }
-
-        .message-success {
-          background: #dcfce7;
-          color: #15803d;
-          padding: 10px;
-          border-radius: 6px;
-          font-size: 13px;
-        }
-
-        .actions {
-          display: flex;
-          gap: 12px;
-          margin-top: 8px;
-        }
-
-        .btn-primary {
-          flex: 1;
-          background-color: #1e3a8a;
-          color: white;
-          padding: 10px;
-          border-radius: 8px;
-          font-weight: 600;
-          border: none;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
-
-        .btn-primary:hover {
-          background-color: #1e40af;
-        }
-
-        .btn-primary:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .btn-secondary {
-          flex: 1;
-          background-color: #e0e7ff;
-          color: #1e3a8a;
-          padding: 10px;
-          border-radius: 8px;
-          font-weight: 600;
-          border: none;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
-
-        .btn-secondary:hover {
-          background-color: #c7d2fe;
-        }
-      `}</style>
-
-      <div className="page">
-        <div className="card">
-          <h2 className="title">🔐 Changer le mot de passe</h2>
-
-          <form onSubmit={handleSubmit} className="form">
-            <div>
-              <label>Ancien mot de passe</label>
+          <form onSubmit={handleSubmit} className="profile-form-layout">
+            <div className="profile-info-item" style={{ marginBottom: '15px', background: 'transparent' }}>
+              <span>Ancien mot de passe</span>
               <input
                 type={show ? "text" : "password"}
                 value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
                 required
-                className="input"
+                className="btn-secondary"
+                style={{ width: '100%', padding: '12px', textAlign: 'left' }}
               />
             </div>
 
-            <div>
-              <label>Nouveau mot de passe</label>
+            <div className="profile-info-item" style={{ marginBottom: '15px', background: 'transparent' }}>
+              <span>Nouveau mot de passe</span>
               <input
                 type={show ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
                 minLength={6}
-                className="input"
+                className="btn-secondary"
+                style={{ width: '100%', padding: '12px', textAlign: 'left' }}
               />
             </div>
 
-            <div className="show">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', padding: '0 10px' }}>
               <input
                 type="checkbox"
+                id="show-password"
                 checked={show}
                 onChange={() => setShow(!show)}
+                style={{ cursor: 'pointer', width: '18px', height: '18px' }}
               />
-              <span>Afficher les mots de passe</span>
+              <label htmlFor="show-password" style={{ cursor: 'pointer', fontSize: '0.9rem', color: '#64748b' }}>
+                Afficher les mots de passe
+              </label>
             </div>
 
-            {error && <div className="message-error">❌ {error}</div>}
-            {success && <div className="message-success">✅ {success}</div>}
+            {error && (
+              <div style={{ background: '#fef2f2', color: '#dc2626', padding: '12px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #fee2e2' }}>
+                <i className="fas fa-exclamation-circle"></i> {error}
+              </div>
+            )}
+            
+            {success && (
+              <div style={{ background: '#ecfdf5', color: '#10b981', padding: '12px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #d1fae5' }}>
+                <i className="fas fa-check-circle"></i> {success}
+              </div>
+            )}
 
-            <div className="actions">
+            <div className="profile-actions">
               <button
                 type="submit"
                 disabled={loading}
                 className="btn-primary"
+                style={{ flex: 1 }}
               >
-                {loading ? "Modification..." : "Changer"}
+                {loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-sync-alt"></i>}
+                <span>{loading ? "Modification..." : "Mettre à jour"}</span>
               </button>
 
               <button
@@ -253,6 +142,6 @@ export default function ChangePassword() {
           </form>
         </div>
       </div>
-    </>
+    </div>
   );
 }

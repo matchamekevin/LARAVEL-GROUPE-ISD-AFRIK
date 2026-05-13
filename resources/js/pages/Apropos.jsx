@@ -1,52 +1,99 @@
 import React from "react";
-import "../styles/apropos.css";
 import usePageMeta from "../hooks/usePageMeta";
+import "../styles/info-pages-new.css";
 
 export default function Apropos() {
   usePageMeta(
-    "A propos | Groupe ISD AFRIK",
-    "Decouvrez la vision, la mission et les valeurs du Groupe ISD AFRIK, acteur technologique de reference en Afrique de l'Ouest."
+    "À propos | Groupe ISD AFRIK",
+    "Découvrez la vision, la mission et les valeurs du Groupe ISD AFRIK, acteur technologique de référence en Afrique de l'Ouest."
   );
 
   return (
-    <div className="apropos-page premium-page">
-      <h1>Groupe ISD AFRIK – Qui sommes-nous ?</h1>
+    <div className="info-page-modern apropos-page">
+      {/* Hero Section */}
+      <section className="info-hero">
+        <h1>Groupe ISD AFRIK – Qui sommes-nous ?</h1>
+        <p>
+          Un partenaire technologique de référence dédié à l'innovation et à la 
+          performance des organisations en Afrique de l'Ouest.
+        </p>
+      </section>
 
-      <p className="intro">
-        Le Groupe ISD AFRIK est une entreprise spécialisée dans les solutions
-        technologiques, la sécurité électronique et les services numériques pour
-        les entreprises et les institutions en Afrique de l’Ouest. Grâce à une
-        équipe d’experts qualifiés et à des partenaires technologiques
-        reconnus, nous proposons des solutions innovantes, performantes et
-        adaptées aux réalités du marché africain.
-      </p>
+      {/* Main Content Area */}
+      <div className="info-content">
+        
+        <section className="info-section">
+          <h2>Notre Histoire & Expertise</h2>
+          <p>
+            Le <strong>Groupe ISD AFRIK</strong> est une entreprise spécialisée dans les solutions
+            technologiques de pointe, la sécurité électronique et les services numériques stratégiques. 
+            Implanté au cœur de l'Afrique de l'Ouest, nous accompagnons les entreprises et les institutions 
+            dans leur transition vers l'ère digitale.
+          </p>
+          <p>
+            Grâce à une équipe d'experts qualifiés et à des partenariats technologiques internationaux, 
+            nous proposons des solutions qui ne se contentent pas de répondre aux standards mondiaux, 
+            mais qui sont profondément adaptées aux réalités et aux défis du marché africain.
+          </p>
+        </section>
 
-      <div className="apropos-grid">
-        <div className="apropos-card">
-          <h2>Notre vision</h2>
-          <p>Devenir un acteur majeur de la transformation digitale et de la sécurité technologique en Afrique.</p>
-        </div>
+        <section className="info-section">
+          <h2>Notre Vision</h2>
+          <p>
+            Notre ambition est de devenir le leader incontesté de la transformation digitale et de la 
+            sécurité technologique sur le continent. Nous croyons en une Afrique connectée, sécurisée 
+            et technologiquement souveraine, où chaque organisation dispose des outils nécessaires pour 
+            exceller à l'échelle mondiale.
+          </p>
+        </section>
 
-        <div className="apropos-card">
-          <h2>Notre mission</h2>
-          <p>Accompagner les entreprises et institutions africaines dans :</p>
-          <ul style={{ textAlign: 'left', marginTop: 8 }}>
-            <li>la sécurisation de leurs infrastructures</li>
-            <li>l’optimisation de leurs systèmes technologiques</li>
-            <li>la transformation digitale de leurs activités</li>
+        <section className="info-section">
+          <h2>Notre Mission</h2>
+          <p>
+            Nous nous donnons pour mission d'être le catalyseur de la croissance de nos clients en 
+            sécurisant leurs actifs critiques et en optimisant leurs processus métier par le numérique.
+          </p>
+          <ul className="info-list">
+            <li><strong>Sécurisation :</strong> Protection avancée des infrastructures physiques et logiques.</li>
+            <li><strong>Optimisation :</strong> Modernisation des systèmes technologiques pour une efficacité maximale.</li>
+            <li><strong>Transformation :</strong> Accompagnement stratégique vers une digitalisation complète et rentable.</li>
           </ul>
-        </div>
+        </section>
 
-        <div className="apropos-card">
-          <h2>Nos valeurs</h2>
-          <ul style={{ textAlign: 'left', marginTop: 8 }}>
-            <li>✔ Excellence professionnelle</li>
-            <li>✔ Innovation technologique</li>
-            <li>✔ Fiabilité et qualité</li>
-            <li>✔ Engagement client</li>
-            <li>✔ Développement des compétences en Afrique</li>
-          </ul>
-        </div>
+        <section className="info-section">
+          <h2>Nos Valeurs Fondamentales</h2>
+          <p>
+            Chaque projet que nous entreprenons est guidé par des principes qui définissent notre 
+            identité et garantissent la satisfaction de nos partenaires.
+          </p>
+          
+          <div className="about-values-grid">
+            <article className="value-card">
+              <i className="fas fa-award"></i>
+              <h3>Excellence</h3>
+              <p>Une rigueur professionnelle absolue dans chaque livraison et chaque conseil apporté.</p>
+            </article>
+
+            <article className="value-card">
+              <i className="fas fa-lightbulb"></i>
+              <h3>Innovation</h3>
+              <p>Une quête permanente des technologies de demain pour résoudre les problèmes d'aujourd'hui.</p>
+            </article>
+
+            <article className="value-card">
+              <i className="fas fa-handshake"></i>
+              <h3>Fiabilité</h3>
+              <p>Un engagement total pour garantir la continuité et la performance de vos systèmes.</p>
+            </article>
+
+            <article className="value-card">
+              <i className="fas fa-users"></i>
+              <h3>Impact Local</h3>
+              <p>Le développement actif des compétences et des talents technologiques sur le continent.</p>
+            </article>
+          </div>
+        </section>
+
       </div>
     </div>
   );

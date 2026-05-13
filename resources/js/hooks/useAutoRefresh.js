@@ -10,11 +10,19 @@ export const useAutoRefresh = () => {
   const pollingIntervalRef = useRef(null);
   const lastVersionRef = useRef(null);
   const isCheckingRef = useRef(false);
+  const isDev = import.meta.env.DEV;
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  const isEnabled = !isDev && !isLocal;
 
   // Checker le manifest pour les mises à jour
-  const checkForUpdates = useCallback(async () => {
+  const checkForUpdates = useCallback(async (reason = 'polling') => {
     if (isCheckingRef.current) return;
     isCheckingRef.current = true;
+
+    if (reason !== 'polling') {
+      console.log(`[AutoRefresh] Checking for updates (reason: ${reason})`);
+    }
 
     try {
       const response = await fetch('/manifest.json?t=' + Date.now(), {
@@ -56,45 +64,42 @@ export const useAutoRefresh = () => {
   }, []);
 
   useEffect(() => {
-    // Only enable polling in production
-    const isDev = import.meta.env.DEV;
-    if (isDev) {
-      // Vite HMR handle it already
+    if (!isEnabled) {
       return;
     }
 
     // En production: polling toutes les 30 secondes
-    pollingIntervalRef.current = setInterval(checkForUpdates, 30000);
+    pollingIntervalRef.current = setInterval(() => checkForUpdates('polling'), 30000);
 
     // Check immédiat au montage
-    checkForUpdates();
+    checkForUpdates('mount');
 
     return () => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
       }
     };
-  }, [checkForUpdates]);
+  }, [checkForUpdates, isEnabled]);
 
   // Checker au focus de la fenêtre (l'utilisateur revient à l'app)
   useEffect(() => {
+    if (!isEnabled) return;
     const handleFocus = () => {
-      console.log('[AutoRefresh] App focused - checking for updates');
-      checkForUpdates();
+      checkForUpdates('focus');
     };
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [checkForUpdates]);
+  }, [checkForUpdates, isEnabled]);
 
   // Checker quand la connexion revient
   useEffect(() => {
+    if (!isEnabled) return;
     const handleOnline = () => {
-      console.log('[AutoRefresh] Connexion restored - checking for updates');
-      checkForUpdates();
+      checkForUpdates('online');
     };
 
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
-  }, [checkForUpdates]);
+  }, [checkForUpdates, isEnabled]);
 };

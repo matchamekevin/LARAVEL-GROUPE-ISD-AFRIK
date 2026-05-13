@@ -1,7 +1,37 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import toast from "react-hot-toast";
 import "../styles/register.css";
+
+const COUNTRY_DIAL_BY_ID = {
+  "1": "+228",
+  "2": "+229",
+  "3": "+226",
+  "4": "+225",
+  "5": "+227",
+};
+
+function normalizePhoneForCountry(rawPhone, idPays) {
+  const digits = String(rawPhone || "").replace(/\D/g, "");
+  if (!digits) return "";
+
+  const dialCode = COUNTRY_DIAL_BY_ID[String(idPays || "")];
+  if (!dialCode) {
+    return `+${digits}`;
+  }
+
+  const codeDigits = dialCode.replace(/\D/g, "");
+  let national = digits;
+
+  if (digits.startsWith(codeDigits)) {
+    national = digits.slice(codeDigits.length);
+  } else if (digits.startsWith("0")) {
+    national = digits.slice(1);
+  }
+
+  return `+${codeDigits}${national}`;
+}
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -33,15 +63,24 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
 
     try {
+      const normalizedPhone = normalizePhoneForCountry(formData.telephone, formData.id_pays);
+      if (!normalizedPhone) {
+        toast.error("Numéro de téléphone invalide");
+        return;
+      }
+
+      const payload = {
+        ...formData,
+        telephone: normalizedPhone,
+      };
+
       // Ensure cookies & CSRF cookie are set for stateful SPA requests (Sanctum)
       await axios.get("/sanctum/csrf-cookie", { withCredentials: true });
-      const res = await axios.post("/api/auth/register", formData, { withCredentials: true });
+      const res = await axios.post("/api/auth/register", payload, { withCredentials: true });
 
-      setSuccess(res.data.message || "Inscription réussie ✅");
+      toast.success(res.data.message || "Inscription réussie ✅");
       setShowOverlay(true);
 
       setTimeout(() => {
@@ -63,13 +102,15 @@ export default function Register() {
       });
     } catch (err) {
       if (err.response?.data) {
-        setError(
+        const errorMsg =
           err.response.data.errors ||
           err.response.data.message ||
-          "Erreur serveur"
-        );
+          "Erreur serveur";
+        setError(errorMsg);
+        toast.error(typeof errorMsg === "object" ? JSON.stringify(errorMsg) : errorMsg);
       } else {
         setError("Erreur réseau");
+        toast.error("Erreur réseau");
       }
     }
   };
@@ -197,21 +238,14 @@ export default function Register() {
           <Link to="/login" className="login-link">Connectez-vous ici</Link>
         </div>
 
-        {success && <div className="success-msg">✅ {success}</div>}
-        {error && (
-          <div className="error-msg">
-            ❌ {typeof error === "object" ? JSON.stringify(error) : error}
+        {/* Overlay de succès */}
+        {showOverlay && (
+          <div className="overlay-success">
+            <i className="fas fa-check-circle"></i>
+            <p>Inscription réussie !</p>
           </div>
         )}
       </div>
-
-      {/* Overlay de succès */}
-      {showOverlay && (
-        <div className="overlay-success">
-          <i className="fas fa-check-circle"></i>
-          <p>Inscription réussie !</p>
-        </div>
-      )}
     </div>
   );
 }

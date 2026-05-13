@@ -1,92 +1,82 @@
-import React, { useState, useRef, useEffect } from "react";
-import axios from "axios";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { tokenService } from "../services/tokenService";
+import { apiClient } from "../api/axiosConfig";
 import "../styles/otp.css";
 
 export default function OtpVerification() {
   const [code, setCode] = useState("");
-  const [displayCode, setDisplayCode] = useState("");
   const [showCode, setShowCode] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const lastAutoSubmittedCodeRef = useRef(null);
 
   const navigate = useNavigate();
   const location = useLocation();
   const user_id = location.state?.user_id;
   const email = location.state?.email;
   const portal = location.state?.portal || "client";
+  const redirectTarget = useMemo(
+    () => (String(location.state?.from || "/").startsWith("/") ? String(location.state?.from || "/") : "/"),
+    [location.state?.from]
+  );
+  const postLoginState = useMemo(() => ({
+    ...(location.state?.post_login_intent ? { post_login_intent: location.state.post_login_intent } : {}),
+    ...(location.state?.post_login_payload !== undefined
+      ? { post_login_payload: location.state.post_login_payload }
+      : {}),
+  }), [location.state?.post_login_intent, location.state?.post_login_payload]);
 
-  const API_BASE = (() => {
-    if (typeof window !== "undefined") {
-      const { protocol, hostname } = window.location;
-      if (["localhost", "127.0.0.1"].includes(hostname)) {
-        return `${protocol}//${hostname}:8000`;
-      }
-      if (import.meta.env.VITE_API_BASE) {
-        const envBase = import.meta.env.VITE_API_BASE.replace(/\/$/, "");
-        const envLooksLocal = /localhost|127\.0\.0\.1/i.test(envBase);
-        const hostIsLocal = ["localhost", "127.0.0.1"].includes(hostname);
-        if (!envLooksLocal || hostIsLocal) return envBase;
-      }
-      return window.location.origin;
-    }
-    return "";
-  })();
-
-  // Format du code pour l'affichage (masqué ou visible)
-  useEffect(() => {
-    if (showCode) {
-      setDisplayCode(code);
-    } else {
-      setDisplayCode(code.replace(/\d/g, "•"));
-    }
-  }, [code, showCode]);
-
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
+  const verifyOtp = useCallback(async (otpCode) => {
     setError(null);
     setSuccess(null);
 
-    if (!code || code.length < 6) {
+    if (!otpCode || otpCode.length < 6) {
       setError("Veuillez entrer un code à 6 chiffres");
+      return;
+    }
+
+    if (isSubmitting) {
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const res = await axios.post(
-        `${API_BASE}/api/auth/verify-2fa`,
-        { user_id, code, portal },
-        { withCredentials: true }
+      const res = await apiClient.post(
+        `/api/auth/verify-2fa`,
+        { user_id, code: otpCode, portal }
       );
 
-      console.log("Réponse verify-2fa:", res.data);
-
       if (res.data.token) {
-        localStorage.setItem("token", res.data.token);
-        localStorage.setItem("user", JSON.stringify(res.data.user));
+        tokenService.setToken(res.data.token);
+        tokenService.setUser(res.data.user);
         if (res.data.user?.id_pays) {
-          localStorage.setItem("pays", res.data.user.id_pays);
+          tokenService.setPays(res.data.user.id_pays);
         }
         window.dispatchEvent(new Event("userUpdated"));
 
         setSuccess("✓ Connexion réussie");
-        setTimeout(() => navigate("/"), 1200);
+        setTimeout(() => navigate(redirectTarget, { replace: true, state: postLoginState }), 500);
       } else {
         setError("Réponse inattendue du serveur");
       }
     } catch (err) {
-      console.error("Erreur verify-2fa:", err.response?.data || err.message);
+      console.error("[OTP] ❌ Erreur verify-2fa:", err.response?.data || err.message);
       const errorMsg =
         err.response?.data?.message || "Code OTP invalide ou expiré";
       setError(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
+  }, [isSubmitting, navigate, portal, redirectTarget, postLoginState, user_id]);
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    await verifyOtp(code);
   };
 
   const handleResend = async () => {
@@ -96,11 +86,12 @@ export default function OtpVerification() {
     setResendLoading(true);
 
     try {
-      const res = await axios.post(
-        `${API_BASE}/api/auth/resend-2fa`,
-        { user_id, portal },
-        { withCredentials: true }
+      console.log('[OTP] 📨 Demande de renvoi OTP');
+      const res = await apiClient.post(
+        `/api/auth/resend-2fa`,
+        { user_id, portal }
       );
+      console.log('[OTP] ✅ OTP renvoyé:', res.data);
       setSuccess(res.data.message || "Code renvoyé avec succès");
 
       if (res.data.code) {
@@ -121,7 +112,7 @@ export default function OtpVerification() {
         });
       }, 1000);
     } catch (err) {
-      console.error("Erreur resend-2fa:", err.response?.data || err.message);
+      console.error("[OTP] ❌ Erreur resend-2fa:", err.response?.data || err.message);
       setError(
         err.response?.data?.message || "Impossible de renvoyer le code"
       );
@@ -129,6 +120,41 @@ export default function OtpVerification() {
       setResendLoading(false);
     }
   };
+
+  const sanitizeOtp = (value) => value.replace(/\D/g, "").slice(0, 6);
+
+  const handleCodeInput = (e) => {
+    setCode(sanitizeOtp(e.target.value || ""));
+  };
+
+  const handleCodePaste = (e) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData("text");
+    setCode(sanitizeOtp(pastedText));
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search || "");
+    const codeFromUrl = sanitizeOtp(params.get("code") || "");
+
+    if (codeFromUrl.length === 6) {
+      setCode(codeFromUrl);
+    }
+  }, [location.search]);
+
+  useEffect(() => {
+    if (code.length < 6) {
+      lastAutoSubmittedCodeRef.current = null;
+      return;
+    }
+
+    if (lastAutoSubmittedCodeRef.current === code || isSubmitting) {
+      return;
+    }
+
+    lastAutoSubmittedCodeRef.current = code;
+    verifyOtp(code);
+  }, [code, isSubmitting, verifyOtp]);
 
   return (
     <div className="otp-page-wrapper">
@@ -160,16 +186,21 @@ export default function OtpVerification() {
           <form onSubmit={handleVerifyOtp} className="otp-form">
             {/* Input avec toggle visibilité */}
             <div className="otp-input-wrapper">
-              <div className="input-group">
+              <div className="otp-input-group">
                 <i className="fas fa-key icon"></i>
                 <input
                   type="text"
                   placeholder="000000"
-                  value={displayCode}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  className="input"
+                  value={code}
+                  onChange={handleCodeInput}
+                  onPaste={handleCodePaste}
+                  className="otp-input"
                   maxLength="6"
                   inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="[0-9]*"
+                  spellCheck="false"
+                  style={{ WebkitTextSecurity: showCode ? "none" : "disc" }}
                   required
                 />
                 <button
@@ -186,7 +217,7 @@ export default function OtpVerification() {
               </div>
             </div>
 
-            <button type="submit" className="submit-btn" disabled={isSubmitting || code.length < 6}>
+            <button type="submit" className="otp-submit-btn" disabled={isSubmitting || code.length < 6}>
               {isSubmitting ? (
                 <>
                   <i className="fas fa-spinner fa-spin"></i>

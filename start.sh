@@ -31,11 +31,11 @@ function start() {
     npm install || echo "npm install a échoué"
   fi
 
-  # Clear & cache
-  php artisan config:clear || true
-  php artisan cache:clear || true
-  php artisan view:clear || true
-  php artisan route:clear || true
+  # Nettoyage complet des caches Laravel (config, route, view, events, etc.)
+  php artisan optimize:clear || true
+
+  # Nettoyer les fichiers hot Vite stale pour eviter un port/URL faux
+  rm -f "$ROOT_DIR/public/hot" "$ROOT_DIR/storage/framework/vite/hot"
 
   # Optionnel: migrations automatiques (décommenter ou définir AUTO_MIGRATE=true)
   if [ "${AUTO_MIGRATE:-false}" = "true" ]; then
@@ -55,10 +55,30 @@ function start() {
   nohup php artisan serve --host="$APP_HOST" --port="$APP_PORT" > "$LOG_DIR/artisan-serve.log" 2>&1 &
   echo $! >> "$PIDS_FILE"
 
-  # Lancer le worker de queue
-  echo "-> Lancement du worker de queue"
-  nohup php artisan queue:work --sleep=3 --tries=3 --timeout=60 > "$LOG_DIR/queue-worker.log" 2>&1 &
-  echo $! >> "$PIDS_FILE"
+  # Lancer le worker de queue seulement si nécessaire
+  APP_QUEUE_CONNECTION="${QUEUE_CONNECTION:-}"
+  if [ -z "$APP_QUEUE_CONNECTION" ] && [ -f .env ]; then
+    APP_QUEUE_CONNECTION="$(grep -E '^QUEUE_CONNECTION=' .env | tail -n 1 | cut -d= -f2- | tr -d '"' | tr -d "'")"
+  fi
+  APP_QUEUE_CONNECTION="${APP_QUEUE_CONNECTION:-database}"
+
+  START_QUEUE_WORKER=true
+  if [ "$APP_QUEUE_CONNECTION" = "sync" ]; then
+    START_QUEUE_WORKER=false
+    echo "-> Worker queue ignoré (QUEUE_CONNECTION=sync)"
+  elif [ "$APP_QUEUE_CONNECTION" = "database" ]; then
+    JOBS_TABLE_READY="$(php artisan tinker --execute="echo \\Illuminate\\Support\\Facades\\Schema::hasTable(config('queue.connections.database.table', 'jobs')) ? '1' : '0';" 2>/dev/null | tr -d '\r\n\"')"
+    if [ "$JOBS_TABLE_READY" != "1" ]; then
+      START_QUEUE_WORKER=false
+      echo "-> Worker queue ignoré (QUEUE_CONNECTION=database mais table jobs absente)"
+    fi
+  fi
+
+  if [ "$START_QUEUE_WORKER" = "true" ]; then
+    echo "-> Lancement du worker de queue (QUEUE_CONNECTION=$APP_QUEUE_CONNECTION)"
+    nohup php artisan queue:work --sleep=3 --tries=3 --timeout=60 > "$LOG_DIR/queue-worker.log" 2>&1 &
+    echo $! >> "$PIDS_FILE"
+  fi
 
   # Lancer le scheduler (optionnel)
   echo "-> Lancement du scheduler (schedule:work)"
@@ -84,6 +104,9 @@ function stop() {
       kill "$pid" 2>/dev/null || true
     fi
   done < "$PIDS_FILE"
+
+  # Nettoyer les fichiers hot Vite stale
+  rm -f "$ROOT_DIR/public/hot" "$ROOT_DIR/storage/framework/vite/hot"
   rm -f "$PIDS_FILE"
   echo "Arrêt terminé."
 }

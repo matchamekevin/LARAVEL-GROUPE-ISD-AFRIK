@@ -1,82 +1,81 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import "../styles/btp.css";
 import usePageMeta from "../hooks/usePageMeta";
+import "../styles/service-pages-new.css";
 
 export default function Btp() {
   usePageMeta(
-    "BTP et Industrie | Groupe ISD AFRIK",
-    "Solutions technologiques pour BTP et industrie: pilotage, securisation et digitalisation des operations terrain."
+    "BTP & Industrie | Groupe ISD AFRIK",
+    "Solutions technologiques pour le BTP et l'industrie : pilotage de chantiers, digitalisation et infrastructures durables en Afrique."
   );
 
   return (
-    <div className="service-page btp-page premium-page">
-      {/* Hero Section */}
-      <section className="service-hero">
-        <div className="service-hero-content">
-          <h1>Bâtiment & Travaux Publics</h1>
-          <p>Des solutions robustes pour digitaliser, securiser et piloter vos projets BTP et industriels</p>
-        </div>
+    <div className="service-page-modern">
+      <section className="service-hero-modern">
+        <h1>Bâtiment & Travaux Publics (BTP)</h1>
+        <p>Bâtissons le futur avec des infrastructures intelligentes, durables et sécurisées.</p>
       </section>
 
-      <div className="service-container">
-        {/* Introduction */}
-        <section className="service-intro">
-          <h2>Notre Expertise</h2>
-          <p>
-            Nous accompagnons les entreprises et institutions dans la réalisation de projets
-            de construction et d'infrastructure, avec une approche orientee qualite,
-            securite et respect des delais.
-          </p>
-        </section>
-
-        {/* Solutions */}
-        <section className="service-solutions">
-          <h2>Nos Solutions</h2>
-          <div className="solutions-grid">
-            <div className="solution-card">
-              <div className="solution-icon"><i className="fas fa-building"></i></div>
-              <h3>Gestion de Projets</h3>
-              <p>Suivi et coordination des chantiers pour assurer la réussite.</p>
-              <ul>
-                <li>Planification</li>
-                <li>Supervision</li>
-                <li>Contrôle qualité</li>
-              </ul>
-            </div>
-
-            <div className="solution-card">
-              <div className="solution-icon"><i className="fas fa-hard-hat"></i></div>
-              <h3>Construction</h3>
-              <p>Réalisation de bâtiments et infrastructures durables.</p>
-              <ul>
-                <li>Bâtiments résidentiels</li>
-                <li>Bâtiments industriels</li>
-                <li>Travaux publics</li>
-              </ul>
-            </div>
-
-            <div className="solution-card">
-              <div className="solution-icon"><i className="fas fa-tools"></i></div>
-              <h3>Maintenance</h3>
-              <p>Rénovation et optimisation énergétique des ouvrages existants.</p>
-              <ul>
-                <li>Rénovation</li>
-                <li>Réparations</li>
-                <li>Optimisation énergétique</li>
-              </ul>
-            </div>
+      <div className="service-section">
+        <div className="service-grid-2">
+          <div className="service-text-content">
+            <h2>L'innovation technologique au cœur du chantier</h2>
+            <p>
+              Le Groupe ISD AFRIK accompagne les acteurs de la construction dans la digitalisation 
+              de leurs processus métier. De la planification à la réception des ouvrages, nous 
+              intégrons des outils de suivi technique pour garantir le respect des délais et des budgets.
+            </p>
+            <p>
+              Notre expertise couvre à la fois la réalisation physique de projets d'infrastructure 
+              et le déploiement de solutions de monitoring (IoT, capteurs) pour une gestion 
+              prédictive des actifs.
+            </p>
           </div>
-        </section>
+          <div className="service-image-placeholder" style={{ background: '#f8fafc', height: '300px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '1.2rem', border: '1px dashed #cbd5e1' }}>
+             <i className="fas fa-hard-hat fa-4x"></i>
+          </div>
+        </div>
 
-        {/* CTA */}
-        <section className="service-cta">
-          <h2>Construisons ensemble vos projets</h2>
-          <p>Contactez-nous pour bénéficier de notre expertise en BTP.</p>
-          <Link to="/contact" className="cta-button">
-            <i className="fas fa-envelope"></i> Nous contacter
-          </Link>
-        </section>
+        <div className="service-cards-grid">
+          <article className="service-card-item">
+            <div className="service-card-icon"><i className="fas fa-drafting-compass"></i></div>
+            <h3>Études & Planification</h3>
+            <p>Conception technique, calcul de structures et planification stratégique pour optimiser chaque phase de vos projets.</p>
+            <ul className="service-card-list">
+              <li><i className="fas fa-check"></i> Études de Faisabilité</li>
+              <li><i className="fas fa-check"></i> Modélisation 2D/3D</li>
+              <li><i className="fas fa-check"></i> Optimisation des Coûts</li>
+            </ul>
+          </article>
+
+          <article className="service-card-item">
+            <div className="service-card-icon"><i className="fas fa-tools"></i></div>
+            <h3>Construction & Infrastructures</h3>
+            <p>Réalisation de bâtiments industriels, tertiaires et résidentiels avec une exigence de qualité supérieure.</p>
+            <ul className="service-card-list">
+              <li><i className="fas fa-check"></i> Gros Œuvre & Second Œuvre</li>
+              <li><i className="fas fa-check"></i> Voiries & Réseaux Divers (VRD)</li>
+              <li><i className="fas fa-check"></i> Management de Chantier</li>
+            </ul>
+          </article>
+
+          <article className="service-card-item">
+            <div className="service-card-icon"><i className="fas fa-network-wired"></i></div>
+            <h3>Digitalisation & IoT</h3>
+            <p>Intégration de capteurs connectés pour le suivi en temps réel de la santé des structures et la sécurité des travailleurs.</p>
+            <ul className="service-card-list">
+              <li><i className="fas fa-check"></i> Monitoring de Structures</li>
+              <li><i className="fas fa-check"></i> Vidéosurveillance Intelligente</li>
+              <li><i className="fas fa-check"></i> GMAO Intégrée</li>
+            </ul>
+          </article>
+        </div>
+
+        <div className="service-cta-banner">
+          <h2>Un projet d'envergure à réaliser ?</h2>
+          <p>Associez notre rigueur d'ingénierie à votre vision architecturale.</p>
+          <Link to="/contact" className="service-cta-btn">Parler de mon projet BTP</Link>
+        </div>
       </div>
     </div>
   );

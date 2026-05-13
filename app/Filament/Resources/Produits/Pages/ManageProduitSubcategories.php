@@ -144,9 +144,32 @@ class ManageProduitSubcategories extends Page
         }
 
         $subcategory = CategorieProduit::query()->findOrFail($this->editingSubcategoryId);
-        $data = $this->validateForm($subcategory);
 
-        $subcategory->update($this->preparePayload($data, $subcategory));
+        $oldImageUrl = $subcategory->image_url ?? $subcategory->image;
+        $hasNewUpload = $this->imageUpload instanceof TemporaryUploadedFile;
+
+        $data = $this->validateForm($subcategory);
+        $payload = $this->preparePayload($data, $subcategory);
+
+        // Si un nouvel upload image remplace l'ancienne, supprimer le fichier précédent du disque.
+        if ($hasNewUpload && ! empty($oldImageUrl)) {
+            $oldNormalized = (string) $oldImageUrl;
+
+            // Si c'est une URL complète, ne garder que le path.
+            if (str_starts_with($oldNormalized, 'http://') || str_starts_with($oldNormalized, 'https://')) {
+                $oldNormalized = parse_url($oldNormalized, PHP_URL_PATH) ?: '';
+            }
+
+            // Si c'est une URL du type /storage/xxx, convertir en chemin disque.
+            if (str_starts_with($oldNormalized, '/storage/')) {
+                $oldPath = ltrim(substr($oldNormalized, strlen('/storage/')), '/');
+                if (Storage::disk('public')->exists($oldPath)) {
+                    Storage::disk('public')->delete($oldPath);
+                }
+            }
+        }
+
+        $subcategory->update($payload);
 
         $this->closeModals();
 

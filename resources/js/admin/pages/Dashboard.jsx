@@ -27,6 +27,7 @@ const EMPTY_SUMMARY = {
   collaborators: 0,
   partners: 0,
   recentActivity: [],
+  topCustomers: [],
 };
 
 export default function Dashboard() {
@@ -261,85 +262,175 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <section
+      <div
         style={{
-          background: '#ffffff',
-          borderRadius: '1rem',
-          border: '1px solid rgba(148, 163, 184, 0.22)',
-          boxShadow: '0 22px 40px rgba(15, 23, 42, 0.08)',
-          padding: '1.2rem',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+          gap: '1.5rem',
           position: 'relative',
           zIndex: 1,
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.8rem' }}>
-          <h2 style={{ fontSize: '1.08rem', margin: 0, color: '#0f172a', fontWeight: 700 }}>
-            <i className="fas fa-wave-square" style={{ marginRight: '0.5rem', color: '#2563eb' }} />
-            Activité récente
-          </h2>
-          <span style={{ color: '#64748b', fontSize: '0.85rem' }}>{loading ? 'Chargement...' : `${mergedRecentActivity.length} évènements`}</span>
-        </div>
-
-        {loading && (
-          <div style={{ color: '#64748b', textAlign: 'center', padding: '1.8rem 1rem' }}>
-            Mise à jour du tableau de bord...
+        {/* Activité récente */}
+        <section
+          style={{
+            background: '#ffffff',
+            borderRadius: '1rem',
+            border: '1px solid rgba(148, 163, 184, 0.22)',
+            boxShadow: '0 22px 40px rgba(15, 23, 42, 0.08)',
+            padding: '1.2rem',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.8rem' }}>
+            <h2 style={{ fontSize: '1.08rem', margin: 0, color: '#0f172a', fontWeight: 700 }}>
+              <i className="fas fa-wave-square" style={{ marginRight: '0.5rem', color: '#2563eb' }} />
+              Activité récente
+            </h2>
+            <span style={{ color: '#64748b', fontSize: '0.85rem' }}>{loading ? 'Chargement...' : `${mergedRecentActivity.length} évènements`}</span>
           </div>
-        )}
 
-        {!loading && mergedRecentActivity.length === 0 && (
-          <div style={{ color: '#64748b', textAlign: 'center', padding: '1.8rem 1rem' }}>
-            Aucune activité à afficher pour le moment.
-          </div>
-        )}
+          {loading && (
+            <div style={{ color: '#64748b', textAlign: 'center', padding: '1.8rem 1rem' }}>
+              Mise à jour de l&apos;activité...
+            </div>
+          )}
 
-        {!loading && mergedRecentActivity.length > 0 && (
-          <div style={{ display: 'grid', gap: '0.75rem' }}>
-            {mergedRecentActivity.map((item) => (
-              <article
-                key={item.id}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'auto 1fr auto',
-                  gap: '0.8rem',
-                  alignItems: 'center',
-                  borderRadius: '0.75rem',
-                  border: '1px solid rgba(148, 163, 184, 0.2)',
-                  padding: '0.72rem 0.8rem',
-                }}
-              >
-                <span
+          {!loading && mergedRecentActivity.length === 0 && (
+            <div style={{ color: '#64748b', textAlign: 'center', padding: '1.8rem 1rem' }}>
+              Aucune activité à afficher pour le moment.
+            </div>
+          )}
+
+          {!loading && mergedRecentActivity.length > 0 && (
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
+              {mergedRecentActivity.map((item) => (
+                <article
+                  key={item.id}
                   style={{
-                    width: '2rem',
-                    height: '2rem',
-                    borderRadius: '0.6rem',
-                    display: 'inline-flex',
+                    display: 'grid',
+                    gridTemplateColumns: 'auto 1fr auto',
+                    gap: '0.8rem',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    background: `${item.color}20`,
-                    color: item.color,
+                    borderRadius: '0.75rem',
+                    border: '1px solid rgba(148, 163, 184, 0.2)',
+                    padding: '0.72rem 0.8rem',
                   }}
                 >
-                  <i className={`fas ${item.icon}`} />
-                </span>
+                  <span
+                    style={{
+                      width: '2rem',
+                      height: '2rem',
+                      borderRadius: '0.6rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: `${item.color}20`,
+                      color: item.color,
+                    }}
+                  >
+                    <i className={`fas ${item.icon}`} />
+                  </span>
 
-                <div>
-                  <p style={{ margin: 0, fontSize: '0.92rem', color: '#0f172a', fontWeight: 600 }}>{item.title}</p>
-                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.82rem', color: '#64748b' }}>{item.subtitle}</p>
-                </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: '0.92rem', color: '#0f172a', fontWeight: 600 }}>{item.title}</p>
+                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.82rem', color: '#64748b' }}>{item.subtitle}</p>
+                  </div>
 
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ margin: 0, color: '#0f172a', fontWeight: 700, fontSize: '0.88rem' }}>
-                    {item.amount > 0 ? CURRENCY.format(item.amount) : '—'}
-                  </p>
-                  <p style={{ margin: '0.2rem 0 0', color: '#94a3b8', fontSize: '0.78rem' }}>
-                    {item.date ? item.date.toLocaleDateString('fr-FR') : '-'}
-                  </p>
-                </div>
-              </article>
-            ))}
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ margin: 0, color: '#0f172a', fontWeight: 700, fontSize: '0.88rem' }}>
+                      {item.amount > 0 ? CURRENCY.format(item.amount) : '—'}
+                    </p>
+                    <p style={{ margin: '0.2rem 0 0', color: '#94a3b8', fontSize: '0.78rem' }}>
+                      {item.date ? item.date.toLocaleDateString('fr-FR') : '-'}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Top 5 Clients */}
+        <section
+          style={{
+            background: '#ffffff',
+            borderRadius: '1rem',
+            border: '1px solid rgba(148, 163, 184, 0.22)',
+            boxShadow: '0 22px 40px rgba(15, 23, 42, 0.08)',
+            padding: '1.2rem',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.2rem' }}>
+            <h2 style={{ fontSize: '1.08rem', margin: 0, color: '#0f172a', fontWeight: 700 }}>
+              <i className="fas fa-trophy" style={{ marginRight: '0.5rem', color: '#f59e0b' }} />
+              Top 5 Clients les plus actifs
+            </h2>
+            <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Basé sur le volume d&apos;achat</span>
           </div>
-        )}
-      </section>
+
+          {loading ? (
+            <div style={{ color: '#64748b', textAlign: 'center', padding: '1.8rem 1rem' }}>
+              Chargement du classement...
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.92rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #f1f5f9', textAlign: 'left' }}>
+                    <th style={{ padding: '0.75rem 0.5rem', color: '#64748b', fontWeight: 600 }}>Client</th>
+                    <th style={{ padding: '0.75rem 0.5rem', color: '#64748b', fontWeight: 600, textAlign: 'center' }}>Achats</th>
+                    <th style={{ padding: '0.75rem 0.5rem', color: '#64748b', fontWeight: 600, textAlign: 'right' }}>Total dépensé</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {summary.topCustomers && summary.topCustomers.length > 0 ? (
+                    summary.topCustomers.map((customer, idx) => (
+                      <tr key={customer.id_utilisateur} style={{ borderBottom: idx === summary.topCustomers.length - 1 ? 'none' : '1px solid #f8fafc' }}>
+                        <td style={{ padding: '0.85rem 0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+                            <span style={{ 
+                              width: '2.2rem', 
+                              height: '2.2rem', 
+                              borderRadius: '50%', 
+                              background: '#f1f5f9', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              fontSize: '0.85rem',
+                              fontWeight: 700,
+                              color: '#475569'
+                            }}>
+                              {customer.prenom?.charAt(0)}{customer.nom?.charAt(0)}
+                            </span>
+                            <div>
+                              <p style={{ margin: 0, fontWeight: 600, color: '#0f172a' }}>{customer.prenom} {customer.nom}</p>
+                              <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8' }}>{customer.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding: '0.85rem 0.5rem', textAlign: 'center' }}>
+                          <span style={{ background: '#f0fdf4', color: '#16a34a', padding: '2px 8px', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 700 }}>
+                            {customer.total_orders} cmd
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.85rem 0.5rem', textAlign: 'right', fontWeight: 800, color: '#0f172a' }}>
+                          {CURRENCY.format(customer.total_spent)}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="3" style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                        Aucune donnée d&apos;achat disponible.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

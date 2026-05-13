@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import api from "../axios";
 import { getProduit, getProduitBySlug, getProduits } from "../services/ProduitService";
+import { toastError } from "../utils/toast";
 import {
   formatGeovisionPrice,
   getGeovisionAvailability,
@@ -8,17 +10,22 @@ import {
   readGeovisionSpecifications,
   resolveGeovisionImage,
 } from "../utils/geovision";
+import ProductActionButtons from "../components/ProductActionButtons";
 import "../styles/geovision-product-detail.css";
+import "../../css/product-action-buttons.css";
 
 export default function GeovisionProduitDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [activeImage, setActiveImage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [manufacturerSheetOpen, setManufacturerSheetOpen] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const resumeHandledRef = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -102,6 +109,98 @@ export default function GeovisionProduitDetail() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [manufacturerSheetOpen]);
+
+  const getCurrentUser = () => {
+    try {
+      const raw = localStorage.getItem("user");
+      if (!raw) return {};
+      return JSON.parse(raw) || {};
+    } catch {
+      return {};
+    }
+  };
+
+  const handleProductPayment = async (targetProduct, targetQty = 1) => {
+    if (!targetProduct || Number(targetProduct.stock || 0) <= 0 || paymentLoading) return;
+
+    const quantityToPay = Math.max(1, Number(targetQty || 1));
+
+    if (!localStorage.getItem("token")) {
+      navigate("/login", {
+        state: {
+          from: `${location.pathname}${location.search || ""}`,
+          post_login_intent: "pay_product",
+          post_login_payload: {
+            id_produit: Number(targetProduct.id_produit),
+            quantite: quantityToPay,
+          },
+        },
+      });
+      return;
+    }
+
+    setPaymentLoading(true);
+
+    try {
+      const user = getCurrentUser();
+      const response = await api.post("/produits/paiement", {
+        id_produit: Number(targetProduct.id_produit),
+        quantite: quantityToPay,
+        nom_livraison: user.nom || "Client",
+        prenom_livraison: user.prenom || "ISD",
+        email: user.email || "",
+        telephone: user.telephone || "00000000",
+        adresse: user.adresse || "Lomé, Togo",
+      });
+
+      const checkoutUrl = response?.data?.checkout_url;
+      if (!checkoutUrl) {
+        throw new Error("URL de paiement manquante.");
+      }
+
+      window.location.href = checkoutUrl;
+    } catch (paymentError) {
+      if (paymentError?.response?.status === 401) {
+        setPaymentLoading(false);
+        navigate("/login", {
+          state: {
+            from: `${location.pathname}${location.search || ""}`,
+            post_login_intent: "pay_product",
+            post_login_payload: {
+              id_produit: Number(targetProduct.id_produit),
+              quantite: quantityToPay,
+            },
+          },
+        });
+        return;
+      }
+
+      setPaymentLoading(false);
+      toastError(paymentError?.response?.data?.message || "Impossible d'initialiser le paiement pour ce produit.");
+    }
+  };
+
+  useEffect(() => {
+    const intent = location.state?.post_login_intent;
+    const payload = location.state?.post_login_payload;
+    const hasToken = Boolean(localStorage.getItem("token"));
+
+    if (!hasToken || !product?.id_produit || paymentLoading || resumeHandledRef.current) {
+      return;
+    }
+
+    if (intent !== "pay_product") {
+      return;
+    }
+
+    const targetProductId = Number(payload?.id_produit || 0);
+    if (targetProductId && targetProductId !== Number(product.id_produit)) {
+      return;
+    }
+
+    resumeHandledRef.current = true;
+    handleProductPayment(product, Math.max(1, Number(payload?.quantite || 1)));
+  }, [location.state, paymentLoading, product?.id_produit]);
 
   if (loading) {
     return (
@@ -234,6 +333,22 @@ export default function GeovisionProduitDetail() {
             )}
 
             <div className="gpd-actions">
+              {/* Boutons d'action produit (panier, favoris, paiement) */}
+              <div style={{ marginBottom: "1.5rem", width: "100%" }}>
+                <ProductActionButtons
+                  product={product}
+                  options={{
+                    defaultQuantity: 1,
+                    showQuantity: true,
+                    showPaymentBtn: true,
+                    onPaymentClick: (prod, qty) => {
+                      handleProductPayment(prod, qty);
+                    },
+                  }}
+                />
+              </div>
+
+              {/* Boutons d'information existants */}
               <button type="button" className="gpd-btn gpd-btn--primary" onClick={() => navigate("/contact", { state: { subject: product.titre } })}>
                 Demander un devis
               </button>

@@ -301,8 +301,46 @@ function normalizeListResponse(response, itemNormalizer = (item) => item) {
 function resolveMediaUrl(value) {
   const raw = String(value || '').trim();
   if (!raw) return null;
-  if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('/')) return raw;
+  if (raw.startsWith('/storage/')) return raw;
+  if (raw.startsWith('http://') || raw.startsWith('https://')) {
+    try {
+      const parsed = new URL(raw);
+      const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+      const currentHost = typeof window !== 'undefined' ? window.location.hostname : '';
+      if (parsed.pathname.startsWith('/storage/') && (!currentOrigin || parsed.origin === currentOrigin || /^(localhost|127\.0\.0\.1|::1)$/i.test(currentHost))) {
+        return parsed.pathname;
+      }
+    } catch (_error) {
+      // keep original URL
+    }
+
+    return raw;
+  }
+  if (raw.startsWith('/')) return raw;
   return `/storage/${raw.replace(/^\/+/, '')}`;
+}
+
+function buildCategoryPayload(data) {
+  const payload = {};
+
+  Object.entries(data || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') {
+      return;
+    }
+
+    if (typeof value === 'boolean') {
+      payload[key] = value;
+      return;
+    }
+
+    payload[key] = value;
+  });
+
+  return payload;
+}
+
+function hasUploadFile(data) {
+  return Boolean(data?.image && typeof data.image === 'object' && typeof data.image.name === 'string');
 }
 
 function normalizeUser(u) {
@@ -417,6 +455,7 @@ export async function createAdminAdjoint(payload) {
     email: payload.email,
     telephone: payload.telephone || null,
     id_pays: payload.id_pays !== undefined && payload.id_pays !== null && payload.id_pays !== '' ? Number(payload.id_pays) : undefined,
+    admin_role: payload.admin_role || 'admin_adjoint',
     can_access_client: Boolean(payload.can_access_client),
     two_factor_enabled: payload.two_factor_enabled !== undefined ? Boolean(payload.two_factor_enabled) : true,
   });
@@ -599,20 +638,28 @@ export async function getCategories(params = {}) {
 }
 
 export async function createCategory(data) {
+  if (!hasUploadFile(data)) {
+    return api.post('/api/categories-produits', buildCategoryPayload(data));
+  }
+
   const formData = new FormData();
   Object.entries(data || {}).forEach(([key, value]) => {
-    if (value === undefined || value === null) return;
-    if (value === '') return;
+    if (value === undefined || value === null || value === '') return;
     if (typeof value === 'boolean') {
       formData.append(key, value ? '1' : '0');
       return;
     }
     formData.append(key, value);
   });
+
   return api.post('/api/categories-produits', formData);
 }
 
 export async function updateCategory(id, data) {
+  if (!hasUploadFile(data)) {
+    return api.put(`/api/categories-produits/${id}`, buildCategoryPayload(data));
+  }
+
   const formData = new FormData();
   formData.append('_method', 'PUT');
   Object.entries(data || {}).forEach(([key, value]) => {

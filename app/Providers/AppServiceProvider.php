@@ -2,13 +2,24 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    public function boot()
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        //
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
     {
         // Configuration du morph map pour les relations polymorphiques
         Relation::enforceMorphMap([
@@ -18,19 +29,12 @@ class AppServiceProvider extends ServiceProvider
             'commande' => 'App\Models\Commande',
             'BLOG' => 'App\Models\Blog',
             'user' => 'App\Models\User',
-            
+
             // Ajoutez d'autres modèles si nécessaire
-            ]);
+        ]);
 
-        // Forcer le schéma HTTPS en production (utile derrière un proxy comme Render)
-        try {
-            $appEnv = config('app.env');
-        } catch (\Exception $e) {
-            $appEnv = env('APP_ENV');
-        }
-
-        $appUrl = env('APP_URL', '');
-        if ($appEnv === 'production' || stripos($appUrl, 'https://') === 0) {
+        // Forcer le schéma HTTPS uniquement en production.
+        if (app()->environment('production')) {
             URL::forceScheme('https');
         }
     }

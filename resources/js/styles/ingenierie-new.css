@@ -66,10 +66,6 @@
   /* ❌ transition supprimée */
 }
 
-.ingenierie-card:hover {
-  /* ❌ effet hover supprimé */
-}
-
 .ingenierie-card-image {
   position: relative;
   width: 100%;
@@ -80,6 +76,11 @@
   padding: 0.75rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   /* ❌ transition supprimée */
+}
+
+.ingenierie-card-image--empty {
+  background:
+    linear-gradient(135deg, rgba(248, 250, 252, 1) 0%, rgba(226, 232, 240, 0.9) 100%);
 }
 
 .ingenierie-card-overlay {
@@ -172,8 +173,109 @@
   margin-bottom: 2rem;
 }
 
+/* Skeleton Loader */
+.skeleton-card {
+  pointer-events: none;
+}
+
+.skeleton-image {
+  background: #f1f5f9;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-title {
+  width: 70%;
+  height: 1.5rem;
+  background: #f1f5f9;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-desc {
+  width: 100%;
+  height: 1rem;
+  background: #f1f5f9;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-btn {
+  width: 120px;
+  height: 2.5rem;
+  background: #f1f5f9;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-image::after,
+.skeleton-title::after,
+.skeleton-desc::after,
+.skeleton-btn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.4) 20%,
+    rgba(255, 255, 255, 0.7) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.ingenierie-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin: 1rem auto 1.5rem;
+  width: min(1100px, 100%);
+}
+
+.ingenierie-filter-label {
+  font-weight: 700;
+  color: #1f2937;
+  font-size: 0.95rem;
+}
+
+.ingenierie-filter-select {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0.55rem 0.8rem;
+  min-width: 220px;
+  font-size: 0.95rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
+  .ingenierie-filter-bar {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin: 0.5rem 0 1.25rem;
+  }
+
+  .ingenierie-filter-select {
+    width: 100%;
+    min-width: 0;
+  }
+
   .ingenierie-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;

@@ -1160,5 +1160,28 @@
     animation: none;
   }
 }
-  
-  
+
+/* style bouton principal */
+.card-button,
+.btn-inscrire {
+  background-color: #0f1729; /* couleur souhaitée */
+  color: #ffffff;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.card-button:hover,
+.btn-inscrire:hover {
+  background-color: #0b1320;
+}
+
+/* si une règle plus spécifique écrase le style, forcez ainsi (à éviter si possible) */
+.card-button,
+.btn-inscrire {
+  background-color: #0f1729 !important;
+  color: #fff !important;
+}
+

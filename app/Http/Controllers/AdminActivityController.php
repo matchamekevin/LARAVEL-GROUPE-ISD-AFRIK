@@ -24,11 +24,15 @@ class AdminActivityController extends Controller
     {
         $value = strtolower(trim((string) $role));
 
-        if (in_array($value, ['admin', 'admin_pays', 'admin_national', 'admin_adjoint'], true)) {
+        if (in_array($value, ['admin_pays', 'admin_national'], true)) {
+            return 'admin_pays';
+        }
+
+        if ($value === 'admin_adjoint') {
             return 'admin_adjoint';
         }
 
-        if ($value === 'superadmin') {
+        if (in_array($value, ['superadmin', 'super-admin', 'admin'], true)) {
             return 'superadmin';
         }
 
@@ -37,7 +41,7 @@ class AdminActivityController extends Controller
 
     private function isSuperAdminUser(?object $user): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -59,7 +63,7 @@ class AdminActivityController extends Controller
 
     private function formatUserLabel(?object $user, string $fallback = 'Utilisateur'): string
     {
-        if (!$user) {
+        if (! $user) {
             return $fallback;
         }
 
@@ -70,7 +74,7 @@ class AdminActivityController extends Controller
             }
         }
 
-        $fullName = trim((string) ($user->prenom ?? '') . ' ' . (string) ($user->nom ?? ''));
+        $fullName = trim((string) ($user->prenom ?? '').' '.(string) ($user->nom ?? ''));
         if ($fullName !== '') {
             return $fullName;
         }
@@ -92,10 +96,10 @@ class AdminActivityController extends Controller
                 $user = $order->utilisateur;
 
                 $activities[] = [
-                    'id' => 'order-' . ($order->id_commande ?? uniqid()),
+                    'id' => 'order-'.($order->id_commande ?? uniqid()),
                     'type' => 'commande',
-                    'title' => 'Commande #' . ($order->numero_commande ?? $order->id_commande ?? '-'),
-                    'subtitle' => $this->formatUserLabel($user, 'Client') . ' • ' . str_replace('_', ' ', (string) ($order->statut ?? 'statut inconnu')),
+                    'title' => 'Commande #'.($order->numero_commande ?? $order->id_commande ?? '-'),
+                    'subtitle' => $this->formatUserLabel($user, 'Client').' • '.str_replace('_', ' ', (string) ($order->statut ?? 'statut inconnu')),
                     'amount' => (float) ($order->montant_total ?? 0),
                     'date' => (string) ($order->date_commande ?? $order->created_at ?? null),
                     'icon' => 'fa-box',
@@ -113,13 +117,13 @@ class AdminActivityController extends Controller
 
             foreach ($payments as $payment) {
                 $user = $payment->utilisateur;
-                $title = $payment->formation?->titre ?: 'Paiement #' . ($payment->id_paiement ?? '-');
+                $title = $payment->formation?->titre ?: 'Paiement #'.($payment->id_paiement ?? '-');
 
                 $activities[] = [
-                    'id' => 'payment-' . ($payment->id_paiement ?? uniqid()),
+                    'id' => 'payment-'.($payment->id_paiement ?? uniqid()),
                     'type' => 'paiement',
                     'title' => $title,
-                    'subtitle' => $this->formatUserLabel($user, 'Utilisateur') . ' • ' . ($payment->statut_paiement ?? 'inconnu'),
+                    'subtitle' => $this->formatUserLabel($user, 'Utilisateur').' • '.($payment->statut_paiement ?? 'inconnu'),
                     'amount' => (float) ($payment->montant ?? 0),
                     'date' => (string) ($payment->date_paiement ?? $payment->created_at ?? null),
                     'icon' => 'fa-credit-card',
@@ -135,10 +139,10 @@ class AdminActivityController extends Controller
 
         foreach ($auditLogs as $audit) {
             $user = $audit->utilisateur;
-            $subtitle = $this->formatUserLabel($user, 'Système') . ($audit->table_cible ? ' • ' . $audit->table_cible : '');
+            $subtitle = $this->formatUserLabel($user, 'Système').($audit->table_cible ? ' • '.$audit->table_cible : '');
 
             $activities[] = [
-                'id' => 'audit-' . ($audit->id_log ?? uniqid()),
+                'id' => 'audit-'.($audit->id_log ?? uniqid()),
                 'type' => 'audit',
                 'title' => (string) ($audit->action ?? 'Action système'),
                 'subtitle' => $subtitle,
@@ -158,7 +162,7 @@ class AdminActivityController extends Controller
             $admin = $log->admin;
 
             $activities[] = [
-                'id' => 'admin-' . ($log->id ?? uniqid()),
+                'id' => 'admin-'.($log->id ?? uniqid()),
                 'type' => 'admin',
                 'title' => (string) ($log->action ?? 'Action admin'),
                 'subtitle' => $this->formatUserLabel($admin, 'Admin'),
@@ -170,7 +174,7 @@ class AdminActivityController extends Controller
         }
 
         return collect($activities)
-            ->filter(fn (array $item) => !empty($item['date']))
+            ->filter(fn (array $item) => ! empty($item['date']))
             ->sortByDesc(function (array $item) {
                 return strtotime((string) $item['date']) ?: 0;
             })
@@ -183,7 +187,7 @@ class AdminActivityController extends Controller
     {
         $query = Utilisateur::query()->whereNull('deleted_at');
 
-        if (!$this->isSuperAdminUser($actor)) {
+        if (! $this->isSuperAdminUser($actor)) {
             $query->where(function ($builder) {
                 $builder
                     ->whereNull('admin_role')
@@ -225,6 +229,16 @@ class AdminActivityController extends Controller
             })
             ->count();
 
+        $topCustomers = Utilisateur::query()
+            ->select('utilisateurs.id_utilisateur', 'utilisateurs.prenom', 'utilisateurs.nom', 'utilisateurs.email')
+            ->join('commandes', 'utilisateurs.id_utilisateur', '=', 'commandes.id_utilisateur')
+            ->selectRaw('COUNT(commandes.id_commande) as total_orders')
+            ->selectRaw('SUM(commandes.montant_total) as total_spent')
+            ->groupBy('utilisateurs.id_utilisateur', 'utilisateurs.prenom', 'utilisateurs.nom', 'utilisateurs.email')
+            ->orderByDesc('total_spent')
+            ->limit(5)
+            ->get();
+
         return response()->json([
             'users' => $this->visibleUsersCount($actor),
             'orders' => Commande::query()->count(),
@@ -242,6 +256,7 @@ class AdminActivityController extends Controller
             'collaborators' => HomeCollaborator::query()->count(),
             'partners' => HomePartner::query()->count(),
             'recentActivity' => $recentActivity,
+            'topCustomers' => $topCustomers,
         ]);
     }
 }

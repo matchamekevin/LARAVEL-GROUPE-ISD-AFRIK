@@ -23,24 +23,37 @@ class Commande extends Model
     use HasFactory;
 
     protected $table = 'commandes';
+
     protected $primaryKey = 'id_commande';
 
     protected $fillable = [
+        'uuid',           // ✅ AJOUTER
         'numero_commande',
         'date_commande',
-        'statut',            // en_attente, payée, annulée
+        'statut',
+        'type_commande',
         'montant_total',
         'montant_commission',
         'date_livraison',
         'id_utilisateur',
     ];
 
+    // ✅ AJOUTER cette méthode
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
+
     /** Relations */
 
     // Une commande appartient à un utilisateur
     public function utilisateur()
     {
-        return $this->belongsTo(User::class, 'id_utilisateur'); 
+        return $this->belongsTo(User::class, 'id_utilisateur');
         // ⚡ utilise User si tu es sur Laravel standard
     }
 

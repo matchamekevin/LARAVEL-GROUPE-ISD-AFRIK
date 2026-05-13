@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from "react";
 import axios from "axios";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import MainLayout from "./layouts/MainLayout";
 import AutoRefreshProvider from "./providers/AutoRefreshProvider";
 import ScrollToTop from "./components/ScrollToTop";
@@ -62,6 +63,7 @@ function LazyPage({ name }) {
 function App() {
     return (
         <BrowserRouter>
+            <Toaster position="top-right" reverseOrder={false} />
             <MainLayout>
                 {/* Gestion unifiée du scroll: top sur navigation normale, restauration sur back/forward */}
                   <ScrollToTop />

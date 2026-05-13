@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # ISD_AFRIK Backend
 
 Backend Laravel pour le site de l'entreprise ISD AFRIK.

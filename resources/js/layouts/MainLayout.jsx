@@ -1,89 +1,134 @@
-import React, { useEffect } from "react";
-import axios from "axios";
+import React, { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { tokenService } from "../services/tokenService";
+import { apiClient } from "../api/axiosConfig";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ToastContainer from "../components/ToastContainer";
 
-function resolveApiBase() {
-    if (typeof window !== "undefined") {
-        const { protocol, hostname } = window.location;
-        if (import.meta.env.VITE_API_BASE) {
-            const envBase = import.meta.env.VITE_API_BASE.replace(/\/$/, "");
-            const envLooksLocal = /localhost|127\.0\.0\.1/i.test(envBase);
-            const hostIsLocal = ["localhost", "127.0.0.1"].includes(hostname);
-            if (!envLooksLocal || hostIsLocal) return envBase;
-        }
-        if (["localhost", "127.0.0.1"].includes(hostname)) return `${protocol}//${hostname}:8000`;
-        return window.location.origin;
-    }
-
-    return "";
-}
-
-function clearClientSession() {
-    try {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        localStorage.removeItem("pays");
-    } catch (e) {
-        // ignore if localStorage is unavailable
-    }
-
-    window.dispatchEvent(new Event("userUpdated"));
-}
-
 export default function MainLayout({ children }) {
     const location = useLocation();
     const navigate = useNavigate();
+    const retryCountRef = useRef(0);
+    const MAX_RETRIES = 3;
+    const VERIFY_INTERVAL = 10000; // 10 secondes
 
     useEffect(() => {
-        const ignoredPaths = ["/login", "/register", "/forgot-password"];
-        const apiBase = resolveApiBase();
+        const ignoredPaths = ["/login", "/register", "/forgot-password", "/verify-otp"];
+        let intervalId = null;
 
         async function verifyClientSession() {
-            const token = localStorage.getItem("token");
-            if (!token) return;
+            const token = tokenService.getToken();
+            
+            if (!token) {
+                return;
+            }
 
             try {
-                const res = await axios.get(`${apiBase}/api/auth/profile`, {
-                    withCredentials: true,
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                    params: {
-                        portal: "client",
-                    },
+                const res = await apiClient.get('/api/auth/profile', {
+                    params: { portal: 'client' },
                 });
 
                 const profile = res.data?.user || res.data;
-                if (!profile || profile.can_access_client === false || String(profile.statut || "").toLowerCase() !== "actif") {
-                    throw new Error("client-session-revoked");
+
+                // ✅ Vérifications correctes (pas strictement false)
+                if (!profile) {
+                    throw new Error('Profile empty');
                 }
 
-                localStorage.setItem("user", JSON.stringify(profile));
-            } catch (error) {
-                clearClientSession();
+                const hasClientAccess = profile.can_access_client !== false && String(profile.statut || '').toLowerCase() === 'actif';
 
-                if (!ignoredPaths.includes(location.pathname)) {
-                    navigate("/login", {
-                        replace: true,
-                        state: { error: "Votre accès client a été retiré. Veuillez vous reconnecter si nécessaire." },
-                    });
+                if (!hasClientAccess) {
+                    console.warn('[MainLayout] ⚠️ Accès client révoqué');
+                    throw new Error('client-access-revoked');
+                }
+
+                // ✅ Mise à jour des données
+                tokenService.setUser(profile);
+                retryCountRef.current = 0; // Reset retry counter
+
+            } catch (error) {
+                const status = error.response?.status;
+                const isAuthError = status === 401 || status === 403;
+
+                console.error('[MainLayout] ❌ Erreur vérification:', {
+                    status,
+                    message: error.response?.data?.message,
+                    retryCount: retryCountRef.current,
+                });
+
+                // Erreurs d'authentification = déconnexion immédiate
+                if (isAuthError) {
+                    console.warn('[MainLayout] 🔐 Erreur auth - Déconnexion');
+                    tokenService.clearSession();
+
+                    if (!ignoredPaths.includes(location.pathname)) {
+                        navigate('/login', {
+                            replace: true,
+                            state: {
+                                from: `${location.pathname}${location.search || ""}`,
+                                error: 'Votre session a expiré. Veuillez vous reconnecter.',
+                            },
+                        });
+                    }
+                    return;
+                }
+
+                // Autres erreurs = retry jusqu'à MAX_RETRIES
+                retryCountRef.current++;
+                if (retryCountRef.current >= MAX_RETRIES) {
+                    console.error(`[MainLayout] ❌ Échec après ${MAX_RETRIES} tentatives - Déconnexion`);
+                    tokenService.clearSession();
+
+                    if (!ignoredPaths.includes(location.pathname)) {
+                        navigate('/login', {
+                            replace: true,
+                            state: {
+                                from: `${location.pathname}${location.search || ""}`,
+                                error: 'Connexion perdue. Veuillez vous reconnecter.',
+                            },
+                        });
+                    }
                 }
             }
         }
 
+        // Vérifier au montage et ensuite tous les 10s
         verifyClientSession();
-        const intervalId = window.setInterval(verifyClientSession, 10000);
-        const syncHandler = () => verifyClientSession();
-        window.addEventListener("userUpdated", syncHandler);
+        intervalId = window.setInterval(verifyClientSession, VERIFY_INTERVAL);
+
+        // Listener pour les événements de token
+        const handleTokenExpired = () => {
+            tokenService.clearSession();
+            navigate('/login', {
+                replace: true,
+                state: {
+                    from: `${location.pathname}${location.search || ""}`,
+                    error: 'Votre token a expiré.',
+                },
+            });
+        };
+
+        const handleAccessDenied = () => {
+            tokenService.clearSession();
+            navigate('/login', {
+                replace: true,
+                state: {
+                    from: `${location.pathname}${location.search || ""}`,
+                    error: 'Accès refusé.',
+                },
+            });
+        };
+
+        window.addEventListener('token-expired', handleTokenExpired);
+        window.addEventListener('access-denied', handleAccessDenied);
 
         return () => {
-            window.clearInterval(intervalId);
-            window.removeEventListener("userUpdated", syncHandler);
+            if (intervalId) window.clearInterval(intervalId);
+            window.removeEventListener('token-expired', handleTokenExpired);
+            window.removeEventListener('access-denied', handleAccessDenied);
         };
-    }, [location.pathname, navigate]);
+    }, [location.pathname, location.search, navigate]);
 
     return (
         <div className="site-shell min-h-screen flex flex-col font-[Corbel]">

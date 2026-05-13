@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { login, verify2FA, resend2FA, setAdminToken } from '../api';
 
 function normalizeAuthMessage(err, fallback) {
@@ -57,14 +58,17 @@ export default function Login({ onLogin }){
       if (data.requires_2fa) {
         setRequires2fa(true);
         setUserId(data.user_id);
-        setInfo('Code 2FA envoyé par e-mail.');
+        toast.info('Code 2FA envoyé par e-mail.');
       } else {
         // connexion réussie sans 2FA
         if (data.token) setAdminToken(data.token);
+        toast.success('Connexion réussie !');
         if (onLogin) onLogin();
       }
     }catch(err){
-      setError(normalizeAuthMessage(err, 'Erreur de connexion'));
+      const msg = normalizeAuthMessage(err, 'Erreur de connexion');
+      setError(msg);
+      toast.error(msg);
     }finally{ setLoading(false); }
   }
 
@@ -75,9 +79,12 @@ export default function Login({ onLogin }){
       const res = await verify2FA({ user_id: userId, code, portal: 'admin' });
       const data = res.data || {};
       if (data.token) setAdminToken(data.token);
+      toast.success('Authentification 2FA réussie !');
       if (onLogin) onLogin();
     }catch(err){
-      setError(normalizeAuthMessage(err, 'Code invalide'));
+      const msg = normalizeAuthMessage(err, 'Code invalide');
+      setError(msg);
+      toast.error(msg);
     }finally{ setLoading(false); }
   }
 
@@ -85,9 +92,13 @@ export default function Login({ onLogin }){
     setLoading(true); setError(null); setInfo(null);
     try{
       const res = await resend2FA({ user_id: userId, portal: 'admin' });
-      setInfo(res.data?.message || 'Nouveau code envoyé');
+      const msg = res.data?.message || 'Nouveau code envoyé';
+      setInfo(msg);
+      toast.success(msg);
     }catch(err){
-      setError(normalizeAuthMessage(err, 'Erreur en renvoi du code'));
+      const msg = normalizeAuthMessage(err, 'Erreur en renvoi du code');
+      setError(msg);
+      toast.error(msg);
     }finally{ setLoading(false); }
   }
 
@@ -242,26 +253,6 @@ export default function Login({ onLogin }){
               />
             </div>
           )}
-
-          {error && <div style={{
-            color: '#DC2626',
-            marginBottom: 12,
-            padding: '0.75rem',
-            background: '#FEE2E2',
-            borderRadius: '0.5rem',
-            fontSize: '0.9rem',
-            fontWeight: 500,
-          }}><i className="fas fa-exclamation-circle" style={{marginRight: '0.3rem'}}></i>{error}</div>}
-
-          {info && <div style={{
-            color: '#15803D',
-            marginBottom: 12,
-            padding: '0.75rem',
-            background: '#DCFCE7',
-            borderRadius: '0.5rem',
-            fontSize: '0.9rem',
-            fontWeight: 500,
-          }}><i className="fas fa-check-circle" style={{marginRight: '0.3rem'}}></i>{info}</div>}
 
           {!requires2fa && (
             <button 

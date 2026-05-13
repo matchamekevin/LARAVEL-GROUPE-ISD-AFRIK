@@ -32,22 +32,39 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
+    const isCancelled = axios.isCancel(err);
+    const isAborted = err.code === 'ECONNABORTED';
+    const isNetworkError = !err.response && !isCancelled;
+
     try {
       const cfg = err?.config || {};
       const url = cfg.url || cfg.baseURL || 'unknown';
-      console.error('API request failed', { url, message: err.message, code: err.code, status: err?.response?.status });
+      if (!isCancelled) {
+        console.error(`API request failed [${err.code || 'ERROR'}]`, {
+          url,
+          message: err.message,
+          status: err?.response?.status,
+          isAborted,
+          isNetworkError
+        });
+      }
     } catch (e) {
       // ignore logging errors
     }
 
     // simple retry/backoff for network timeouts or missing response
     const config = err.config || {};
-    if (!config) return Promise.reject(err);
-    config.__retryCount = config.__retryCount || 0;
-    const shouldRetry = (err.code === 'ECONNABORTED' || !err.response) && config.__retryCount < 2;
+    if (!config || isCancelled) return Promise.reject(err);
+
+    // Only retry on true timeouts or network failures, not on every aborted request
+    // (ECONNABORTED with timeout message is a timeout, otherwise it might be a manual abort)
+    const isTimeout = isAborted && err.message?.toLowerCase().includes('timeout');
+    const shouldRetry = (isTimeout || isNetworkError) && (config.__retryCount || 0) < 2;
+
     if (shouldRetry) {
-      config.__retryCount += 1;
-      const delay = 500 * config.__retryCount; // 500ms, 1s
+      config.__retryCount = (config.__retryCount || 0) + 1;
+      const delay = 1000 * config.__retryCount; // 1s, 2s
+      console.warn(`Retrying request (${config.__retryCount}/2) in ${delay}ms...`, config.url);
       return new Promise((resolve) => setTimeout(resolve, delay)).then(() => api(config));
     }
 

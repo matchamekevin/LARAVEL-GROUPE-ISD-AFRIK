@@ -7,7 +7,7 @@ const countries = [
   { code: "NE", name: "Niger", flag: "/flags/ni.png" }, // corrigé
   { code: "CI", name: "Côte d’Ivoire", flag: "/flags/co.png" }, // corrigé
   { code: "BJ", name: "Bénin", flag: "/flags/be.png" }, // corrigé
-  { code: "BF", name: "Burkina ", flag: "/flags/bk.png" }, // corrigé
+  { code: "BF", name: "Burkina Faso", flag: "/flags/bk.png" }, // corrigé
 ];
 
 export default function CountrySelector({ value, onChange }) {

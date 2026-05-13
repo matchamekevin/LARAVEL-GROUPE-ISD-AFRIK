@@ -57,6 +57,29 @@ const getDescendantIds = (rootId, categories) => {
   return ids;
 };
 
+const getNearestMainAncestorSlug = (category, categoriesById, mainCategorySlugs = []) => {
+  if (!category) return "";
+
+  const allowed = new Set(mainCategorySlugs);
+  let current = category;
+  let guard = 0;
+
+  while (current && guard < 20) {
+    const slug = normalizeSlug(current.slug || current.nom || "");
+    if (allowed.has(slug)) {
+      return slug;
+    }
+
+    const parentId = Number(current.parent_id || 0);
+    if (!parentId) break;
+
+    current = categoriesById[parentId] || null;
+    guard += 1;
+  }
+
+  return "";
+};
+
 const formatPrice = (value) => Number(value || 0).toLocaleString("fr-FR");
 
 const statusLabel = (statut) => {
@@ -321,21 +344,35 @@ export default function Produits() {
     }
 
     let source = [];
+    const activeRootId = Number(activeCategory.id || 0);
 
     if (activeCategory.slug === ALL_CATEGORY_SLUG) {
       const mainCategoryIds = mainCategories
         .filter((item) => item.slug !== ALL_CATEGORY_SLUG && item.id)
         .map((item) => Number(item.id));
 
-      const idSet = new Set(mainCategoryIds);
-      source = categories.filter((item) => idSet.has(Number(item.parent_id || 0)));
+      const idSet = new Set();
+      mainCategoryIds.forEach((mainId) => {
+        getDescendantIds(mainId, categories).forEach((id) => {
+          if (id !== mainId) {
+            idSet.add(id);
+          }
+        });
+      });
+
+      source = categories.filter((item) => idSet.has(Number(item.id_categorie || item.id)));
 
       // Fallback: si aucune catégorie enfant, afficher les catégories principales elles-mêmes.
       if (source.length === 0) {
-        source = categories.filter((item) => idSet.has(Number(item.id_categorie || item.id)));
+        const mainSet = new Set(mainCategoryIds);
+        source = categories.filter((item) => mainSet.has(Number(item.id_categorie || item.id)));
       }
     } else if (activeCategory.id) {
-      source = categories.filter((item) => Number(item.parent_id || 0) === Number(activeCategory.id));
+      const descendants = getDescendantIds(Number(activeCategory.id), categories).filter(
+        (id) => id !== Number(activeCategory.id)
+      );
+      const idSet = new Set(descendants);
+      source = categories.filter((item) => idSet.has(Number(item.id_categorie || item.id)));
 
       // Fallback: catégorie principale sans enfants, la rendre cliquable comme sous-catégorie.
       if (source.length === 0 && activeCategory.node) {
@@ -350,13 +387,38 @@ export default function Produits() {
         return String(a.nom || "").localeCompare(String(b.nom || ""), "fr");
       })
       .map((item) => ({
-        id: Number(item.id_categorie || item.id),
-        slug: normalizeSlug(item.slug || item.nom),
-        label: item.nom,
-        description: item.description || "",
-        image: getCategoryImage(item),
+        ...(function buildDisplayItem() {
+          const id = Number(item.id_categorie || item.id);
+          const ancestors = [];
+          let parentId = Number(item.parent_id || 0);
+          let guard = 0;
+
+          while (parentId && guard < 20) {
+            const parent = categoriesById[parentId];
+            if (!parent) break;
+            const parentOwnId = Number(parent.id_categorie || parent.id || 0);
+
+            if (activeRootId && parentOwnId === activeRootId) {
+              break;
+            }
+
+            ancestors.unshift(String(parent.nom || "").trim());
+            parentId = Number(parent.parent_id || 0);
+            guard += 1;
+          }
+
+          return {
+            id,
+            slug: normalizeSlug(item.slug || item.nom),
+            label: item.nom,
+            pathLabel: ancestors.length ? `${ancestors.join(" / ")} / ${item.nom}` : item.nom,
+            depth: ancestors.length + 1,
+            description: item.description || "",
+            image: getCategoryImage(item),
+          };
+        })(),
       }));
-  }, [activeCategory, categories, mainCategories]);
+  }, [activeCategory, categories, categoriesById, mainCategories]);
 
   const selectedSubcategory = useMemo(() => {
     if (!selectedSubcategoryId && !selectedSubcategorySlug) {
@@ -653,8 +715,7 @@ export default function Produits() {
     if (categoryFromId) {
       const ownSlug = normalizeSlug(categoryFromId.slug || categoryFromId.nom);
       const ownId = Number(categoryFromId.id_categorie || categoryFromId.id || 0);
-      const parent = categoriesById[Number(categoryFromId.parent_id)];
-      const parentSlug = normalizeSlug(parent?.slug || parent?.nom || "");
+      const mainAncestorSlug = getNearestMainAncestorSlug(categoryFromId, categoriesById, mainCategorySlugs);
       const hasChildren = categories.some((item) => Number(item.parent_id || 0) === ownId);
 
       if (mainCategorySlugs.includes(ownSlug)) {
@@ -669,8 +730,8 @@ export default function Produits() {
           setSelectedSubcategoryId("");
           setSelectedSubcategorySlug("");
         }
-      } else if (mainCategorySlugs.includes(parentSlug)) {
-        setActiveCategorySlug(parentSlug);
+      } else if (mainAncestorSlug) {
+        setActiveCategorySlug(mainAncestorSlug);
         setSelectedSubcategoryId(String(categoryFromId.id_categorie || categoryFromId.id));
         setSelectedSubcategorySlug(ownSlug);
       }
@@ -684,8 +745,7 @@ export default function Produits() {
     if (!categoryFromId && categoryFromDb) {
       const ownSlug = normalizeSlug(categoryFromDb.slug || categoryFromDb.nom);
       const ownId = Number(categoryFromDb.id_categorie || categoryFromDb.id || 0);
-      const parent = categoriesById[Number(categoryFromDb.parent_id)];
-      const parentSlug = normalizeSlug(parent?.slug || parent?.nom || "");
+      const mainAncestorSlug = getNearestMainAncestorSlug(categoryFromDb, categoriesById, mainCategorySlugs);
       const hasChildren = categories.some((item) => Number(item.parent_id || 0) === ownId);
 
       if (mainCategorySlugs.includes(ownSlug)) {
@@ -698,8 +758,8 @@ export default function Produits() {
           setSelectedSubcategoryId("");
           setSelectedSubcategorySlug("");
         }
-      } else if (mainCategorySlugs.includes(parentSlug)) {
-        setActiveCategorySlug(parentSlug);
+      } else if (mainAncestorSlug) {
+        setActiveCategorySlug(mainAncestorSlug);
         setSelectedSubcategoryId(String(categoryFromDb.id_categorie || categoryFromDb.id));
         setSelectedSubcategorySlug(ownSlug);
       }
@@ -735,64 +795,21 @@ export default function Produits() {
     return subscribeStoreUpdates(refreshStoreState);
   }, [produits]);
 
-  const loadProduits = useCallback(async () => {
+  const fetchProduits = useCallback(async (isSilent = false) => {
     if (!activeCategory) {
       return;
     }
 
-    setLoading(true);
-    setError("");
-
-    try {
-      const params = {
-        segment: "general",
-        tri: "recent",
-        par_page: selectedModel ? 100 : 250,
-      };
-
-      const categoryIds = [];
-
-      if (selectedSubcategoryId) {
-        categoryIds.push(...getDescendantIds(Number(selectedSubcategoryId), categories));
-      } else if (activeCategory.id) {
-        const descendants = getDescendantIds(Number(activeCategory.id), categories);
-        descendants.forEach((id) => {
-          if (id !== Number(activeCategory.id)) {
-            categoryIds.push(id);
-          }
-        });
-      }
-
-      if (categoryIds.length > 0) {
-        params.id_categorie = Array.from(new Set(categoryIds)).join(",");
-      }
-
-      if (selectedModel) {
-        params.modele = selectedModel;
-      }
-
-      const response = await getProduits(params);
-      setProduits(response.data?.data || []);
-    } catch {
-      setError("Impossible de charger les produits pour le moment.");
-      setProduits([]);
-    } finally {
-      setLoading(false);
+    if (!isSilent) {
+      setLoading(true);
+      setError("");
     }
-  }, [activeCategory, categories, selectedModel, selectedSubcategoryId]);
-
-  useEffect(() => {
-    loadProduits();
-  }, [loadProduits]);
-
-  const backgroundLoadProduits = useCallback(async () => {
-    if (!activeCategory) return;
 
     try {
       const params = {
         segment: "general",
         tri: "recent",
-        par_page: selectedModel ? 100 : 250,
+        par_page: selectedModel ? 100 : 100, // Réduit de 250 à 100 pour optimiser les perfs
       };
 
       const categoryIds = [];
@@ -819,17 +836,30 @@ export default function Produits() {
       const response = await getProduits(params);
       setProduits(response.data?.data || []);
     } catch (err) {
-      // silent background refresh
+      if (!isSilent) {
+        setError("Impossible de charger les produits pour le moment.");
+        setProduits([]);
+      }
+    } finally {
+      if (!isSilent) {
+        setLoading(false);
+      }
     }
   }, [activeCategory, categories, selectedModel, selectedSubcategoryId]);
 
-  useLivePolling(backgroundLoadProduits, {
-    intervalMs: 7000,
-    enabled: true,
+  // Polling des produits (silencieux après le premier load)
+  useLivePolling(() => fetchProduits(true), {
+    intervalMs: 30000, // 30s au lieu de 7s (plus raisonnable)
+    enabled: !!activeCategory,
   });
 
+  // Chargement initial des produits quand les filtres changent
+  useEffect(() => {
+    fetchProduits(false);
+  }, [fetchProduits]);
+
   useLivePolling(loadCategories, {
-    intervalMs: 20000,
+    intervalMs: 60000, // 1m au lieu de 20s pour les catégories
     enabled: true,
   });
 
@@ -858,21 +888,22 @@ export default function Produits() {
     const idStr = item.id ? String(item.id) : "";
     const slug = item.slug || "";
     const categoryFromId = item.id ? categoriesById[Number(item.id)] || null : null;
-    const parentCategory = categoryFromId ? categoriesById[Number(categoryFromId.parent_id || 0)] : null;
-    const parentSlug = normalizeSlug(parentCategory?.slug || parentCategory?.nom || "");
-    const includeMainCategory = Boolean(parentSlug && mainCategorySlugs.includes(parentSlug));
+    const mainAncestorSlug = categoryFromId
+      ? getNearestMainAncestorSlug(categoryFromId, categoriesById, mainCategorySlugs)
+      : "";
+    const includeMainCategory = Boolean(mainAncestorSlug && mainCategorySlugs.includes(mainAncestorSlug));
 
     setSelectedSubcategoryId(idStr);
     setSelectedSubcategorySlug(slug);
     if (includeMainCategory) {
-      setActiveCategorySlug(parentSlug);
+      setActiveCategorySlug(mainAncestorSlug);
     }
     setSelectedModel("");
     setSearchTerm("");
 
     const params = new URLSearchParams(location.search);
     const fallbackMain = activeCategorySlug && activeCategorySlug !== ALL_CATEGORY_SLUG ? activeCategorySlug : "";
-    const mainSlugForQuery = includeMainCategory ? parentSlug : fallbackMain;
+    const mainSlugForQuery = includeMainCategory ? mainAncestorSlug : fallbackMain;
     const cats = mainSlugForQuery ? `${mainSlugForQuery}${slug ? `,${slug}` : ""}` : slug;
 
     if (cats) {
@@ -1094,7 +1125,7 @@ export default function Produits() {
                     className="pcat-outline-btn"
                     onClick={() => handleSubcategoryClick(item)}
                   >
-                    {item.label}
+                    {item.pathLabel || item.label}
                   </button>
                 ))}
                 {filteredSubcategories.length === 0 && (
@@ -1162,6 +1193,9 @@ export default function Produits() {
 
                   <div className="pcat-sub-content">
                     <h3>{item.label}</h3>
+                    {item.pathLabel && item.pathLabel !== item.label && (
+                      <p className="pcat-sub-path">{item.pathLabel}</p>
+                    )}
                     <p>{item.description || "Selectionnez cette sous-categorie pour afficher les modeles precis."}</p>
                     <div className="pcat-sub-footer">
                       <span className="pcat-sub-count">

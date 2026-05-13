@@ -17,7 +17,9 @@ class Authenticate extends Middleware
             return null;
         }
 
-        // Pour les autres routes, rediriger vers la page d'accueil (React se charge du reste)
-        return '/';
+        // Pour les autres routes, rediriger vers la route de login afin que
+        // Laravel enregistre l'URL "intended" et permette le retour après
+        // authentification.
+        return route('login');
     }
 }
