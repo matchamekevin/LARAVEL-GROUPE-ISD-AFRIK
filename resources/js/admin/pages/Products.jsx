@@ -439,6 +439,57 @@ export default function Products() {
     []
   );
 
+  // Build a tree and return flattened options with depth for parent selects
+  const buildCategoryOptions = useCallback(() => {
+    const nodes = new Map();
+    categories.forEach((cat) => {
+      const id = getCategoryId(cat);
+      nodes.set(id, { ...cat, __id: id, children: [] });
+    });
+
+    const roots = [];
+    nodes.forEach((node) => {
+      const pid = getCategoryParentId(node);
+      if (pid && nodes.has(pid)) {
+        nodes.get(pid).children.push(node);
+      } else {
+        roots.push(node);
+      }
+    });
+
+    const options = [];
+    const renderNode = (node, depth = 0) => {
+      options.push({ id: node.__id, label: node.nom || node.slug || `#${node.__id}`, depth });
+      if (Array.isArray(node.children) && node.children.length > 0) {
+        node.children.sort((a, b) => Number(a.ordre || 0) - Number(b.ordre || 0)).forEach((child) => renderNode(child, depth + 1));
+      }
+    };
+
+    roots.sort((a, b) => Number(a.ordre || 0) - Number(b.ordre || 0)).forEach((r) => renderNode(r, 0));
+    return options;
+  }, [categories, getCategoryId, getCategoryParentId]);
+
+  const getDescendantIds = useCallback((rootId) => {
+    const byParent = new Map();
+    categories.forEach((c) => {
+      const pid = getCategoryParentId(c);
+      if (!byParent.has(pid)) byParent.set(pid, []);
+      byParent.get(pid).push(getCategoryId(c));
+    });
+
+    const stack = [Number(rootId)];
+    const ids = new Set();
+    while (stack.length > 0) {
+      const cur = stack.pop();
+      if (!cur || ids.has(cur)) continue;
+      ids.add(cur);
+      const children = byParent.get(cur) || [];
+      children.forEach((cid) => stack.push(cid));
+    }
+
+    return Array.from(ids);
+  }, [categories, getCategoryParentId, getCategoryId]);
+
   const topLevelCategories = useMemo(
     () => categories.filter((category) => getCategoryParentId(category) === 0),
     [categories, getCategoryParentId]
@@ -491,15 +542,30 @@ export default function Products() {
     [mainCategoriesAll, getCategoryId]
   );
 
+  const allDescendantIds = useMemo(() => {
+    if (mainCategoryIds.size === 0) return new Set();
+
+    const ids = new Set();
+    mainCategoryIds.forEach((rootId) => {
+      getDescendantIds(rootId).forEach((id) => {
+        if (!mainCategoryIds.has(Number(id))) {
+          ids.add(Number(id));
+        }
+      });
+    });
+
+    return ids;
+  }, [mainCategoryIds, getDescendantIds]);
+
   const mainCategories = useMemo(() => {
     if (mainCategoryIds.size === 0) return [];
     return filteredCategories.filter((category) => mainCategoryIds.has(getCategoryId(category)));
   }, [filteredCategories, mainCategoryIds, getCategoryId]);
 
   const subCategories = useMemo(() => {
-    if (mainCategoryIds.size === 0) return [];
-    return filteredCategories.filter((category) => mainCategoryIds.has(getCategoryParentId(category)));
-  }, [filteredCategories, mainCategoryIds, getCategoryParentId]);
+    if (allDescendantIds.size === 0) return [];
+    return filteredCategories.filter((category) => allDescendantIds.has(getCategoryId(category)));
+  }, [filteredCategories, allDescendantIds, getCategoryId]);
 
   const subcategoryParentCategories = useMemo(
     () => mainCategoriesAll.filter((category) => getCategoryId(category) !== Number(editingCategoryId || 0)),
@@ -514,7 +580,7 @@ export default function Products() {
       ? 'Modifier une sous-categorie'
       : 'Modifier une categorie principale'
     : isSubcategoryTab
-      ? 'Gestion des sous-categories'
+      ? 'Gestion des sous-categories (tous niveaux)'
       : 'Gestion des categories principales';
 
   const managedCategoryIds = useMemo(
@@ -546,6 +612,14 @@ export default function Products() {
     },
     [activeTab, subcategoryParentCategories, technicalRootId]
   );
+
+  const categoryOptions = useMemo(() => buildCategoryOptions(), [buildCategoryOptions]);
+
+  const excludedParentIds = useMemo(() => {
+    if (!editingCategoryId) return new Set();
+    const ids = getDescendantIds(Number(editingCategoryId));
+    return new Set(ids.map((v) => Number(v)));
+  }, [editingCategoryId, getDescendantIds]);
 
   useEffect(() => {
     setSelectedProductIds((previous) => {
@@ -1245,6 +1319,21 @@ export default function Products() {
     setCategoryImagePreview(null);
   };
 
+  // Create category with explicit parent (used by "Ajouter sous-categorie")
+  const handleStartCreateCategoryWithParent = (parentId) => {
+    setEditingCategoryId(null);
+    setCategoryEditorOpen(true);
+    const base = buildDefaultCategoryForm();
+    setCategoryForm({ ...base, parent_id: parentId ? String(parentId) : '' });
+    setCategoryErrorMessage('');
+    setCategorySuccessMessage('');
+    setCategoryImageFile(null);
+    if (categoryImagePreview) {
+      try { URL.revokeObjectURL(categoryImagePreview); } catch (e) {}
+    }
+    setCategoryImagePreview(null);
+  };
+
   const handleOpenCategoryManagement = async (tab) => {
     if (tab === 'products') {
       setActiveTab('products');
@@ -1496,10 +1585,9 @@ export default function Products() {
     let failedCount = 0;
     let lastErrorMessage = '';
 
-    for (const category of selectedCategories) {
+      for (const category of selectedCategories) {
       const id = getCategoryId(category);
       if (!id) continue;
-
       const hasProducts = Number(category?.produits_count ?? 0) > 0;
 
       try {
@@ -1727,7 +1815,7 @@ export default function Products() {
                 className={activeTab === 'subcategories' ? 'is-active' : ''}
                 onClick={() => handleOpenCategoryManagement('subcategories')}
               >
-                Sous-catégories
+                Sous-categories (tous niveaux)
               </button>
 
               <button
@@ -1873,7 +1961,7 @@ export default function Products() {
                   onClick={handleStartCreateCategory}
                   disabled={lookupsLoading || savingCategory}
                 >
-                  {isSubcategoryTab ? 'Nouvelle sous-categorie' : 'Nouvelle categorie'}
+                  {isSubcategoryTab ? 'Nouvelle sous-categorie (niveau libre)' : 'Nouvelle categorie'}
                 </button>
                 {categoryEditorOpen ? (
                   <button
@@ -1896,7 +1984,7 @@ export default function Products() {
 
             <div className="admin-products-searchbar admin-products-category-searchbar">
               <input
-                placeholder={isSubcategoryTab ? 'Rechercher sous-categorie, slug, description...' : 'Rechercher categorie, slug, description...'}
+                placeholder={isSubcategoryTab ? 'Rechercher sous-categorie (tous niveaux), slug, description...' : 'Rechercher categorie, slug, description...'}
                 value={categoryQuery}
                 onChange={(event) => setCategoryQuery(event.target.value)}
               />
@@ -1937,9 +2025,9 @@ export default function Products() {
             <AdminNotice type="success" message={categorySuccessMessage} className="admin-products-notice" />
 
             {lookupsLoading ? (
-              <div className="admin-products-empty">{isSubcategoryTab ? 'Chargement des sous-categories...' : 'Chargement des categories...'}</div>
+              <div className="admin-products-empty">{isSubcategoryTab ? 'Chargement des sous-categories (tous niveaux)...' : 'Chargement des categories...'}</div>
             ) : managedCategories.length === 0 ? (
-              <div className="admin-products-empty">{isSubcategoryTab ? 'Aucune sous-categorie trouvee.' : 'Aucune categorie trouvee.'}</div>
+              <div className="admin-products-empty">{isSubcategoryTab ? 'Aucune sous-categorie trouvee (tous niveaux).' : 'Aucune categorie trouvee.'}</div>
             ) : (
               <div className="admin-products-table-wrap">
                 <table className="admin-products-table">
@@ -1957,7 +2045,7 @@ export default function Products() {
                       </th>
                       <th>ID</th>
                       {isSubcategoryTab ? <th>Image</th> : null}
-                      <th>{isSubcategoryTab ? 'Sous-categorie' : 'Categorie'}</th>
+                      <th>{isSubcategoryTab ? 'Sous-categorie / Niveau' : 'Categorie'}</th>
                       {isSubcategoryTab ? <th>Parent</th> : null}
                       <th>Produits</th>
                       <th>Ordre</th>
@@ -1966,81 +2054,118 @@ export default function Products() {
                     </tr>
                   </thead>
                   <tbody>
-                    {managedCategories.map((category) => {
-                      const id = Number(category.id ?? category.id_categorie);
-                      const isChecked = selectedCategoryIds.has(id);
-                      const parentName = category.parent?.nom || categoriesById.get(Number(category.parent_id || 0))?.nom || '-';
-                      const categoryThumb = getCategoryImage(category);
+                    {
+                      (() => {
+                        // Build a tree from managedCategories using getCategoryId / getCategoryParentId helpers
+                        const nodes = new Map();
+                        managedCategories.forEach((cat) => {
+                          const id = getCategoryId(cat);
+                          nodes.set(id, { ...cat, __id: id, children: [] });
+                        });
 
-                      return (
-                        <tr key={id}>
-                          <td>
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => toggleCategorySelection(id)}
-                              disabled={bulkCategoryDeleting}
-                              aria-label={`Selectionner la categorie ${category?.nom || id}`}
-                            />
-                          </td>
-                          <td>#{id}</td>
-                          {isSubcategoryTab ? (
-                            <td>
-                              <img
-                                className="admin-products-category-thumb"
-                                src={categoryThumb}
-                                alt={category.nom || 'Categorie'}
-                                loading="lazy"
-                                onError={(event) => handleImageError(event, '/images/produits/proj.webp')}
-                              />
-                            </td>
-                          ) : null}
-                          <td>
-                            <div className="admin-products-product-cell">
-                              <div>
-                                <strong>{category.nom || 'Sans nom'}</strong>
-                                <small>{category.slug || 'slug auto'}</small>
-                                <small>{category.description || 'Sans description'}</small>
-                              </div>
-                            </div>
-                          </td>
-                          {isSubcategoryTab ? <td>{parentName}</td> : null}
-                          <td>{Number(category.produits_count ?? 0)}</td>
-                          <td>{Number(category.ordre ?? 0)}</td>
-                          <td>
-                            <span className={`admin-products-status ${category.actif === false ? 'admin-products-status--indisponible' : 'admin-products-status--disponible'}`}>
-                              {category.actif === false ? 'Non' : 'Oui'}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="admin-products-category-actions">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                height="20px"
-                                viewBox="0 -960 960 960"
-                                width="20px"
-                                fill="#274483"
-                                role="button"
-                                tabIndex={0}
-                                onMouseDown={(e) => e.preventDefault()}
-                                aria-label={`Editer la categorie ${category?.nom || id}`}
-                                onClick={() => { if (categoryActionLoadingId !== id) handleStartEditCategory(category); }}
-                                onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && categoryActionLoadingId !== id) handleStartEditCategory(category); }}
-                                style={{ cursor: categoryActionLoadingId === id ? 'default' : 'pointer', verticalAlign: 'middle', border: 'none', background: 'transparent', padding: 0, outline: 'none' }}
-                              >
-                                <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
-                              </svg>
-                              <DeleteIconButton
-                                onClick={() => handleDeleteCategory(id)}
-                                className="admin-products-btn admin-products-btn--outline admin-products-danger"
-                                title="Supprimer"
-                                ariaLabel={`Supprimer la categorie ${category?.nom || id}`}
-                              />
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                        const roots = [];
+                        nodes.forEach((node) => {
+                          const pid = getCategoryParentId(node);
+                          if (pid && nodes.has(pid)) {
+                            nodes.get(pid).children.push(node);
+                          } else {
+                            roots.push(node);
+                          }
+                        });
+
+                        const rows = [];
+
+                        const renderNode = (node, depth = 0) => {
+                          const id = node.__id || getCategoryId(node);
+                          const isChecked = selectedCategoryIds.has(Number(id));
+                          const parentName = node.parent?.nom || categoriesById.get(Number(node.parent_id || 0))?.nom || '-';
+                          const categoryThumb = getCategoryImage(node);
+
+                          rows.push(
+                            <tr key={id}>
+                              <td>
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => toggleCategorySelection(Number(id))}
+                                  disabled={bulkCategoryDeleting}
+                                  aria-label={`Selectionner la categorie ${node?.nom || id}`}
+                                />
+                              </td>
+                              <td>#{id}</td>
+                              {isSubcategoryTab ? (
+                                <td>
+                                  <img
+                                    className="admin-products-category-thumb"
+                                    src={categoryThumb}
+                                    alt={node.nom || 'Categorie'}
+                                    loading="lazy"
+                                    onError={(event) => handleImageError(event, '/images/produits/proj.webp')}
+                                  />
+                                </td>
+                              ) : null}
+                              <td>
+                                <div className="admin-products-product-cell">
+                                  <div>
+                                    <strong style={{ display: 'block', paddingLeft: `${depth * 16}px` }}>{node.nom || 'Sans nom'}</strong>
+                                    <small>{node.slug || 'slug auto'}</small>
+                                    <small>{node.description || 'Sans description'}</small>
+                                  </div>
+                                </div>
+                              </td>
+                              {isSubcategoryTab ? <td>{parentName}</td> : null}
+                              <td>{Number(node.produits_count ?? 0)}</td>
+                              <td>{Number(node.ordre ?? 0)}</td>
+                              <td>
+                                <span className={`admin-products-status ${node.actif === false ? 'admin-products-status--indisponible' : 'admin-products-status--disponible'}`}>
+                                  {node.actif === false ? 'Non' : 'Oui'}
+                                </span>
+                              </td>
+                              <td>
+                                <div className="admin-products-category-actions">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    height="20px"
+                                    viewBox="0 -960 960 960"
+                                    width="20px"
+                                    fill="#274483"
+                                    role="button"
+                                    tabIndex={0}
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    aria-label={`Editer la categorie ${node?.nom || id}`}
+                                    onClick={() => { if (categoryActionLoadingId !== id) handleStartEditCategory(node); }}
+                                    onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && categoryActionLoadingId !== id) handleStartEditCategory(node); }}
+                                    style={{ cursor: categoryActionLoadingId === id ? 'default' : 'pointer', verticalAlign: 'middle', border: 'none', background: 'transparent', padding: 0, outline: 'none' }}
+                                  >
+                                    <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
+                                  </svg>
+                                  <button
+                                    type="button"
+                                    className="admin-products-btn admin-products-btn--outline"
+                                    onClick={() => handleStartCreateCategoryWithParent(Number(id))}
+                                  >
+                                    Ajouter sous-categorie
+                                  </button>
+                                  <DeleteIconButton
+                                    onClick={() => handleDeleteCategory(Number(id))}
+                                    className="admin-products-btn admin-products-btn--outline admin-products-danger"
+                                    title="Supprimer"
+                                    ariaLabel={`Supprimer la categorie ${node?.nom || id}`}
+                                  />
+                                </div>
+                              </td>
+                            </tr>
+                          );
+
+                          if (Array.isArray(node.children) && node.children.length > 0) {
+                            node.children.sort((a, b) => Number(a.ordre || 0) - Number(b.ordre || 0)).forEach((child) => renderNode(child, depth + 1));
+                          }
+                        };
+
+                        roots.sort((a, b) => Number(a.ordre || 0) - Number(b.ordre || 0)).forEach((r) => renderNode(r, 0));
+                        return rows;
+                      })()
+                    }
                   </tbody>
                 </table>
               </div>
@@ -2108,31 +2233,28 @@ export default function Products() {
                       placeholder="optionnel"
                     />
                   </label>
-                  {isSubcategoryTab ? (
-                    <label>
-                      Categorie parente
-                      <select
-                        value={categoryForm.parent_id}
-                        onChange={(event) => setCategoryForm((previous) => ({ ...previous, parent_id: event.target.value }))}
-                        required
-                      >
-                        <option value="">Selectionner une categorie</option>
-                        {subcategoryParentCategories.map((category) => {
-                          const id = category.id ?? category.id_categorie;
-                          return (
-                            <option key={id} value={id}>
-                              {category.nom}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </label>
-                  ) : (
-                    <label>
-                      Type
-                      <input value="Categorie principale" readOnly />
-                    </label>
-                  )}
+                  <label>
+                    Parent
+                    <select
+                      value={categoryForm.parent_id}
+                      onChange={(event) => setCategoryForm((previous) => ({ ...previous, parent_id: event.target.value }))}
+                    >
+                      <option value="">(Racine)</option>
+                      {categoryOptions.map((opt) => {
+                        const id = Number(opt.id);
+                        if (!id) return null;
+                        // exclude self and descendants to avoid cycles
+                        if (editingCategoryId && (Number(editingCategoryId) === id)) return null;
+                        if (editingCategoryId && excludedParentIds.has(id)) return null;
+                        const indent = Array.from({ length: Math.max(0, opt.depth) }).map(() => '\u00A0\u00A0').join('');
+                        return (
+                          <option key={id} value={id}>
+                            {`${indent}${opt.label}`}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </label>
                   <label>
                     Ordre
                     <input

@@ -25,8 +25,9 @@
                             wire:model.live="parentCategoryId"
                             class="block w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200"
                         >
-                            @foreach ($parentCategories as $category)
-                                <option value="{{ $category->id_categorie }}">{{ $category->nom }}</option>
+                            <option value="">Sélectionner une catégorie...</option>
+                            @foreach ($this->allCategoryOptions as $id => $nom)
+                                <option value="{{ $id }}">{{ $nom }}</option>
                             @endforeach
                         </select>
                     </label>
@@ -159,8 +160,11 @@
                                 wire:model.defer="form.parent_id"
                                 class="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200"
                             >
-                                @foreach ($parentCategories as $category)
-                                    <option value="{{ $category->id_categorie }}">{{ $category->nom }}</option>
+                                <option value="">Aucune (Catégorie Racine)</option>
+                                @foreach ($this->allCategoryOptions as $id => $nom)
+                                    @if (!$isEditModalOpen || $id != $editingSubcategoryId)
+                                        <option value="{{ $id }}">{{ $nom }}</option>
+                                    @endif
                                 @endforeach
                             </select>
                             @error('form.parent_id') <span class="text-sm text-rose-600">{{ $message }}</span> @enderror

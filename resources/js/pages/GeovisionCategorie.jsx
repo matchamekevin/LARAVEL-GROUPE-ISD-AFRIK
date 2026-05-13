@@ -321,127 +321,160 @@ export default function GeovisionCategorie() {
             </div>
           </div>
 
-          {subtypes.length > 0 && (
-            <div className="pp-meta-row pp-meta-row--wrap">
-              {subtypes.map((subtype) => (
-                <span key={subtype.slug} className="pp-meta-chip">{subtype.nom}</span>
-              ))}
-            </div>
-          )}
-
-          {(filterOptions.resolution.size > 0 || filterOptions.lens.size > 0 || filterOptions.environment.size > 0) && (
-            <div className="pp-filter-bar">
-              <select
-                className="pp-filter-select"
-                value={filters.resolution}
-                onChange={(event) => setFilters((previous) => ({ ...previous, resolution: event.target.value }))}
-              >
-                <option value="">Résolution</option>
-                {Array.from(filterOptions.resolution).sort().map((value) => (
-                  <option key={value} value={value}>{value}</option>
-                ))}
-              </select>
-
-              <select
-                className="pp-filter-select"
-                value={filters.lens}
-                onChange={(event) => setFilters((previous) => ({ ...previous, lens: event.target.value }))}
-              >
-                <option value="">Type d’objectif</option>
-                {Array.from(filterOptions.lens).sort().map((value) => (
-                  <option key={value} value={value}>{value}</option>
-                ))}
-              </select>
-
-              <select
-                className="pp-filter-select"
-                value={filters.environment}
-                onChange={(event) => setFilters((previous) => ({ ...previous, environment: event.target.value }))}
-              >
-                <option value="">Environnement</option>
-                {Array.from(filterOptions.environment).sort().map((value) => (
-                  <option key={value} value={value}>{value}</option>
-                ))}
-              </select>
-
-              <button type="button" className="pp-filter-reset" onClick={() => setFilters(EMPTY_FILTERS)}>
-                Réinitialiser
-              </button>
-            </div>
-          )}
-
-          {(loadingCategory || loadingProducts) && <div className="pp-empty">Chargement des modèles GeoVision...</div>}
-          {!loadingCategory && error && <div className="pp-empty">{error}</div>}
-          {!loadingCategory && !loadingProducts && !error && visibleProducts.length === 0 && (
-            <div className="pp-empty">Aucun modèle trouvé pour cette catégorie avec ces critères.</div>
-          )}
-
-          {!loadingCategory && !loadingProducts && !error && visibleProducts.length > 0 && (
-            <>
-              <div className="pp-meta-row pp-meta-row--space">
-                <span className="pp-meta-chip">{visibleProducts.length} modèle(s)</span>
-                <span className="pp-meta-chip">{category?.nom}</span>
-                {filters.resolution && <span className="pp-meta-chip">{filters.resolution}</span>}
-                {filters.lens && <span className="pp-meta-chip">{filters.lens}</span>}
-                {filters.environment && <span className="pp-meta-chip">{filters.environment}</span>}
+          {subtypes.length > 0 ? (
+            <section className="pcat-section">
+              <div className="pcat-heading-row">
+                <h2>Sous-catégories</h2>
+                <p>Choisissez une sous-catégorie pour continuer.</p>
               </div>
-
-              <div className="pp-group-stack">
-                {productGroups.map(([groupName, items]) => (
-                  <div key={groupName} className="pp-group-section">
-                    {showGroups && <h3 className="pp-group-title">{groupName}</h3>}
-                    <div className="pp-grid" aria-label={`Modèles ${groupName}`}>
-                      {items.map((product) => {
-                        const specs = readGeovisionSpecifications(product);
-                        const taxonomyText = [
-                          specs.taxonomy.category,
-                          specs.taxonomy.subcategory,
-                          specs.taxonomy.series,
-                        ].filter(Boolean).join(" / ");
-
-                        return (
-                          <article key={product.id_produit || product.slug} className="pp-card">
-                            <button
-                              type="button"
-                              className="pp-image-wrap"
-                              onClick={() => navigate(`/geovision/produit/${product.slug}`)}
-                            >
-                              <img
-                                alt={product.titre}
-                                className="pp-image"
-                                loading="lazy"
-                                src={resolveGeovisionImage(product)}
-                                onError={(e) => {
-                                  e.target.onerror = null;
-                                  e.target.src = "/images/geovision/cam1.webp";
-                                }}
-                              />
-                              <div className="pp-image-overlay"></div>
-                              <span className="pp-badge pp-badge--neuf">{product.categorie?.nom || specs.taxonomy.subcategory || category?.nom}</span>
-                            </button>
-
-                            <div className="pp-body">
-                              <h3 className="pp-title">{product.titre}</h3>
-                              <p className="pp-desc">{product.description_courte || product.description}</p>
-                              {taxonomyText && <p className="pp-card-note">{taxonomyText}</p>}
-                              <div className="pp-meta-row">
-                                {specs.tags.slice(0, 4).map((tag) => (
-                                  <span key={`${product.slug}-${normalizeGeovisionKey(tag)}`} className="pp-meta-chip">{tag}</span>
-                                ))}
-                              </div>
-                              <div className="pp-footer-row">
-                                <button className="pp-add-btn" onClick={() => navigate(`/geovision/produit/${product.slug}`)}>
-                                  Voir la fiche →
-                                </button>
-                              </div>
-                            </div>
-                          </article>
-                        );
-                      })}
+              <div className="pcat-sub-grid">
+                {subtypes.map((subtype) => (
+                  <article key={subtype.slug} className="pcat-sub-card">
+                    <div className="pcat-sub-visual">
+                      <img 
+                        src={resolveGeovisionImage(subtype)} 
+                        alt={subtype.nom} 
+                        loading="lazy" 
+                        className="is-landscape"
+                        onError={(e) => { e.target.src = "/images/produits/proj.webp"; }}
+                      />
+                      <div className="pcat-sub-overlay" aria-hidden="true"></div>
                     </div>
-                  </div>
+                    <div className="pcat-sub-content">
+                      <h3>{subtype.nom}</h3>
+                      <p>{subtype.description}</p>
+                      <div className="pcat-sub-footer">
+                        <span className="pcat-sub-count">{subtype.produits_count ?? 0} produit(s)</span>
+                        <button 
+                          type="button" 
+                          className="pcat-solid-btn"
+                          onClick={() => navigate(`/geovision/categorie/${subtype.slug}`)}
+                        >
+                          Voir plus
+                        </button>
+                      </div>
+                    </div>
+                  </article>
                 ))}
               </div>
+            </section>
+          ) : (
+            <>
+              {(filterOptions.resolution.size > 0 || filterOptions.lens.size > 0 || filterOptions.environment.size > 0) && (
+                <div className="pp-filter-bar">
+                  <select
+                    className="pp-filter-select"
+                    value={filters.resolution}
+                    onChange={(event) => setFilters((previous) => ({ ...previous, resolution: event.target.value }))}
+                  >
+                    <option value="">Résolution</option>
+                    {Array.from(filterOptions.resolution).sort().map((value) => (
+                      <option key={value} value={value}>{value}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    className="pp-filter-select"
+                    value={filters.lens}
+                    onChange={(event) => setFilters((previous) => ({ ...previous, lens: event.target.value }))}
+                  >
+                    <option value="">Type d’objectif</option>
+                    {Array.from(filterOptions.lens).sort().map((value) => (
+                      <option key={value} value={value}>{value}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    className="pp-filter-select"
+                    value={filters.environment}
+                    onChange={(event) => setFilters((previous) => ({ ...previous, environment: event.target.value }))}
+                  >
+                    <option value="">Environnement</option>
+                    {Array.from(filterOptions.environment).sort().map((value) => (
+                      <option key={value} value={value}>{value}</option>
+                    ))}
+                  </select>
+
+                  <button type="button" className="pp-filter-reset" onClick={() => setFilters(EMPTY_FILTERS)}>
+                    Réinitialiser
+                  </button>
+                </div>
+              )}
+
+              {(loadingCategory || loadingProducts) && <div className="pp-empty">Chargement des modèles GeoVision...</div>}
+              {!loadingCategory && error && <div className="pp-empty">{error}</div>}
+              {!loadingCategory && !loadingProducts && !error && visibleProducts.length === 0 && (
+                <div className="pp-empty">Aucun modèle trouvé pour cette catégorie avec ces critères.</div>
+              )}
+
+              {!loadingCategory && !loadingProducts && !error && visibleProducts.length > 0 && (
+                <>
+                  <div className="pp-meta-row pp-meta-row--space">
+                    <span className="pp-meta-chip">{visibleProducts.length} modèle(s)</span>
+                    <span className="pp-meta-chip">{category?.nom}</span>
+                    {filters.resolution && <span className="pp-meta-chip">{filters.resolution}</span>}
+                    {filters.lens && <span className="pp-meta-chip">{filters.lens}</span>}
+                    {filters.environment && <span className="pp-meta-chip">{filters.environment}</span>}
+                  </div>
+
+                  <div className="pp-group-stack">
+                    {productGroups.map(([groupName, items]) => (
+                      <div key={groupName} className="pp-group-section">
+                        {showGroups && <h3 className="pp-group-title">{groupName}</h3>}
+                        <div className="pp-grid" aria-label={`Modèles ${groupName}`}>
+                          {items.map((product) => {
+                            const specs = readGeovisionSpecifications(product);
+                            const taxonomyText = [
+                              specs.taxonomy.category,
+                              specs.taxonomy.subcategory,
+                              specs.taxonomy.series,
+                            ].filter(Boolean).join(" / ");
+
+                            return (
+                              <article key={product.id_produit || product.slug} className="pp-card">
+                                <button
+                                  type="button"
+                                  className="pp-image-wrap"
+                                  onClick={() => navigate(`/geovision/produit/${product.slug}`)}
+                                >
+                                  <img
+                                    alt={product.titre}
+                                    className="pp-image"
+                                    loading="lazy"
+                                    src={resolveGeovisionImage(product)}
+                                    onError={(e) => {
+                                      e.target.onerror = null;
+                                      e.target.src = "/images/geovision/cam1.webp";
+                                    }}
+                                  />
+                                  <div className="pp-image-overlay"></div>
+                                  <span className="pp-badge pp-badge--neuf">{product.categorie?.nom || specs.taxonomy.subcategory || category?.nom}</span>
+                                </button>
+
+                                <div className="pp-body">
+                                  <h3 className="pp-title">{product.titre}</h3>
+                                  <p className="pp-desc">{product.description_courte || product.description}</p>
+                                  {taxonomyText && <p className="pp-card-note">{taxonomyText}</p>}
+                                  <div className="pp-meta-row">
+                                    {specs.tags.slice(0, 4).map((tag) => (
+                                      <span key={`${product.slug}-${normalizeGeovisionKey(tag)}`} className="pp-meta-chip">{tag}</span>
+                                    ))}
+                                  </div>
+                                  <div className="pp-footer-row">
+                                    <button className="pp-add-btn" onClick={() => navigate(`/geovision/produit/${product.slug}`)}>
+                                      Voir la fiche →
+                                    </button>
+                                  </div>
+                                </div>
+                              </article>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>

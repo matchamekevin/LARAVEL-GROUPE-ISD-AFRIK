@@ -1,3 +1,4 @@
+import { submitContactMessage } from '../admin/api';
 import React, { useEffect, useMemo, useState } from 'react';
 import Loader from '../components/Loader';
 import AdminToast, { useAdminToast } from '../components/AdminToast';
@@ -77,6 +78,9 @@ export default function IngenieriePageAdmin() {
 
   const [domainModalOpen, setDomainModalOpen] = useState(false);
   const [serviceModalOpen, setServiceModalOpen] = useState(false);
+  const [mailModalOpen, setMailModalOpen] = useState(false);
+  const [selectedForMail, setSelectedForMail] = useState(new Set());
+  const [mailForm, setMailForm] = useState({ nom_complet: '', email: '', telephone: '', sujet: '', message: '' });
   const [domainForm, setDomainForm] = useState(INITIAL_DOMAIN_FORM);
   const [serviceForm, setServiceForm] = useState(INITIAL_SERVICE_FORM);
   const [editingDomainId, setEditingDomainId] = useState(null);
@@ -189,6 +193,47 @@ export default function IngenieriePageAdmin() {
     setEditingDomainId(null);
     setDomainForm(INITIAL_DOMAIN_FORM);
     setDomainModalOpen(true);
+  };
+
+  const toggleSelectForMail = (id) => {
+    setSelectedForMail((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const openMailModal = () => {
+    const labels = categories.filter(c => selectedForMail.has(Number(c.id ?? c.id_categorie))).map(c => c.nom || c.slug || c.id);
+    setMailForm(prev => ({ ...prev, sujet: labels.length ? `Demande: ${labels.join(', ')}` : prev.sujet, message: labels.length ? `Interet pour: ${labels.join(', ')}\n\nMerci.` : prev.message }));
+    setMailModalOpen(true);
+  };
+
+  const sendMail = async (e) => {
+    e && e.preventDefault && e.preventDefault();
+    try {
+      const payload = {
+        nom_complet: String(mailForm.nom_complet || '').trim(),
+        email: String(mailForm.email || '').trim(),
+        telephone: String(mailForm.telephone || '').trim() || null,
+        sujet: String(mailForm.sujet || '').trim() || 'Demande Ingenierie',
+        message: String(mailForm.message || '').trim(),
+      };
+
+      if (!payload.nom_complet || !payload.email || !payload.message) {
+        showToast('Nom, email et message obligatoires.', 'error');
+        return;
+      }
+
+      await submitContactMessage(payload);
+      showToast('Email envoyé.', 'success');
+      setSelectedForMail(new Set());
+      setMailModalOpen(false);
+      setMailForm({ nom_complet: '', email: '', telephone: '', sujet: '', message: '' });
+      await loadCategories({ showLoader: false, silent: true });
+    } catch (err) {
+      showToast(err?.response?.data?.message || 'Erreur lors de l envoi.', 'error');
+    }
   };
 
   const openCreateServiceModal = () => {
@@ -415,6 +460,9 @@ export default function IngenieriePageAdmin() {
             Initialiser les domaines
           </button>
           <span className="admin-hero-stat">{domaines.length} domaines</span>
+          <button type="button" className="admin-btn admin-btn-sm" onClick={openMailModal} disabled={selectedForMail.size === 0} style={{ marginLeft: 8 }}>
+            Envoyer mail ({selectedForMail.size})
+          </button>
         </div>
       </section>
 
@@ -476,7 +524,7 @@ export default function IngenieriePageAdmin() {
               return (
                 <article key={id} className="admin-ingenierie-domain-card">
                   <header className="admin-ingenierie-domain-head">
-                    <div className="admin-ingenierie-domain-meta">
+                      <div className="admin-ingenierie-domain-meta">
                       <h3>{domain.nom}</h3>
                       <p>{domain.description || 'Aucune description.'}</p>
                       <div className="admin-ingenierie-domain-tags">
@@ -489,6 +537,9 @@ export default function IngenieriePageAdmin() {
                     </div>
 
                     <div className="admin-table-actions">
+                      <label style={{ marginRight: 8 }} title="Sélectionner pour envoi">
+                        <input type="checkbox" checked={selectedForMail.has(id)} onChange={() => toggleSelectForMail(id)} />
+                      </label>
                       <button
                         type="button"
                         className="admin-ingenierie-icon-btn"
@@ -557,6 +608,9 @@ export default function IngenieriePageAdmin() {
                               {service.description && <p>{service.description}</p>}
                             </div>
                             <div className="admin-table-actions">
+                              <label style={{ marginRight: 8 }} title="Sélectionner pour envoi">
+                                <input type="checkbox" checked={selectedForMail.has(serviceId)} onChange={() => toggleSelectForMail(serviceId)} />
+                              </label>
                               <button
                                 type="button"
                                 className="admin-ingenierie-icon-btn"
@@ -725,6 +779,51 @@ export default function IngenieriePageAdmin() {
                   <button type="submit" className="admin-btn admin-btn-sm admin-ingenierie-btn" disabled={saving}>
                     {editingDomainId ? 'Mettre a jour' : 'Creer'}
                   </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        </div>
+      )}
+
+      {mailModalOpen && (
+        <div className="admin-catalogue-modal-overlay" role="dialog" aria-modal="true" onClick={() => setMailModalOpen(false)}>
+          <div className="admin-catalogue-modal-shell" onClick={(event) => event.stopPropagation()}>
+            <section className="admin-catalogue-card admin-catalogue-modal admin-catalogue-modal--tagged admin-ingenierie-modal">
+              <div className="admin-catalogue-card-head admin-ingenierie-modal-head">
+                <h2>Envoyer un email</h2>
+                <button type="button" className="admin-ingenierie-icon-btn" onClick={() => setMailModalOpen(false)} aria-label="Fermer">
+                  <span className="material-symbols-outlined" aria-hidden="true">close</span>
+                </button>
+              </div>
+
+              <form className="admin-form" onSubmit={sendMail}>
+                <div className="admin-form-grid">
+                  <div className="admin-form-field admin-form-grid-half">
+                    <label>Nom complet</label>
+                    <input className="admin-form-input" value={mailForm.nom_complet} onChange={(e) => setMailForm(prev => ({ ...prev, nom_complet: e.target.value }))} required />
+                  </div>
+                  <div className="admin-form-field admin-form-grid-half">
+                    <label>Email destinataire</label>
+                    <input className="admin-form-input" type="email" value={mailForm.email} onChange={(e) => setMailForm(prev => ({ ...prev, email: e.target.value }))} required />
+                  </div>
+                  <div className="admin-form-field admin-form-grid-half">
+                    <label>Téléphone</label>
+                    <input className="admin-form-input" value={mailForm.telephone} onChange={(e) => setMailForm(prev => ({ ...prev, telephone: e.target.value }))} />
+                  </div>
+                  <div className="admin-form-field admin-form-grid-full">
+                    <label>Sujet</label>
+                    <input className="admin-form-input" value={mailForm.sujet} onChange={(e) => setMailForm(prev => ({ ...prev, sujet: e.target.value }))} />
+                  </div>
+                  <div className="admin-form-field admin-form-grid-full">
+                    <label>Message</label>
+                    <textarea className="admin-form-textarea" rows={6} value={mailForm.message} onChange={(e) => setMailForm(prev => ({ ...prev, message: e.target.value }))} required />
+                  </div>
+                </div>
+
+                <div className="admin-form-actions">
+                  <button type="button" className="admin-btn admin-btn-secondary admin-btn-sm" onClick={() => setMailModalOpen(false)}>Annuler</button>
+                  <button type="submit" className="admin-btn admin-btn-sm admin-ingenierie-btn">Envoyer</button>
                 </div>
               </form>
             </section>

@@ -22,6 +22,7 @@ class CategorieProduitResource extends JsonResource
             'segment'      => $this->segment,
             'parent_id'    => $this->parent_id,
             'ordre'        => $this->ordre,
+            'display_mode' => $this->display_mode,
             'actif'        => $this->actif,
             'image_url'    => $this->image_url,
             'image'        => $this->image,

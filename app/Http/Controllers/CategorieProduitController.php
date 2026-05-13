@@ -53,22 +53,26 @@ class CategorieProduitController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $query = CategorieProduit::query()
+        $categorie = CategorieProduit::query()
             ->withCount('produits')
-            ->with(['parent.parent']);
+            ->with(['parent.parent'])
+            ->findOrFail($id);
 
         if ($request->boolean('tree')) {
-            $query->with('childrenRecursive');
-        } else {
-            $query->with('children');
+            $categorie->load('childrenRecursive');
+            return response()->json($categorie);
         }
 
-        if ($request->boolean('with_products')) {
-            $query->with('produits.images');
+        $displayMode = $categorie->display_mode ?? 'auto';
+        $hasChildren = $categorie->children()->exists();
+
+        if ($displayMode === 'children' || ($displayMode === 'auto' && $hasChildren)) {
+            $categorie->load('children');
+            return response()->json($categorie);
         }
 
-        $categorie = $query->findOrFail($id);
-
+        // sinon afficher directement les produits
+        $categorie->load('produits.images');
         return response()->json($categorie);
     }
 
@@ -77,22 +81,26 @@ class CategorieProduitController extends Controller
      */
     public function showBySlug(Request $request, string $slug)
     {
-        $query = CategorieProduit::query()
+        $categorie = CategorieProduit::query()
             ->withCount('produits')
-            ->with(['parent.parent']);
+            ->with(['parent.parent'])
+            ->where('slug', $slug)
+            ->firstOrFail();
 
         if ($request->boolean('tree')) {
-            $query->with('childrenRecursive');
-        } else {
-            $query->with('children');
+            $categorie->load('childrenRecursive');
+            return response()->json($categorie);
         }
 
-        if ($request->boolean('with_products')) {
-            $query->with('produits.images');
+        $displayMode = $categorie->display_mode ?? 'auto';
+        $hasChildren = $categorie->children()->exists();
+
+        if ($displayMode === 'children' || ($displayMode === 'auto' && $hasChildren)) {
+            $categorie->load('children');
+            return response()->json($categorie);
         }
 
-        $categorie = $query->where('slug', $slug)->firstOrFail();
-
+        $categorie->load('produits.images');
         return response()->json($categorie);
     }
 

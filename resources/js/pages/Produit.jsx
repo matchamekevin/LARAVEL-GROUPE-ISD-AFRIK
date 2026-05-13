@@ -7,10 +7,15 @@ import "../styles/produit.css";
 
 const ALL_CATEGORY_SLUG = "tout";
 
-const flattenCategories = (items = [], depth = 0) =>
+const flattenCategories = (items = [], depth = 0, parentId = null) =>
   items.flatMap((item) => {
     const children = item.children_recursive || item.children || [];
-    return [{ ...item, depth }, ...flattenCategories(children, depth + 1)];
+    const flattenedItem = { 
+      ...item, 
+      depth, 
+      parent_id: item.parent_id || parentId 
+    };
+    return [flattenedItem, ...flattenCategories(children, depth + 1, item.id_categorie || item.id)];
   });
 
 const normalizeSlug = (value) =>
@@ -246,12 +251,54 @@ export default function Produits() {
   const [error, setError] = useState("");
 
   const [activeCategorySlug, setActiveCategorySlug] = useState(ALL_CATEGORY_SLUG);
+  const [categoryStack, setCategoryStack] = useState([]); // Array of category objects
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState("");
   const [selectedSubcategorySlug, setSelectedSubcategorySlug] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [favoriteIds, setFavoriteIds] = useState(() => new Set());
   const [cartIds, setCartIds] = useState(() => new Set());
+
+  const currentCategory = categoryStack.length > 0 ? categoryStack[categoryStack.length - 1] : null;
+
+
+  
+
+  const handleSubcategoryClick = (item) => {
+    const ownId = Number(item.id_categorie || item.id || 0);
+
+    // Detect children in the current categories list or in nested property
+    const hasChildren = categories.some((c) => Number(c.parent_id || 0) === ownId) ||
+      (Array.isArray(item.children_recursive) && item.children_recursive.length > 0) ||
+      (Array.isArray(item.children) && item.children.length > 0);
+
+    setSearchTerm("");
+
+    if (hasChildren) {
+      // Drill down
+      setCategoryStack((prev) => [...prev, { ...item, id: ownId }]);
+      // Reset any previously selected leaf-subcategory
+      setSelectedSubcategoryId("");
+      setSelectedSubcategorySlug("");
+    } else {
+      // It's a leaf: show products for this subcategory
+      setCategoryStack((prev) => [...prev, { ...item, id: ownId }]);
+      setSelectedSubcategoryId(String(ownId));
+      setSelectedSubcategorySlug(normalizeSlug(item.slug || item.nom || ""));
+      // Clear model selection when selecting a leaf
+      setSelectedModel("");
+    }
+  };
+
+  const navigateUp = (index = -1) => {
+    if (index === -1) {
+       setCategoryStack([]);
+       setSelectedSubcategoryId("");
+       setSelectedSubcategorySlug("");
+    } else {
+       setCategoryStack(prev => prev.slice(0, index + 1));
+    }
+  };
 
   const categoriesById = useMemo(() => {
     return categories.reduce((accumulator, item) => {
@@ -337,6 +384,24 @@ export default function Produits() {
   const activeCategory = useMemo(() => {
     return mainCategories.find((item) => item.slug === activeCategorySlug) || mainCategories[0] || null;
   }, [activeCategorySlug, mainCategories]);
+
+  // Compute visible subcategories based on current stack or active main category
+  const visibleSubcategories = useMemo(() => {
+    let parentId = 0;
+
+    if (categoryStack.length > 0) {
+      parentId = Number(currentCategory?.id_categorie || currentCategory?.id || 0);
+    } else if (activeCategorySlug !== ALL_CATEGORY_SLUG && activeCategory && activeCategory.id) {
+      parentId = Number(activeCategory.id);
+    } else {
+      parentId = 0;
+    }
+
+    return categories.filter((c) => Number(c.parent_id || 0) === Number(parentId));
+  }, [activeCategory, activeCategorySlug, categories, categoryStack, currentCategory]);
+
+
+
 
   const subcategories = useMemo(() => {
     if (!activeCategory) {
@@ -871,53 +936,15 @@ export default function Produits() {
 
   const handleCategoryChange = (slug) => {
     setActiveCategorySlug(slug);
+    setCategoryStack([]);
+    setSelectedModel("");
     setSelectedSubcategoryId("");
     setSelectedSubcategorySlug("");
-    setSelectedModel("");
     setSearchTerm("");
 
     const params = new URLSearchParams(location.search);
     params.set("categories", slug);
     params.delete("sous_categorie_id");
-    params.delete("modele");
-    const query = params.toString();
-    navigate(`${location.pathname}${query ? `?${query}` : ""}`);
-  };
-
-  const handleSubcategoryClick = (item) => {
-    const idStr = item.id ? String(item.id) : "";
-    const slug = item.slug || "";
-    const categoryFromId = item.id ? categoriesById[Number(item.id)] || null : null;
-    const mainAncestorSlug = categoryFromId
-      ? getNearestMainAncestorSlug(categoryFromId, categoriesById, mainCategorySlugs)
-      : "";
-    const includeMainCategory = Boolean(mainAncestorSlug && mainCategorySlugs.includes(mainAncestorSlug));
-
-    setSelectedSubcategoryId(idStr);
-    setSelectedSubcategorySlug(slug);
-    if (includeMainCategory) {
-      setActiveCategorySlug(mainAncestorSlug);
-    }
-    setSelectedModel("");
-    setSearchTerm("");
-
-    const params = new URLSearchParams(location.search);
-    const fallbackMain = activeCategorySlug && activeCategorySlug !== ALL_CATEGORY_SLUG ? activeCategorySlug : "";
-    const mainSlugForQuery = includeMainCategory ? mainAncestorSlug : fallbackMain;
-    const cats = mainSlugForQuery ? `${mainSlugForQuery}${slug ? `,${slug}` : ""}` : slug;
-
-    if (cats) {
-      params.set("categories", cats);
-    } else {
-      params.delete("categories");
-    }
-
-    if (idStr) {
-      params.set("sous_categorie_id", idStr);
-    } else {
-      params.delete("sous_categorie_id");
-    }
-
     params.delete("modele");
     const query = params.toString();
     navigate(`${location.pathname}${query ? `?${query}` : ""}`);
@@ -1026,6 +1053,42 @@ export default function Produits() {
                 </button>
               )}
             </label>
+            <div style={{ marginTop: 8 }}>
+              <button
+                type="button"
+                className="pcat-outline-btn"
+                onClick={() => {
+                  // Exemple: créer une pile de catégories profonde si possible
+                  const root = topLevelCategories[0];
+                  if (!root) return;
+                  const level1 = categories.find(c => Number(c.parent_id || 0) === Number(root.id_categorie || root.id));
+                  const level2 = level1 ? categories.find(c => Number(c.parent_id || 0) === Number(level1.id_categorie || level1.id)) : null;
+                  const level3 = level2 ? categories.find(c => Number(c.parent_id || 0) === Number(level2.id_categorie || level2.id)) : null;
+
+                  const stack = [];
+                  if (root && root.id) stack.push({ ...root, id: Number(root.id_categorie || root.id) });
+                  if (level1) stack.push({ ...level1, id: Number(level1.id_categorie || level1.id) });
+                  if (level2) stack.push({ ...level2, id: Number(level2.id_categorie || level2.id) });
+                  if (level3) stack.push({ ...level3, id: Number(level3.id_categorie || level3.id) });
+
+                  setCategoryStack(stack);
+                  if (stack.length > 0) {
+                    const last = stack[stack.length - 1];
+                    const ownId = Number(last.id_categorie || last.id || 0);
+                    const hasChildren = categories.some(c => Number(c.parent_id || 0) === ownId);
+                    if (!hasChildren) {
+                      setSelectedSubcategoryId(String(ownId));
+                      setSelectedSubcategorySlug(normalizeSlug(last.slug || last.nom || ""));
+                    } else {
+                      setSelectedSubcategoryId("");
+                      setSelectedSubcategorySlug("");
+                    }
+                  }
+                }}
+              >
+                Exemple: navigation profonde
+              </button>
+            </div>
           </div>
         </section>
 
@@ -1045,145 +1108,50 @@ export default function Produits() {
           })}
         </section>
 
-        {(selectedSubcategory || selectedModel) && (
+        {(categoryStack.length > 0 || selectedModel) && (
           <section className="pcat-breadcrumb">
             <div className="pcat-breadcrumb-actions">
               <button
                 type="button"
                 className="pcat-outline-btn"
-                onClick={() => {
-                  setSelectedSubcategoryId("");
-                  setSelectedSubcategorySlug("");
-                  setSelectedModel("");
-                  setSearchTerm("");
-
-                  const params = new URLSearchParams(location.search);
-                  params.set("categories", activeCategorySlug);
-                  params.delete("sous_categorie_id");
-                  params.delete("modele");
-                  const query = params.toString();
-                  navigate(`${location.pathname}${query ? `?${query}` : ""}`);
-                }}
+                onClick={() => navigateUp(-1)}
               >
-                Retour sous-categories
+                Tout voir
               </button>
-
-              {selectedSubcategory && (
+              {categoryStack.map((cat, idx) => (
                 <button
-                  type="button"
-                  className="pcat-outline-btn"
-                  onClick={() => {
-                    setSelectedModel("");
-                    setSearchTerm("");
-
-                    const params = new URLSearchParams(location.search);
-                    const cats = selectedSubcategorySlug || activeCategorySlug || "";
-                    if (cats) {
-                      params.set("categories", cats);
-                    } else {
-                      params.delete("categories");
-                    }
-
-                    if (selectedSubcategoryId) {
-                      params.set("sous_categorie_id", selectedSubcategoryId);
-                    } else {
-                      params.delete("sous_categorie_id");
-                    }
-
-                    params.delete("modele");
-                    const query = params.toString();
-                    navigate(`${location.pathname}${query ? `?${query}` : ""}`);
-                  }}
+                    key={cat.id}
+                    type="button"
+                    className="pcat-outline-btn"
+                    onClick={() => navigateUp(idx)}
                 >
-                  Retour modeles
+                    Retour à {cat.nom || cat.label}
                 </button>
-              )}
+              ))}
             </div>
 
             <p className="pcat-breadcrumb-path">
               {activeCategory?.label}
-              {selectedSubcategory ? ` / ${selectedSubcategory.label}` : ""}
+              {categoryStack.map(cat => ` / ${cat.nom || cat.label}`)}
               {selectedModel ? ` / ${selectedModel}` : ""}
             </p>
           </section>
         )}
 
-        {searchNormalized && (
-          <section className="pcat-section pcat-search-global">
-            <div className="pcat-heading-row">
-              <h2>Recherche globale</h2>
-              <p>Résultats simultanés: sous-catégories, modèles et produits.</p>
-            </div>
-
-            <div className="pcat-search-global-grid">
-              <article className="pcat-search-global-card">
-                <h3>Sous-catégories</h3>
-                {filteredSubcategories.slice(0, 8).map((item) => (
-                  <button
-                    key={`search-sub-${item.id || item.slug}`}
-                    type="button"
-                    className="pcat-outline-btn"
-                    onClick={() => handleSubcategoryClick(item)}
-                  >
-                    {item.pathLabel || item.label}
-                  </button>
-                ))}
-                {filteredSubcategories.length === 0 && (
-                  <p className="pcat-search-global-empty">Aucune sous-catégorie.</p>
-                )}
-              </article>
-
-              <article className="pcat-search-global-card">
-                <h3>Modèles</h3>
-                {globalModelResults.map((item) => (
-                  <button
-                    key={`search-model-${item.name}`}
-                    type="button"
-                    className="pcat-outline-btn"
-                    onClick={() => handleModelClick(item.name)}
-                  >
-                    {item.name} ({item.count})
-                  </button>
-                ))}
-                {globalModelResults.length === 0 && (
-                  <p className="pcat-search-global-empty">Aucun modèle.</p>
-                )}
-              </article>
-
-              <article className="pcat-search-global-card">
-                <h3>Produits</h3>
-                {globalProductResults.map((produit) => (
-                  <button
-                    key={`search-product-${produit.id_produit}`}
-                    type="button"
-                    className="pcat-outline-btn"
-                    onClick={() => navigate(`/produits/${produit.id_produit}`)}
-                  >
-                    {produit.titre}
-                  </button>
-                ))}
-                {globalProductResults.length === 0 && (
-                  <p className="pcat-search-global-empty">Aucun produit.</p>
-                )}
-              </article>
-            </div>
-          </section>
-        )}
-
-        {!selectedSubcategory && (
+        {visibleSubcategories.length > 0 && (
           <section className="pcat-section">
             <div className="pcat-heading-row">
-              <h2>Sous-categories</h2>
-              <p>Choisissez une famille pour afficher les modeles disponibles.</p>
+              <h2>Sous-catégories</h2>
+              <p>Sélectionnez une famille pour continuer la navigation.</p>
             </div>
 
             <div className="pcat-sub-grid">
-              {filteredSubcategories.map((item) => (
-                <article key={`${item.slug}-${item.id || "catalog"}`} className="pcat-sub-card">
+              {visibleSubcategories.map((item) => (
+                <article key={`${item.slug}-${item.id_categorie || item.id}`} className="pcat-sub-card">
                   <div className="pcat-sub-visual">
                     <img
-                      src={item.image || "/images/produits/proj.webp"}
-                      alt={item.label}
+                      src={item.image_url || "/images/produits/proj.webp"}
+                      alt={item.nom || item.label}
                       loading="lazy"
                       onLoad={applyOrientationClass}
                       onError={(event) => handleImageError(event, "/images/produits/proj.webp")}
@@ -1192,43 +1160,36 @@ export default function Produits() {
                   </div>
 
                   <div className="pcat-sub-content">
-                    <h3>{item.label}</h3>
-                    {item.pathLabel && item.pathLabel !== item.label && (
-                      <p className="pcat-sub-path">{item.pathLabel}</p>
-                    )}
-                    <p>{item.description || "Selectionnez cette sous-categorie pour afficher les modeles precis."}</p>
+                    <h3>{item.nom || item.label}</h3>
+                    <p>{item.description || "Sélectionnez cette catégorie pour voir la suite."}</p>
                     <div className="pcat-sub-footer">
                       <span className="pcat-sub-count">
-                        {item.id ? `${countsBySubcategory[item.id] || 0} produit(s) DB` : "Catalogue modele"}
+                        {item.id ? `${countsBySubcategory[item.id] || 0} produit(s) DB` : "Catalogue"}
                       </span>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          handleSubcategoryClick(item);
-                        }}
-                        className="pcat-solid-btn"
-                      >
-                        Voir modeles
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSubcategoryClick(item)}
+                          className="pcat-solid-btn"
+                        >
+                          {(
+                            categories.some(c => Number(c.parent_id) === Number(item.id)) ||
+                            (Array.isArray(item.children_recursive) && item.children_recursive.length > 0) ||
+                            (Array.isArray(item.children) && item.children.length > 0)
+                          ) ? "Voir sous-catégories" : "Voir produits"}
+                        </button>
                     </div>
-                  </div>
-                </article>
+                  </div>                </article>
               ))}
             </div>
-
-            {!loading && filteredSubcategories.length === 0 && (
-              <div className="pcat-empty-box">Aucune sous-categorie ne correspond a votre recherche.</div>
-            )}
           </section>
         )}
 
-        {selectedSubcategory && !selectedModel && (
+        {/* Show model list if at a leaf node (no more subcategories) */}
+        {categoryStack.length > 0 && visibleSubcategories.length === 0 && !selectedModel && (
           <section className="pcat-section">
             <div className="pcat-heading-row">
-              <h2>Modeles precis</h2>
-              <p>Cliquez sur un modele pour afficher les produits associes.</p>
+              <h2>Modèles disponibles</h2>
+              <p>Produits dans {currentCategory?.nom || currentCategory?.label}</p>
             </div>
 
             <div className="pcat-model-grid">
@@ -1238,72 +1199,28 @@ export default function Produits() {
                 const isModelInCart = representativeId > 0 ? cartIds.has(representativeId) : false;
 
                 return (
-                  <article key={`${selectedSubcategory.slug}-${item.name}`} className="pcat-model-card">
+                  <article key={`${item.name}`} className="pcat-model-card">
                     <div className="pcat-model-visual">
                       <img
                         src={item.image || "/images/produits/proj.webp"}
-                        alt={`Modele ${item.name}`}
+                        alt={`Modèle ${item.name}`}
                         className="pcat-model-image"
                         loading="lazy"
                         onLoad={applyOrientationClass}
                         onError={(event) => handleImageError(event, "/images/produits/proj.webp")}
                       />
-
-                      <div className="pcat-model-badges" aria-hidden="true">
-                        {isModelInCart && (
-                          <span className="pcat-model-badge pcat-model-badge--cart">
-                            <span role="img" aria-hidden="true">🛒</span>
-                            <span className="pcat-model-badge-text">Dans le panier</span>
-                          </span>
-                        )}
-
-                        {isModelFavorite && (
-                          <span className="pcat-model-badge pcat-model-badge--fav" aria-label="Favori">
-                            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
-                          </span>
-                        )}
-                      </div>
                     </div>
                     <h3>{item.name}</h3>
-                    <p>{item.source === "db" ? `${item.count} produit(s) en base` : "Modele de reference catalogue"}</p>
-
-                    <div className="pcat-model-rating">
-                      <Stars note={item.ratingAverage} />
-                      <span>{item.ratingCount > 0 ? `(${item.ratingCount})` : "Aucun avis"}</span>
-                    </div>
-
                     <div className="pcat-model-actions">
-                      <button
-                        type="button"
-                        className={`pcat-model-secondary-btn ${isModelInCart ? "is-added" : ""}`}
-                        onClick={() => handleModelAddToCart(item)}
-                      >
-                        {isModelInCart ? "Dans le panier" : "Ajouter panier"}
-                      </button>
-
-                      <button
-                        type="button"
-                        className={`pcat-model-fav-btn ${isModelFavorite ? "is-active" : ""}`}
-                        aria-label={isModelFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-                        onClick={() => handleModelToggleFavorite(item)}
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                        </svg>
-                      </button>
-
-                      <button type="button" onClick={() => handleModelClick(item.name)} className="pcat-solid-btn pcat-model-view-btn">
-                        Voir produits / detail
+                      <button type="button" onClick={() => handleModelClick(item.name)} className="pcat-solid-btn">
+                        Voir produits
                       </button>
                     </div>
                   </article>
                 );
               })}
             </div>
-
-            {!loading && modelCards.length === 0 && (
-              <div className="pcat-empty-box">Aucun modele trouve pour cette sous-categorie.</div>
-            )}
+            {modelCards.length === 0 && <p className="pcat-empty-box">Aucun modèle trouvé.</p>}
           </section>
         )}
 

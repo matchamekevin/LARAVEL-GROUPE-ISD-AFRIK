@@ -76,12 +76,19 @@ class ManageProduitSubcategories extends Page
             return collect();
         }
 
+        // Pour supporter plusieurs niveaux, on peut soit afficher tout l'arbre,
+        // soit seulement les enfants directs de la catégorie sélectionnée (même si c'est une sous-catégorie).
         return CategorieProduit::query()
             ->withCount('produits')
             ->where('parent_id', $this->parentCategoryId)
             ->orderBy('ordre')
             ->orderBy('nom')
             ->get();
+    }
+
+    public function getAllCategoryOptionsProperty(): array
+    {
+        return CategorieProduit::getTreeOptions();
     }
 
     public function updatedParentCategoryId($value): void
@@ -210,8 +217,9 @@ class ManageProduitSubcategories extends Page
 
     protected function parentCategories()
     {
+        // On permet maintenant de sélectionner n'importe quelle catégorie comme "parente"
+        // pour gérer ses propres sous-catégories.
         return CategorieProduit::query()
-            ->whereNull('parent_id')
             ->orderBy('ordre')
             ->orderBy('nom')
             ->get();
@@ -230,7 +238,7 @@ class ManageProduitSubcategories extends Page
             ],
             'form.description' => ['nullable', 'string'],
             'form.image_url' => ['nullable', 'string', 'max:255'],
-            'form.parent_id' => ['required', 'integer', 'exists:categories_produits,id_categorie'],
+            'form.parent_id' => ['nullable', 'integer', 'exists:categories_produits,id_categorie'],
             'form.ordre' => ['nullable', 'integer', 'min:0'],
             'form.actif' => ['boolean'],
             'imageUpload' => ['nullable', 'image', 'max:5120'],
