@@ -212,7 +212,10 @@ export default function PrestationDetail() {
 
           {!!prestation.services?.length && (
             <div className="prestation-services">
-              <h2>Services inclus</h2>
+              <h2>Services à sélectionner</h2>
+              <p className="prestation-selector-note">
+                Cochez les services qui correspondent à votre besoin pour préparer votre demande de devis.
+              </p>
               <form className="prestation-services-selector">
                 {prestation.services.map((service) => (
                   <label key={service} className="prestation-service-checkbox">
@@ -231,7 +234,10 @@ export default function PrestationDetail() {
           {!!prestation.technologies?.length && (
             <div className="prestation-info-grid">
               <article className="prestation-info-card">
-                <h3>Technologies et environnements</h3>
+                <h3>Technologies à sélectionner</h3>
+                <p className="prestation-selector-note">
+                  Choisissez les technologies ou environnements concernés par votre projet.
+                </p>
                 <form className="prestation-technologies-selector">
                   {prestation.technologies.map((tech) => (
                     <label key={tech} className="prestation-tech-checkbox">
@@ -249,14 +255,17 @@ export default function PrestationDetail() {
           )}
 
           <div className="prestation-contact-cta">
-            <h3>Interesse par cette prestation ?</h3>
+            <h3>Intéressé par cette prestation ?</h3>
+            <p className="prestation-selector-note prestation-selector-note--centered">
+              Les éléments sélectionnés seront repris dans votre demande.
+            </p>
             <form onSubmit={handleDevisSubmit} className="prestation-devis-form">
               <button
                 type="submit"
                 className="prestation-contact-btn"
                 disabled={submitting || (selectedServices.size === 0 && selectedTechnologies.size === 0)}
               >
-                {submitting ? "Envoi en cours..." : "Demander un devis →"}
+                {submitting ? "Envoi en cours..." : "Envoyer ma demande de devis →"}
               </button>
             </form>
           </div>

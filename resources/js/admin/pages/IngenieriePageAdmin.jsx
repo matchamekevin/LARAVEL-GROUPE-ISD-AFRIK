@@ -1,4 +1,4 @@
-import { submitContactMessage } from '../admin/api';
+import { submitContactMessage } from '../api';
 import React, { useEffect, useMemo, useState } from 'react';
 import Loader from '../components/Loader';
 import AdminToast, { useAdminToast } from '../components/AdminToast';

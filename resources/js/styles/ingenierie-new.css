@@ -91,47 +91,65 @@
   position: relative;
   flex: 1;
   min-width: 0;
-  padding: 2rem;
+  padding: 1.5rem;
   background: #ffffff;
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 0.8rem;
+  overflow: hidden;
 }
 
 .ingenierie-card-title {
-  font-size: clamp(1rem, 1.6vw, 1.35rem);
+  font-size: clamp(0.95rem, 1.4vw, 1.2rem);
   font-weight: 900;
   margin-bottom: 0;
   color: var(--primary-blue);
-  line-height: 1.35;
-  overflow-wrap: normal;
-  word-break: normal;
-  hyphens: none;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: keep-all;
 }
 
 .ingenierie-card-desc {
-  font-size: clamp(0.88rem, 1.05vw, 0.98rem);
-  line-height: 1.6;
+  font-size: clamp(0.8rem, 0.9vw, 0.92rem);
+  line-height: 1.4;
   color: var(--text-light-gray);
   margin-bottom: 0;
   font-weight: 500;
   flex: 1;
-  overflow-wrap: normal;
-  word-break: normal;
-  hyphens: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  word-break: keep-all;
 }
 
 /* Buttons */
+.ingenierie-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
 .ingenierie-btn {
   background: var(--primary-orange);
   color: white;
-  padding: 0.8rem;
+  padding: 0.65rem 1.2rem;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   font-weight: 700;
+  font-size: 0.95rem;
   cursor: pointer;
   text-decoration: none;
-  align-self: flex-start;
+  white-space: nowrap;
+  display: inline-block;
+  transition: background-color 0.2s ease;
 }
 
 .ingenierie-hero-cta {
@@ -287,6 +305,20 @@
   }
 
   .ingenierie-card-content {
-    padding: 1.5rem;
+    padding: 1.25rem;
+    gap: 0.6rem;
+  }
+
+  .ingenierie-card-title {
+    font-size: 1.1rem;
+  }
+
+  .ingenierie-card-desc {
+    font-size: 0.9rem;
+  }
+
+  .ingenierie-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
   }
 }
