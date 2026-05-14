@@ -279,8 +279,26 @@
 .prestation-info-card h3 {
   margin: 0 0 1rem;
   color: var(--primary-blue);
-  font-size: 1.1rem;
+  font-size: 1.35rem;
   font-weight: 800;
+}
+
+.prestation-selector-note {
+  margin: 0 0 1.15rem;
+  padding: 0.9rem 1rem;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--primary-blue);
+  background: rgba(251, 146, 60, 0.08);
+  border-left: 4px solid var(--primary-orange);
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.prestation-selector-note--centered {
+  max-width: 680px;
+  margin: 0 auto 1.35rem;
+  text-align: center;
 }
 
 .prestation-info-card ul {
@@ -457,6 +475,12 @@
 
   .prestation-info-grid {
     grid-template-columns: 1fr;
+  }
+
+  .prestation-selector-note {
+    font-size: 0.95rem;
+    padding: 0.8rem 0.9rem;
+    margin-bottom: 1rem;
   }
 
   .prestation-contact-cta {

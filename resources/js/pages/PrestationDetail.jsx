@@ -36,7 +36,48 @@ export default function PrestationDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedServices, setSelectedServices] = useState(new Set());
   const [selectedTechnologies, setSelectedTechnologies] = useState(new Set());
+  const [selectedDeliverables, setSelectedDeliverables] = useState(new Set());
   const [submitting, setSubmitting] = useState(false);
+  const [imageFallbackIndex, setImageFallbackIndex] = useState({});
+  
+  const getImageCandidates = (src) => {
+    const s = String(src || '').trim();
+    const candidates = [];
+    if (!s) return candidates;
+    candidates.push(s);
+    try {
+      const origin = window?.location?.origin || '';
+      if (s.startsWith('/')) {
+        candidates.push(origin + s);
+      } else if (!s.startsWith('http')) {
+        candidates.push('/' + s);
+        candidates.push(origin + '/' + s);
+      }
+      if (s.startsWith('/storage/')) {
+        candidates.push(s.replace('/storage/', '/storage/app/public/'));
+      }
+      if (s.startsWith('storage/')) {
+        candidates.push('/' + s);
+        candidates.push('/storage/' + s.replace(/^storage\//, ''));
+      }
+      candidates.push('/public' + (s.startsWith('/') ? s : '/' + s));
+    } catch (e) {}
+    return Array.from(new Set(candidates));
+  };
+  
+  const handleImageError = (e, key) => {
+    const orig = e.target.dataset?.original || e.target.getAttribute('src') || '';
+    const candidates = getImageCandidates(orig);
+    const idx = imageFallbackIndex[key] || 0;
+    if (idx + 1 < candidates.length) {
+      const next = candidates[idx + 1];
+      setImageFallbackIndex(prev => ({ ...prev, [key]: idx + 1 }));
+      e.target.src = next;
+      return;
+    }
+    // last resort: hide image (keeps layout)
+    e.target.style.display = 'none';
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -122,11 +163,21 @@ export default function PrestationDetail() {
     setSelectedTechnologies(updated);
   };
 
+  const toggleDeliverable = (item) => {
+    const updated = new Set(selectedDeliverables);
+    if (updated.has(item)) {
+      updated.delete(item);
+    } else {
+      updated.add(item);
+    }
+    setSelectedDeliverables(updated);
+  };
+
   const handleDevisSubmit = async (e) => {
     e.preventDefault();
     
-    if (selectedServices.size === 0 && selectedTechnologies.size === 0) {
-      showToast("Selectionnez au moins un service ou une technologie", "error");
+    if (selectedServices.size === 0 && selectedTechnologies.size === 0 && selectedDeliverables.size === 0) {
+      showToast("Selectionnez au moins un service, une technologie ou un livrable", "error");
       return;
     }
 
@@ -140,6 +191,7 @@ export default function PrestationDetail() {
           prestation_name: prestation.title,
           services: Array.from(selectedServices),
           technologies: Array.from(selectedTechnologies),
+          deliverables: Array.from(selectedDeliverables),
         }),
       });
 
@@ -152,6 +204,7 @@ export default function PrestationDetail() {
       showToast("Devis envoyé avec succès! Vous pouvez aussi remplir le formulaire de contact.", "success");
       setSelectedServices(new Set());
       setSelectedTechnologies(new Set());
+      setSelectedDeliverables(new Set());
       
       // Redirect to contact form after 2 seconds
       setTimeout(() => navigate("/contact"), 2000);
@@ -180,11 +233,13 @@ export default function PrestationDetail() {
     <div className="prestation-detail-page">
       <section className="prestation-hero">
         {prestation.image ? (
-          <img
-            src={prestation.image}
-            alt={prestation.title}
-            className="prestation-hero-image"
-          />
+            <img
+              src={prestation.image}
+              data-original={prestation.image}
+              alt={prestation.title}
+              className="prestation-hero-image"
+              onError={(e) => handleImageError(e, prestation.slug || 'hero')}
+            />
         ) : (
           <div className="prestation-hero-image prestation-hero-image--empty" aria-hidden="true"></div>
         )}
@@ -240,14 +295,37 @@ export default function PrestationDetail() {
                 </p>
                 <form className="prestation-technologies-selector">
                   {prestation.technologies.map((tech) => (
-                    <label key={tech} className="prestation-tech-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={selectedTechnologies.has(tech)}
-                        onChange={() => toggleTechnology(tech)}
-                      />
-                      <span>{tech}</span>
-                    </label>
+                      <label key={tech} className="prestation-tech-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={selectedTechnologies.has(tech)}
+                          onChange={() => toggleTechnology(tech)}
+                        />
+                        <span>{tech}</span>
+                      </label>
+                  ))}
+                </form>
+              </article>
+            </div>
+          )}
+
+          {!!prestation.deliverables?.length && (
+            <div className="prestation-info-grid">
+              <article className="prestation-info-card">
+                <h3>Livrables</h3>
+                <p className="prestation-selector-note">
+                  Sélectionnez les livrables attendus pour votre projet.
+                </p>
+                <form className="prestation-technologies-selector">
+                  {prestation.deliverables.map((item) => (
+                      <label key={item} className="prestation-tech-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={selectedDeliverables.has(item)}
+                          onChange={() => toggleDeliverable(item)}
+                        />
+                        <span>{item}</span>
+                      </label>
                   ))}
                 </form>
               </article>
@@ -256,14 +334,11 @@ export default function PrestationDetail() {
 
           <div className="prestation-contact-cta">
             <h3>Intéressé par cette prestation ?</h3>
-            <p className="prestation-selector-note prestation-selector-note--centered">
-              Les éléments sélectionnés seront repris dans votre demande.
-            </p>
             <form onSubmit={handleDevisSubmit} className="prestation-devis-form">
               <button
                 type="submit"
                 className="prestation-contact-btn"
-                disabled={submitting || (selectedServices.size === 0 && selectedTechnologies.size === 0)}
+                disabled={submitting || (selectedServices.size === 0 && selectedTechnologies.size === 0 && selectedDeliverables.size === 0)}
               >
                 {submitting ? "Envoi en cours..." : "Envoyer ma demande de devis →"}
               </button>

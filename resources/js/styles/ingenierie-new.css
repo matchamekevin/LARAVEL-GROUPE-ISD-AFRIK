@@ -281,6 +281,34 @@
   font-size: 0.95rem;
 }
 
+.ingenierie-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.2rem;
+}
+
+.ingenierie-tag {
+  display: inline-block;
+  background: rgba(251, 146, 60, 0.1);
+  color: #c2410c;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  border: 1px solid rgba(251, 146, 60, 0.25);
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ingenierie-tag-more {
+  background: var(--light-bg);
+  color: var(--text-gray);
+  border-color: #d1d5db;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .ingenierie-filter-bar {

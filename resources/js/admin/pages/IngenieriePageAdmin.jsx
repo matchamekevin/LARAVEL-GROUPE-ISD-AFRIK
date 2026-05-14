@@ -16,6 +16,7 @@ const INITIAL_DOMAIN_FORM = {
   slug: '',
   description: '',
   details: '',
+  services: '',
   deliverables: '',
   technologies: '',
   image_url: '',
@@ -61,6 +62,16 @@ const linesToList = (value) =>
 
 const listToLines = (value) => (Array.isArray(value) ? value.filter(Boolean).join('\n') : '');
 
+const stripNumbers = (str) => str.replace(/-?\d+$/, "");
+const stripStopWords = (str) => str.replace(/-(de|du|des|le|la|les|l|d|a|au|aux|en|et|ou)-/g, "-").replace(/^-(de|du|des|le|la|les|l|d|a|au|aux|en|et|ou)-/g, "");
+const normalizeForMatch = (str) => stripStopWords(stripNumbers(str));
+
+const findDefaultBySlug = (slug) =>
+  INGENIERIE_DEFAULT_DOMAINES.find((d) => d.slug === slug) ||
+  INGENIERIE_DEFAULT_DOMAINES.find((d) => slug?.includes(d.slug) || d.slug?.includes(slug)) ||
+  INGENIERIE_DEFAULT_DOMAINES.find((d) => normalizeForMatch(d.slug) === normalizeForMatch(slug || '')) ||
+  null;
+
 const appendVersionToImage = (url, versionSeed) => {
   const source = String(url || '').trim();
   if (!source) return source;
@@ -88,13 +99,36 @@ export default function IngenieriePageAdmin() {
   const [domainUploadPreview, setDomainUploadPreview] = useState('');
   const { toast, showToast } = useAdminToast();
 
-  const domaines = useMemo(
-    () =>
-      categories
-        .filter((category) => !parentId(category))
-        .sort((a, b) => Number(a?.ordre || 0) - Number(b?.ordre || 0)),
-    [categories]
-  );
+  const domaines = useMemo(() => {
+    const dbDomaines = categories
+      .filter((category) => !parentId(category))
+      .sort((a, b) => Number(a?.ordre || 0) - Number(b?.ordre || 0));
+
+    for (const defaultDomain of INGENIERIE_DEFAULT_DOMAINES) {
+      const exists = dbDomaines.some(
+        (c) => c.slug === defaultDomain.slug || c.slug?.includes(defaultDomain.slug) || defaultDomain.slug?.includes(c.slug || '') || normalizeForMatch(c.slug || '') === normalizeForMatch(defaultDomain.slug)
+      );
+      if (!exists) {
+        dbDomaines.push({
+          id: `placeholder-${defaultDomain.slug}`,
+          id_categorie: `placeholder-${defaultDomain.slug}`,
+          nom: defaultDomain.title,
+          slug: defaultDomain.slug,
+          description: defaultDomain.description,
+          icone: null,
+          image: defaultDomain.image,
+          image_url: defaultDomain.image,
+          ordre: defaultDomain.slug === 'incendie' ? 10 : dbDomaines.length + 1,
+          actif: true,
+          created_at: null,
+          updated_at: null,
+          isPlaceholder: true,
+        });
+      }
+    }
+
+    return dbDomaines.sort((a, b) => Number(a?.ordre || 0) - Number(b?.ordre || 0));
+  }, [categories]);
 
   const services = useMemo(
     () =>
@@ -121,9 +155,16 @@ export default function IngenieriePageAdmin() {
     return domaines.filter((domain) => {
       const linkedServices = servicesByDomain.get(categoryId(domain)) || [];
       const meta = parseDomainMeta(domain?.icone);
+      const defaultFallback = findDefaultBySlug(domain?.slug) || {};
       const serviceText = linkedServices.map((item) => `${item.nom || ''} ${item.slug || ''} ${item.description || ''}`).join(' ');
+      const metaServices = Array.isArray(meta?.services) ? meta.services : [];
+      const metaDeliverables = Array.isArray(meta?.deliverables) ? meta.deliverables : [];
+      const metaTechnologies = Array.isArray(meta?.technologies) ? meta.technologies : [];
+      const defaultServices = Array.isArray(defaultFallback?.services) ? defaultFallback.services : [];
+      const defaultDeliverables = Array.isArray(defaultFallback?.deliverables) ? defaultFallback.deliverables : [];
+      const defaultTechnologies = Array.isArray(defaultFallback?.technologies) ? defaultFallback.technologies : [];
       const haystack = normalizeText(
-        `${domain.nom || ''} ${domain.slug || ''} ${domain.description || ''} ${meta.details || ''} ${(meta.deliverables || []).join(' ')} ${(meta.technologies || []).join(' ')} ${serviceText}`
+        `${domain.nom || ''} ${domain.slug || ''} ${domain.description || ''} ${meta.details || defaultFallback.details || ''} ${metaServices.join(' ')} ${metaDeliverables.join(' ')} ${metaTechnologies.join(' ')} ${defaultServices.join(' ')} ${defaultDeliverables.join(' ')} ${defaultTechnologies.join(' ')} ${serviceText}`
       );
       return haystack.includes(q);
     });
@@ -244,14 +285,20 @@ export default function IngenieriePageAdmin() {
 
   const startEditDomain = (domain) => {
     const meta = parseDomainMeta(domain?.icone);
-    setEditingDomainId(categoryId(domain));
+    const defaultFallback = findDefaultBySlug(domain?.slug) || {};
+    if (domain?.isPlaceholder) {
+      setEditingDomainId(null);
+    } else {
+      setEditingDomainId(categoryId(domain));
+    }
     setDomainForm({
-      nom: domain.nom || '',
+      nom: domain.nom || defaultFallback.title || '',
       slug: domain.slug || '',
       description: domain.description || '',
-      details: meta.details || '',
-      deliverables: listToLines(meta.deliverables),
-      technologies: listToLines(meta.technologies),
+      details: meta.details || defaultFallback.details || '',
+      services: listToLines(meta.services?.length ? meta.services : defaultFallback.services),
+      deliverables: listToLines(meta.deliverables?.length ? meta.deliverables : defaultFallback.deliverables),
+      technologies: listToLines(meta.technologies?.length ? meta.technologies : defaultFallback.technologies),
       image_url: domain.image_url || domain.image || '',
       image_file: null,
       existing_image: appendVersionToImage(domain.image_url || domain.image || '', domain.updated_at || domain.created_at || Date.now()),
@@ -281,6 +328,7 @@ export default function IngenieriePageAdmin() {
     try {
       const metadata = {
         details: String(domainForm.details || '').trim(),
+        services: linesToList(domainForm.services),
         deliverables: linesToList(domainForm.deliverables),
         technologies: linesToList(domainForm.technologies),
       };
@@ -378,6 +426,7 @@ export default function IngenieriePageAdmin() {
       for (const [index, domain] of INGENIERIE_DEFAULT_DOMAINES.entries()) {
         const metadata = {
           details: domain.details || '',
+          services: Array.isArray(domain.services) ? domain.services : [],
           deliverables: Array.isArray(domain.deliverables) ? domain.deliverables : [],
           technologies: Array.isArray(domain.technologies) ? domain.technologies : [],
         };
@@ -459,10 +508,7 @@ export default function IngenieriePageAdmin() {
           >
             Initialiser les domaines
           </button>
-          <span className="admin-hero-stat">{domaines.length} domaines</span>
-          <button type="button" className="admin-btn admin-btn-sm" onClick={openMailModal} disabled={selectedForMail.size === 0} style={{ marginLeft: 8 }}>
-            Envoyer mail ({selectedForMail.size})
-          </button>
+          <span className="admin-hero-stat">{domaines.filter(d => !d.isPlaceholder).length} en DB / {domaines.length} total</span>
         </div>
       </section>
 
@@ -479,30 +525,35 @@ export default function IngenieriePageAdmin() {
           </div>
         </div>
 
-        <div className="admin-ingenierie-searchbox">
-          <span className="material-symbols-outlined admin-ingenierie-search-icon" aria-hidden="true">search</span>
-          <input
-            className="admin-form-input"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Rechercher domaine, service ou contenu detail..."
-          />
+        <div className="admin-isearch">
+          <div className="admin-isearch-bar">
+            <span className="admin-isearch-icon material-symbols-outlined">search</span>
+            <input
+              className="admin-isearch-input"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Rechercher domaine, service ou contenu detail..."
+            />
+            <span className="admin-isearch-count">{filteredDomaines.length}</span>
+            {!!search && (
+              <button type="button" className="admin-isearch-clear" onClick={() => setSearch('')} aria-label="Effacer la recherche">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            )}
+          </div>
           {!!search && (
-            <button
-              type="button"
-              className="admin-ingenierie-clear-btn"
-              onClick={() => setSearch('')}
-              aria-label="Effacer la recherche"
-            >
-              <span className="material-symbols-outlined" aria-hidden="true">close</span>
-            </button>
+            <div className="admin-isearch-hint">
+              {filteredDomaines.length === 0
+                ? "Aucun resultat"
+                : `${filteredDomaines.length} domaine${filteredDomaines.length > 1 ? 's' : ''} trouv\u00e9${filteredDomaines.length > 1 ? 's' : ''}`}
+            </div>
           )}
         </div>
       </section>
 
       <section className="admin-card admin-ingenierie-results">
         <div className="admin-card-header admin-ingenierie-results-header">
-          <h2>Domaines publies</h2>
+          <h2>Domaines ({domaines.length})</h2>
         </div>
 
         {filteredDomaines.length === 0 ? (
@@ -513,8 +564,8 @@ export default function IngenieriePageAdmin() {
         ) : (
           <div className="admin-ingenierie-domain-list">
             {filteredDomaines.map((domain) => {
-              const id = categoryId(domain);
-              const linkedServices = servicesByDomain.get(id) || [];
+              const id = domain?.isPlaceholder ? domain.id : categoryId(domain);
+              const linkedServices = domain?.isPlaceholder ? [] : (servicesByDomain.get(id) || []);
               const meta = parseDomainMeta(domain?.icone);
               const previewImage = appendVersionToImage(
                 domain?.image_url || domain?.image || '',
@@ -522,13 +573,16 @@ export default function IngenieriePageAdmin() {
               );
 
               return (
-                <article key={id} className="admin-ingenierie-domain-card">
+                <article key={id} className={`admin-ingenierie-domain-card ${domain?.isPlaceholder ? 'admin-ingenierie-domain-card--placeholder' : ''}`}>
                   <header className="admin-ingenierie-domain-head">
                       <div className="admin-ingenierie-domain-meta">
                       <h3>{domain.nom}</h3>
                       <p>{domain.description || 'Aucune description.'}</p>
                       <div className="admin-ingenierie-domain-tags">
                         <span className="admin-badge admin-badge-info">/{domain.slug}</span>
+                        {domain?.isPlaceholder && (
+                          <span className="admin-badge admin-badge-warning">À creer</span>
+                        )}
                         <span className={`admin-badge ${domain.actif !== false ? 'admin-badge-success' : 'admin-badge-danger'}`}>
                           {domain.actif !== false ? 'Actif' : 'Inactif'}
                         </span>
@@ -537,9 +591,6 @@ export default function IngenieriePageAdmin() {
                     </div>
 
                     <div className="admin-table-actions">
-                      <label style={{ marginRight: 8 }} title="Sélectionner pour envoi">
-                        <input type="checkbox" checked={selectedForMail.has(id)} onChange={() => toggleSelectForMail(id)} />
-                      </label>
                       <button
                         type="button"
                         className="admin-ingenierie-icon-btn"
@@ -551,8 +602,8 @@ export default function IngenieriePageAdmin() {
                       <button
                         type="button"
                         className="admin-ingenierie-icon-btn admin-ingenierie-icon-btn-danger"
-                        onClick={() => removeCategory(id)}
-                        disabled={saving}
+                        onClick={() => !domain?.isPlaceholder && removeCategory(id)}
+                        disabled={saving || domain?.isPlaceholder}
                         aria-label={`Supprimer ${domain.nom}`}
                       >
                         <span className="material-symbols-outlined" aria-hidden="true">delete</span>
@@ -560,9 +611,17 @@ export default function IngenieriePageAdmin() {
                     </div>
                   </header>
 
-                  {!!previewImage && (
+                  {previewImage && (
                     <div className="admin-ingenierie-domain-image-wrap">
-                      <img src={previewImage} alt={domain.nom} className="admin-ingenierie-domain-image" />
+                      <img
+                        src={previewImage}
+                        alt={domain.nom}
+                        className="admin-ingenierie-domain-image"
+                        onError={(e) => {
+                          e.target.src = '';
+                          e.target.alt = 'Image non disponible';
+                        }}
+                      />
                     </div>
                   )}
 
@@ -572,8 +631,18 @@ export default function IngenieriePageAdmin() {
                     </div>
                   )}
 
-                  {(Array.isArray(meta?.deliverables) && meta.deliverables.length > 0) || (Array.isArray(meta?.technologies) && meta.technologies.length > 0) ? (
+                  {(Array.isArray(meta?.services) && meta.services.length > 0) || (Array.isArray(meta?.deliverables) && meta.deliverables.length > 0) || (Array.isArray(meta?.technologies) && meta.technologies.length > 0) ? (
                     <div className="admin-ingenierie-domain-extra-grid">
+                      {Array.isArray(meta?.services) && meta.services.length > 0 && (
+                        <div className="admin-ingenierie-mini-panel">
+                          <h4>Services (metadonnees)</h4>
+                          <ul>
+                            {meta.services.map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                       {Array.isArray(meta?.deliverables) && meta.deliverables.length > 0 && (
                         <div className="admin-ingenierie-mini-panel">
                           <h4>Livrables</h4>
@@ -598,43 +667,48 @@ export default function IngenieriePageAdmin() {
                   ) : null}
 
                   {linkedServices.length > 0 ? (
-                    <ul className="admin-ingenierie-service-list">
-                      {linkedServices.map((service) => {
-                        const serviceId = categoryId(service);
-                        return (
-                          <li key={serviceId}>
-                            <div>
-                              <strong>{service.nom}</strong>
-                              {service.description && <p>{service.description}</p>}
-                            </div>
-                            <div className="admin-table-actions">
-                              <label style={{ marginRight: 8 }} title="Sélectionner pour envoi">
-                                <input type="checkbox" checked={selectedForMail.has(serviceId)} onChange={() => toggleSelectForMail(serviceId)} />
-                              </label>
-                              <button
-                                type="button"
-                                className="admin-ingenierie-icon-btn"
-                                onClick={() => startEditService(service)}
-                                aria-label={`Editer ${service.nom}`}
-                              >
-                                <span className="material-symbols-outlined" aria-hidden="true">edit</span>
-                              </button>
-                              <button
-                                type="button"
-                                className="admin-ingenierie-icon-btn admin-ingenierie-icon-btn-danger"
-                                onClick={() => removeCategory(serviceId)}
-                                disabled={saving}
-                                aria-label={`Supprimer ${service.nom}`}
-                              >
-                                <span className="material-symbols-outlined" aria-hidden="true">delete</span>
-                              </button>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                    <>
+                      <h4 className="admin-ingenierie-service-list-title">Services enfants (prioritaires)</h4>
+                      <ul className="admin-ingenierie-service-list">
+                        {linkedServices.map((service) => {
+                          const serviceId = categoryId(service);
+                          return (
+                            <li key={serviceId}>
+                              <div>
+                                <strong>{service.nom}</strong>
+                                {service.description && <p>{service.description}</p>}
+                              </div>
+                              <div className="admin-table-actions">
+                                <label style={{ marginRight: 8 }} title="Sélectionner pour envoi">
+                                  <input type="checkbox" checked={selectedForMail.has(serviceId)} onChange={() => toggleSelectForMail(serviceId)} />
+                                </label>
+                                <button
+                                  type="button"
+                                  className="admin-ingenierie-icon-btn"
+                                  onClick={() => startEditService(service)}
+                                  aria-label={`Editer ${service.nom}`}
+                                >
+                                  <span className="material-symbols-outlined" aria-hidden="true">edit</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="admin-ingenierie-icon-btn admin-ingenierie-icon-btn-danger"
+                                  onClick={() => removeCategory(serviceId)}
+                                  disabled={saving}
+                                  aria-label={`Supprimer ${service.nom}`}
+                                >
+                                  <span className="material-symbols-outlined" aria-hidden="true">delete</span>
+                                </button>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </>
+                  ) : Array.isArray(meta?.services) && meta.services.length > 0 ? (
+                    <div className="admin-notice info">Les services issus des metadonnees (icone) seront affiches sur la page publique. Ajoutez des services enfants pour les personnaliser.</div>
                   ) : (
-                    <div className="admin-notice info">Aucun service detail n'est encore rattache a ce domaine.</div>
+                    <div className="admin-notice info">Aucun service rattache a ce domaine. Ajoutez des services via le formulaire ou creez des services enfants.</div>
                   )}
                 </article>
               );
@@ -676,17 +750,18 @@ export default function IngenieriePageAdmin() {
                   </div>
 
                   <div className="admin-form-field admin-form-grid-half">
-                    <label>Image URL</label>
+                    <label>Image URL (lien existant)</label>
                     <input
                       className="admin-form-input"
                       value={domainForm.image_url}
                       onChange={(event) => setDomainForm((prev) => ({ ...prev, image_url: event.target.value }))}
-                      placeholder="/images/..."
+                      placeholder="/images/produits/proj.webp"
                     />
+                    <small className="admin-form-hint">Chemin vers une image existante dans /public/images/</small>
                   </div>
 
                   <div className="admin-form-field admin-form-grid-half">
-                    <label>Uploader une image</label>
+                    <label>Ou uploader une nouvelle image</label>
                     <input
                       className="admin-form-input"
                       type="file"
@@ -694,6 +769,7 @@ export default function IngenieriePageAdmin() {
                       onChange={(event) => setDomainForm((prev) => ({ 
                         ...prev, 
                         image_file: event.target.files?.[0] || null,
+                        image_url: '',
                         existing_image: ''
                       }))}
                     />
@@ -727,6 +803,17 @@ export default function IngenieriePageAdmin() {
                       value={domainForm.details}
                       onChange={(event) => setDomainForm((prev) => ({ ...prev, details: event.target.value }))}
                     />
+                  </div>
+
+                  <div className="admin-form-field admin-form-grid-half">
+                    <label>Services (1 ligne = 1 service)</label>
+                    <textarea
+                      className="admin-form-textarea"
+                      rows={4}
+                      value={domainForm.services}
+                      onChange={(event) => setDomainForm((prev) => ({ ...prev, services: event.target.value }))}
+                    />
+                    <small className="admin-form-hint">Si des services enfants existent, ils prendront priorite.</small>
                   </div>
 
                   <div className="admin-form-field admin-form-grid-half">

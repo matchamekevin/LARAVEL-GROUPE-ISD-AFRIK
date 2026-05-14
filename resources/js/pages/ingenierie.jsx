@@ -188,12 +188,25 @@ export default function Ingenierie() {
                                     <h3 className="ingenierie-card-title">{domaine.title}</h3>
                                     <p className="ingenierie-card-desc">{domaine.description}</p>
 
+                                    {domaine.services?.length > 0 && (
+                                      <div className="ingenierie-card-tags">
+                                        {domaine.services.slice(0, 3).map((svc) => (
+                                          <span key={svc} className="ingenierie-tag">{svc}</span>
+                                        ))}
+                                        {domaine.services.length > 3 && (
+                                          <span className="ingenierie-tag ingenierie-tag-more">+{domaine.services.length - 3}</span>
+                                        )}
+                                      </div>
+                                    )}
+
                                     <div className="ingenierie-card-actions">
                                         <Link 
                                             to={`/prestation/${domaine.slug}`}
                                             className="ingenierie-btn"
                                         >
-                                            Prestations →
+                                            {domaine.services?.length || domaine.technologies?.length || domaine.deliverables?.length
+                                              ? "Voir les prestations →"
+                                              : "Prestations →"}
                                         </Link>
                                     </div>
                                 </div>
