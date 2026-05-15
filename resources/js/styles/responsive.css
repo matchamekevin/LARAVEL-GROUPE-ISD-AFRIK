@@ -113,10 +113,7 @@
   padding-top: env(safe-area-inset-top, 0px);
 }
 
-/* ── Main layout responsive spacing ───────────────── */
-.site-main {
-  padding-inline: clamp(0px, 2vw, 20px);
-}
+
 
 /* ── Touch-friendly targets on mobile ──────────────── */
 @media (pointer: coarse) {
