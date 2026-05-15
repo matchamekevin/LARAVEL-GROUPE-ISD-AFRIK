@@ -20,7 +20,7 @@ import ScrollToTop from '../components/ScrollToTop';
 import { ADMIN_NAV_ITEMS } from './config/navigation';
 
 import { clearAdminToken, hasAdminToken, logout, me } from './api';
-import "../../styles/responsive.css";
+import "../styles/responsive.css";
 
 const navListItemStyle = { marginBottom: '0.75rem' };
 const navIconStyle = { marginRight: '0.5rem' };
