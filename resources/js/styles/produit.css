@@ -1450,34 +1450,59 @@
   }
 }
 
-@media (max-width: 700px) {
-  .pcat-container {
-    width: calc(100% - 22px);
-  }
-
-  .pcat-sub-grid,
-  .pcat-model-grid,
-  .pcat-product-grid,
-  .pcat-steps {
-    grid-template-columns: 1fr;
-  }
-
-  .pcat-hero-title {
-    font-size: 1.9rem;
-  }
-
-  .pcat-search {
-    padding: 9px 12px;
-  }
-
-  .pcat-footer-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .pcat-footer-row .pcat-solid-btn {
-    width: 100%;
-  }
+@media (max-width: 768px) {
+  .pcat-hero { padding: 20px 12px; }
+  .pcat-hero-title { font-size: 1.3rem; }
+  
+  /* Main pills - compact */
+  .pcat-main-pills { gap: 6px; overflow-x: auto; flex-wrap: nowrap; padding: 4px 0 8px; -webkit-overflow-scrolling: touch; }
+  .pcat-pill { white-space: nowrap; font-size: 0.78rem; padding: 6px 12px; border-radius: 20px; flex-shrink: 0; }
+  
+  /* Grids → 2 columns */
+  .pp-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .pcat-product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .pcat-sub-grid { grid-template-columns: 1fr; gap: 12px; }
+  .pcat-model-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  
+  /* Cards compact */
+  .pp-body { padding: 10px 12px 14px; }
+  .pp-title { font-size: 0.85rem; }
+  .pp-desc { font-size: 0.78rem; -webkit-line-clamp: 2; }
+  .pp-image-wrap { aspect-ratio: 16/10; }
+  .pp-badge { font-size: 0.65rem; padding: 4px 8px; top: 6px; left: 6px; }
+  .pp-meta-chip { font-size: 0.7rem; padding: 3px 8px; }
+  .pp-add-btn { font-size: 0.78rem; padding: 8px 12px; }
+  .pp-footer-row { padding-top: 8px; gap: 6px; }
+  
+  /* Products grid */
+  .pcat-product-card .pcat-product-image-wrap { aspect-ratio: 4/3; }
+  .pcat-product-body { padding: 10px; }
+  .pcat-title { font-size: 0.82rem; }
+  .pcat-description { font-size: 0.75rem; -webkit-line-clamp: 2; }
+  .pcat-footer-row { flex-direction: column; gap: 6px; }
+  .pcat-footer-row .pcat-solid-btn { width: 100%; padding: 8px; font-size: 0.78rem; }
+  .pcat-price { font-size: 0.9rem; }
+  
+  /* Model cards */
+  .pcat-model-card { padding: 10px; }
+  .pcat-model-card h3 { font-size: 0.85rem; }
+  .pcat-model-visual { aspect-ratio: 16/10; }
+  
+  /* Breadcrumb */
+  .pcat-breadcrumb-path { font-size: 0.72rem; gap: 3px; }
+  
+  /* Filter bar */
+  .pcat-filter-bar { grid-template-columns: 1fr; gap: 8px; }
+  .pp-filter-select { min-height: 40px; font-size: 0.8rem; }
+  .pp-filter-reset { min-height: 40px; font-size: 0.8rem; }
+  
+  /* Cart/favorite icons visible */
+  .pcat-fav-btn { width: 32px; height: 32px; }
+  .pcat-cart-icon-only { width: 32px; height: 32px; }
+  
+  /* Section headings */
+  .pcat-heading-row h2 { font-size: 1rem; }
+  .pcat-heading-row p { font-size: 0.82rem; }
 }
 
 /* ── RESPONSIVE PRODUITS ──────────────────────────── */
@@ -1502,58 +1527,31 @@
   .pcat-pill { white-space: nowrap; font-size: 0.85rem; padding: 8px 14px; }
 }
 
-@media (max-width: 640px) {
-  .pcat-hero { padding: clamp(20px, 3vw, 40px) clamp(10px, 2vw, 16px); }
-  .pp-grid, .pcat-product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .pcat-sub-grid { grid-template-columns: 1fr; }
-  .pcat-model-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .pcat-product-card .pcat-product-image-wrap { aspect-ratio: 4/3; }
-  .pcat-product-body { padding: 12px; }
-  .pcat-title { font-size: 0.9rem; }
-  .pcat-description { font-size: 0.8rem; -webkit-line-clamp: 2; }
-  .pcat-footer-row { flex-direction: column; gap: 8px; }
-  .pcat-footer-row .pcat-solid-btn { width: 100%; }
-  .pcat-breadcrumb-path { font-size: 0.78rem; flex-wrap: wrap; }
-  .pcat-filter-bar { grid-template-columns: 1fr; }
-}
 
-@media (max-width: 400px) {
-  .pp-grid, .pcat-product-grid { grid-template-columns: 1fr; }
-  .pcat-model-grid { grid-template-columns: 1fr; }
-  .pcat-breadcrumb { flex-direction: column; gap: 8px; }
-  .pcat-breadcrumb-path { width: 100%; }
-}
-
-/* ── RESPONSIVE ADDITIONS ─────────────────────────── */
-@media (max-width: 600px) {
-  .pcat-hero-title { font-size: 1.3rem; }
-  .pcat-breadcrumb-path { font-size: 0.75rem; gap: 4px; }
-  .pcat-pill { font-size: 0.8rem; padding: 6px 12px; }
-  .pcat-heading-row h2 { font-size: 1.1rem; }
-  .pcat-heading-row p { font-size: 0.85rem; }
-  .pcat-model-card h3 { font-size: 0.9rem; }
-  .pcat-product-body { padding: 10px; }
-  .pcat-title { font-size: 0.85rem; }
-  .pcat-description { font-size: 0.78rem; -webkit-line-clamp: 2; }
-  .pcat-footer-row { flex-direction: column; gap: 6px; }
-  .pcat-footer-row .pcat-solid-btn { width: 100%; }
-}
 
 /* ── RESPONSIVE CARD OVERRIDES ────────────────────── */
 @media (max-width: 1100px) {
   .pp-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
   .pcat-product-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
 }
-@media (max-width: 820px) {
-  .pp-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .pcat-product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .pcat-sub-grid { grid-template-columns: 1fr; }
-  .pp-body { padding: 14px 16px 18px; }
-  .pp-title { font-size: 0.9rem; }
-  .pp-desc { -webkit-line-clamp: 2; }
-}
 @media (max-width: 520px) {
-  .pp-grid { grid-template-columns: 1fr; }
-  .pcat-product-grid { grid-template-columns: 1fr; }
-  .pp-card { max-width: 400px; margin-inline: auto; }
+  .pp-grid { grid-template-columns: 1fr; max-width: 340px; margin-inline: auto; }
+  .pcat-product-grid { grid-template-columns: 1fr; max-width: 340px; margin-inline: auto; }
+  .pcat-model-grid { grid-template-columns: 1fr; max-width: 340px; margin-inline: auto; }
+}
+
+/* ── Always show cart/fav icons on mobile ─────────── */
+@media (hover: none) and (pointer: coarse) {
+  .pcat-fav-btn, .pcat-cart-icon-only, .pp-icon-btn,
+  .gpd-icon-btn, .pd-btn-favori, .pd-btn-panier,
+  [class*="fav-btn"], [class*="cart-icon"] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ── Better image fit on cards ────────────────────── */
+@media (max-width: 768px) {
+  .pp-image, .pcat-product-image, .pcat-model-image { object-fit: contain; background: #f8fafc; }
+  .pcat-product-image-wrap, .pp-image-wrap, .pcat-model-visual { background: #f8fafc; }
 }

@@ -2373,75 +2373,7 @@ body.modal-open {
   .home > section { padding: 50px 16px; }
 }
 
-/* Tablettes portrait */
-@media (max-width: 768px) {
-  .home .hero { min-height: 80vh; padding: 70px 16px 30px !important; }
-  .home .hero-content h1 { font-size: 1.9rem; margin-bottom: 1rem; }
-  .home .hero-content p { font-size: 1rem; margin-bottom: 1.5rem; }
-  .home .hero-buttons { gap: 1rem; }
-  .home .hero-stats { grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 24px; }
-  .home .hero-stat-item .stat-number { font-size: 1.8rem; }
-  .home .hero-stat-item .stat-label { font-size: 0.85rem; }
-  .home .btn-primary, .home .btn-secondary { padding: 12px 24px; font-size: 0.9rem; }
-  .home .section-header { margin: 0 auto 40px; }
-  .home .section-header h2 { font-size: 1.8rem; }
-  .home .section-header p { font-size: 1rem; }
-  .home .why-visual .grid { grid-template-columns: 1fr 1fr; gap: 20px; }
-  .home .offers .cards { grid-template-columns: 1fr; gap: 24px; }
-  .home .promotions .cards { flex-direction: column; align-items: center; }
-  .home .promo-card { min-width: 100%; max-width: 320px; }
-  .promo-gallery { grid-template-columns: 1fr 1fr; gap: 16px; }
-  .promo-image { width: auto; max-width: 100%; height: auto; max-height: 420px; object-fit: contain; }
-  .home .sectors-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-  .home .sector-card { padding: 24px 18px; }
-  .home .products .cards { grid-template-columns: 1fr; }
-  .home .seller { min-height: 60vh; }
-  .home .formations-horizontal { flex-direction: column; align-items: center; }
-  .home .formation-card { max-width: 100%; }
-  .home .testimonials-grid { grid-template-columns: 1fr; }
-  .home .collaborators-grid { grid-template-columns: repeat(2, 1fr); }
-  .home .cta-content h2 { font-size: 2rem; }
-  .home .cta-content p { font-size: 1.1rem; }
-  .home > section { padding: 40px 16px; }
-  .home .modal-content { padding: 24px; }
-}
 
-/* Grand téléphone */
-@media (max-width: 576px) {
-  .home .hero-content h1 { font-size: 1.6rem; }
-  .home .hero-content p { font-size: 0.9rem; }
-  .home .hero-buttons { flex-direction: column; align-items: center; gap: 0.8rem; }
-  .home .hero-stats { grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px 0; }
-  .home .hero-stat-item .stat-number { font-size: 1.5rem; }
-  .home .section-header h2 { font-size: 1.5rem; }
-  .home .section-header p { font-size: 0.9rem; }
-  .home .why-visual .grid { grid-template-columns: 1fr; }
-  .promo-gallery { grid-template-columns: 1fr; }
-  .promo-image { width: auto; max-width: 100%; height: auto; max-height: 420px; object-fit: contain; }
-  .home .sectors-grid { grid-template-columns: 1fr; }
-  .home .sector-card .icon { font-size: 2.5rem; }
-  .home .product-card .actions { flex-direction: column; }
-  .home .product-card .actions button { width: 100%; }
-  .home .collaborators-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-  .home .cta-content h2 { font-size: 1.6rem; }
-  .home .cta-buttons { flex-direction: column; align-items: center; }
-  .home > section { padding: 32px 12px; }
-  .home .review-form .form-row { grid-template-columns: 1fr; }
-}
-
-/* Petit téléphone */
-@media (max-width: 400px) {
-  .home .hero-content h1 { font-size: 1.4rem; }
-  .home .hero-buttons a, .home .hero-buttons button { width: 100%; justify-content: center; }
-  .home .hero-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .home .hero-stat-item .stat-number { font-size: 1.3rem; }
-  .home .hero-stat-item .stat-label { font-size: 0.75rem; }
-  .home .promo-badge { font-size: 0.75rem; padding: 5px 10px; }
-  .home .collaborators-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
-  .home .partner-item { width: 110px; }
-  .home .partner-item img { width: 70px; height: 70px; }
-  .home > section { padding: 24px 10px; }
-}
 
 /* ===========================
    PP STYLES (used by Geovision.jsx)
@@ -2527,65 +2459,116 @@ body.modal-open {
 
 /* Tablets 768px */
 @media (max-width: 768px) {
-  .home .hero { min-height: 500px; height: 80vh; }
-  .home .hero-content h1 { font-size: clamp(1.5rem, 5vw, 2rem); }
-  .home .hero-content p { font-size: 0.95rem; }
-  .home .hero-buttons { flex-direction: column; align-items: center; gap: 12px; }
-  .home .hero-stats { grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 24px; }
-  .home .hero-stat-item .stat-number { font-size: clamp(1.5rem, 4vw, 2rem); }
-  .home .sectors-grid { grid-template-columns: 1fr; gap: 16px; }
-  .home .sector-card { padding: clamp(20px, 3vw, 30px); }
-  .home .products .cards { grid-template-columns: 1fr; gap: 16px; }
-  .home .why-visual .grid { grid-template-columns: 1fr; gap: 16px; }
-  .home .offers .cards { grid-template-columns: 1fr; gap: 16px; }
-  .home .testimonials-grid { grid-template-columns: 1fr; gap: 16px; }
-  .home .collaborators-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-  .home .section-header h2 { font-size: clamp(1.3rem, 4vw, 1.8rem); }
-  .home .section-header p { font-size: 0.95rem; }
-  .home > section { padding: clamp(24px, 3vw, 40px) clamp(10px, 2vw, 16px); }
-  .home .formations-horizontal { grid-template-columns: 1fr; }
-  .home .cta-content h2 { font-size: clamp(1.5rem, 5vw, 2.2rem); }
-  .home .cta-buttons { flex-direction: column; align-items: center; }
-  .home .seller-content h2 { font-size: clamp(1.5rem, 5vw, 2.2rem); }
-}
-
-/* Small phones 480px */
-@media (max-width: 480px) {
-  .home .hero { min-height: 400px; height: 70vh; }
-  .home .hero-content h1 { font-size: clamp(1.2rem, 6vw, 1.5rem); }
-  .home .hero-stats { grid-template-columns: 1fr; gap: 12px; }
-  .home .hero-stat-item .stat-number { font-size: 1.5rem; }
-  .home .sector-card .icon { width: 60px; height: 60px; font-size: 2.5rem; }
-  .home .collaborators-grid { grid-template-columns: 1fr; }
-  .home .testimonial-card-new { padding: 20px; }
-  .home .testimonial-header { flex-direction: column; text-align: center; }
-  .home .promo-card { max-width: 100%; min-width: unset; }
-  .home .promotions .cards { flex-direction: column; align-items: center; }
-}
-
-/* Tiny phones 360px */
-@media (max-width: 360px) {
-  .home .hero { min-height: 350px; height: 60vh; }
-  .home > section { padding: 20px clamp(6px, 2vw, 10px); }
-  .home .hero-content h1 { font-size: 1.1rem; }
-}
-
-/* ── RESPONSIVE ADDITIONS ─────────────────────────── */
-@media (max-width: 1100px) {
-  .home .hero-stat-item .stat-number { font-size: clamp(1.3rem, 3vw, 2rem); }
-  .home .hero-content h1 { font-size: clamp(1.5rem, 4vw, 2.5rem); }
-}
-@media (max-width: 600px) {
+  .home .hero { min-height: 450px; height: 70vh; }
+  .home .hero-content h1 { font-size: clamp(1.3rem, 5vw, 1.8rem); margin-bottom: 0.8rem; }
+  .home .hero-content p { font-size: 0.85rem; margin-bottom: 1.2rem; }
+  .home .hero-buttons { flex-direction: column; align-items: stretch; gap: 10px; }
   .home .hero-buttons .btn-primary,
-  .home .hero-buttons .btn-secondary { width: 100%; text-align: center; justify-content: center; }
-  .home .section-header h2 { font-size: clamp(1.2rem, 5vw, 1.5rem); }
-  .home .section-header p { font-size: 0.85rem; }
-  .home .sector-card { padding: 16px; }
-  .home .sector-card h3 { font-size: 1rem; }
-  .home .sector-card p { font-size: 0.85rem; }
-  .home .offer-card .card-body { padding: 16px; }
-  .home .offer-card h3 { font-size: 1.1rem; }
+  .home .hero-buttons .btn-secondary { width: 100%; justify-content: center; padding: 12px 20px; font-size: 0.9rem; }
+  .home .hero-stats { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px; padding: 16px 0; }
+  .home .hero-stat-item .stat-number { font-size: clamp(1.3rem, 4vw, 1.8rem); }
+  .home .hero-stat-item .stat-label { font-size: 0.8rem; }
+  .home > section { padding: clamp(24px, 3vw, 40px) clamp(10px, 2vw, 16px); }
+  .home .section-header { margin-bottom: 16px; }
+  .home .section-header h2 { font-size: clamp(1.2rem, 4vw, 1.6rem); }
+  .home .section-header h2::after { width: 50px; height: 3px; bottom: -6px; }
+  .home .section-header p { font-size: 0.85rem; margin-top: 0.8rem; }
+  
+  /* Grids → 2 columns */
+  .home .sectors-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .home .products .cards { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .home .offers .cards { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .home .testimonials-grid { grid-template-columns: 1fr; gap: 14px; }
+  .home .collaborators-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .home .why-visual .grid { grid-template-columns: 1fr; gap: 14px; }
+  .home .formations-horizontal { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  
+  /* Sector cards */
+  .home .sector-card { padding: 20px 16px; }
+  .home .sector-card .icon { width: 56px; height: 56px; font-size: 2rem; margin-bottom: 14px; }
+  .home .sector-card h3 { font-size: 0.95rem; }
+  .home .sector-card p { font-size: 0.8rem; margin-bottom: 14px; }
+  
+  /* Product cards */
+  .home .product-card .card-image { height: 160px; }
   .home .product-card .card-body { padding: 14px; }
-  .home .product-card h3 { font-size: 1rem; }
+  .home .product-card h3 { font-size: 0.9rem; }
+  .home .product-card .price { font-size: 1.1rem; margin-bottom: 12px; }
+  
+  /* Offer cards */
+  .home .offer-card .card-image { height: 140px; }
+  .home .offer-card .card-body { padding: 16px; }
+  .home .offer-card h3 { font-size: 1rem; }
+  .home .offer-card p { font-size: 0.85rem; }
+  
+  /* Testimonial */
   .home .testimonial-card-new { padding: 16px; }
+  .home .testimonial-header { gap: 12px; }
+  .home .testimonial-avatar { width: 56px; height: 56px; }
+  .home .testimonial-info h4 { font-size: 1rem; }
+  .home .testimonial-text-new { font-size: 0.9rem; }
+  
+  /* Collaborator */
+  .home .collaborator-card { height: 140px; }
+  
+  /* Promo cards */
+  .home .promotions .cards { gap: 12px; }
+  .home .promo-card { min-width: unset; max-width: 100%; padding: 16px 14px; }
+  .home .promo-card .icon { font-size: 2rem; }
+  .home .promo-card h3 { font-size: 1rem; }
+  .home .promo-card p { font-size: 0.85rem; }
+  .home .promo-badge { font-size: 0.7rem; padding: 3px 10px; top: 10px; right: 10px; }
+  
+  /* CTA */
+  .home .cta-final { padding: 50px 16px; }
+  .home .cta-content h2 { font-size: clamp(1.3rem, 5vw, 1.8rem); }
+  .home .cta-content p { font-size: 0.95rem; }
+  .home .cta-buttons { flex-direction: column; align-items: stretch; gap: 12px; }
+  .home .cta-buttons .btn-primary,
+  .home .cta-buttons .btn-secondary { width: 100%; justify-content: center; }
+  
+  /* Seller */
+  .home .seller-content h2 { font-size: clamp(1.3rem, 5vw, 1.8rem); }
+  
+  /* Formation cards home */
+  .home .formation-card { padding: 14px; }
+  .home .formation-img { height: 120px; }
+  .home .formation-card h3 { font-size: 1rem; }
+  .home .formation-card p { font-size: 0.85rem; }
+}
+
+/* Small phones 520px */
+@media (max-width: 520px) {
+  .home .hero { min-height: 380px; height: 65vh; }
+  .home .hero-content h1 { font-size: clamp(1.1rem, 6vw, 1.4rem); }
+  .home .hero-stats { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .home .sectors-grid { grid-template-columns: 1fr; }
+  .home .products .cards { grid-template-columns: 1fr; }
+  .home .offers .cards { grid-template-columns: 1fr; }
+  .home .formations-horizontal { grid-template-columns: 1fr; }
+  .home .collaborators-grid { grid-template-columns: 1fr; }
+  .home .partner-item { width: 100px; }
+  .home .partner-item img { width: 70px; height: 70px; }
+}
+
+/* Tiny phones 380px */
+@media (max-width: 380px) {
+  .home .hero { min-height: 320px; height: 55vh; }
+  .home .hero-stats { grid-template-columns: 1fr; }
+  .home .sector-card { padding: 14px 10px; }
+  .home .sector-card .icon { width: 44px; height: 44px; font-size: 1.5rem; }
+}
+
+/* ── Fix hero text clipping ───────────────────────── */
+.home .hero-content { overflow: visible; }
+.home .hero-slide { object-position: center; }
+
+/* ── Home card images responsive ──────────────────── */
+@media (max-width: 768px) {
+  .home .product-card .card-image img,
+  .home .offer-card .card-image img,
+  .home .sector-card .icon,
+  .home .formation-img { object-fit: contain; background: #f8f9fa; }
+  .home .product-card .card-image,
+  .home .offer-card .card-image { background: #f8f9fa; }
 }

@@ -147,3 +147,22 @@
   .no-print, header, footer, nav, [class*="btn"], [class*="button"] { display: none !important; }
   body { font-size: 12pt; color: #000; background: #fff; }
 }
+
+/* ── Fix extra space on pages ─────────────────────── */
+.site-main > *:first-child { margin-top: 0; }
+.site-main > *:last-child { margin-bottom: 0; }
+footer { margin-top: 0; }
+
+/* ── Fix hover on touch devices ───────────────────── */
+@media (hover: none) and (pointer: coarse) {
+  .pp-pill:hover, .pcat-pill:hover, .pp-add-btn:hover,
+  .pcat-solid-btn:hover, .pcat-outline-btn:hover,
+  .pp-card:hover, .pcat-product-card:hover,
+  .sector-card:hover, .product-card:hover,
+  .offer-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .pp-pill.is-active:hover { transform: none !important; }
+  a:hover, button:hover { opacity: 0.9; }
+}

@@ -424,6 +424,17 @@
     }
   }
   
+@media (max-width: 640px) {
+    .newsletter-input {
+      padding: 10px 12px;
+      font-size: 0.9rem;
+    }
+    .newsletter-btn {
+      padding: 10px 16px;
+      font-size: 0.95rem;
+    }
+  }
+  
   @media (max-width: 480px) {
     .newsletter-form {
       flex-direction: column;
@@ -431,6 +442,19 @@
   
     .newsletter-btn {
       width: 100%;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+    }
+  
+    .social-icons {
+      justify-content: center;
+    }
+  }
+  
+    .newsletter-btn {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 0.95rem;
     }
   
     .social-icons {

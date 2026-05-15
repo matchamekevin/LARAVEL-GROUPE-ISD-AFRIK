@@ -182,3 +182,16 @@
   .pp-search { max-width: none; }
   .pp-search-wrapper--compact .pp-search { max-width: none; }
 }
+
+@media (max-width: 640px) {
+  .pp-search { padding: 8px 12px; border-radius: 10px; }
+  .pp-search input[type="search"] { font-size: 0.85rem; padding: 4px 2px; }
+  .pp-search-icon { width: 16px; height: 16px; }
+}
+
+@media (max-width: 480px) {
+  .pp-search-wrapper { margin: 8px 0 12px; }
+  .pp-search { padding: 6px 10px; border-radius: 10px; gap: 8px; }
+  .pp-search input[type="search"] { font-size: 0.82rem; padding: 4px 2px; }
+  .pp-search-icon { width: 14px; height: 14px; }
+}

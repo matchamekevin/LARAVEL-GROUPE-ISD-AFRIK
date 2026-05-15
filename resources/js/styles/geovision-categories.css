@@ -1177,3 +1177,8 @@
   .pp-grid { grid-template-columns: 1fr; max-width: 380px; margin-inline: auto; }
   .pp-card .pp-desc { -webkit-line-clamp: 3; }
 }
+
+@media (max-width: 768px) {
+  .pp-image { object-fit: contain; background: #f8fafc; }
+  .pp-image-wrap { background: #f8fafc; }
+}
