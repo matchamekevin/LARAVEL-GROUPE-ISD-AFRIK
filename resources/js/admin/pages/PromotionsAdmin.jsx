@@ -5,13 +5,15 @@ import {
   updateHomeMarketingCard,
   deleteHomeMarketingCard,
 } from '../api';
-import Loader from '../components/Loader';
-import AdminToast, { useAdminToast } from '../components/AdminToast';
+import Loader from '../../components/Loader';
+import { toastError, toastSuccess } from '../../utils/toast';
+import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
 import { HOME_MARKETING_SECTIONS, normalizeMarketingTarget } from '../../utils/homeMarketingCards';
 import '../styles/admin-shared.css';
 import '../styles/catalogue-admin.css';
 import '../styles/promotions.css';
+import SearchBar from '../../components/SearchBar';
 
 const SECTION_OPTIONS = [
   {
@@ -72,7 +74,7 @@ export default function PromotionsAdmin() {
    const [bulkDeleting, setBulkDeleting] = useState(false);
    const cardSelectionRef = useRef(null);
 
-   const { toast, showToast } = useAdminToast();
+
 
    function getCardImageSrc(card) {
      if (card?.image_url) return card.image_url;
@@ -97,7 +99,7 @@ export default function PromotionsAdmin() {
      } catch (err) {
        console.error(err);
        setCards([]);
-       showToast('Impossible de charger les promotions', 'error');
+       toastError('Impossible de charger les promotions');
      } finally {
        setLoading(false);
      }
@@ -156,17 +158,17 @@ export default function PromotionsAdmin() {
     const editing = Boolean(editingId);
 
     if (!form.title.trim()) {
-      showToast('Le nom interne de la promotion est obligatoire', 'error');
+      toastError('Le nom interne de la promotion est obligatoire');
       return;
     }
 
     if (!form.target_url.trim()) {
-      showToast("L'URL de redirection est obligatoire", 'error');
+      toastError("L'URL de redirection est obligatoire");
       return;
     }
 
     if (!editingId && !form.image) {
-      showToast('Veuillez ajouter une image', 'error');
+      toastError('Veuillez ajouter une image');
       return;
     }
 
@@ -190,9 +192,10 @@ export default function PromotionsAdmin() {
 
       closeModal();
       await loadData();
-      showToast(editing ? 'Promotion mise a jour.' : 'Promotion creee.', 'success');
+      toastSuccess(editing ? 'Promotion mise a jour.' : 'Promotion creee.');
+      notifyMutation();
     } catch (err) {
-      showToast(err?.response?.data?.message || 'Erreur enregistrement promotion', 'error');
+      toastError(err?.response?.data?.message || 'Erreur enregistrement promotion');
     } finally {
       setSaving(false);
     }
@@ -265,16 +268,16 @@ export default function PromotionsAdmin() {
     setSelectedCardIds(new Set());
 
     if (deletedCount > 0) {
-      showToast(
+      toastSuccess(
         failedCount > 0
           ? `${deletedCount} promotion(s) supprimee(s).`
-          : `${deletedCount} promotion(s) supprimee(s) avec succes.`,
-        'success'
+          : `${deletedCount} promotion(s) supprimee(s) avec succes.`
       );
+      notifyMutation();
     }
 
     if (failedCount > 0) {
-      showToast(lastErrorMessage || `${failedCount} promotion(s) non supprimee(s).`, 'error');
+      toastError(lastErrorMessage || `${failedCount} promotion(s) non supprimee(s).`);
     }
 
     setBulkDeleting(false);
@@ -293,10 +296,11 @@ export default function PromotionsAdmin() {
         return next;
       });
       if (editingId === id) closeModal();
-      showToast('Promotion supprimee.', 'success');
+      toastSuccess('Promotion supprimee.');
+      notifyMutation();
     } catch (err) {
       console.error(err);
-      showToast('Erreur suppression promotion', 'error');
+      toastError('Erreur suppression promotion');
     }
   }
 
@@ -388,11 +392,11 @@ export default function PromotionsAdmin() {
         </section>
 
         <section className="card admin-promotions-toolbar">
-          <input
-            type="text"
+          <SearchBar
             placeholder="Rechercher une promotion (titre ou redirection)..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            compact
           />
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             {STATUS_FILTER_OPTIONS.map((option) => (
@@ -443,7 +447,7 @@ export default function PromotionsAdmin() {
             <p>{activeSectionMeta.description}</p>
           </div>
 
-          {loading ? <Loader /> : (
+          {loading ? <Loader variant="spinner" /> : (
             filteredCards.length === 0 ? (
               <div className="admin-promotions-empty-box">Aucune promotion trouvee pour les filtres actuels.</div>
             ) : (

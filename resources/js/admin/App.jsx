@@ -15,11 +15,12 @@ import CollaboratorsAdmin from './pages/CollaboratorsAdmin';
 import PartnersAdmin from './pages/PartnersAdmin';
 import IngenieriePageAdmin from './pages/IngenieriePageAdmin';
 import Login from './pages/Login';
-import Loader from './components/Loader';
+import Loader from '../components/Loader';
 import ScrollToTop from '../components/ScrollToTop';
 import { ADMIN_NAV_ITEMS } from './config/navigation';
 
 import { clearAdminToken, hasAdminToken, logout, me } from './api';
+import "../../styles/responsive.css";
 
 const navListItemStyle = { marginBottom: '0.75rem' };
 const navIconStyle = { marginRight: '0.5rem' };
@@ -115,7 +116,7 @@ export default function App() {
     return () => clearInterval(intervalId);
   }, [user]);
 
-  if (loading) return <Loader />;
+  if (loading) return <Loader variant="spinner" size="lg" overlay text="Chargement..." />;
 
   if (!user) {
     return (

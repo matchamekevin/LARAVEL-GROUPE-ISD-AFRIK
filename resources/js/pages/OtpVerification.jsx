@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import Loader from "../components/Loader";
 import { tokenService } from "../services/tokenService";
 import { apiClient } from "../api/axiosConfig";
+import { toastError, toastSuccess } from "../utils/toast";
 import "../styles/otp.css";
 
 export default function OtpVerification() {
   const [code, setCode] = useState("");
   const [showCode, setShowCode] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -31,11 +31,8 @@ export default function OtpVerification() {
   }), [location.state?.post_login_intent, location.state?.post_login_payload]);
 
   const verifyOtp = useCallback(async (otpCode) => {
-    setError(null);
-    setSuccess(null);
-
     if (!otpCode || otpCode.length < 6) {
-      setError("Veuillez entrer un code à 6 chiffres");
+      toastError("Veuillez entrer un code à 6 chiffres");
       return;
     }
 
@@ -59,16 +56,16 @@ export default function OtpVerification() {
         }
         window.dispatchEvent(new Event("userUpdated"));
 
-        setSuccess("✓ Connexion réussie");
+        toastSuccess("✓ Connexion réussie");
         setTimeout(() => navigate(redirectTarget, { replace: true, state: postLoginState }), 500);
       } else {
-        setError("Réponse inattendue du serveur");
+        toastError("Réponse inattendue du serveur");
       }
     } catch (err) {
       console.error("[OTP] ❌ Erreur verify-2fa:", err.response?.data || err.message);
       const errorMsg =
         err.response?.data?.message || "Code OTP invalide ou expiré";
-      setError(errorMsg);
+      toastError(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -81,8 +78,6 @@ export default function OtpVerification() {
 
   const handleResend = async () => {
     if (!user_id || resendCooldown > 0) return;
-    setError(null);
-    setSuccess(null);
     setResendLoading(true);
 
     try {
@@ -92,13 +87,11 @@ export default function OtpVerification() {
         { user_id, portal }
       );
       console.log('[OTP] ✅ OTP renvoyé:', res.data);
-      setSuccess(res.data.message || "Code renvoyé avec succès");
-
+      const msg = res.data.message || "Code renvoyé avec succès";
       if (res.data.code) {
-        setSuccess(
-          (prev) =>
-            (prev ? prev + ` — code: ${res.data.code}` : `code: ${res.data.code}`)
-        );
+        toastSuccess(`${msg} — code: ${res.data.code}`);
+      } else {
+        toastSuccess(msg);
       }
 
       setResendCooldown(30);
@@ -113,7 +106,7 @@ export default function OtpVerification() {
       }, 1000);
     } catch (err) {
       console.error("[OTP] ❌ Erreur resend-2fa:", err.response?.data || err.message);
-      setError(
+      toastError(
         err.response?.data?.message || "Impossible de renvoyer le code"
       );
     } finally {
@@ -169,20 +162,6 @@ export default function OtpVerification() {
           </p>
           <p className="otp-email">{email}</p>
 
-          {/* Messages */}
-          {success && (
-            <div className="alert alert-success">
-              <i className="fas fa-check-circle"></i>
-              <span>{success}</span>
-            </div>
-          )}
-          {error && (
-            <div className="alert alert-error">
-              <i className="fas fa-exclamation-circle"></i>
-              <span>{error}</span>
-            </div>
-          )}
-
           <form onSubmit={handleVerifyOtp} className="otp-form">
             {/* Input avec toggle visibilité */}
             <div className="otp-input-wrapper">
@@ -220,7 +199,7 @@ export default function OtpVerification() {
             <button type="submit" className="otp-submit-btn" disabled={isSubmitting || code.length < 6}>
               {isSubmitting ? (
                 <>
-                  <i className="fas fa-spinner fa-spin"></i>
+                  <Loader variant="inline" size="sm" />
                   Vérification...
                 </>
               ) : (

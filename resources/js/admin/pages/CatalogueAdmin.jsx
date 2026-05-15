@@ -12,11 +12,13 @@ import {
   uploadProductImages,
 } from '../api';
 import { useLivePolling } from '../../hooks/useLivePolling';
-import Loader from '../components/Loader';
-import AdminToast, { useAdminToast } from '../components/AdminToast';
+import Loader from '../../components/Loader';
+import { toastError, toastSuccess } from '../../utils/toast';
+import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
 import '../styles/admin-shared.css';
 import '../styles/catalogue-admin.css';
+import SearchBar from '../../components/SearchBar';
 
 const GEOVISION_SEGMENT = 'geovision';
 
@@ -231,7 +233,7 @@ export default function CatalogueAdmin() {
   const [familyQuery, setFamilyQuery] = useState('');
   const [modelQuery, setModelQuery] = useState('');
   const [modelCategoryFilter, setModelCategoryFilter] = useState('all');
-  const { toast, showToast } = useAdminToast();
+
 
   const activeTab = section === 'modeles' || section === 'categories' || section === 'familles' ? section : null;
 
@@ -567,7 +569,7 @@ export default function CatalogueAdmin() {
   useLivePolling(
     () => Promise.all([backgroundLoadCategories(), backgroundLoadModels()]),
     {
-      intervalMs: 8000,
+      intervalMs: 3000,
       enabled: !savingCategory && !savingModel,
     }
   );
@@ -602,18 +604,18 @@ export default function CatalogueAdmin() {
       setCategoryEditorOpen(false);
       setCategoryEditorKind('categorie');
       await loadCategories();
-      showToast(
+      toastSuccess(
         isEditingCategory
           ? (isFamilyEditor ? 'Famille GeoVision mise a jour.' : 'Categorie GeoVision mise a jour.')
-          : (isFamilyEditor ? 'Famille GeoVision creee.' : 'Categorie GeoVision creee.'),
-        'success'
+          : (isFamilyEditor ? 'Famille GeoVision creee.' : 'Categorie GeoVision creee.')
       );
+      notifyMutation();
     } catch (err) {
       const errors = err?.response?.data?.errors;
       const details = errors
         ? Object.values(errors).flat().join('\n')
         : '';
-      showToast(details || err?.response?.data?.message || 'Erreur sauvegarde categorie GeoVision', 'error');
+      toastError(details || err?.response?.data?.message || 'Erreur sauvegarde categorie GeoVision');
     } finally {
       setSavingCategory(false);
     }
@@ -821,16 +823,16 @@ export default function CatalogueAdmin() {
     setSelectedFamilyIds(new Set());
 
     if (deletedCount > 0) {
-      showToast(
+      toastSuccess(
         failedCount > 0
           ? `${deletedCount} famille(s) supprimee(s).`
-          : `${deletedCount} famille(s) supprimee(s) avec succes.`,
-        'success'
+          : `${deletedCount} famille(s) supprimee(s) avec succes.`
       );
+      notifyMutation();
     }
 
     if (failedCount > 0) {
-      showToast(lastErrorMessage || `${failedCount} famille(s) non supprimee(s).`, 'error');
+      toastError(lastErrorMessage || `${failedCount} famille(s) non supprimee(s).`);
     }
 
     setBulkFamilyDeleting(false);
@@ -890,16 +892,16 @@ export default function CatalogueAdmin() {
     setSelectedCategoryIds(new Set());
 
     if (deletedCount > 0) {
-      showToast(
+      toastSuccess(
         failedCount > 0
           ? `${deletedCount} categorie(s) supprimee(s).`
-          : `${deletedCount} categorie(s) supprimee(s) avec succes.`,
-        'success'
+          : `${deletedCount} categorie(s) supprimee(s) avec succes.`
       );
+      notifyMutation();
     }
 
     if (failedCount > 0) {
-      showToast(lastErrorMessage || `${failedCount} categorie(s) non supprimee(s).`, 'error');
+      toastError(lastErrorMessage || `${failedCount} categorie(s) non supprimee(s).`);
     }
 
     setBulkCategoryDeleting(false);
@@ -955,16 +957,16 @@ export default function CatalogueAdmin() {
     setSelectedModelIds(new Set());
 
     if (deletedCount > 0) {
-      showToast(
+      toastSuccess(
         failedCount > 0
           ? `${deletedCount} modele(s) supprime(s).`
-          : `${deletedCount} modele(s) supprime(s) avec succes.`,
-        'success'
+          : `${deletedCount} modele(s) supprime(s) avec succes.`
       );
+      notifyMutation();
     }
 
     if (failedCount > 0) {
-      showToast(lastErrorMessage || `${failedCount} modele(s) non supprime(s).`, 'error');
+      toastError(lastErrorMessage || `${failedCount} modele(s) non supprime(s).`);
     }
 
     setBulkModelDeleting(false);
@@ -986,9 +988,10 @@ export default function CatalogueAdmin() {
         next.delete(Number(id));
         return next;
       });
-      showToast('Categorie GeoVision supprimee.', 'success');
+      toastSuccess('Categorie GeoVision supprimee.');
+      notifyMutation();
     } catch (err) {
-      showToast('Erreur suppression categorie', 'error');
+      toastError('Erreur suppression categorie');
     }
   }
 
@@ -997,11 +1000,11 @@ export default function CatalogueAdmin() {
     const editing = Boolean(editingModelId);
 
     if (!modelForm.title.trim()) {
-      showToast('Le titre du modele est obligatoire.', 'error');
+      toastError('Le titre du modele est obligatoire.');
       return;
     }
     if (!modelForm.id_categorie) {
-      showToast('La categorie GeoVision est obligatoire.', 'error');
+      toastError('La categorie GeoVision est obligatoire.');
       return;
     }
 
@@ -1009,7 +1012,7 @@ export default function CatalogueAdmin() {
     const selectedCategory = categoriesById.get(selectedCategoryId);
     const selectedCategoryHasChildren = categoryChildIds.has(selectedCategoryId);
     if (!selectedCategory || !getCategoryParentId(selectedCategory) || selectedCategoryHasChildren) {
-      showToast('Selectionnez une sous-categorie finale (pas une famille parent).', 'error');
+      toastError('Selectionnez une sous-categorie finale (pas une famille parent).');
       return;
     }
 
@@ -1043,13 +1046,14 @@ export default function CatalogueAdmin() {
       setModelEditorOpen(false);
       setModelImageFiles([]);
       await loadModels();
-      showToast(editing ? 'Modele GeoVision mis a jour.' : 'Modele GeoVision cree.', 'success');
+      toastSuccess(editing ? 'Modele GeoVision mis a jour.' : 'Modele GeoVision cree.');
+      notifyMutation();
     } catch (err) {
       const errors = err?.response?.data?.errors;
       const details = errors
         ? Object.values(errors).flat().join('\n')
         : '';
-      showToast(details || err?.response?.data?.message || 'Erreur sauvegarde modele GeoVision', 'error');
+      toastError(details || err?.response?.data?.message || 'Erreur sauvegarde modele GeoVision');
     } finally {
       setSavingModel(false);
     }
@@ -1091,9 +1095,10 @@ export default function CatalogueAdmin() {
         next.delete(Number(id));
         return next;
       });
-      showToast('Modele GeoVision supprime.', 'success');
+      toastSuccess('Modele GeoVision supprime.');
+      notifyMutation();
     } catch (err) {
-      showToast('Erreur suppression modele GeoVision', 'error');
+      toastError('Erreur suppression modele GeoVision');
     }
   }
 
@@ -1132,10 +1137,11 @@ export default function CatalogueAdmin() {
                   </div>
             </div>
             <div className="admin-catalogue-filters">
-              <input
+              <SearchBar
                 placeholder="Rechercher categorie, slug, description..."
                 value={categoryQuery}
                 onChange={(e) => setCategoryQuery(e.target.value)}
+                compact
               />
             </div>
 
@@ -1278,7 +1284,7 @@ export default function CatalogueAdmin() {
             </div>
 
             <div className="admin-catalogue-filters admin-catalogue-filters-2">
-              <input placeholder="Rechercher titre, reference, modele..." value={modelQuery} onChange={(e) => setModelQuery(e.target.value)} />
+              <SearchBar placeholder="Rechercher titre, reference, modele..." value={modelQuery} onChange={(e) => setModelQuery(e.target.value)} compact />
               <select value={modelCategoryFilter} onChange={(e) => setModelCategoryFilter(e.target.value)}>
                 <option value="all">Toutes categories</option>
                 {modelCategoryOptions.map((cat) => {
@@ -1435,10 +1441,11 @@ export default function CatalogueAdmin() {
             </div>
 
             <div className="admin-catalogue-filters">
-              <input
+              <SearchBar
                 placeholder="Rechercher famille, slug, description..."
                 value={familyQuery}
                 onChange={(e) => setFamilyQuery(e.target.value)}
+                compact
               />
             </div>
 
@@ -1887,7 +1894,7 @@ export default function CatalogueAdmin() {
         </div>
       )}
 
-      <AdminToast toast={toast} />
+
       </div>
   );
 }

@@ -3,7 +3,6 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\CategorieProduitResource;
 
 class ProduitResource extends JsonResource
@@ -32,20 +31,6 @@ class ProduitResource extends JsonResource
         return null;
     }
 
-    private function storageFileExists(string $path): bool
-    {
-        $candidate = ltrim(trim($path), '/');
-        if ($candidate === '') {
-            return false;
-        }
-
-        try {
-            return Storage::disk('public')->exists($candidate);
-        } catch (\Throwable $exception) {
-            return false;
-        }
-    }
-
     private function normalizeImageUrl(?string $value): ?string
     {
         $url = trim((string) ($value ?? ''));
@@ -64,10 +49,6 @@ class ProduitResource extends JsonResource
 
         $storagePath = $this->extractStoragePath($url);
         if ($storagePath !== null) {
-            if (!$this->storageFileExists($storagePath)) {
-                return null;
-            }
-
             return '/storage/' . ltrim($storagePath, '/');
         }
 
@@ -123,7 +104,7 @@ class ProduitResource extends JsonResource
             'categorie'     => new CategorieProduitResource($this->whenLoaded('categorie')),
             'images'        => ImageResource::collection($this->whenLoaded('images')),
             'commentaires'  => CommentaireResource::collection($this->whenLoaded('commentaires')),
-            'image_url'     => $this->normalizeImageUrl($this->images->first()?->url ?? $this->images->first()?->path) ?? '/images/default.webp',
+            'image_url'     => $this->normalizeImageUrl($this->images->first()?->url ?? $this->images->first()?->path) ?? '/images/produits/proj.webp',
             'image_urls'    => $this->whenLoaded('images', fn () => $this->images
                 ->map(fn ($image) => $this->normalizeImageUrl($image->url ?? $image->path))
                 ->filter()

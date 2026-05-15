@@ -2,6 +2,8 @@ import React from "react";
 import "../styles/home.css";
 import usePageMeta from "../hooks/usePageMeta";
 import { submitContactMessage } from "../admin/api";
+import { notifyMutation } from "../utils/mutationBus";
+import { toastError, toastSuccess } from "../utils/toast";
 
 export default function Contact() {
     usePageMeta(
@@ -17,7 +19,6 @@ export default function Contact() {
         message: "",
     });
     const [sending, setSending] = React.useState(false);
-    const [feedback, setFeedback] = React.useState(null);
 
     const onChange = (key) => (e) => {
         setForm((prev) => ({ ...prev, [key]: e.target.value }));
@@ -26,15 +27,15 @@ export default function Contact() {
     const onSubmit = async (e) => {
         e.preventDefault();
         setSending(true);
-        setFeedback(null);
 
         try {
             await submitContactMessage(form);
             setForm({ nom_complet: "", email: "", telephone: "", sujet: "", message: "" });
-            setFeedback({ type: "success", text: "Message envoyé. Nous vous répondrons rapidement." });
+            notifyMutation();
+            toastSuccess("Message envoyé. Nous vous répondrons rapidement.");
         } catch (err) {
             const msg = err?.response?.data?.message || "Impossible d'envoyer le message pour le moment.";
-            setFeedback({ type: "error", text: msg });
+            toastError(msg);
         } finally {
             setSending(false);
         }
@@ -105,11 +106,6 @@ export default function Contact() {
                                 <label htmlFor="contact-message">Message</label>
                                 <textarea id="contact-message" rows="5" placeholder="Decrivez votre besoin" value={form.message} onChange={onChange("message")} required />
                             </div>
-                            {feedback && (
-                                <p style={{ color: feedback.type === "success" ? "#166534" : "#b91c1c", marginBottom: "0.75rem" }}>
-                                    {feedback.text}
-                                </p>
-                            )}
                             <div className="contact-form-actions">
                                 <button className="btn-primary" type="submit" disabled={sending}>
                                     <i className="fas fa-paper-plane"></i> {sending ? "Envoi..." : "Envoyer"}

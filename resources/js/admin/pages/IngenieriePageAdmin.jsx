@@ -1,13 +1,15 @@
 import { submitContactMessage } from '../api';
 import React, { useEffect, useMemo, useState } from 'react';
-import Loader from '../components/Loader';
-import AdminToast, { useAdminToast } from '../components/AdminToast';
+import Loader from '../../components/Loader';
+import { toastError, toastSuccess } from "../../utils/toast";
+import { notifyMutation } from "../../utils/mutationBus";
 import { useLivePolling } from '../../hooks/useLivePolling';
 import { createCategory, deleteCategory, getCategories, updateCategory } from '../api';
 import { INGENIERIE_DEFAULT_DOMAINES } from '../../data/ingenierieDomains';
 import '../styles/admin-shared.css';
 import '../styles/catalogue-admin.css';
 import '../styles/ingenierie-page-admin.css';
+import SearchBar from '../../components/SearchBar';
 
 const INGENIERIE_SEGMENT = 'ingenierie-page';
 
@@ -97,7 +99,6 @@ export default function IngenieriePageAdmin() {
   const [editingDomainId, setEditingDomainId] = useState(null);
   const [editingServiceId, setEditingServiceId] = useState(null);
   const [domainUploadPreview, setDomainUploadPreview] = useState('');
-  const { toast, showToast } = useAdminToast();
 
   const domaines = useMemo(() => {
     const dbDomaines = categories
@@ -183,7 +184,7 @@ export default function IngenieriePageAdmin() {
         setCategories([]);
       }
       if (!silent) {
-        showToast('Impossible de charger les domaines Ingenierie.', 'error');
+        toastError('Impossible de charger les domaines Ingenierie.');
       }
     } finally {
       if (showLoader) {
@@ -262,18 +263,19 @@ export default function IngenieriePageAdmin() {
       };
 
       if (!payload.nom_complet || !payload.email || !payload.message) {
-        showToast('Nom, email et message obligatoires.', 'error');
+        toastError('Nom, email et message obligatoires.');
         return;
       }
 
       await submitContactMessage(payload);
-      showToast('Email envoyé.', 'success');
+      toastSuccess('Email envoyé.');
+      notifyMutation();
       setSelectedForMail(new Set());
       setMailModalOpen(false);
       setMailForm({ nom_complet: '', email: '', telephone: '', sujet: '', message: '' });
       await loadCategories({ showLoader: false, silent: true });
     } catch (err) {
-      showToast(err?.response?.data?.message || 'Erreur lors de l envoi.', 'error');
+      toastError(err?.response?.data?.message || 'Erreur lors de l envoi.');
     }
   };
 
@@ -357,9 +359,10 @@ export default function IngenieriePageAdmin() {
 
       closeDomainModal();
       await loadCategories({ showLoader: false, silent: true });
-      showToast(editingDomainId ? 'Domaine mis a jour.' : 'Domaine cree.', 'success');
+      toastSuccess(editingDomainId ? 'Domaine mis a jour.' : 'Domaine cree.');
+      notifyMutation();
     } catch (error) {
-      showToast(error?.response?.data?.message || 'Erreur lors de la sauvegarde du domaine.', 'error');
+      toastError(error?.response?.data?.message || 'Erreur lors de la sauvegarde du domaine.');
     } finally {
       setSaving(false);
     }
@@ -379,7 +382,7 @@ export default function IngenieriePageAdmin() {
       };
 
       if (!payload.parent_id) {
-        showToast('Selectionnez un domaine parent pour ce service.', 'error');
+        toastError('Selectionnez un domaine parent pour ce service.');
         return;
       }
 
@@ -391,9 +394,10 @@ export default function IngenieriePageAdmin() {
 
       closeServiceModal();
       await loadCategories({ showLoader: false, silent: true });
-      showToast(editingServiceId ? 'Service mis a jour.' : 'Service cree.', 'success');
+      toastSuccess(editingServiceId ? 'Service mis a jour.' : 'Service cree.');
+      notifyMutation();
     } catch (error) {
-      showToast(error?.response?.data?.message || 'Erreur lors de la sauvegarde du service.', 'error');
+      toastError(error?.response?.data?.message || 'Erreur lors de la sauvegarde du service.');
     } finally {
       setSaving(false);
     }
@@ -406,9 +410,10 @@ export default function IngenieriePageAdmin() {
     try {
       await deleteCategory(id, { force: true });
       await loadCategories({ showLoader: false, silent: true });
-      showToast('Element supprime.', 'success');
+      toastSuccess('Element supprime.');
+      notifyMutation();
     } catch (error) {
-      showToast(error?.response?.data?.message || 'Suppression impossible.', 'error');
+      toastError(error?.response?.data?.message || 'Suppression impossible.');
     } finally {
       setSaving(false);
     }
@@ -476,19 +481,19 @@ export default function IngenieriePageAdmin() {
       }
 
       await loadCategories({ showLoader: false, silent: true });
-      showToast('Domaines Ingenierie initialises.', 'success');
+      toastSuccess('Domaines Ingenierie initialises.');
+      notifyMutation();
     } catch (error) {
-      showToast(error?.response?.data?.message || 'Initialisation impossible.', 'error');
+      toastError(error?.response?.data?.message || 'Initialisation impossible.');
     } finally {
       setSeeding(false);
     }
   };
 
-  if (loading) return <Loader />;
+  if (loading) return <Loader variant="spinner" size="lg" text="Chargement..." />;
 
   return (
     <div className="admin-page admin-page-max admin-ingenierie-page">
-      <AdminToast toast={toast} />
 
       <section className="admin-hero admin-ingenierie-hero">
         <div className="admin-hero-content">
@@ -526,21 +531,13 @@ export default function IngenieriePageAdmin() {
         </div>
 
         <div className="admin-isearch">
-          <div className="admin-isearch-bar">
-            <span className="admin-isearch-icon material-symbols-outlined">search</span>
-            <input
-              className="admin-isearch-input"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Rechercher domaine, service ou contenu detail..."
-            />
-            <span className="admin-isearch-count">{filteredDomaines.length}</span>
-            {!!search && (
-              <button type="button" className="admin-isearch-clear" onClick={() => setSearch('')} aria-label="Effacer la recherche">
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            )}
-          </div>
+          <SearchBar
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            onClear={() => setSearch('')}
+            placeholder="Rechercher domaine, service ou contenu detail..."
+            compact
+          />
           {!!search && (
             <div className="admin-isearch-hint">
               {filteredDomaines.length === 0

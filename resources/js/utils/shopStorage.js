@@ -1,3 +1,5 @@
+import { notifyMutation } from "./mutationBus";
+
 const FAVORITES_KEY_PREFIX = "isd_favorites";
 const CART_KEY_PREFIX = "isd_cart";
 const GUEST_ID_KEY = "isd_guest_id";
@@ -188,6 +190,7 @@ export function toggleFavorite(product) {
     : [snapshot, ...list];
 
   writeArray(FAVORITES_KEY_PREFIX, scope, next);
+  notifyMutation();
 
   return {
     isFavorite: !exists,
@@ -229,6 +232,7 @@ export function addToCart(product, quantite = 1) {
   }
 
   writeArray(CART_KEY_PREFIX, scope, list);
+  notifyMutation();
   return list;
 }
 
@@ -253,12 +257,15 @@ export function setCartItemQuantity(productId, quantite) {
 }
 
 export function removeFromCart(productId) {
-  return setCartItemQuantity(productId, 0);
+  const result = setCartItemQuantity(productId, 0);
+  notifyMutation();
+  return result;
 }
 
 export function clearCart() {
   const scope = ensureScopeReady();
   writeArray(CART_KEY_PREFIX, scope, []);
+  notifyMutation();
 }
 
 export function getCartCount() {

@@ -12,12 +12,14 @@ import {
 import { resolveFormationImageUrl } from '../../utils/mediaUrl';
 import { getApiBase } from '../../utils/apiBase';
 import { useLivePolling } from '../../hooks/useLivePolling';
-import Loader from '../components/Loader';
-import AdminToast, { useAdminToast } from '../components/AdminToast';
+import Loader from '../../components/Loader';
+import { toastError, toastSuccess } from '../../utils/toast';
+import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
 import '../styles/admin-shared.css';
 import '../styles/formations.css';
 import '../styles/products.css';
+import SearchBar from '../../components/SearchBar';
 
 const INITIAL_FORM = {
   titre: '',
@@ -54,7 +56,7 @@ export default function Formations() {
   const [bulkFormationDeleting, setBulkFormationDeleting] = useState(false);
   const formationSelectionRef = useRef(null);
   const formationHeaderSelectionRef = useRef(null);
-  const { toast, showToast } = useAdminToast();
+
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -219,7 +221,7 @@ export default function Formations() {
   useLivePolling(
     () => backgroundLoadFormations(),
     {
-      intervalMs: 8000,
+      intervalMs: 3000,
       enabled: !saving && !loading,
     }
   );
@@ -253,10 +255,11 @@ export default function Formations() {
       setNewFormation(INITIAL_FORM);
       setCreateModalOpen(false);
       await loadFormations();
-      showToast('Formation creee avec succes.', 'success');
+      toastSuccess('Formation creee avec succes.');
+      notifyMutation();
     } catch (err) {
       console.error('Erreur création formation', err);
-      showToast(err?.response?.data?.message || 'Erreur creation formation', 'error');
+      toastError(err?.response?.data?.message || 'Erreur creation formation');
     } finally {
       setSaving(false);
     }
@@ -325,16 +328,16 @@ export default function Formations() {
     setSelectedFormationIds(new Set());
 
     if (deletedCount > 0) {
-      showToast(
+      toastSuccess(
         failedCount > 0
           ? `${deletedCount} formation(s) supprimee(s).`
-          : `${deletedCount} formation(s) supprimee(s) avec succes.`,
-        'success'
+          : `${deletedCount} formation(s) supprimee(s) avec succes.`
       );
+      notifyMutation();
     }
 
     if (failedCount > 0) {
-      showToast(lastErrorMessage || `${failedCount} formation(s) non supprimee(s).`, 'error');
+      toastError(lastErrorMessage || `${failedCount} formation(s) non supprimee(s).`);
     }
 
     setBulkFormationDeleting(false);
@@ -351,10 +354,11 @@ export default function Formations() {
         return next;
       });
       setRefreshToken((t) => t + 1);
-      showToast('Formation supprimee.', 'success');
+      toastSuccess('Formation supprimee.');
+      notifyMutation();
     } catch (err) {
       console.error('Erreur suppression formation', err);
-      showToast('Erreur suppression formation', 'error');
+      toastError('Erreur suppression formation');
     }
   }
 
@@ -404,10 +408,11 @@ export default function Formations() {
       }
 
       await loadFormations();
-      showToast('Formation mise a jour avec succes.', 'success');
+      toastSuccess('Formation mise a jour avec succes.');
+      notifyMutation();
     } catch (err) {
       console.error('Erreur update formation', err);
-      showToast(err?.response?.data?.message || 'Erreur mise a jour formation', 'error');
+      toastError(err?.response?.data?.message || 'Erreur mise a jour formation');
     }
   }
 
@@ -484,12 +489,13 @@ export default function Formations() {
       }
 
       await loadFormations();
-      showToast('Formation mise a jour avec succes.', 'success');
+      toastSuccess('Formation mise a jour avec succes.');
+      notifyMutation();
       setEditModalOpen(false);
       setEditForm(null);
     } catch (err) {
       console.error('Erreur update formation', err);
-      showToast(err?.response?.data?.message || 'Erreur mise a jour formation', 'error');
+      toastError(err?.response?.data?.message || 'Erreur mise a jour formation');
     } finally {
       setSaving(false);
     }
@@ -518,13 +524,14 @@ export default function Formations() {
         </div>
 
         <div className="admin-formations-searchbar">
-          <input
+          <SearchBar
             placeholder="Rechercher par titre ou description..."
             value={searchInput}
             onChange={(e) => {
               setSearchInput(e.target.value);
               setPage(1);
             }}
+            compact
           />
           <select
             value={categorie}
@@ -915,7 +922,7 @@ export default function Formations() {
         </div>
       )}
 
-      <AdminToast toast={toast} />
+
     </div>
   );
 }

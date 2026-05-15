@@ -47,4 +47,74 @@
 
 .toast-error { border-left-color: #dc2626; background: #fff6f6; }
 .toast-success { border-left-color: #10b981; background: #f0fdf4; }
+.toast-warning { border-left-color: #f59e0b; background: #fffbeb; }
 .toast-info { border-left-color: #0ea5e9; background: #f0f9ff; }
+
+/* ── Confirm Dialog ──────────────────────────────── */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.confirm-dialog {
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px 30px 22px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+}
+
+.confirm-title {
+  margin: 0 0 10px;
+  color: #172243;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.confirm-message {
+  margin: 0 0 22px;
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.confirm-btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.confirm-btn--cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.confirm-btn--cancel:hover {
+  background: #e2e8f0;
+}
+
+.confirm-btn--confirm {
+  background: #172243;
+  color: #fff;
+}
+
+.confirm-btn--confirm:hover {
+  background: #0d1529;
+}

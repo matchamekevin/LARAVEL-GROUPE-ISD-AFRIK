@@ -2,7 +2,10 @@ import React, { useCallback, useDeferredValue, useEffect, useState } from "react
 import { Link, useNavigate, useParams } from "react-router-dom";
 import "../styles/home.css";
 import "../styles/geovision-categories.css";
+import SearchBar from "../components/SearchBar";
+import Loader from "../components/Loader";
 import { getCategorie, getCategorieBySlug, getProduits } from "../services/ProduitService";
+import { toastError } from "../utils/toast";
 import { useLivePolling } from "../hooks/useLivePolling";
 import {
   getCategoryChildren,
@@ -140,7 +143,9 @@ export default function GeovisionCategorie() {
     } catch (requestError) {
       if (!isSilent) {
         setProducts([]);
-        setError(requestError.response?.data?.message || "Impossible de charger les modèles GeoVision.");
+        const prodErr = requestError.response?.data?.message || "Impossible de charger les modèles GeoVision.";
+        toastError(prodErr);
+        setError(prodErr);
       }
     } finally {
       if (!isSilent) {
@@ -166,7 +171,9 @@ export default function GeovisionCategorie() {
     } catch (requestError) {
       if (!isSilent) {
         setCategory(null);
-        setError(requestError.response?.data?.message || "Catégorie GeoVision introuvable.");
+        const catErr = requestError.response?.data?.message || "Catégorie GeoVision introuvable.";
+        toastError(catErr);
+        setError(catErr);
       }
     } finally {
       if (!isSilent) {
@@ -187,12 +194,12 @@ export default function GeovisionCategorie() {
 
   // Polling silencieux
   useLivePolling(() => fetchProducts(true), {
-    intervalMs: 30000,
+    intervalMs: 5000,
     enabled: Boolean(category?.slug) && !loadingProducts,
   });
 
   useLivePolling(() => fetchCategory(true), {
-    intervalMs: 60000,
+    intervalMs: 5000,
     enabled: !loadingCategory,
   });
 
@@ -207,7 +214,9 @@ export default function GeovisionCategorie() {
     }
   }, [category?.parent_id, category?.slug, loadingCategory, navigate]);
 
-  const parentFamily = category?.parent?.parent || category?.parent || null;
+  const parentFamily = category?.parent?.parent || null;
+  const parentCategory = category?.parent || null;
+  const currentCategory = category || null;
   const subtypes = getCategoryChildren(category);
   const searchToken = normalizeGeovisionKey(deferredSearch);
 
@@ -289,10 +298,16 @@ export default function GeovisionCategorie() {
                 <Link to={`/geovision?famille=${parentFamily.slug}`}>{parentFamily.nom}</Link>
               </>
             )}
-            {category && (
+            {parentCategory && parentCategory.slug !== parentFamily?.slug && (
               <>
                 <span>/</span>
-                <span>{category.nom}</span>
+                <Link to={`/geovision/categorie/${parentCategory.slug}`}>{parentCategory.nom}</Link>
+              </>
+            )}
+            {currentCategory && currentCategory.slug !== parentCategory?.slug && (
+              <>
+                <span>/</span>
+                <span>{currentCategory.nom}</span>
               </>
             )}
           </nav>
@@ -302,24 +317,11 @@ export default function GeovisionCategorie() {
             <h2>Modèles disponibles</h2>
           </div>
 
-          <div className="pp-search-wrap">
-            <div className="mx-auto w-full max-w-[520px]">
-              <label htmlFor="geovision-product-search" className="sr-only">Rechercher un modèle GeoVision</label>
-              <div className="group flex items-center border-2 border-gray-100 rounded-full bg-white shadow-sm hover:shadow-lg hover:border-gray-200 overflow-hidden h-10 px-1 transition-all duration-300 focus-within:border-amber-400 focus-within:shadow-lg focus-within:shadow-amber-100">
-                <span className="pl-4 pr-2 text-gray-400">
-                  <svg className="h-5 w-5 text-gray-400 group-focus-within:text-amber-500 transition-colors duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                </span>
-                <input
-                  id="geovision-product-search"
-                  type="text"
-                  className="h-full w-full border-0 bg-transparent px-3 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none transition-all duration-150"
-                  placeholder="Rechercher une référence, un tag, une plateforme ou une caractéristique..."
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                />
-              </div>
-            </div>
-          </div>
+          <SearchBar
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Rechercher une référence, un tag, une plateforme ou une caractéristique..."
+          />
 
           {subtypes.length > 0 ? (
             <section className="pcat-section">
@@ -401,7 +403,7 @@ export default function GeovisionCategorie() {
                 </div>
               )}
 
-              {(loadingCategory || loadingProducts) && <div className="pp-empty">Chargement des modèles GeoVision...</div>}
+              {(loadingCategory || loadingProducts) && <Loader variant="skeleton" count={4} />}
               {!loadingCategory && error && <div className="pp-empty">{error}</div>}
               {!loadingCategory && !loadingProducts && !error && visibleProducts.length === 0 && (
                 <div className="pp-empty">Aucun modèle trouvé pour cette catégorie avec ces critères.</div>
@@ -463,6 +465,12 @@ export default function GeovisionCategorie() {
                                   <div className="pp-footer-row">
                                     <button className="pp-add-btn" onClick={() => navigate(`/geovision/produit/${product.slug}`)}>
                                       Voir la fiche →
+                                    </button>
+                                    <button className="pp-icon-btn" title="Ajouter au panier" aria-label="Ajouter au panier" onClick={(e) => { e.stopPropagation(); /* TODO: addToCart */ }}>
+                                      <i className="fa-solid fa-cart-shopping"></i>
+                                    </button>
+                                    <button className="pp-icon-btn" title="Ajouter aux favoris" aria-label="Ajouter aux favoris" onClick={(e) => { e.stopPropagation(); /* TODO: toggleFavorite */ }}>
+                                      <i className="fa-regular fa-heart"></i>
                                     </button>
                                   </div>
                                 </div>

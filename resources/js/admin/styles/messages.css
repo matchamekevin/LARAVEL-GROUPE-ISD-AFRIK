@@ -117,7 +117,6 @@
   margin-bottom: var(--spacing-lg);
 }
 
-.admin-messages-filters input,
 .admin-messages-filters select {
   padding: var(--spacing-md) var(--spacing-lg);
   border: 2px solid #d1d5db;

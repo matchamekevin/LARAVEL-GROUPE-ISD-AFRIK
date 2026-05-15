@@ -13,27 +13,38 @@ export function notifyToast(toast) {
   }
 }
 
-export function toastError(message, options = {}) {
+function createToast(type, message, options = {}) {
   notifyToast({
-    id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    type: "error",
-    message: String(message || "Erreur"),
-    duration: options.duration || 5000,
+    id: `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    type,
+    message: String(message || ""),
+    duration: options.duration || (type === "success" ? 3500 : 5000),
   });
+}
+
+export function toastError(message, options = {}) {
+  createToast("error", message || "Une erreur est survenue", options);
 }
 
 export function toastSuccess(message, options = {}) {
-  notifyToast({
-    id: `ok-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    type: "success",
-    message: String(message || "Succès"),
-    duration: options.duration || 3500,
-  });
+  createToast("success", message || "Opération réussie", options);
 }
 
-export default {
+export function toastWarning(message, options = {}) {
+  createToast("warning", message || "Attention", options);
+}
+
+export function toastInfo(message, options = {}) {
+  createToast("info", message || "Information", options);
+}
+
+const toast = {
   subscribe: subscribeToast,
   notify: notifyToast,
   error: toastError,
   success: toastSuccess,
+  warning: toastWarning,
+  info: toastInfo,
 };
+
+export default toast;

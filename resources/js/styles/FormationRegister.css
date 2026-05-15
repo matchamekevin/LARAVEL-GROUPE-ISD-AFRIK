@@ -441,10 +441,6 @@
   font-weight: 600;
 }
 
-.fa-spinner {
-  animation: registerSpin 0.9s linear infinite;
-}
-
 @keyframes registerRise {
   from {
     transform: translateY(14px);
@@ -464,12 +460,6 @@
   to {
     transform: translateY(0);
     opacity: 1;
-  }
-}
-
-@keyframes registerSpin {
-  to {
-    transform: rotate(360deg);
   }
 }
 
@@ -528,4 +518,11 @@
   .btn-add-participant {
     width: 100%;
   }
+}
+
+/* ── RESPONSIVE FORMATION REGISTER ────────────────── */
+@media (max-width: 768px) {
+  .register-form { padding: 16px; }
+  .register-form .form-group { flex-direction: column; gap: 8px; }
+  .register-form input { font-size: 16px; }
 }

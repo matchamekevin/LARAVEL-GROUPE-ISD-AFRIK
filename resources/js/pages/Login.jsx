@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import toast from "react-hot-toast";
+import { toastError, toastSuccess } from "../utils/toast";
 import { tokenService } from "../services/tokenService";
 import { apiClient, API_BASE } from "../api/axiosConfig";
 // Styles imported globally in app.jsx
@@ -57,10 +57,10 @@ export default function Login() {
 
   useEffect(() => {
     if (location.state?.success) {
-      toast.success(location.state.success);
+      toastSuccess(location.state.success);
     }
     if (location.state?.error) {
-      toast.error(location.state.error);
+      toastError(location.state.error);
     }
   }, [location.state]);
 
@@ -136,7 +136,7 @@ export default function Login() {
           window.dispatchEvent(new Event("userUpdated"));
         }
 
-        toast.success("Connexion réussie ✅");
+        toastSuccess("Connexion réussie ✅");
         setTimeout(() => navigate(redirectTarget, { replace: true, state: postLoginState }), 500);
       } else {
         throw new Error('No token in response');
@@ -149,7 +149,7 @@ export default function Login() {
       console.error("  Full Response:", err.response?.data);
 
       const errorMsg = normalizeAuthMessage(err, 'Erreur de connexion');
-      toast.error(errorMsg);
+      toastError(errorMsg);
     }
   };
 

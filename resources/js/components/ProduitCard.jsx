@@ -63,7 +63,7 @@ export default function ProduitCard({ produit, from }) {
       </button>
 
       {/* ── Image ──────────────────────────────────── */}
-      <Link to={detailLink} className="pc-image-link" state={{ from: back }}>
+      <Link to={detailLink} className="pc-image-link" onClick={() => sessionStorage.setItem("produit_back_url", window.location.href)}>
         <div className="pc-image-wrapper">
           <img
             src={produit.image_url || "/placeholder.webp"}
@@ -83,7 +83,7 @@ export default function ProduitCard({ produit, from }) {
           <span className="pc-marque">{produit.marque}</span>
         )}
 
-        <Link to={detailLink} className="pc-titre-link" state={{ from: back }}>
+        <Link to={detailLink} className="pc-titre-link" onClick={() => sessionStorage.setItem("produit_back_url", window.location.href)}>
           <h3 className="pc-titre">{produit.titre}</h3>
         </Link>
 
@@ -128,7 +128,7 @@ export default function ProduitCard({ produit, from }) {
           {ajouteAuPanier ? "✅ Ajouté !" : "🛒 Ajouter au panier"}
         </button>
 
-        <Link to={`/produits/${produit.id_produit}`} className="pc-btn-detail" state={{ from: back }}>
+        <Link to={`/produits/${produit.id_produit}`} className="pc-btn-detail" onClick={() => sessionStorage.setItem("produit_back_url", window.location.href)}>
           Voir détails
         </Link>
       </div>

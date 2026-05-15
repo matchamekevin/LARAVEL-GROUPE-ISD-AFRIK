@@ -2,7 +2,10 @@ import React, { useDeferredValue, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/home.css";
 import "../styles/geovision-categories.css";
+import SearchBar from "../components/SearchBar";
+import Loader from "../components/Loader";
 import { getCategories, getProduits } from "../services/ProduitService";
+import { toastError } from "../utils/toast";
 import { useLivePolling } from "../hooks/useLivePolling";
 import {
   getCategoryChildren,
@@ -65,7 +68,9 @@ export default function Geovision() {
       .catch((requestError) => {
         if (!isMounted) return;
         setFamilies([]);
-        setError(requestError.response?.data?.message || "Impossible de charger le catalogue GeoVision.");
+        const geoErr = requestError.response?.data?.message || "Impossible de charger le catalogue GeoVision.";
+        toastError(geoErr);
+        setError(geoErr);
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -100,7 +105,7 @@ export default function Geovision() {
   useLivePolling(
     () => backgroundLoadFamilies(),
     {
-      intervalMs: 15000,
+      intervalMs: 4000,
       enabled: !loading,
     }
   );
@@ -234,9 +239,6 @@ export default function Geovision() {
             <h2>GeoVision</h2>
             <p>Catalogue hiérarchique piloté par la base de données, structuré par familles, catégories et modèles.</p>
           </div>
-          <div className="geovision-hero-actions">
-            <button className="btn-primary" onClick={() => navigate("/contact")}>Parler à un expert</button>
-          </div>
         </div>
       </section>
 
@@ -246,6 +248,12 @@ export default function Geovision() {
             <svg viewBox="0 0 24 24" className="pp-heading-icon" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg>
             <h2>Familles GeoVision</h2>
           </div>
+
+          <SearchBar
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Rechercher une catégorie ou un modèle spécifique..."
+          />
 
           <div className="pp-category-pills" role="tablist" aria-label="Familles GeoVision">
             {[{ slug: ALL_FAMILY_SLUG, nom: "Tout" }, ...families].map((family) => (
@@ -259,25 +267,6 @@ export default function Geovision() {
                 {family.nom}
               </button>
             ))}
-          </div>
-
-          <div className="pp-search-wrap">
-            <div className="mx-auto w-full max-w-[520px]">
-                <label htmlFor="geovision-family-search" className="sr-only">Rechercher une catégorie ou un modèle GeoVision</label>
-              <div className="group flex items-center border-2 border-gray-100 rounded-full bg-white shadow-sm hover:shadow-lg hover:border-gray-200 overflow-hidden h-10 px-1 transition-all duration-300 focus-within:border-amber-400 focus-within:shadow-lg focus-within:shadow-amber-100">
-                <span className="pl-4 pr-2 text-gray-400">
-                  <svg className="h-5 w-5 text-gray-400 group-focus-within:text-amber-500 transition-colors duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                </span>
-                <input
-                  id="geovision-family-search"
-                  type="text"
-                  className="h-full w-full border-0 bg-transparent px-3 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none transition-all duration-150"
-                    placeholder="Rechercher une catégorie ou un modèle spécifique..."
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                />
-              </div>
-            </div>
           </div>
 
           {activeFamily && (
@@ -296,7 +285,7 @@ export default function Geovision() {
             </div>
           )}
 
-          {loading && <div className="pp-empty">Chargement des familles GeoVision...</div>}
+          {loading && <Loader variant="skeleton" count={4} />}
           {!loading && error && <div className="pp-empty">{error}</div>}
           {!loading && !error && !modelLoading && isSearching && visibleCategories.length === 0 && modelResults.length === 0 && (
             <div className="pp-empty">Aucune catégorie ou modèle ne correspond à votre recherche.</div>
@@ -307,7 +296,7 @@ export default function Geovision() {
               <div className="pp-group-section">
                 <h3 className="pp-group-title">Modèles trouvés</h3>
                 {modelLoading ? (
-                  <div className="pp-empty">Recherche des modèles GeoVision...</div>
+                  <Loader text="Recherche des modèles GeoVision..." />
                 ) : modelResults.length === 0 ? (
                   <div className="pp-empty">Aucun modèle trouvé pour cette recherche.</div>
                 ) : (

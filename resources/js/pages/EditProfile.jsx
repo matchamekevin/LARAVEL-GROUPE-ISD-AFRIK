@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Loader from "../components/Loader";
 import { getApiBase } from "../utils/apiBase";
 import usePageMeta from "../hooks/usePageMeta";
+import { notifyMutation } from "../utils/mutationBus";
+import { toastError, toastSuccess } from "../utils/toast";
 import "../styles/profile.css";
 
 export default function EditProfile() {
@@ -21,7 +24,6 @@ export default function EditProfile() {
     telephone: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     axios
@@ -40,7 +42,7 @@ export default function EditProfile() {
           telephone: user.telephone || "",
         });
       })
-      .catch(() => setError("Impossible de charger le profil"));
+      .catch(() => toastError("Impossible de charger le profil"));
   }, [API_BASE]);
 
   const handleChange = (e) => {
@@ -50,7 +52,6 @@ export default function EditProfile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     try {
       await axios.put(`${API_BASE}/api/auth/update-profile`, form, {
@@ -68,10 +69,11 @@ export default function EditProfile() {
         window.dispatchEvent(new Event("userUpdated"));
       }
 
-      alert("Profil mis à jour avec succès !");
+      toastSuccess("Profil mis à jour avec succès !");
+      notifyMutation();
       navigate("/profile");
     } catch {
-      setError("Erreur lors de la mise à jour du profil");
+      toastError("Erreur lors de la mise à jour du profil");
     } finally {
       setLoading(false);
     }
@@ -84,12 +86,6 @@ export default function EditProfile() {
           <div className="profile-card-head">
             <h2><i className="fas fa-user-edit"></i> Modifier mon profil</h2>
           </div>
-
-          {error && (
-            <div style={{ background: '#fef2f2', color: '#dc2626', padding: '12px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #fee2e2' }}>
-              <i className="fas fa-exclamation-circle"></i> {error}
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="profile-form-layout">
             <div className="profile-info-item" style={{ marginBottom: '15px', background: 'transparent' }}>
@@ -145,7 +141,7 @@ export default function EditProfile() {
 
             <div className="profile-actions" style={{ marginTop: '20px' }}>
               <button type="submit" disabled={loading} className="btn-primary" style={{ flex: 1 }}>
-                {loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-save"></i>}
+                {loading ? <Loader variant="inline" size="sm" /> : <i className="fas fa-save"></i>}
                 <span>{loading ? "Enregistrement..." : "Enregistrer"}</span>
               </button>
               <button type="button" onClick={() => navigate("/profile")} className="btn-secondary">

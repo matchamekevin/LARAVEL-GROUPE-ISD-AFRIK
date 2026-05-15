@@ -398,7 +398,6 @@
 .admin-catalogue-grid-4 input:focus,
 .admin-catalogue-grid-4 select:focus,
 .admin-catalogue-grid-4 textarea:focus,
-.admin-catalogue-filters input:focus,
 .admin-catalogue-filters select:focus {
   outline: none;
   border-color: var(--color-info);
@@ -491,15 +490,6 @@
   grid-template-columns: 1fr;
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-md);
-}
-
-.admin-catalogue-filters input,
-.admin-catalogue-filters select {
-  padding: 0.62rem 0.8rem;
-  border: 2px solid #d1d5db;
-  border-radius: 10px;
-  min-height: 44px;
-  font-size: var(--font-size-sm);
 }
 
 .admin-catalogue-filters-3 {

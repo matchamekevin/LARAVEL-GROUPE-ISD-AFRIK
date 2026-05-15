@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/PaymentPage.css";
 import { getApiBase } from "../utils/apiBase";
+import { toastError, toastSuccess } from "../utils/toast";
 
 const PaymentPage = () => {
   const location = useLocation();
@@ -12,11 +13,10 @@ const PaymentPage = () => {
   const { inscription, paiement, formation } = location.state || {};
 
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
   const handlePaiement = async () => {
     if (!formation || !formation.id_formation) {
-      setMessage("❌ Erreur: ID formation manquant");
+      toastError("Erreur: ID formation manquant");
       return;
     }
 
@@ -38,12 +38,12 @@ const PaymentPage = () => {
         // ✅ Redirection vers le formulaire FedaPay
         window.location.href = res.data.checkout_url;
       } else {
-        setMessage("❌ Erreur: URL de paiement manquante");
+        toastError("Erreur: URL de paiement manquante");
         setLoading(false);
       }
     } catch (err) {
       console.error("❌ Erreur:", err.response?.data || err.message);
-      setMessage(err.response?.data?.message || "Erreur lors du paiement ❌");
+      toastError(err.response?.data?.message || "Erreur lors du paiement");
       setLoading(false);
     }
   };
@@ -63,16 +63,6 @@ const PaymentPage = () => {
         <header className="payment-header">
           <h1> Paiement de la formation</h1>
         </header>
-
-        {message && (
-          <div
-            className={`message ${
-              message.includes("✅") ? "success" : "error"
-            }`}
-          >
-            <p>{message}</p>
-          </div>
-        )}
 
         <div className="payment-card">
           <h2>{formation.titre}</h2>

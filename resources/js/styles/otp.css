@@ -711,3 +711,17 @@ button:focus-visible {
 input:focus-visible {
   outline: none;
 }
+
+/* ── RESPONSIVE OTP ───────────────────────────────── */
+@media (max-width: 640px) {
+  .otp-container { padding: 16px; }
+  .otp-box { padding: 20px 16px; }
+  .otp-box h2 { font-size: 1.2rem; }
+  .otp-input-group { gap: 6px; }
+  .otp-input { width: 40px; height: 44px; font-size: 1.1rem; }
+}
+
+@media (max-width: 400px) {
+  .otp-input { width: 36px; height: 40px; font-size: 1rem; }
+  .otp-input-group { gap: 4px; }
+}

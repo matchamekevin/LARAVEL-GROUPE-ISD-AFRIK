@@ -345,11 +345,18 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 999;
   }
 
   .header-quick-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .nav-link, .nav a, .nav button {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
   }
 
   .nav.open {
@@ -473,4 +480,25 @@
     right: 10px;
     padding: 0.85rem;
   }
+}
+
+/* ── RESPONSIVE HEADER ────────────────────────────── */
+@media (max-width: 1024px) {
+  .nav { gap: clamp(8px, 1.5vw, 16px); }
+  .nav-link { font-size: clamp(0.8rem, 1vw, 0.9rem); }
+}
+
+@media (max-width: 900px) {
+  .header { padding: clamp(8px, 2vw, 12px) clamp(10px, 2vw, 20px); }
+  .nav { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+  .nav-link { white-space: nowrap; }
+  .logo-img { max-height: clamp(30px, 4vw, 40px); }
+}
+
+@media (max-width: 640px) {
+  .header { padding: 8px clamp(6px, 2vw, 12px); }
+  .logo-img { max-height: 28px; }
+  .selectors { gap: 4px; }
+  .quick-icon-btn { width: 32px; height: 32px; font-size: 0.85rem; }
+  .quick-badge { font-size: 0.6rem; min-width: 16px; height: 16px; }
 }

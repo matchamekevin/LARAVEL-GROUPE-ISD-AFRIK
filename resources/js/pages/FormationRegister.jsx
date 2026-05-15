@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import Loader from "../components/Loader";
 import "../styles/FormationRegister.css";
 import { getApiBase } from "../utils/apiBase";
+import { toastError, toastSuccess, toastWarning } from "../utils/toast";
 
 const FormationRegister = () => {
   const { id } = useParams();
@@ -33,7 +35,10 @@ const FormationRegister = () => {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setFormation(res.data))
-      .catch(() => setMessage("Erreur chargement formation ❌"));
+      .catch(() => {
+        setMessage("Erreur chargement formation ❌");
+        toastError("Erreur chargement formation ❌");
+      });
   }, [id]);
 
   const handleChange = (e) => {
@@ -98,9 +103,9 @@ const FormationRegister = () => {
       console.error("❌ Erreur:", err.response?.data || err.message);
 
       if (err.response?.status === 409) {
-        setMessage("⚠️ Vous êtes déjà inscrit à cette formation !");
+        toastWarning("Vous êtes déjà inscrit à cette formation !");
       } else {
-        setMessage(err.response?.data?.message || "Erreur lors de l'inscription ❌");
+        toastError(err.response?.data?.message || "Erreur lors de l'inscription");
       }
 
       setLoading(false);
@@ -123,12 +128,6 @@ const FormationRegister = () => {
                 <span className="formation-header-chip">Paiement apres validation</span>
               </div>
             </header>
-
-            {message && (
-              <div className={`alert ${message.includes("⚠️") ? "alert-warning" : "alert-error"}`}>
-                <p>{message}</p>
-              </div>
-            )}
 
             <form onSubmit={handleSubmit} className="register-form">
 
@@ -304,7 +303,7 @@ const FormationRegister = () => {
                 <button type="submit" className="btn-inscrire" disabled={loading}>
                   {loading ? (
                     <>
-                      <i className="fas fa-spinner fa-spin"></i> Traitement en cours...
+                      <Loader variant="inline" size="sm" /> Traitement en cours...
                     </>
                   ) : (
                     <>

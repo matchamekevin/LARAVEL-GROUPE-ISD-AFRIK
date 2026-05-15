@@ -4,6 +4,7 @@ import axios from "axios";
 import jsPDF from "jspdf";
 import "../styles/facture.css";
 import { getApiBase } from "../utils/apiBase";
+import { toastError } from "../utils/toast";
 
 // Formater la date en français
 function formatDate(dateString) {
@@ -36,6 +37,7 @@ function FacturePage() {
       })
       .catch((err) => {
         console.error("Erreur API :", err);
+        toastError("Impossible de récupérer les informations du paiement.");
         setError("Impossible de récupérer les informations du paiement.");
       });
   }, [id]);

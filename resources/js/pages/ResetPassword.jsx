@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import api from "../axios";
+import { toastError, toastSuccess } from "../utils/toast";
 
 export default function ResetPassword() {
   const { token } = useParams();
@@ -12,8 +13,6 @@ export default function ResetPassword() {
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
 
   const translateMessage = (key) => {
     const messages = {
@@ -26,8 +25,6 @@ export default function ResetPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
-    setError("");
 
     try {
       const res = await api.post("/auth/reset-password", {
@@ -37,7 +34,7 @@ export default function ResetPassword() {
         password_confirmation: passwordConfirmation,
       });
 
-      setMessage(translateMessage(res.data.message));
+      toastSuccess(translateMessage(res.data.message));
       setPassword("");
       setPasswordConfirmation("");
 
@@ -48,8 +45,7 @@ export default function ResetPassword() {
       }, 2000);
     } catch (err) {
       const msg = err.response?.data?.message || "Erreur inconnue ❌";
-      setError(translateMessage(msg));
-      setTimeout(() => setError(""), 4000);
+      toastError(translateMessage(msg));
     }
   };
 
@@ -131,17 +127,6 @@ export default function ResetPassword() {
           background-color: #1d4ed8;
         }
 
-        .success {
-          color: #16a34a;
-          margin-top: 16px;
-          text-align: center;
-        }
-
-        .error {
-          color: #dc2626;
-          margin-top: 16px;
-          text-align: center;
-        }
       `}</style>
 
       <div className="container">
@@ -190,8 +175,6 @@ export default function ResetPassword() {
             </button>
           </form>
 
-          {message && <p className="success">{message}</p>}
-          {error && <p className="error">{error}</p>}
         </div>
       </div>
     </>

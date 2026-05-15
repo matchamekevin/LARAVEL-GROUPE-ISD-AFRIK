@@ -128,7 +128,7 @@ class CategorieProduitController extends Controller
         $uploaded = $request->file('image') ?: $request->file('image_file');
         if ($uploaded) {
             $storedPath = $uploaded->store('geovision-categories', 'public');
-            $data['image_url'] = Storage::disk('public')->url($storedPath);
+            $data['image_url'] = '/storage/' . ltrim($storedPath, '/');
         }
 
         $data = $this->preparePayload($data);
@@ -170,7 +170,7 @@ class CategorieProduitController extends Controller
         $uploaded = $request->file('image') ?: $request->file('image_file');
         if ($uploaded) {
             $storedPath = $uploaded->store('geovision-categories', 'public');
-            $data['image_url'] = Storage::disk('public')->url($storedPath);
+            $data['image_url'] = '/storage/' . ltrim($storedPath, '/');
 
             $this->deletePublicStoredImage($categorie->image_url);
             $this->deletePublicStoredImage($categorie->image);

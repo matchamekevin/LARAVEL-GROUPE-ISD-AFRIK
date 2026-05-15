@@ -9,6 +9,7 @@ import {
   subscribeStoreUpdates,
 } from "../utils/shopStorage";
 import { getProduit } from "../services/ProduitService";
+import { notifyMutation } from "../utils/mutationBus";
 import { toastError } from "../utils/toast";
 
 function formatPrice(value) {
@@ -105,6 +106,7 @@ export default function Panier() {
         throw new Error("URL de paiement manquante.");
       }
 
+      notifyMutation();
       window.location.href = checkoutUrl;
     } catch (error) {
       const backendMessage =
@@ -116,7 +118,7 @@ export default function Panier() {
   };
 
   return (
-    <section style={{ maxWidth: "1100px", margin: "120px auto 40px", padding: "0 16px" }}>
+    <section style={{ maxWidth: "1100px", margin: "40px auto 40px", padding: "0 clamp(8px, 2vw, 16px)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
         <h1 style={{ margin: 0, color: "#172243" }}>Panier</h1>
         <span style={{ color: "#64748b", fontWeight: 600 }}>{summary.totalQty} article(s)</span>
@@ -162,7 +164,7 @@ export default function Panier() {
                     <button type="button" onClick={() => { const next = removeFromCart(productId); setItems(next); }} style={{ border: "none", background: "transparent", color: "#dc2626", cursor: "pointer", fontWeight: 700 }}>
                       Retirer
                     </button>
-                    <Link to={`/produits/${productId}`} style={{ color: "#1d4ed8", fontWeight: 600 }}>Voir</Link>
+                    <Link to={`/produits/${productId}`} onClick={() => sessionStorage.setItem("produit_back_url", window.location.href)} style={{ color: "#1d4ed8", fontWeight: 600 }}>Voir</Link>
                   </div>
                 </article>
               );
@@ -175,7 +177,7 @@ export default function Panier() {
               <p style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800, color: "#172243" }}>{formatPrice(summary.totalAmount)}</p>
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
-              <button type="button" onClick={() => { clearCart(); setItems([]); }} style={{ border: "1px solid #cbd5e1", background: "#fff", borderRadius: "8px", padding: "8px 12px", cursor: "pointer", fontWeight: 700 }}>
+              <button type="button" onClick={() => { clearCart(); notifyMutation(); setItems([]); }} style={{ border: "1px solid #cbd5e1", background: "#fff", borderRadius: "8px", padding: "8px 12px", cursor: "pointer", fontWeight: 700 }}>
                 Vider le panier
               </button>
               <button

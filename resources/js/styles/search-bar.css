@@ -1,0 +1,184 @@
+.pp-search-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0 20px;
+}
+
+.pp-search {
+  --pp-accent: #1d4ed8;
+  --pp-accent-rgb: 29, 78, 216;
+  width: 100%;
+  max-width: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(var(--pp-accent-rgb), 0.15);
+  border-radius: 14px;
+  padding: 12px 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: border-color 0.35s ease, box-shadow 0.35s ease;
+  backdrop-filter: blur(10px);
+}
+
+.pp-search:hover {
+  border-color: rgba(var(--pp-accent-rgb), 0.35);
+  box-shadow: 0 12px 32px rgba(var(--pp-accent-rgb), 0.12),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.pp-search:focus-within {
+  border-color: var(--pp-accent);
+  box-shadow: 0 14px 36px rgba(var(--pp-accent-rgb), 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.pp-search input[type="search"],
+.pp-search input[type="text"],
+.pp-search-input {
+  border: 0;
+  outline: none;
+  flex: 1 1 auto;
+  font-size: 0.95rem;
+  color: #172243;
+  background: transparent;
+  padding: 6px 4px;
+  font-weight: 500;
+  transition: color 0.25s ease;
+  min-width: 0;
+}
+
+.pp-search-icon {
+  color: rgba(107, 114, 128, 0.7);
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 0.25s ease;
+}
+
+.pp-search:focus-within .pp-search-icon {
+  color: var(--pp-accent);
+}
+
+.pp-search .pp-search-clear {
+  background: transparent;
+  border: 0;
+  color: rgba(107, 114, 128, 0.7);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+  font-size: 14px;
+}
+
+.pp-search .pp-search-clear:hover {
+  background: rgba(var(--pp-accent-rgb), 0.1);
+  color: var(--pp-accent);
+}
+
+.pp-search input::placeholder {
+  color: rgba(107, 114, 128, 0.6);
+  font-weight: 500;
+}
+
+.pp-search .pp-search-submit {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--pp-accent);
+  color: #fff;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pp-search .pp-search-submit:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* Admin search bar: when extra controls (selects, buttons) are adjacent */
+.pp-search-admin {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pp-search-admin .pp-search {
+  flex: 1 1 auto;
+  min-width: 200px;
+}
+
+.pp-search-admin select,
+.pp-search-admin .pp-search-admin-btn {
+  padding: 12px 16px;
+  border: 2px solid rgba(var(--pp-accent-rgb), 0.15);
+  border-radius: 14px;
+  font-size: 0.95rem;
+  color: #172243;
+  background: rgba(255, 255, 255, 0.95);
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+}
+
+.pp-search-admin select:hover,
+.pp-search-admin .pp-search-admin-btn:hover {
+  border-color: rgba(var(--pp-accent-rgb), 0.35);
+  transform: translateY(-1px);
+}
+
+.pp-search-admin select:focus,
+.pp-search-admin .pp-search-admin-btn:focus {
+  border-color: var(--pp-accent);
+  outline: none;
+}
+
+.pp-search-admin .pp-search-admin-btn {
+  background: var(--pp-accent);
+  color: #fff;
+  border-color: var(--pp-accent);
+  font-weight: 600;
+}
+
+.pp-search-admin .pp-search-admin-btn:hover {
+  filter: brightness(1.1);
+}
+
+.pp-search-extra {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pp-search-wrapper--compact {
+  margin: 0;
+}
+
+.pp-search-wrapper--compact .pp-search {
+  padding: 8px 14px;
+  border-radius: 10px;
+}
+
+@media (min-width: 1024px) {
+  .pp-search-wrapper { margin-bottom: 20px; }
+  .pp-search { max-width: none; }
+  .pp-search-wrapper--compact .pp-search { max-width: none; }
+}

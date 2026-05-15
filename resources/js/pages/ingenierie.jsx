@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import usePageMeta from "../hooks/usePageMeta";
+import Loader from "../components/Loader";
 import { getCategories } from "../services/ProduitService";
 import { resolveIngenierieDomaines } from "../data/ingenierieDomains";
 import "../styles/ingenierie-new.css";
@@ -32,7 +33,6 @@ export default function Ingenierie() {
     const [isLoading, setIsLoading] = useState(true);
     const [imageLoaded, setImageLoaded] = useState({});
     const [imageHidden, setImageHidden] = useState({});
-    const [imageFallbackIndex, setImageFallbackIndex] = useState({});
 
     usePageMeta(
         "Ingénierie informatique et industrielle | Groupe ISD AFRIK",
@@ -43,7 +43,6 @@ export default function Ingenierie() {
         let mounted = true;
 
         const loadDomaines = async () => {
-            // Petit délai pour éviter le flash si l'API est trop rapide (optionnel mais aide au ressenti)
             try {
                 const response = await getCategories({
                     segment: "ingenierie-page",
@@ -75,10 +74,7 @@ export default function Ingenierie() {
                 }
             } finally {
                 if (mounted) {
-                    // On laisse un petit temps pour que React process le state avant de masquer le loader
-                    setTimeout(() => {
-                        if (mounted) setIsLoading(false);
-                    }, 100);
+                    setIsLoading(false);
                 }
             }
         };
@@ -94,42 +90,14 @@ export default function Ingenierie() {
         setImageLoaded(prev => ({ ...prev, [slug]: true }));
     };
 
-    const getImageCandidates = (src) => {
-        const s = String(src || '').trim();
-        const candidates = [];
-        if (!s) return candidates;
-        candidates.push(s);
-        try {
-            const origin = window?.location?.origin || '';
-            if (s.startsWith('/')) {
-                candidates.push(origin + s);
-            } else if (!s.startsWith('http')) {
-                candidates.push('/' + s);
-                candidates.push(origin + '/' + s);
-            }
-            if (s.startsWith('/storage/')) {
-                candidates.push(s.replace('/storage/', '/storage/app/public/'));
-            }
-            if (s.startsWith('storage/')) {
-                candidates.push('/' + s);
-                candidates.push('/storage/' + s.replace(/^storage\//, ''));
-            }
-            // public folder fallback
-            candidates.push('/public' + (s.startsWith('/') ? s : '/' + s));
-        } catch (e) {}
-        // unique
-        return Array.from(new Set(candidates));
-    };
-
     const handleImageError = (e, slug) => {
-        const orig = e.target.dataset?.original || e.target.getAttribute('src') || '';
-        const candidates = getImageCandidates(orig);
-        const idx = imageFallbackIndex[slug] || 0;
-        if (idx + 1 < candidates.length) {
-            const next = candidates[idx + 1];
-            setImageFallbackIndex(prev => ({ ...prev, [slug]: idx + 1 }));
-            e.target.src = next;
-            return;
+        if (!e.target.dataset?.retried) {
+            e.target.dataset.retried = '1';
+            const orig = e.target.dataset?.original || e.target.getAttribute('src') || '';
+            if (orig.startsWith('/')) {
+                e.target.src = window?.location?.origin + orig;
+                return;
+            }
         }
         setImageHidden((prev) => ({ ...prev, [slug]: true }));
     };
@@ -145,19 +113,7 @@ export default function Ingenierie() {
 
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
                 {isLoading ? (
-                    <div className="ingenierie-grid">
-                        {[1, 2, 3, 4, 5, 6].map((n) => (
-                            <div key={n} className="ingenierie-card skeleton-card">
-                                <div className="ingenierie-card-image skeleton-image"></div>
-                                <div className="ingenierie-card-content">
-                                    <div className="skeleton-title"></div>
-                                    <div className="skeleton-desc"></div>
-                                    <div className="skeleton-desc"></div>
-                                    <div className="skeleton-btn"></div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    <Loader variant="skeleton" count={6} />
                 ) : (
                     <div className="ingenierie-grid"> 
                         {domaines.length ? domaines.map((domaine) => (
@@ -167,18 +123,19 @@ export default function Ingenierie() {
                                 className="ingenierie-card"
                             >
                                 {domaine.image && !imageHidden[domaine.slug] ? (
-                                    <img 
-                                        src={domaine.image} 
+                                    <img
+                                        src={domaine.image}
                                         alt={domaine.title}
                                         loading="lazy"
+                                        decoding="async"
                                         className="ingenierie-card-image"
-                                            data-original={domaine.image}
-                                            style={{
-                                                opacity: imageLoaded[domaine.slug] ? 1 : 0,
-                                                transition: "opacity 0.4s ease-in-out"
-                                            }}
-                                            onLoad={() => handleImageLoad(domaine.slug)}
-                                            onError={(e) => handleImageError(e, domaine.slug)}
+                                        data-original={domaine.image}
+                                        style={{
+                                            opacity: imageLoaded[domaine.slug] ? 1 : 0,
+                                            transition: "opacity 0.4s ease-in-out"
+                                        }}
+                                        onLoad={() => handleImageLoad(domaine.slug)}
+                                        onError={(e) => handleImageError(e, domaine.slug)}
                                     />
                                 ) : (
                                     <div className="ingenierie-card-image ingenierie-card-image--empty" aria-hidden="true"></div>

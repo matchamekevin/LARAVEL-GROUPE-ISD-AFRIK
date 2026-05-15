@@ -5,8 +5,9 @@ import {
   updateHomeMarketingCard,
   deleteHomeMarketingCard,
 } from '../api';
-import Loader from '../components/Loader';
-import AdminToast, { useAdminToast } from '../components/AdminToast';
+import Loader from '../../components/Loader';
+import { toastError, toastSuccess } from '../../utils/toast';
+import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
 import '../styles/admin-shared.css';
 import '../styles/marketing.css';
@@ -31,7 +32,7 @@ export default function MarketingAdmin() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
-  const { toast, showToast } = useAdminToast();
+
 
   function cardImageSrc(card) {
     if (card?.image_url) return card.image_url;
@@ -50,7 +51,7 @@ export default function MarketingAdmin() {
     } catch (err) {
       console.error(err);
       setCards([]);
-      showToast('Impossible de charger les cartes marketing', 'error');
+      toastError('Impossible de charger les cartes marketing');
     } finally {
       setLoading(false);
     }
@@ -91,11 +92,11 @@ export default function MarketingAdmin() {
     const editing = Boolean(editingId);
 
     if (!form.title?.trim()) {
-      showToast('Le titre est obligatoire', 'error');
+      toastError('Le titre est obligatoire');
       return;
     }
     if (!editingId && !form.image) {
-      showToast('Veuillez ajouter une image', 'error');
+      toastError('Veuillez ajouter une image');
       return;
     }
 
@@ -121,9 +122,10 @@ export default function MarketingAdmin() {
       }
       resetForm();
       await loadData();
-      showToast(editing ? 'Carte marketing mise a jour.' : 'Carte marketing creee.', 'success');
+      toastSuccess(editing ? 'Carte marketing mise a jour.' : 'Carte marketing creee.');
+      notifyMutation();
     } catch (err) {
-      showToast(err?.response?.data?.message || 'Erreur enregistrement carte', 'error');
+      toastError(err?.response?.data?.message || 'Erreur enregistrement carte');
     } finally {
       setSaving(false);
     }
@@ -135,9 +137,10 @@ export default function MarketingAdmin() {
       await deleteHomeMarketingCard(id);
       setCards((prev) => prev.filter((x) => x.id !== id));
       if (editingId === id) resetForm();
-      showToast('Carte marketing supprimee.', 'success');
+      toastSuccess('Carte marketing supprimee.');
+      notifyMutation();
     } catch (err) {
-      showToast('Erreur suppression carte', 'error');
+      toastError('Erreur suppression carte');
     }
   }
 
@@ -288,7 +291,7 @@ export default function MarketingAdmin() {
 
       <div className="card">
         <h2 style={{ marginBottom: '0.75rem' }}>Cartes configurées</h2>
-        {loading ? <Loader /> : (
+        {loading ? <Loader variant="spinner" /> : (
           <div style={{ display: 'grid', gap: '1rem' }}>
             <div>
               <h3 style={{ marginBottom: '0.45rem', color: '#172243' }}>Nos Offres ({grouped.offer.length})</h3>
@@ -405,7 +408,7 @@ export default function MarketingAdmin() {
         )}
       </div>
 
-      <AdminToast toast={toast} />
+
     </div>
   );
 }

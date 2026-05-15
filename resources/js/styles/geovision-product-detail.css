@@ -1,6 +1,6 @@
 .gpd-page {
   min-height: 100vh;
-  padding: 96px 0 72px;
+  padding: 24px 0 72px;
   background:
     radial-gradient(circle at top left, rgba(251, 156, 8, 0.18), transparent 28%),
     linear-gradient(180deg, #f6f8fc 0%, #edf2f8 100%);
@@ -352,6 +352,143 @@
   flex-wrap: wrap;
 }
 
+.gpd-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.gpd-qty-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #f7f9fc;
+  border: 2px solid rgba(23, 34, 67, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.gpd-qty-btn {
+  width: 36px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.gpd-qty-btn:hover {
+  background: #172243;
+  color: #fff;
+}
+
+.gpd-qty-btn:active {
+  background: #fb9c08;
+  color: #fff;
+}
+
+.gpd-qty-input {
+  width: 48px;
+  height: 40px;
+  text-align: center;
+  border: none;
+  border-left: 1px solid rgba(23, 34, 67, 0.08);
+  border-right: 1px solid rgba(23, 34, 67, 0.08);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #172243;
+  background: #fff;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.gpd-qty-input::-webkit-outer-spin-button,
+.gpd-qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.gpd-qty-input:focus {
+  background: #fffbeb;
+}
+
+.gpd-icon-btn {
+  width: 46px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(23, 34, 67, 0.12);
+  border-radius: 10px;
+  background: #fff;
+  color: #172243;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.gpd-icon-btn:hover:not(:disabled) {
+  background: #172243;
+  color: #fff;
+  border-color: #172243;
+  transform: translateY(-1px);
+}
+
+.gpd-icon-btn--success {
+  background: #28a745 !important;
+  color: #fff !important;
+  border-color: #28a745 !important;
+}
+
+.gpd-icon-btn--active {
+  background: #fff5f5;
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.gpd-btn-pay {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 20px;
+  background: #172243;
+  color: #fff;
+  border: 2px solid #172243;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.gpd-btn-pay:hover:not(:disabled) {
+  background: #fb9c08;
+  border-color: #fb9c08;
+  transform: translateY(-1px);
+}
+
+.gpd-btn-pay:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gpd-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .gpd-btn,
 .gpd-related-link {
   display: inline-flex;
@@ -562,7 +699,7 @@
 
 @media (max-width: 640px) {
   .gpd-page {
-    padding-top: 84px;
+    padding-top: 16px;
   }
 
   .gpd-shell {
@@ -604,4 +741,51 @@
   .gpd-sheet-header {
     padding-top: 16px;
   }
+}
+
+/* ── RESPONSIVE GEOVISION PRODUCT DETAIL ─────────── */
+@media (max-width: 1024px) {
+  .gpd-shell { max-width: 100%; padding: 0 clamp(12px, 2vw, 20px); }
+  .gpd-hero { grid-template-columns: 1fr; gap: clamp(16px, 3vw, 30px); }
+  .gpd-main-image-wrap { max-width: 500px; margin: 0 auto; }
+}
+
+@media (max-width: 768px) {
+  .gpd-breadcrumb { font-size: 0.75rem; flex-wrap: wrap; gap: 4px; }
+  .gpd-content h1 { font-size: clamp(1.1rem, 3vw, 1.4rem); }
+  .gpd-price { font-size: clamp(1.2rem, 3vw, 1.5rem); }
+  .gpd-summary-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .gpd-spec-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .gpd-action-bar { flex-wrap: wrap; }
+  .gpd-qty-group { width: 100%; }
+  .gpd-btn-pay { width: 100%; }
+  .gpd-related-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .gpd-section { margin-top: clamp(20px, 3vw, 30px); }
+}
+
+@media (max-width: 480px) {
+  .gpd-summary-grid { grid-template-columns: 1fr; }
+  .gpd-spec-grid { grid-template-columns: 1fr; }
+  .gpd-related-grid { grid-template-columns: 1fr; }
+  .gpd-breadcrumb { font-size: 0.7rem; }
+  .gpd-content .gpd-kicker { font-size: 0.8rem; }
+  .gpd-description { font-size: 0.85rem; }
+  .gpd-bullet-list { gap: 8px; }
+  .gpd-gallery-panel .gpd-thumb-list { gap: 6px; }
+  .gpd-gallery-panel .gpd-thumb { width: 50px; height: 50px; }
+}
+
+/* ── RESPONSIVE ADDITIONS ─────────────────────────── */
+@media (max-width: 600px) {
+  .gpd-breadcrumb { font-size: 0.7rem; gap: 3px; }
+  .gpd-hero { grid-template-columns: 1fr; gap: 16px; }
+  .gpd-content h1 { font-size: 1.1rem; }
+  .gpd-price { font-size: 1.2rem; }
+  .gpd-summary-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .gpd-spec-grid { grid-template-columns: 1fr; gap: 6px; }
+  .gpd-action-bar { flex-direction: column; }
+  .gpd-qty-group { width: 100%; }
+  .gpd-btn-pay { width: 100%; }
+  .gpd-feature-list { gap: 4px; }
+  .gpd-feature-chip { font-size: 0.75rem; padding: 4px 8px; }
 }

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import Loader from "../components/Loader";
 import "../styles/formationDetails.css";
 import { getApiBase } from "../utils/apiBase";
 import { resolveFormationImageUrl } from "../utils/mediaUrl";
+import { toastError } from "../utils/toast";
 
 const FormationDetails = () => {
   const { id } = useParams();
@@ -23,6 +25,7 @@ const FormationDetails = () => {
       })
       .catch((err) => {
         console.error("Erreur:", err);
+        toastError("Formation non trouvée");
         setError("Formation non trouvée");
       })
       .finally(() => setLoading(false));
@@ -42,12 +45,7 @@ const FormationDetails = () => {
   };
 
   if (loading) {
-    return (
-      <div className="formation-details-loading">
-        <div className="spinner"></div>
-        <p>Chargement des détails...</p>
-      </div>
-    );
+    return <Loader variant="spinner" size="lg" text="Chargement..." overlay />;
   }
 
   if (error || !formation) {

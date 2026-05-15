@@ -39,13 +39,20 @@ export function normalizeMarketingTarget(target, fallback = "/") {
   }
 }
 
+function normalizeStorageUrl(url) {
+  if (typeof url !== "string") return url;
+  const match = url.match(/\/storage\/.+/);
+  if (match) return match[0];
+  return url;
+}
+
 function resolveImage(item, fallbackImage) {
   if (isAbsoluteMediaPath(item?.image_url)) {
-    return item.image_url;
+    return normalizeStorageUrl(item.image_url);
   }
 
   if (isAbsoluteMediaPath(item?.image_path)) {
-    return item.image_path;
+    return normalizeStorageUrl(item.image_path);
   }
 
   return fallbackImage;

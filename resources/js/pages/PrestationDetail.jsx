@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import usePageMeta from "../hooks/usePageMeta";
 import { getCategories } from "../services/ProduitService";
 import { resolveIngenierieDomaines } from "../data/ingenierieDomains";
-import AdminToast, { useAdminToast } from "../admin/components/AdminToast";
+import { toastError, toastSuccess } from "../utils/toast";
 import "../styles/prestation-detail.css";
 
 const sanitizeImageUrl = (value) => {
@@ -31,7 +31,7 @@ const sanitizeDomaines = (list = []) =>
 export default function PrestationDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { showToast } = useAdminToast();
+
   const [domaines, setDomaines] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedServices, setSelectedServices] = useState(new Set());
@@ -177,7 +177,7 @@ export default function PrestationDetail() {
     e.preventDefault();
     
     if (selectedServices.size === 0 && selectedTechnologies.size === 0 && selectedDeliverables.size === 0) {
-      showToast("Selectionnez au moins un service, une technologie ou un livrable", "error");
+      toastError("Selectionnez au moins un service, une technologie ou un livrable");
       return;
     }
 
@@ -201,7 +201,7 @@ export default function PrestationDetail() {
         throw new Error(result.message || "Erreur lors de l'envoi du devis");
       }
 
-      showToast("Devis envoyé avec succès! Vous pouvez aussi remplir le formulaire de contact.", "success");
+      toastSuccess("Devis envoyé avec succès! Vous pouvez aussi remplir le formulaire de contact.");
       setSelectedServices(new Set());
       setSelectedTechnologies(new Set());
       setSelectedDeliverables(new Set());
@@ -209,7 +209,7 @@ export default function PrestationDetail() {
       // Redirect to contact form after 2 seconds
       setTimeout(() => navigate("/contact"), 2000);
     } catch (error) {
-      showToast(error.message || "Erreur lors de l'envoi du devis", "error");
+      toastError(error.message || "Erreur lors de l'envoi du devis");
     } finally {
       setSubmitting(false);
     }

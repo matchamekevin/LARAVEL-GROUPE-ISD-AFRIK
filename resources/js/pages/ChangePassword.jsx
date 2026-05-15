@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Loader from "../components/Loader";
 import { getApiBase } from "../utils/apiBase";
 import usePageMeta from "../hooks/usePageMeta";
+import { notifyMutation } from "../utils/mutationBus";
+import { toastError, toastSuccess } from "../utils/toast";
 import "../styles/profile.css";
 
 export default function ChangePassword() {
@@ -14,8 +17,6 @@ export default function ChangePassword() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [show, setShow] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -23,8 +24,6 @@ export default function ChangePassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
 
     try {
       setLoading(true);
@@ -43,7 +42,8 @@ export default function ChangePassword() {
         }
       );
 
-      setSuccess(res.data.message);
+      toastSuccess(res.data.message);
+      notifyMutation();
 
       setTimeout(() => {
         localStorage.removeItem("token");
@@ -52,7 +52,7 @@ export default function ChangePassword() {
         navigate("/login");
       }, 1500);
     } catch (err) {
-      setError(
+      toastError(
         err.response?.data?.message ||
           "Erreur lors du changement du mot de passe"
       );
@@ -108,18 +108,6 @@ export default function ChangePassword() {
               </label>
             </div>
 
-            {error && (
-              <div style={{ background: '#fef2f2', color: '#dc2626', padding: '12px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #fee2e2' }}>
-                <i className="fas fa-exclamation-circle"></i> {error}
-              </div>
-            )}
-            
-            {success && (
-              <div style={{ background: '#ecfdf5', color: '#10b981', padding: '12px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #d1fae5' }}>
-                <i className="fas fa-check-circle"></i> {success}
-              </div>
-            )}
-
             <div className="profile-actions">
               <button
                 type="submit"
@@ -127,7 +115,7 @@ export default function ChangePassword() {
                 className="btn-primary"
                 style={{ flex: 1 }}
               >
-                {loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-sync-alt"></i>}
+                {loading ? <Loader variant="inline" size="sm" /> : <i className="fas fa-sync-alt"></i>}
                 <span>{loading ? "Modification..." : "Mettre à jour"}</span>
               </button>
 

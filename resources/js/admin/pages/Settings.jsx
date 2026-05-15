@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { me, updateMyProfile, changeMyPassword } from '../api';
-import AdminNotice from '../components/AdminNotice';
+import { toastError, toastSuccess, toastInfo } from '../../utils/toast';
+import { notifyMutation } from '../../utils/mutationBus';
 import '../styles/admin-shared.css';
 import '../styles/settings.css';
 
@@ -26,8 +27,7 @@ export default function Settings() {
   const [profileMessage, setProfileMessage] = useState('');
   const [passwordMessage, setPasswordMessage] = useState('');
 
-  const profileNoticeType = profileMessage.toLowerCase().includes('succes') ? 'success' : 'error';
-  const passwordNoticeType = passwordMessage.toLowerCase().includes('succes') ? 'success' : 'error';
+
 
   const fullNamePreview = useMemo(
     () => [profile.prenom, profile.nom].filter(Boolean).join(' ').trim(),
@@ -51,7 +51,7 @@ export default function Settings() {
       .catch(() => {
         if (!mounted) return;
         setProfile(INITIAL_PROFILE);
-        setProfileMessage('Impossible de charger le profil.');
+        toastError('Impossible de charger le profil.');
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -82,10 +82,11 @@ export default function Settings() {
         email: profile.email,
         telephone: profile.telephone,
       });
-      setProfileMessage('Profil mis a jour avec succes.');
+      toastSuccess('Profil mis a jour avec succes.');
+      notifyMutation();
     } catch (err) {
       const msg = err?.response?.data?.message || 'Erreur lors de la mise a jour du profil.';
-      setProfileMessage(msg);
+      toastError(msg);
     } finally {
       setSavingProfile(false);
     }
@@ -93,12 +94,12 @@ export default function Settings() {
 
   const handleSavePassword = async () => {
     if (!password.current_password || !password.new_password || !password.new_password_confirmation) {
-      setPasswordMessage('Veuillez remplir tous les champs de mot de passe.');
+      toastError('Veuillez remplir tous les champs de mot de passe.');
       return;
     }
 
     if (password.new_password !== password.new_password_confirmation) {
-      setPasswordMessage('La confirmation du mot de passe ne correspond pas.');
+      toastError('La confirmation du mot de passe ne correspond pas.');
       return;
     }
 
@@ -106,11 +107,12 @@ export default function Settings() {
     setPasswordMessage('');
     try {
       await changeMyPassword(password);
-      setPasswordMessage('Mot de passe modifie avec succes.');
+      toastSuccess('Mot de passe modifie avec succes.');
+      notifyMutation();
       setPassword(INITIAL_PASSWORD);
     } catch (err) {
       const msg = err?.response?.data?.message || 'Erreur lors du changement de mot de passe.';
-      setPasswordMessage(msg);
+      toastError(msg);
     } finally {
       setSavingPassword(false);
     }
@@ -288,7 +290,7 @@ export default function Settings() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
             <div style={{ flex: 1 }}>
-              <AdminNotice type={profileNoticeType} message={profileMessage} />
+
             </div>
             <button
               onClick={handleSaveProfile}
@@ -364,7 +366,7 @@ export default function Settings() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
             <div style={{ flex: 1 }}>
-              <AdminNotice type={passwordNoticeType} message={passwordMessage} />
+
             </div>
             <button
               onClick={handleSavePassword}

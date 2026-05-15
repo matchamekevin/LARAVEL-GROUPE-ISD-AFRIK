@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import api from "../axios";
+import Loader from "../components/Loader";
 import { getProduit, getProduitBySlug, getProduits } from "../services/ProduitService";
 import { toastError } from "../utils/toast";
+import { addToCart, isFavorite, subscribeStoreUpdates, toggleFavorite } from "../utils/shopStorage";
 import {
   formatGeovisionPrice,
   getGeovisionAvailability,
@@ -10,9 +12,7 @@ import {
   readGeovisionSpecifications,
   resolveGeovisionImage,
 } from "../utils/geovision";
-import ProductActionButtons from "../components/ProductActionButtons";
 import "../styles/geovision-product-detail.css";
-import "../../css/product-action-buttons.css";
 
 export default function GeovisionProduitDetail() {
   const { slug } = useParams();
@@ -25,6 +25,9 @@ export default function GeovisionProduitDetail() {
   const [error, setError] = useState("");
   const [manufacturerSheetOpen, setManufacturerSheetOpen] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [quantite, setQuantite] = useState(1);
+  const [ajouteAuPanier, setAjouteAuPanier] = useState(false);
+  const [favori, setFavori] = useState(false);
   const resumeHandledRef = useRef(false);
 
   useEffect(() => {
@@ -46,7 +49,9 @@ export default function GeovisionProduitDetail() {
       .catch((requestError) => {
         if (!isMounted) return;
         setProduct(null);
-        setError(requestError.response?.data?.message || "Produit GeoVision introuvable.");
+        const prodErr = requestError.response?.data?.message || "Produit GeoVision introuvable.";
+        toastError(prodErr);
+        setError(prodErr);
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -110,6 +115,81 @@ export default function GeovisionProduitDetail() {
     };
   }, [manufacturerSheetOpen]);
 
+  useEffect(() => {
+    if (!product?.id_produit) { setFavori(false); return; }
+    const refresh = () => setFavori(isFavorite(product.id_produit));
+    refresh();
+    return subscribeStoreUpdates(refresh);
+  }, [product?.id_produit]);
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    addToCart(product, quantite);
+    setAjouteAuPanier(true);
+    setTimeout(() => setAjouteAuPanier(false), 2000);
+  };
+
+  const handleToggleFavorite = () => {
+    if (!product) return;
+    toggleFavorite(product);
+    setFavori(!favori);
+  };
+
+  const handleProductPayment = () => {
+    if (!product || Number(product.stock || 0) <= 0 || paymentLoading) return;
+    const quantityToPay = Math.max(1, quantite);
+    if (!localStorage.getItem("token")) {
+      navigate("/login", {
+        state: {
+          from: `${location.pathname}${location.search || ""}`,
+          post_login_intent: "pay_product",
+          post_login_payload: {
+            id_produit: Number(product.id_produit),
+            quantite: quantityToPay,
+          },
+        },
+      });
+      return;
+    }
+    setPaymentLoading(true);
+    try {
+      const user = getCurrentUser();
+      api.post("/produits/paiement", {
+        id_produit: Number(product.id_produit),
+        quantite: quantityToPay,
+        nom_livraison: user.nom || "Client",
+        prenom_livraison: user.prenom || "ISD",
+        email: user.email || "",
+        telephone: user.telephone || "00000000",
+        adresse: user.adresse || "Lomé, Togo",
+      }).then((response) => {
+        const checkoutUrl = response?.data?.checkout_url;
+        if (!checkoutUrl) throw new Error("URL de paiement manquante.");
+        window.location.href = checkoutUrl;
+      }).catch((err) => {
+        if (err?.response?.status === 401) {
+          setPaymentLoading(false);
+          navigate("/login", {
+            state: {
+              from: `${location.pathname}${location.search || ""}`,
+              post_login_intent: "pay_product",
+              post_login_payload: {
+                id_produit: Number(product.id_produit),
+                quantite: quantityToPay,
+              },
+            },
+          });
+          return;
+        }
+        toastError(err?.response?.data?.message || "Impossible d'initialiser le paiement.");
+        setPaymentLoading(false);
+      });
+    } catch {
+      toastError("Erreur lors du paiement.");
+      setPaymentLoading(false);
+    }
+  };
+
   const getCurrentUser = () => {
     try {
       const raw = localStorage.getItem("user");
@@ -117,66 +197,6 @@ export default function GeovisionProduitDetail() {
       return JSON.parse(raw) || {};
     } catch {
       return {};
-    }
-  };
-
-  const handleProductPayment = async (targetProduct, targetQty = 1) => {
-    if (!targetProduct || Number(targetProduct.stock || 0) <= 0 || paymentLoading) return;
-
-    const quantityToPay = Math.max(1, Number(targetQty || 1));
-
-    if (!localStorage.getItem("token")) {
-      navigate("/login", {
-        state: {
-          from: `${location.pathname}${location.search || ""}`,
-          post_login_intent: "pay_product",
-          post_login_payload: {
-            id_produit: Number(targetProduct.id_produit),
-            quantite: quantityToPay,
-          },
-        },
-      });
-      return;
-    }
-
-    setPaymentLoading(true);
-
-    try {
-      const user = getCurrentUser();
-      const response = await api.post("/produits/paiement", {
-        id_produit: Number(targetProduct.id_produit),
-        quantite: quantityToPay,
-        nom_livraison: user.nom || "Client",
-        prenom_livraison: user.prenom || "ISD",
-        email: user.email || "",
-        telephone: user.telephone || "00000000",
-        adresse: user.adresse || "Lomé, Togo",
-      });
-
-      const checkoutUrl = response?.data?.checkout_url;
-      if (!checkoutUrl) {
-        throw new Error("URL de paiement manquante.");
-      }
-
-      window.location.href = checkoutUrl;
-    } catch (paymentError) {
-      if (paymentError?.response?.status === 401) {
-        setPaymentLoading(false);
-        navigate("/login", {
-          state: {
-            from: `${location.pathname}${location.search || ""}`,
-            post_login_intent: "pay_product",
-            post_login_payload: {
-              id_produit: Number(targetProduct.id_produit),
-              quantite: quantityToPay,
-            },
-          },
-        });
-        return;
-      }
-
-      setPaymentLoading(false);
-      toastError(paymentError?.response?.data?.message || "Impossible d'initialiser le paiement pour ce produit.");
     }
   };
 
@@ -205,10 +225,8 @@ export default function GeovisionProduitDetail() {
   if (loading) {
     return (
       <div className="gpd-page">
-        <div className="gpd-shell gpd-empty-state">
-          <p className="gpd-kicker">GeoVision</p>
-          <h1>Chargement du modèle...</h1>
-          <p>Nous récupérons les détails complets de cette référence GeoVision.</p>
+        <div className="gpd-shell">
+          <Loader variant="skeleton" type="detail" />
         </div>
       </div>
     );
@@ -233,8 +251,9 @@ export default function GeovisionProduitDetail() {
   const specs = readGeovisionSpecifications(product);
   const images = getProductGallery(product);
   const availability = getGeovisionAvailability(product);
-  const family = product.categorie?.parent?.parent || product.categorie?.parent || null;
-  const category = product.categorie?.parent || product.categorie || null;
+  const subcategory = product.categorie || null;
+  const category = subcategory?.parent || null;
+  const family = category?.parent || null;
   const price = formatGeovisionPrice(product.prix_promo || product.prix);
   const featureCards = (specs.features.length > 0 ? specs.features : specs.tags).slice(0, 6);
   const detailCards = Array.from(new Set([
@@ -259,10 +278,16 @@ export default function GeovisionProduitDetail() {
               <Link to={`/geovision?famille=${family.slug}`}>{family.nom}</Link>
             </>
           )}
-          {category && (
+          {category && category.slug !== family?.slug && (
             <>
               <span>/</span>
               <Link to={`/geovision/categorie/${category.slug}`}>{category.nom}</Link>
+            </>
+          )}
+          {subcategory && subcategory.slug !== category?.slug && (
+            <>
+              <span>/</span>
+              <Link to={`/geovision/categorie/${subcategory.slug}`}>{subcategory.nom}</Link>
             </>
           )}
           <span>/</span>
@@ -275,21 +300,6 @@ export default function GeovisionProduitDetail() {
               <img src={images[activeImage]} alt={product.titre} className="gpd-main-image" />
               <span className="gpd-badge">{specs.taxonomy.subcategory || category?.nom || "GeoVision"}</span>
             </div>
-
-            {images.length > 1 && (
-              <div className="gpd-thumbs">
-                {images.map((src, index) => (
-                  <button
-                    key={`${product.slug}-${index}`}
-                    type="button"
-                    className={`gpd-thumb ${index === activeImage ? "is-active" : ""}`}
-                    onClick={() => setActiveImage(index)}
-                  >
-                    <img src={src} alt="" />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="gpd-content">
@@ -332,35 +342,75 @@ export default function GeovisionProduitDetail() {
               </div>
             )}
 
-            <div className="gpd-actions">
-              {/* Boutons d'action produit (panier, favoris, paiement) */}
-              <div style={{ marginBottom: "1.5rem", width: "100%" }}>
-                <ProductActionButtons
-                  product={product}
-                  options={{
-                    defaultQuantity: 1,
-                    showQuantity: true,
-                    showPaymentBtn: true,
-                    onPaymentClick: (prod, qty) => {
-                      handleProductPayment(prod, qty);
-                    },
+            <div className="gpd-action-bar">
+              <div className="gpd-qty-group">
+                <button
+                  type="button"
+                  className="gpd-qty-btn"
+                  onClick={() => setQuantite((q) => Math.max(1, q - 1))}
+                  aria-label="Diminuer la quantité"
+                >
+                  <i className="fa-solid fa-minus"></i>
+                </button>
+                <input
+                  id={`gpd-qty-${product.id_produit}`}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  min="1"
+                  max="999"
+                  value={quantite}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value.replace(/\D/g, ""), 10);
+                    if (!isNaN(val)) setQuantite(Math.max(1, Math.min(999, val)));
                   }}
+                  className="gpd-qty-input"
                 />
+                <button
+                  type="button"
+                  className="gpd-qty-btn"
+                  onClick={() => setQuantite((q) => Math.min(999, q + 1))}
+                  aria-label="Augmenter la quantité"
+                >
+                  <i className="fa-solid fa-plus"></i>
+                </button>
               </div>
+              <button
+                type="button"
+                className={`gpd-icon-btn ${ajouteAuPanier ? "gpd-icon-btn--success" : ""}`}
+                title="Ajouter au panier"
+                aria-label="Ajouter au panier"
+                onClick={handleAddToCart}
+                disabled={ajouteAuPanier}
+              >
+                <i className={`fa-solid ${ajouteAuPanier ? "fa-check" : "fa-cart-shopping"}`}></i>
+              </button>
+              <button
+                type="button"
+                className={`gpd-icon-btn ${favori ? "gpd-icon-btn--active" : ""}`}
+                title={favori ? "Retirer des favoris" : "Ajouter aux favoris"}
+                aria-label={favori ? "Retirer des favoris" : "Ajouter aux favoris"}
+                onClick={handleToggleFavorite}
+              >
+                <i className={`fa-${favori ? "solid" : "regular"} fa-heart`}></i>
+              </button>
+              <button
+                type="button"
+                className="gpd-btn-pay"
+                title="Payer maintenant"
+                aria-label="Payer maintenant"
+                onClick={handleProductPayment}
+                disabled={paymentLoading}
+              >
+                {paymentLoading ? <Loader variant="inline" size="sm" /> : <i className="fa-solid fa-credit-card"></i>}
+                <span>{paymentLoading ? "Redirection..." : "Payer"}</span>
+              </button>
+            </div>
 
-              {/* Boutons d'information existants */}
+            <div className="gpd-actions">
               <button type="button" className="gpd-btn gpd-btn--primary" onClick={() => navigate("/contact", { state: { subject: product.titre } })}>
                 Demander un devis
               </button>
-              {category && (
-                <Link to={`/geovision/categorie/${category.slug}`} className="gpd-btn gpd-btn--ghost">
-                  Voir la catégorie
-                </Link>
-              )}
-              <button type="button" className="gpd-btn gpd-btn--ghost" onClick={openManufacturerSheet}>
-                Fiche constructeur
-              </button>
-              <Link to="/geovision" className="gpd-btn gpd-btn--ghost">Retour GeoVision</Link>
             </div>
           </div>
         </section>

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import toast from "react-hot-toast";
+import { toastError, toastSuccess } from "../utils/toast";
 
 export default function ForgotPassword() {
   const API_BASE = (() => {
@@ -22,8 +22,6 @@ export default function ForgotPassword() {
   })();
 
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
 
   const translateMessage = (key) => {
     const messages = {
@@ -46,11 +44,11 @@ export default function ForgotPassword() {
         { withCredentials: true }
       );
       const msg = res.data.message || "passwords.sent";
-      toast.success(translateMessage(msg));
+      toastSuccess(translateMessage(msg));
       setEmail("");
     } catch (err) {
       const msg = err.response?.data?.message || "passwords.user";
-      toast.error(translateMessage(msg));
+      toastError(translateMessage(msg));
     }
   };
 

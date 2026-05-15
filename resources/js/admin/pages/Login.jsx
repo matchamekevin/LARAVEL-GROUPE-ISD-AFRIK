@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import toast from 'react-hot-toast';
+import { toastError, toastSuccess, toastInfo } from '../../utils/toast';
 import { login, verify2FA, resend2FA, setAdminToken } from '../api';
 
 function normalizeAuthMessage(err, fallback) {
@@ -24,7 +24,6 @@ export default function Login({ onLogin }){
   const [requires2fa, setRequires2fa] = useState(false);
   const [userId, setUserId] = useState(null);
   const [code, setCode] = useState('');
-  const [info, setInfo] = useState(null);
   const emailInputRef = useRef(null);
   const passwordInputRef = useRef(null);
 
@@ -58,47 +57,46 @@ export default function Login({ onLogin }){
       if (data.requires_2fa) {
         setRequires2fa(true);
         setUserId(data.user_id);
-        toast.info('Code 2FA envoyé par e-mail.');
+        toastInfo('Code 2FA envoyé par e-mail.');
       } else {
         // connexion réussie sans 2FA
         if (data.token) setAdminToken(data.token);
-        toast.success('Connexion réussie !');
+        toastSuccess('Connexion réussie !');
         if (onLogin) onLogin();
       }
     }catch(err){
       const msg = normalizeAuthMessage(err, 'Erreur de connexion');
       setError(msg);
-      toast.error(msg);
+      toastError(msg);
     }finally{ setLoading(false); }
   }
 
   async function handleVerify(e){
     e.preventDefault();
-    setLoading(true); setError(null); setInfo(null);
+    setLoading(true); setError(null);
     try{
       const res = await verify2FA({ user_id: userId, code, portal: 'admin' });
       const data = res.data || {};
       if (data.token) setAdminToken(data.token);
-      toast.success('Authentification 2FA réussie !');
+      toastSuccess('Authentification 2FA réussie !');
       if (onLogin) onLogin();
     }catch(err){
       const msg = normalizeAuthMessage(err, 'Code invalide');
       setError(msg);
-      toast.error(msg);
+      toastError(msg);
     }finally{ setLoading(false); }
   }
 
   async function handleResend(){
-    setLoading(true); setError(null); setInfo(null);
+    setLoading(true); setError(null);
     try{
       const res = await resend2FA({ user_id: userId, portal: 'admin' });
       const msg = res.data?.message || 'Nouveau code envoyé';
-      setInfo(msg);
-      toast.success(msg);
+      toastSuccess(msg);
     }catch(err){
       const msg = normalizeAuthMessage(err, 'Erreur en renvoi du code');
       setError(msg);
-      toast.error(msg);
+      toastError(msg);
     }finally{ setLoading(false); }
   }
 

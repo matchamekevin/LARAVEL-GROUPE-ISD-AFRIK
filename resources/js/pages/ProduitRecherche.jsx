@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { searchProduits } from "../services/ProduitService";
 import ProduitCard from "../components/ProduitCard";
+import Loader from "../components/Loader";
 import "../styles/produitrecherche.css";
+import SearchBar from "../components/SearchBar";
 
 export default function ProduitRecherche() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -52,25 +54,15 @@ export default function ProduitRecherche() {
             <p>Résultats pour <strong>"{recherche}"</strong></p>
           )}
 
-          <form className="pr-search-form" onSubmit={handleSubmit}>
-            <input
-              type="text"
-              placeholder="Rechercher un produit, une marque..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              autoFocus
-            />
-            {query && (
-              <button
-                type="button"
-                className="pr-clear"
-                onClick={() => { setQuery(""); setResultats([]); setRecherche(""); }}
-              >✕</button>
-            )}
-            <button type="submit" className="pr-search-btn">
-              Rechercher
-            </button>
-          </form>
+          <SearchBar
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onClear={() => { setQuery(""); setResultats([]); setRecherche(""); }}
+            placeholder="Rechercher un produit, une marque..."
+            autoFocus
+            onSubmit={handleSubmit}
+            submitLabel="Rechercher"
+          />
         </div>
       </div>
 
@@ -88,13 +80,7 @@ export default function ProduitRecherche() {
         )}
 
         {/* Loading */}
-        {loading && (
-          <div className="pr-grid">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="pr-skeleton" />
-            ))}
-          </div>
-        )}
+        {loading && <Loader variant="skeleton" count={8} type="card" />}
 
         {/* Résultats */}
         {!loading && resultats.length > 0 && (

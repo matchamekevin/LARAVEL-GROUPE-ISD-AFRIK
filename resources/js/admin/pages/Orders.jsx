@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { getOrders, getOrder, updateOrderStatus, updateOrderDeliveryStatus } from '../api';
-import AdminToast, { useAdminToast } from '../components/AdminToast';
-import AdminNotice from '../components/AdminNotice';
-import Loader from '../components/Loader';
+import { toastError, toastSuccess } from "../../utils/toast";
+import { notifyMutation } from "../../utils/mutationBus";
+import Loader from '../../components/Loader';
 import { useLivePolling } from '../../hooks/useLivePolling';
 import '../styles/admin-shared.css';
 import '../styles/orders.css';
@@ -48,15 +48,14 @@ export default function Orders() {
   const [page, setPage] = useState(1);
   const [refreshToken, setRefreshToken] = useState(0);
   const [stats, setStats] = useState({ total: 0, en_attente: 0, payee: 0 });
-  const [errorMessage, setErrorMessage] = useState('');
-  const { toast, showToast } = useAdminToast();
+
 
   useEffect(() => {
     let mounted = true;
 
     async function loadOrders() {
       setLoading(true);
-      setErrorMessage('');
+
       try {
         const params = { page, per_page: ORDERS_PER_PAGE };
         const res = await getOrders(params);
@@ -92,7 +91,7 @@ export default function Orders() {
         setOrders([]);
         setPagination(EMPTY_PAGINATION);
         setStats({ total: 0, en_attente: 0, payee: 0 });
-        setErrorMessage('Impossible de charger les commandes pour le moment.');
+        toastError('Impossible de charger les commandes pour le moment.');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -142,7 +141,7 @@ export default function Orders() {
   useLivePolling(
     () => backgroundLoadOrders(),
     {
-      intervalMs: 7000,
+      intervalMs: 3000,
       enabled: !loading && updatingDeliveryId === null,
     }
   );
@@ -153,14 +152,15 @@ export default function Orders() {
       setSelectedOrder(res.data);
     } catch (err) {
       console.error('Get order error', err);
-      showToast('Erreur recuperation commande', 'error');
+      toastError('Erreur recuperation commande');
     }
   }
 
   async function handleStatus(id, statut) {
     try {
       await updateOrderStatus(id, statut);
-      showToast('Statut commande mis a jour.', 'success');
+      toastSuccess('Statut commande mis a jour.');
+      notifyMutation();
       setRefreshToken((t) => t + 1);
       if (selectedOrder && selectedOrder.id === id) {
         try {
@@ -172,7 +172,7 @@ export default function Orders() {
       }
     } catch (err) {
       console.error('Update order status error', err);
-      showToast('Erreur mise a jour statut commande', 'error');
+      toastError('Erreur mise a jour statut commande');
     }
   }
 
@@ -180,7 +180,8 @@ export default function Orders() {
     setUpdatingDeliveryId(id);
     try {
       await updateOrderDeliveryStatus(id, statut);
-      showToast('Statut livraison mis a jour.', 'success');
+      toastSuccess('Statut livraison mis a jour.');
+      notifyMutation();
       setRefreshToken((t) => t + 1);
       if (selectedOrder && selectedOrder.id === id) {
         try {
@@ -192,7 +193,7 @@ export default function Orders() {
       }
     } catch (err) {
       console.error('Update delivery status error', err);
-      showToast(err?.response?.data?.message || 'Erreur mise a jour statut livraison', 'error');
+      toastError(err?.response?.data?.message || 'Erreur mise a jour statut livraison');
     } finally {
       setUpdatingDeliveryId(null);
     }
@@ -223,7 +224,7 @@ export default function Orders() {
         )}
       </div>
 
-      <AdminNotice type="error" message={errorMessage} className="admin-orders-notice" />
+
 
       {loading ? (
         <Loader text="Chargement des commandes..." />
@@ -370,7 +371,7 @@ export default function Orders() {
         </>
       )}
 
-      <AdminToast toast={toast} />
+
     </div>
   );
 }

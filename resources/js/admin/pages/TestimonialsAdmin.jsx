@@ -5,8 +5,9 @@ import {
   updateHomeTestimonial,
   deleteHomeTestimonial,
 } from '../api';
-import Loader from '../components/Loader';
-import AdminToast, { useAdminToast } from '../components/AdminToast';
+import Loader from '../../components/Loader';
+import { toastError, toastSuccess } from '../../utils/toast';
+import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
 import { pickDisplayMediaUrl } from '../../utils/mediaUrl';
 import '../styles/admin-shared.css';
@@ -34,7 +35,7 @@ export default function TestimonialsAdmin() {
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const itemSelectionRef = useRef(null);
   const itemHeaderSelectionRef = useRef(null);
-  const { toast, showToast } = useAdminToast();
+
 
   function avatarSrc(item) {
     return pickDisplayMediaUrl([item?.avatar_url, item?.avatar_path], '');
@@ -48,7 +49,7 @@ export default function TestimonialsAdmin() {
     } catch (err) {
       console.error(err);
       setItems([]);
-      showToast('Impossible de charger les avis clients', 'error');
+      toastError('Impossible de charger les avis clients');
     } finally {
       setLoading(false);
     }
@@ -126,17 +127,17 @@ export default function TestimonialsAdmin() {
     const editing = Boolean(editingId);
 
     if (!form.name?.trim()) {
-      showToast('Le nom du client est obligatoire', 'error');
+      toastError('Le nom du client est obligatoire');
       return;
     }
 
     if (!form.text?.trim()) {
-      showToast('Le temoignage est obligatoire', 'error');
+      toastError('Le temoignage est obligatoire');
       return;
     }
 
     if (!editingId && !form.avatar) {
-      showToast('Veuillez ajouter un avatar/logo', 'error');
+      toastError('Veuillez ajouter un avatar/logo');
       return;
     }
 
@@ -162,9 +163,10 @@ export default function TestimonialsAdmin() {
 
       resetForm();
       await loadData();
-      showToast(editing ? 'Avis mis a jour.' : 'Avis cree.', 'success');
+      toastSuccess(editing ? 'Avis mis a jour.' : 'Avis cree.');
+      notifyMutation();
     } catch (err) {
-      showToast(err?.response?.data?.message || 'Erreur enregistrement avis', 'error');
+      toastError(err?.response?.data?.message || 'Erreur enregistrement avis');
     } finally {
       setSaving(false);
     }
@@ -237,16 +239,16 @@ export default function TestimonialsAdmin() {
     setSelectedItemIds(new Set());
 
     if (deletedCount > 0) {
-      showToast(
+      toastSuccess(
         failedCount > 0
           ? `${deletedCount} avis supprimee(s).`
-          : `${deletedCount} avis supprimee(s) avec succes.`,
-        'success'
+          : `${deletedCount} avis supprimee(s) avec succes.`
       );
+      notifyMutation();
     }
 
     if (failedCount > 0) {
-      showToast(lastErrorMessage || `${failedCount} avis non supprimee(s).`, 'error');
+      toastError(lastErrorMessage || `${failedCount} avis non supprimee(s).`);
     }
 
     setBulkDeleting(false);
@@ -264,9 +266,10 @@ export default function TestimonialsAdmin() {
         return next;
       });
       if (editingId === id) resetForm();
-      showToast('Avis supprime.', 'success');
+      toastSuccess('Avis supprime.');
+      notifyMutation();
     } catch (err) {
-      showToast('Erreur suppression avis', 'error');
+      toastError('Erreur suppression avis');
     }
   }
 
@@ -425,7 +428,7 @@ export default function TestimonialsAdmin() {
             </button>
           </div>
         </div>
-        {loading ? <Loader /> : (
+        {loading ? <Loader variant="spinner" /> : (
           <table className="admin-bulk-table">
             <thead>
               <tr>
@@ -507,7 +510,7 @@ export default function TestimonialsAdmin() {
         )}
       </div>
 
-      <AdminToast toast={toast} />
+
     </div>
   );
 }

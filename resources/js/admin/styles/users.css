@@ -92,27 +92,6 @@
   min-width: 250px;
 }
 
-.admin-users-search-input input {
-  width: 100%;
-  min-height: 42px;
-  padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-sm) 2.6rem;
-  border: var(--border-light);
-  border-radius: 8px;
-  font-size: var(--font-size-sm);
-  transition: all 0.2s ease;
-  background-color: #ffffff;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='20' y1='20' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: 0.9rem 50%;
-  background-size: 0.95rem 0.95rem;
-}
-
-.admin-users-search-input input:focus {
-  outline: none;
-  border-color: #718096;
-  box-shadow: 0 0 0 3px rgba(113, 128, 150, 0.1);
-}
-
 /* Table Card */
 .admin-users-list-card {
   background: var(--color-white);

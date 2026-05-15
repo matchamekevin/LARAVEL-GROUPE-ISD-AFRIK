@@ -279,13 +279,6 @@
   margin-bottom: var(--spacing-lg);
 }
 
-.admin-products-searchbar input {
-  padding: var(--spacing-md) var(--spacing-lg);
-  border: 2px solid #d1d5db;
-  border-radius: var(--border-radius);
-  font-size: var(--font-size-base);
-}
-
 .admin-products-bulk-bar {
   display: flex;
   flex-wrap: wrap;
@@ -1390,11 +1383,6 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-md);
-}
-
-.admin-products-searchbar input,
-.admin-products-filters select {
-  min-height: 44px;
 }
 
 .admin-products-table-wrap {

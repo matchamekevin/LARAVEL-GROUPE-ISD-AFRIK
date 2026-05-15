@@ -535,38 +535,6 @@
 }
 
 /* ========================================
-   LOADING PREMIUM
-   ======================================== */
-
-.formation-details-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 70vh;
-  gap: 30px;
-}
-
-.formation-details-loading .spinner {
-  width: 80px;
-  height: 80px;
-  border: 8px solid rgba(255, 255, 255, 0.1);
-  border-top: 8px solid #fb9c08;
-  border-right: 8px solid #ffa500;
-  border-radius: 50%;
-  animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  box-shadow: 0 0 40px rgba(251, 156, 8, 0.4);
-}
-
-.formation-details-loading p {
-  color: white;
-  font-size: 1.4rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-shadow: 0 2px 20px rgba(251, 156, 8, 0.5);
-}
-
-/* ========================================
    ERREUR
    ======================================== */
 
@@ -715,4 +683,14 @@
   .info-item i {
     font-size: 2.5rem;
   }
+}
+
+/* ── RESPONSIVE FORMATION DETAILS ─────────────────── */
+@media (max-width: 900px) {
+  .formation-details-grid { grid-template-columns: 1fr; gap: 20px; }
+}
+
+@media (max-width: 640px) {
+  .formation-details-header { padding: clamp(16px, 3vw, 24px); }
+  .formation-details-header h1 { font-size: clamp(1.2rem, 4vw, 1.5rem); }
 }

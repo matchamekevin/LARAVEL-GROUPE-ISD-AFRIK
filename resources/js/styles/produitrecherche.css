@@ -48,53 +48,6 @@
     margin-bottom: 24px;
   }
   
-  /* Formulaire */
-  .pr-search-form {
-    display: flex;
-    background: #fff;
-    border-radius: 50px;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    border: 2px solid transparent;
-    transition: border-color 0.2s;
-  }
-  
-  .pr-search-form:focus-within { border-color: #fb9c08; }
-  
-  .pr-search-form input {
-    flex: 1;
-    border: none;
-    outline: none;
-    padding: 14px 20px;
-    font-size: 15px;
-    color: #172243;
-    background: transparent;
-  }
-  
-  .pr-clear {
-    background: none;
-    border: none;
-    padding: 0 12px;
-    font-size: 16px;
-    color: #adb5bd;
-    cursor: pointer;
-    transition: color 0.2s;
-  }
-  .pr-clear:hover { color: #dc3545; }
-  
-  .pr-search-btn {
-    background: #fb9c08;
-    color: #fff;
-    border: none;
-    padding: 14px 28px;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.2s;
-    white-space: nowrap;
-  }
-  .pr-search-btn:hover { background: #d87f06; }
-  
   /* ── Container ──────────────────────────────────────── */
   .pr-container {
     max-width: 1300px;
@@ -119,20 +72,6 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
     gap: 18px;
-  }
-  
-  /* Skeleton */
-  .pr-skeleton {
-    height: 340px;
-    border-radius: 12px;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: pr-shimmer 1.4s infinite;
-  }
-  
-  @keyframes pr-shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
   }
   
   /* État vide */
@@ -172,3 +111,15 @@
     .pr-grid        { grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .pr-search-btn  { padding: 12px 16px; font-size: 13px; }
   }
+
+/* ── RESPONSIVE PRODUIT RECHERCHE ─────────────────── */
+@media (max-width: 768px) {
+  .pr-hero h1 { font-size: clamp(1.3rem, 4vw, 1.8rem); }
+  .pr-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
+
+@media (max-width: 480px) {
+  .pr-grid { grid-template-columns: 1fr; }
+  .pr-filter-bar { flex-direction: column; gap: 8px; }
+  .pr-card-body { padding: 12px; }
+}

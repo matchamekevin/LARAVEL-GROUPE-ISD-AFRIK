@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { createAdminAdjoint, getCountries, getUsers, me, updateUser, updateUserStatus } from '../api';
 import { useLivePolling } from '../../hooks/useLivePolling';
-import AdminToast, { useAdminToast } from '../components/AdminToast';
-import AdminNotice from '../components/AdminNotice';
-import Loader from '../components/Loader';
+import { toastError, toastSuccess } from "../../utils/toast";
+import { notifyMutation } from "../../utils/mutationBus";
+import Loader from '../../components/Loader';
 import '../styles/admin-shared.css';
 import '../styles/users.css';
+import SearchBar from '../../components/SearchBar';
 
 import { ROLE_LABELS, normalizeRole } from '../utils/roles';
 
@@ -125,11 +126,9 @@ export default function Users() {
   const [accessUpdating, setAccessUpdating] = useState(null);
   const [creatingAdmin, setCreatingAdmin] = useState(false);
   const [accessDrafts, setAccessDrafts] = useState({});
-  const [errorMessage, setErrorMessage] = useState('');
   const [phoneError, setPhoneError] = useState(null);
   const [adminForm, setAdminForm] = useState(INITIAL_ADMIN_FORM);
   const [refreshToken, setRefreshToken] = useState(0);
-  const { toast, showToast } = useAdminToast();
 
   const actorId = actorUser?.id ?? actorUser?.id_utilisateur ?? null;
   const actorRole = deriveAdminLevel(actorUser || {});
@@ -170,8 +169,6 @@ export default function Users() {
 
     async function loadUsers() {
       setLoading(true);
-      setErrorMessage('');
-
       try {
         const params = {
           page,
@@ -221,7 +218,7 @@ export default function Users() {
         setUsers([]);
         setPagination(EMPTY_PAGINATION);
         setStats(EMPTY_STATS);
-        setErrorMessage('Impossible de charger les utilisateurs pour le moment.');
+        toastError('Impossible de charger les utilisateurs pour le moment.');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -290,7 +287,7 @@ export default function Users() {
   useLivePolling(
     () => backgroundLoadUsers(),
     {
-      intervalMs: 7000,
+      intervalMs: 3000,
       enabled: !creatingAdmin && accessUpdating === null && toggling === null,
     }
   );
@@ -337,11 +334,12 @@ export default function Users() {
       const nextUser = mergeUserState(selectedUser, updated);
 
       await applySelfUpdate(nextUser);
-      showToast(`✅ ${actionText} effectué. Email envoyé à ${selectedUser.email}`, 'success');
+      toastSuccess(`✅ ${actionText} effectué. Email envoyé à ${selectedUser.email}`);
+      notifyMutation();
       reloadUsers();
     } catch (err) {
       console.error('Toggle user status error', err);
-      showToast('❌ Erreur lors de la mise à jour du statut', 'error');
+      toastError('❌ Erreur lors de la mise à jour du statut');
     } finally {
       setToggling(null);
     }
@@ -390,11 +388,12 @@ export default function Users() {
       });
 
       await applySelfUpdate(nextUser);
-      showToast(`✅ Accès mis à jour pour ${selectedUser.email}`, 'success');
+      toastSuccess(`✅ Accès mis à jour pour ${selectedUser.email}`);
+      notifyMutation();
       reloadUsers();
     } catch (err) {
       console.error('Access update error', err);
-      showToast(err?.response?.data?.message || '❌ Erreur lors de la mise à jour des accès', 'error');
+      toastError(err?.response?.data?.message || '❌ Erreur lors de la mise à jour des accès');
     } finally {
       setAccessUpdating(null);
     }
@@ -429,11 +428,12 @@ export default function Users() {
         two_factor_enabled: true,
       }));
 
-      showToast(`✅ Admin adjoint créé. Email envoyé à ${created?.email || adminForm.email}`, 'success');
+      toastSuccess(`✅ Admin adjoint créé. Email envoyé à ${created?.email || adminForm.email}`);
+      notifyMutation();
       reloadUsers();
     } catch (err) {
       console.error('Create admin adjoint error', err);
-      showToast(err?.response?.data?.message || '❌ Impossible de créer le compte admin adjoint', 'error');
+      toastError(err?.response?.data?.message || '❌ Impossible de créer le compte admin adjoint');
     } finally {
       setCreatingAdmin(false);
     }
@@ -524,7 +524,6 @@ export default function Users() {
         )}
       </div>
 
-      <AdminNotice type="error" message={errorMessage} className="admin-users-notice" />
 
       {actorIsSuperAdmin && (
         <div className="admin-users-create-card">
@@ -708,15 +707,12 @@ export default function Users() {
         </div>
 
         <form className="admin-users-search" onSubmit={handleSearchSubmit} style={{ marginBottom: 0, flex: 1, maxWidth: '500px' }}>
-          <div className="admin-users-search-input" style={{ width: '100%' }}>
-            <input
-              type="text"
-              placeholder="Rechercher un nom ou email..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              style={{ width: '100%' }}
-            />
-          </div>
+          <SearchBar
+            placeholder="Rechercher un nom ou email..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            compact
+          />
         </form>
       </div>
 
@@ -926,7 +922,7 @@ export default function Users() {
           </div>
         </div>
 
-      <AdminToast toast={toast} />
+
     </>
   );
 }

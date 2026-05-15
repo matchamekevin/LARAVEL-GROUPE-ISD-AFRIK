@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
 import api from "../axios";
+import Loader from "../components/Loader";
 import { getCategorie, getProduit, getProduits } from "../services/ProduitService";
 import { useLivePolling } from "../hooks/useLivePolling";
 import { addToCart, isFavorite, subscribeStoreUpdates, toggleFavorite } from "../utils/shopStorage";
-import { toastError } from "../utils/toast";
+import { notifyMutation } from "../utils/mutationBus";
+import { toastError, toastSuccess } from "../utils/toast";
 import "../styles/produitdetail.css";
 
 function normalizeMediaUrl(value) {
@@ -89,8 +91,6 @@ export default function ProduitDetail() {
   const [avisForm,        setAvisForm]        = useState({ note: 0, contenu: "" });
   const [hoverNote,       setHoverNote]       = useState(0);
   const [avisSubmitting,  setAvisSubmitting]  = useState(false);
-  const [avisMessage,     setAvisMessage]     = useState("");
-  const [avisError,       setAvisError]       = useState("");
   const [modelGallery,    setModelGallery]    = useState([]);
   const [paiementLoading, setPaiementLoading] = useState(false);
   const [refreshToken,    setRefreshToken]    = useState(0);
@@ -121,8 +121,6 @@ export default function ProduitDetail() {
   useEffect(() => {
     setLoading(true);
     setOnglet("description");
-    setAvisMessage("");
-    setAvisError("");
     setImageActive(0);
     setModelGallery([]);
     getProduit(id)
@@ -138,7 +136,7 @@ export default function ProduitDetail() {
   };
 
   useLivePolling(() => backgroundLoadProduit(), {
-    intervalMs: 8000,
+    intervalMs: 3000,
     enabled: Boolean(id) && !avisSubmitting && !paiementLoading,
   });
 
@@ -287,15 +285,7 @@ export default function ProduitDetail() {
   if (loading) {
     return (
       <div className="pd-page">
-        <div className="pd-skeleton-wrap">
-          <div className="pd-skeleton pd-skeleton--img" />
-          <div className="pd-skeleton-info">
-            <div className="pd-skeleton pd-skeleton--line" />
-            <div className="pd-skeleton pd-skeleton--line pd-skeleton--short" />
-            <div className="pd-skeleton pd-skeleton--line" />
-            <div className="pd-skeleton pd-skeleton--btn" />
-          </div>
-        </div>
+        <Loader variant="skeleton" type="detail" />
       </div>
     );
   }
@@ -306,44 +296,63 @@ export default function ProduitDetail() {
         <div className="pd-not-found">
           <div><i className="fa-solid fa-box-open pd-empty-icon" aria-hidden="true"></i></div>
           <h2>Produit introuvable</h2>
-          <Link to={location.state?.from || "/produits"} className="pd-back-btn">← Retour boutique</Link>
+          <button type="button" className="pd-back-btn" onClick={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate("/produits");
+            }
+          }}>← Retour boutique</button>
         </div>
       </div>
     );
   }
 
   const localGallery = collectProductMedia(produit);
-  const images = modelGallery.length > 0 ? modelGallery : localGallery.length > 0 ? localGallery : ["/images/default.webp"];
+  const images = modelGallery.length > 0 ? modelGallery : localGallery.length > 0 ? localGallery : ["/images/produits/proj.webp"];
   const prixFinal = produit.prix_promo ?? produit.prix;
   const reduction = produit.prix_promo ? Math.round(((produit.prix - produit.prix_promo) / produit.prix) * 100) : null;
   const avisCount = Number(produit.nombre_avis || 0) || (Array.isArray(produit.commentaires) ? produit.commentaires.length : 0);
   const specsObject = toSpecificationsObject(produit.specifications);
   const specsEntries = Object.entries(specsObject);
 
+  const slugifyCategory = (cat) => String(cat?.slug || cat?.nom || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+
+  const catNode = produit.categorie || categorieInfo || null;
+  const catParent = catNode?.parent || null;
+  const catGrandParent = catParent?.parent || null;
+
   return (
     <div className="pd-page">
 
-      {/* ── Fil d'Ariane ─────────────────────────── */}
       <nav className="pd-breadcrumb" aria-label="Fil d'Ariane">
-        <ol className="pd-breadcrumb-inner">
-          <li><Link to="/">Accueil</Link></li>
-          <li><span aria-hidden="true">›</span><Link to="/produits">Boutique</Link></li>
-          {isGeovision && (
-            <li><span aria-hidden="true">›</span><Link to={geovisionLink}>Geovision</Link></li>
-          )}
-          {(produit.categorie || categorieInfo) && (
-            <li>
-              <span aria-hidden="true">›</span>
-              <Link to={`/produits?id_categorie=${(produit.categorie?.id_categorie || categorieInfo?.id_categorie || produit.id_categorie)}`}>
-                {(produit.categorie?.nom || categorieInfo?.nom)}
-              </Link>
-            </li>
-          )}
-          <li>
-            <span aria-hidden="true">›</span>
-            <span className="pd-breadcrumb-current" aria-current="page">{produit.titre}</span>
-          </li>
-        </ol>
+        <Link to="/" className="pd-breadcrumb-link">Accueil</Link>
+        <span className="pd-breadcrumb-sep">/</span>
+        <button type="button" className="pd-breadcrumb-link-btn" onClick={() => navigate("/produits")}>
+          Produits
+        </button>
+        {catGrandParent && (
+          <>
+            <span className="pd-breadcrumb-sep">/</span>
+            <Link to={`/produits?categories=${slugifyCategory(catGrandParent)}`} className="pd-breadcrumb-link">{catGrandParent.nom}</Link>
+          </>
+        )}
+        {catParent && (!catGrandParent || catParent.slug !== catGrandParent.slug) && (
+          <>
+            <span className="pd-breadcrumb-sep">/</span>
+            <Link to={`/produits?categories=${slugifyCategory(catGrandParent || catParent)}&sous_categorie_id=${catParent.id_categorie || catParent.id}`} className="pd-breadcrumb-link">{catParent.nom}</Link>
+          </>
+        )}
+        {catNode && (!catParent || catNode.slug !== catParent.slug) && (
+          <>
+            <span className="pd-breadcrumb-sep">/</span>
+            <Link to={`/produits?categories=${slugifyCategory(catParent || catNode)}&sous_categorie_id=${catNode.id_categorie || catNode.id}`} className="pd-breadcrumb-link">{catNode.nom}</Link>
+          </>
+        )}
+        <span className="pd-breadcrumb-sep">/</span>
+        <span className="pd-breadcrumb-current">{produit.titre}</span>
       </nav>
 
       {/* ── Corps principal ───────────────────────── */}
@@ -355,7 +364,7 @@ export default function ProduitDetail() {
             <div className="pd-img-main-wrapper">
               {reduction && <span className="pd-badge-promo">-{reduction}%</span>}
               {produit.est_nouveau && <span className="pd-badge-nouveau">Nouveau</span>}
-              <img src={images[imageActive]} alt={produit.titre} className="pd-img-main" />
+              <img src={images[imageActive]} alt={produit.titre} className="pd-img-main" onError={(e) => { const img = e.currentTarget; if (img && !img.dataset.fallback) { img.dataset.fallback = "1"; img.src = "/images/produits/proj.webp"; } }} />
             </div>
           </div>
 
@@ -411,11 +420,13 @@ export default function ProduitDetail() {
                 className={`pd-btn-panier ${ajouteAuPanier ? "pd-btn-panier--ok" : ""}`}
                 onClick={handlePanier}
                 disabled={produit.stock === 0 || ajouteAuPanier}
+                title={ajouteAuPanier ? "Ajouté au panier !" : "Ajouter au panier"}
+                aria-label={ajouteAuPanier ? "Ajouté au panier !" : "Ajouter au panier"}
               >
                 {ajouteAuPanier ? (
-                  <><i className="fa-solid fa-circle-check pd-icon-inline" aria-hidden="true"></i>Ajouté au panier !</>
+                  <i className="fa-solid fa-circle-check pd-icon-inline" aria-hidden="true"></i>
                 ) : (
-                  <><i className="fa-solid fa-cart-shopping pd-icon-inline" aria-hidden="true"></i>Ajouter au panier</>
+                  <i className="fa-solid fa-cart-shopping pd-icon-inline" aria-hidden="true"></i>
                 )}
               </button>
 
@@ -497,12 +508,10 @@ export default function ProduitDetail() {
                   className="pd-avis-item"
                   onSubmit={async (event) => {
                     event.preventDefault();
-                    setAvisMessage("");
-                    setAvisError("");
                     const userId = getCurrentUserId();
-                    if (!userId) { setAvisError("Connectez-vous pour publier un avis."); return; }
-                    if (!avisForm.note || avisForm.note < 1) { setAvisError("Sélectionnez une note avec les étoiles."); return; }
-                    if (String(avisForm.contenu || "").trim().length < 3) { setAvisError("Votre avis doit contenir au moins 3 caractères."); return; }
+                    if (!userId) { toastError("Connectez-vous pour publier un avis."); return; }
+                    if (!avisForm.note || avisForm.note < 1) { toastError("Sélectionnez une note avec les étoiles."); return; }
+                    if (String(avisForm.contenu || "").trim().length < 3) { toastError("Votre avis doit contenir au moins 3 caractères."); return; }
                     setAvisSubmitting(true);
                     try {
                       await api.post("/commentaires", {
@@ -516,10 +525,11 @@ export default function ProduitDetail() {
                       setProduit(refreshed.data?.data || produit);
                       setAvisForm({ note: 0, contenu: "" });
                       setHoverNote(0);
-                      setAvisMessage("Avis publié avec succès.");
+                      notifyMutation();
+                      toastSuccess("Avis publié avec succès.");
                     } catch (error) {
                       const backendMessage = error?.response?.data?.message || "Impossible d'envoyer l'avis pour le moment.";
-                      setAvisError(backendMessage);
+                      toastError(backendMessage);
                     } finally {
                       setAvisSubmitting(false);
                     }
@@ -557,13 +567,11 @@ export default function ProduitDetail() {
                   />
 
                   <div className="pd-avis-actions">
-                    <button type="submit" className="pd-btn-panier" disabled={avisSubmitting}>
+                    <button type="submit" className="pd-btn-avis" disabled={avisSubmitting}>
                       {avisSubmitting ? "Envoi..." : "Publier mon avis"}
                     </button>
                   </div>
 
-                  {avisError && <p className="pd-vide" style={{ color: "#b91c1c", marginTop: "0.6rem" }}>{avisError}</p>}
-                  {avisMessage && <p style={{ color: "#15803d", marginTop: "0.6rem", fontSize: "0.92rem", fontWeight: 600 }}>{avisMessage}</p>}
                 </form>
 
                 {produit.commentaires?.length > 0 ? (
@@ -591,7 +599,19 @@ export default function ProduitDetail() {
           </div>
         </div>
 
-        <Link to={location.state?.from || "/produits"} className="pd-back-link">← Retour à la boutique</Link>
+        <button
+          type="button"
+          className="pd-back-link pd-back-btn"
+          onClick={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate("/produits");
+            }
+          }}
+        >
+          ← Retour
+        </button>
       </div>
     </div>
   );

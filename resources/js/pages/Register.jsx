@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
-import toast from "react-hot-toast";
+import { toastError, toastSuccess } from "../utils/toast";
 import "../styles/register.css";
 
 const COUNTRY_DIAL_BY_ID = {
@@ -45,11 +45,8 @@ export default function Register() {
     id_pays: ""
   });
 
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showOverlay, setShowOverlay] = useState(false);
 
   const navigate = useNavigate();
 
@@ -67,7 +64,7 @@ export default function Register() {
     try {
       const normalizedPhone = normalizePhoneForCountry(formData.telephone, formData.id_pays);
       if (!normalizedPhone) {
-        toast.error("Numéro de téléphone invalide");
+        toastError("Numéro de téléphone invalide");
         return;
       }
 
@@ -80,11 +77,9 @@ export default function Register() {
       await axios.get("/sanctum/csrf-cookie", { withCredentials: true });
       const res = await axios.post("/api/auth/register", payload, { withCredentials: true });
 
-      toast.success(res.data.message || "Inscription réussie ✅");
-      setShowOverlay(true);
+      toastSuccess(res.data.message || "Inscription réussie ✅");
 
       setTimeout(() => {
-        setShowOverlay(false);
         navigate("/login", {
           state: { success: "Compte créé avec succès ✅" },
         });
@@ -106,11 +101,9 @@ export default function Register() {
           err.response.data.errors ||
           err.response.data.message ||
           "Erreur serveur";
-        setError(errorMsg);
-        toast.error(typeof errorMsg === "object" ? JSON.stringify(errorMsg) : errorMsg);
+        toastError(typeof errorMsg === "object" ? JSON.stringify(errorMsg) : errorMsg);
       } else {
-        setError("Erreur réseau");
-        toast.error("Erreur réseau");
+        toastError("Erreur réseau");
       }
     }
   };
@@ -238,13 +231,6 @@ export default function Register() {
           <Link to="/login" className="login-link">Connectez-vous ici</Link>
         </div>
 
-        {/* Overlay de succès */}
-        {showOverlay && (
-          <div className="overlay-success">
-            <i className="fas fa-check-circle"></i>
-            <p>Inscription réussie !</p>
-          </div>
-        )}
       </div>
     </div>
   );

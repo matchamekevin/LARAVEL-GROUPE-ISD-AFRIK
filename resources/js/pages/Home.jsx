@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/home.css";
 import "../styles/why-cards-grid.css";
@@ -12,6 +12,8 @@ import { getHomePartners } from "../services/HomePartnersService";
 import ProduitCard from "../components/ProduitCard";
 import usePageMeta from "../hooks/usePageMeta";
 import { pickDisplayMediaUrl } from "../utils/mediaUrl";
+import { notifyMutation } from "../utils/mutationBus";
+import { toastSuccess } from "../utils/toast";
 import {
   HOME_MARKETING_SECTIONS,
   mapFeaturedProductCard,
@@ -193,6 +195,7 @@ export default function Home() {
   const [collaborators, setCollaborators] = useState(() => getFallbackCollaborators());
   const [testimonials, setTestimonials] = useState(() => getFallbackTestimonials());
   const [partners, setPartners] = useState(() => getFallbackPartners());
+  const prevHomePromotionsRef = useRef(null);
 
   const applyMarketingCards = (items) => {
     const list = Array.isArray(items) ? items : [];
@@ -215,10 +218,13 @@ export default function Home() {
 
     if (mappedOffers.length > 0) setOffers(mappedOffers);
     if (mappedProducts.length > 0) setFeaturedProducts(mappedProducts);
-    if (mappedHomePromotions.length > 0) {
-      setHomePromotions(mappedHomePromotions);
-    } else if (mappedPromotionPage.length > 0) {
-      setHomePromotions(mappedPromotionPage);
+    const promoData = mappedHomePromotions.length > 0 ? mappedHomePromotions : mappedPromotionPage;
+    if (promoData.length > 0) {
+      const str = JSON.stringify(promoData);
+      if (str !== prevHomePromotionsRef.current) {
+        prevHomePromotionsRef.current = str;
+        setHomePromotions(promoData);
+      }
     }
   };
 
@@ -445,7 +451,8 @@ export default function Home() {
     e.preventDefault();
     // TODO: Envoyer l'avis au backend
     console.log("Nouvel avis:", reviewData);
-    alert("Merci pour votre avis ! Il sera publié après validation.");
+    toastSuccess("Merci pour votre avis ! Il sera publié après validation.");
+    notifyMutation();
     setShowReviewForm(false);
     setReviewData({ name: "", role: "", company: "", text: "", rating: 5 });
   };
@@ -576,7 +583,7 @@ export default function Home() {
                 src={item.src}
                 alt={item.title || `Promo ${idx + 1}`}
                 className="promo-image"
-                onError={(e)=>{e.target.style.background='#eee'; e.target.src=''}}
+                onError={(e)=>{if(!e.target.dataset.fallback){e.target.dataset.fallback='1';e.target.src='/images/promotions/promo9.webp'}else{e.target.style.display='none'}}}
               />
             </button>
           ))}
@@ -609,7 +616,7 @@ export default function Home() {
                   src={homePromotions[promoModalIndex]?.src}
                   alt={homePromotions[promoModalIndex]?.title || `Promo ${promoModalIndex+1}`}
                   className="modal-promo-img"
-                  onError={(e)=>{e.target.style.background='#eee'; e.target.src=''}}
+                onError={(e)=>{if(!e.target.dataset.fallback){e.target.dataset.fallback='1';e.target.src='/images/promotions/promo9.webp'}else{e.target.style.display='none'}}}
                 />
               </div>
 

@@ -3,7 +3,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { getCategories, getProduits } from "../services/ProduitService";
 import { addToCart, getCartItems, isFavorite, subscribeStoreUpdates, toggleFavorite } from "../utils/shopStorage";
 import { useLivePolling } from "../hooks/useLivePolling";
+import { toastError, toastSuccess } from "../utils/toast";
 import "../styles/produit.css";
+import SearchBar from "../components/SearchBar";
 
 const ALL_CATEGORY_SLUG = "tout";
 
@@ -247,7 +249,6 @@ export default function Produits() {
 
   const [categories, setCategories] = useState([]);
   const [produits, setProduits] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [activeCategorySlug, setActiveCategorySlug] = useState(ALL_CATEGORY_SLUG);
@@ -266,28 +267,42 @@ export default function Produits() {
 
   const handleSubcategoryClick = (item) => {
     const ownId = Number(item.id_categorie || item.id || 0);
+    const ownSlug = normalizeSlug(item.slug || item.nom || "");
 
-    // Detect children in the current categories list or in nested property
     const hasChildren = categories.some((c) => Number(c.parent_id || 0) === ownId) ||
       (Array.isArray(item.children_recursive) && item.children_recursive.length > 0) ||
       (Array.isArray(item.children) && item.children.length > 0);
 
     setSearchTerm("");
 
-    if (hasChildren) {
-      // Drill down
+    const existingIndex = categoryStack.findIndex((c) => {
+      const cId = Number(c.id);
+      const cSlug = normalizeSlug(c.slug || c.nom || "");
+      return cId === ownId || (ownSlug && cSlug === ownSlug);
+    });
+
+    if (existingIndex >= 0) {
+      setCategoryStack((prev) => prev.slice(0, existingIndex + 1));
+    } else {
       setCategoryStack((prev) => [...prev, { ...item, id: ownId }]);
-      // Reset any previously selected leaf-subcategory
+    }
+
+    if (hasChildren) {
       setSelectedSubcategoryId("");
       setSelectedSubcategorySlug("");
     } else {
-      // It's a leaf: show products for this subcategory
-      setCategoryStack((prev) => [...prev, { ...item, id: ownId }]);
       setSelectedSubcategoryId(String(ownId));
-      setSelectedSubcategorySlug(normalizeSlug(item.slug || item.nom || ""));
-      // Clear model selection when selecting a leaf
+      setSelectedSubcategorySlug(ownSlug);
       setSelectedModel("");
     }
+  };
+
+  const saveCatalogState = () => {
+    sessionStorage.setItem("produit_back_url", `${location.pathname}${location.search}`);
+    sessionStorage.setItem("produit_back_stack", JSON.stringify(categoryStack));
+    sessionStorage.setItem("produit_back_sub_id", selectedSubcategoryId);
+    sessionStorage.setItem("produit_back_sub_slug", selectedSubcategorySlug);
+    sessionStorage.setItem("produit_back_model", selectedModel);
   };
 
   const navigateUp = (index = -1) => {
@@ -327,11 +342,20 @@ export default function Produits() {
 
   const technicalRootId = Number(technicalRootCategory?.id_categorie || technicalRootCategory?.id || 0);
 
+  const GEOVISION_SLUG = "geovision";
+
   const mainCategories = useMemo(() => {
     const base = [
       {
         slug: ALL_CATEGORY_SLUG,
         label: "Tout",
+        id: null,
+        node: null,
+        image: "/images/produits/proj.webp",
+      },
+      {
+        slug: GEOVISION_SLUG,
+        label: "Geovision",
         id: null,
         node: null,
         image: "/images/produits/proj.webp",
@@ -377,7 +401,7 @@ export default function Produits() {
   }, [categories, technicalRootId, topLevelCategories]);
 
   const mainCategorySlugs = useMemo(
-    () => mainCategories.filter((item) => item.slug !== ALL_CATEGORY_SLUG).map((item) => item.slug),
+    () => mainCategories.filter((item) => item.slug !== ALL_CATEGORY_SLUG && item.slug !== GEOVISION_SLUG).map((item) => item.slug),
     [mainCategories]
   );
 
@@ -385,20 +409,27 @@ export default function Produits() {
     return mainCategories.find((item) => item.slug === activeCategorySlug) || mainCategories[0] || null;
   }, [activeCategorySlug, mainCategories]);
 
-  // Compute visible subcategories based on current stack or active main category
   const visibleSubcategories = useMemo(() => {
-    let parentId = 0;
-
-    if (categoryStack.length > 0) {
-      parentId = Number(currentCategory?.id_categorie || currentCategory?.id || 0);
-    } else if (activeCategorySlug !== ALL_CATEGORY_SLUG && activeCategory && activeCategory.id) {
-      parentId = Number(activeCategory.id);
-    } else {
-      parentId = 0;
+    if (activeCategorySlug === ALL_CATEGORY_SLUG && categoryStack.length === 0) {
+      const mainIds = mainCategories
+        .filter((item) => item.slug !== ALL_CATEGORY_SLUG && item.slug !== GEOVISION_SLUG && item.id)
+        .map((item) => Number(item.id));
+      const mainIdSet = new Set(mainIds);
+      const firstLevel = categories.filter((item) => mainIdSet.has(Number(item.parent_id || 0)));
+      if (firstLevel.length > 0) {
+        return firstLevel;
+      }
+      return categories.filter((c) => Number(c.parent_id || 0) !== 0);
     }
 
+    let parentId = 0;
+    if (categoryStack.length > 0) {
+      parentId = Number(currentCategory?.id_categorie || currentCategory?.id || 0);
+    } else if (activeCategory && activeCategory.id) {
+      parentId = Number(activeCategory.id);
+    }
     return categories.filter((c) => Number(c.parent_id || 0) === Number(parentId));
-  }, [activeCategory, activeCategorySlug, categories, categoryStack, currentCategory]);
+  }, [activeCategory, activeCategorySlug, categories, categoryStack, currentCategory, mainCategories]);
 
 
 
@@ -506,6 +537,32 @@ export default function Produits() {
 
   const searchNormalized = useMemo(() => searchTerm.trim().toLowerCase(), [searchTerm]);
 
+  const allCategoriesWithPath = useMemo(() => {
+    return categories
+      .filter((item) => Number(item.parent_id || 0) > 0)
+      .map((item) => {
+        const id = Number(item.id_categorie || item.id);
+        const ancestors = [];
+        let parentId = Number(item.parent_id || 0);
+        let guard = 0;
+        while (parentId && guard < 20) {
+          const parent = categoriesById[parentId];
+          if (!parent) break;
+          ancestors.unshift(String(parent.nom || "").trim());
+          parentId = Number(parent.parent_id || 0);
+          guard += 1;
+        }
+        return {
+          id,
+          slug: normalizeSlug(item.slug || item.nom),
+          nom: item.nom,
+          pathLabel: ancestors.length ? `${ancestors.join(" / ")} / ${item.nom}` : item.nom,
+          depth: ancestors.length,
+          hasChildren: categories.some((c) => Number(c.parent_id || 0) === id),
+        };
+      });
+  }, [categories, categoriesById]);
+
   const filteredSubcategories = useMemo(() => {
     const subcategoryIds = new Set(subcategories.filter((item) => item.id).map((item) => Number(item.id)));
     const productSearchIndex = new Map();
@@ -537,10 +594,16 @@ export default function Produits() {
     }
 
     if (!searchNormalized) {
-      return subcategories;
+      const seen = new Set();
+      return subcategories.filter((item) => {
+        const key = String(item.id);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     }
 
-    return subcategories.filter((item) => {
+    const localMatches = subcategories.filter((item) => {
       const haystack = `${item.label} ${item.description || ""}`.toLowerCase();
       if (haystack.includes(searchNormalized)) {
         return true;
@@ -553,7 +616,50 @@ export default function Produits() {
       const productBlob = productSearchIndex.get(Number(item.id)) || "";
       return productBlob.includes(searchNormalized);
     });
-  }, [categoriesById, produits, searchNormalized, subcategories]);
+
+    if (localMatches.length > 0) {
+      const seen = new Set();
+      return localMatches.filter((item) => {
+        const key = String(item.id);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    const localIds = new Set(subcategories.map((item) => Number(item.id)));
+    const fallback = allCategoriesWithPath
+      .filter((cat) => {
+        if (localIds.has(cat.id)) return false;
+        const haystack = `${cat.nom} ${cat.pathLabel}`.toLowerCase();
+        return haystack.includes(searchNormalized);
+      })
+      .slice(0, 20)
+      .map((cat) => {
+        const raw = categories.find((c) => Number(c.id_categorie || c.id) === cat.id);
+        return {
+          id: cat.id,
+          slug: cat.slug,
+          label: cat.nom,
+          nom: cat.nom,
+          pathLabel: cat.pathLabel,
+          depth: cat.depth,
+          description: raw?.description || "",
+          image_url: getCategoryImage(raw || {}),
+          image: getCategoryImage(raw || {}),
+          id_categorie: cat.id,
+          has_children: cat.hasChildren,
+        };
+      });
+
+    const seen = new Set();
+    return fallback.filter((item) => {
+      const key = String(item.id);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [allCategoriesWithPath, categories, categoriesById, produits, searchNormalized, subcategories]);
 
   const countsBySubcategory = useMemo(() => {
     const buckets = {};
@@ -688,38 +794,6 @@ export default function Produits() {
     return produitsModele.filter((item) => buildSearchBlob(item).includes(searchNormalized));
   }, [produitsModele, searchNormalized]);
 
-  const globalModelResults = useMemo(() => {
-    if (!searchNormalized) {
-      return [];
-    }
-
-    const byModel = {};
-    produits.forEach((item) => {
-      const modelName = String(item.modele || "").trim();
-      if (!modelName) {
-        return;
-      }
-
-      const key = modelName.toLowerCase();
-      if (!byModel[key]) {
-        byModel[key] = {
-          name: modelName,
-          count: 0,
-          representativeProduct: item,
-          searchBlob: "",
-        };
-      }
-
-      byModel[key].count += 1;
-      byModel[key].searchBlob += ` ${buildSearchBlob(item)}`;
-    });
-
-    return Object.values(byModel)
-      .filter((item) => item.name.toLowerCase().includes(searchNormalized) || item.searchBlob.includes(searchNormalized))
-      .sort((a, b) => a.name.localeCompare(b.name, "fr"))
-      .slice(0, 10);
-  }, [produits, searchNormalized]);
-
   const globalProductResults = useMemo(() => {
     if (!searchNormalized) {
       return [];
@@ -833,7 +907,36 @@ export default function Produits() {
     if (modelParam) {
       setSelectedModel(modelParam);
     }
+
+    // Restore saved catalog state (from sessionStorage on back navigation)
+    const savedSubId = sessionStorage.getItem("produit_back_sub_id") || "";
+    const savedStack = sessionStorage.getItem("produit_back_stack") || "";
+    if (subcategoryIdParam > 0 && savedSubId && savedStack) {
+      try {
+        const parsed = JSON.parse(savedStack);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setCategoryStack(parsed);
+        }
+      } catch (_) {}
+      sessionStorage.removeItem("produit_back_stack");
+      sessionStorage.removeItem("produit_back_sub_id");
+      sessionStorage.removeItem("produit_back_sub_slug");
+      sessionStorage.removeItem("produit_back_model");
+    }
   }, [categories, categoriesById, location.search, mainCategorySlugs]);
+
+  useEffect(() => {
+    const state = location.state;
+    const catalog = state?.produitCatalog;
+    if (catalog) {
+      if (catalog.activeCategorySlug) setActiveCategorySlug(catalog.activeCategorySlug);
+      if (catalog.categoryStack?.length > 0) setCategoryStack(catalog.categoryStack);
+      if (catalog.selectedSubcategoryId) setSelectedSubcategoryId(catalog.selectedSubcategoryId);
+      if (catalog.selectedSubcategorySlug) setSelectedSubcategorySlug(catalog.selectedSubcategorySlug);
+      if (catalog.selectedModel) setSelectedModel(catalog.selectedModel);
+      window.history.replaceState({}, document.title, location.pathname + location.search);
+    }
+  }, [JSON.stringify(location.state)]);
 
   useEffect(() => {
     const refreshStoreState = () => {
@@ -860,14 +963,9 @@ export default function Produits() {
     return subscribeStoreUpdates(refreshStoreState);
   }, [produits]);
 
-  const fetchProduits = useCallback(async (isSilent = false) => {
+  const fetchProduits = useCallback(async () => {
     if (!activeCategory) {
       return;
-    }
-
-    if (!isSilent) {
-      setLoading(true);
-      setError("");
     }
 
     try {
@@ -901,30 +999,23 @@ export default function Produits() {
       const response = await getProduits(params);
       setProduits(response.data?.data || []);
     } catch (err) {
-      if (!isSilent) {
-        setError("Impossible de charger les produits pour le moment.");
-        setProduits([]);
-      }
-    } finally {
-      if (!isSilent) {
-        setLoading(false);
-      }
+      toastError("Impossible de charger les produits pour le moment.");
+      setError("Impossible de charger les produits pour le moment.");
+      setProduits([]);
     }
   }, [activeCategory, categories, selectedModel, selectedSubcategoryId]);
 
-  // Polling des produits (silencieux après le premier load)
-  useLivePolling(() => fetchProduits(true), {
-    intervalMs: 30000, // 30s au lieu de 7s (plus raisonnable)
+  useLivePolling(() => fetchProduits(), {
+    intervalMs: 5000,
     enabled: !!activeCategory,
   });
 
-  // Chargement initial des produits quand les filtres changent
   useEffect(() => {
-    fetchProduits(false);
+    fetchProduits();
   }, [fetchProduits]);
 
   useLivePolling(loadCategories, {
-    intervalMs: 60000, // 1m au lieu de 20s pour les catégories
+    intervalMs: 5000,
     enabled: true,
   });
 
@@ -935,6 +1026,11 @@ export default function Produits() {
       : "Rechercher une sous-categorie";
 
   const handleCategoryChange = (slug) => {
+    if (slug === GEOVISION_SLUG) {
+      navigate("/geovision");
+      return;
+    }
+
     setActiveCategorySlug(slug);
     setCategoryStack([]);
     setSelectedModel("");
@@ -956,7 +1052,8 @@ export default function Produits() {
     );
 
     if (matching.length === 1) {
-      navigate(`/produits/${matching[0].id_produit}`);
+      saveCatalogState();
+      navigate(`/produits/${matching[0].id_produit}`, { state: { from: `${location.pathname}${location.search}`, produitCatalog: { activeCategorySlug, categoryStack, selectedSubcategoryId, selectedSubcategorySlug, selectedModel } } });
       return;
     }
 
@@ -1020,7 +1117,7 @@ export default function Produits() {
     }
   };
 
-  const handleImageError = (event, fallback = "/images/default.webp") => {
+  const handleImageError = (event, fallback = "/images/produits/proj.webp") => {
     const img = event.currentTarget || event.target;
     if (!img) return;
     if (img.dataset.fallbackApplied === "1") return;
@@ -1037,58 +1134,13 @@ export default function Produits() {
           <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
             <h1 className="pcat-hero-title">Nos Produits</h1>
 
-            <label className="pcat-search" aria-label="Recherche catalogue">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M11 19a8 8 0 1 1 5.293-14.002A8 8 0 0 1 11 19Zm9.707 1.293-4.52-4.52" />
-              </svg>
-              <input
-                type="search"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder={searchPlaceholder}
-              />
-              {searchTerm && (
-                <button type="button" onClick={() => setSearchTerm("")} className="pcat-search-clear" aria-label="Effacer la recherche">
-                  x
-                </button>
-              )}
-            </label>
-            <div style={{ marginTop: 8 }}>
-              <button
-                type="button"
-                className="pcat-outline-btn"
-                onClick={() => {
-                  // Exemple: créer une pile de catégories profonde si possible
-                  const root = topLevelCategories[0];
-                  if (!root) return;
-                  const level1 = categories.find(c => Number(c.parent_id || 0) === Number(root.id_categorie || root.id));
-                  const level2 = level1 ? categories.find(c => Number(c.parent_id || 0) === Number(level1.id_categorie || level1.id)) : null;
-                  const level3 = level2 ? categories.find(c => Number(c.parent_id || 0) === Number(level2.id_categorie || level2.id)) : null;
+            <SearchBar
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              onClear={() => setSearchTerm("")}
+              placeholder={searchPlaceholder}
+            />
 
-                  const stack = [];
-                  if (root && root.id) stack.push({ ...root, id: Number(root.id_categorie || root.id) });
-                  if (level1) stack.push({ ...level1, id: Number(level1.id_categorie || level1.id) });
-                  if (level2) stack.push({ ...level2, id: Number(level2.id_categorie || level2.id) });
-                  if (level3) stack.push({ ...level3, id: Number(level3.id_categorie || level3.id) });
-
-                  setCategoryStack(stack);
-                  if (stack.length > 0) {
-                    const last = stack[stack.length - 1];
-                    const ownId = Number(last.id_categorie || last.id || 0);
-                    const hasChildren = categories.some(c => Number(c.parent_id || 0) === ownId);
-                    if (!hasChildren) {
-                      setSelectedSubcategoryId(String(ownId));
-                      setSelectedSubcategorySlug(normalizeSlug(last.slug || last.nom || ""));
-                    } else {
-                      setSelectedSubcategoryId("");
-                      setSelectedSubcategorySlug("");
-                    }
-                  }
-                }}
-              >
-                Exemple: navigation profonde
-              </button>
-            </div>
           </div>
         </section>
 
@@ -1109,36 +1161,66 @@ export default function Produits() {
         </section>
 
         {(categoryStack.length > 0 || selectedModel) && (
-          <section className="pcat-breadcrumb">
-            <div className="pcat-breadcrumb-actions">
+          <nav className="pcat-breadcrumb" aria-label="Fil d'Ariane">
+            <div className="pcat-breadcrumb-path">
+              <button type="button" className="pcat-breadcrumb-link-btn" onClick={() => navigate("/")}>
+                Accueil
+              </button>
+              <span className="pcat-breadcrumb-sep">/</span>
               <button
                 type="button"
-                className="pcat-outline-btn"
-                onClick={() => navigateUp(-1)}
+                className="pcat-breadcrumb-link-btn"
+                onClick={() => {
+                  setActiveCategorySlug(ALL_CATEGORY_SLUG);
+                  setCategoryStack([]);
+                  setSelectedSubcategoryId("");
+                  setSelectedSubcategorySlug("");
+                  setSelectedModel("");
+                  setSearchTerm("");
+                  navigate("/produits");
+                }}
               >
-                Tout voir
+                Produits
               </button>
-              {categoryStack.map((cat, idx) => (
-                <button
-                    key={cat.id}
-                    type="button"
-                    className="pcat-outline-btn"
-                    onClick={() => navigateUp(idx)}
-                >
-                    Retour à {cat.nom || cat.label}
-                </button>
-              ))}
+              {activeCategory?.label && (
+                <>
+                  <span className="pcat-breadcrumb-sep">/</span>
+                  <button type="button" className="pcat-breadcrumb-link-btn" onClick={() => handleCategoryChange(activeCategorySlug)}>
+                    {activeCategory.label}
+                  </button>
+                </>
+              )}
+              {categoryStack.map((cat, idx) => {
+                const isLast = idx === categoryStack.length - 1 && !selectedModel;
+                return (
+                  <React.Fragment key={cat.id}>
+                    <span className="pcat-breadcrumb-sep">/</span>
+                    {isLast ? (
+                      <span className="pcat-breadcrumb-current">{cat.nom || cat.label}</span>
+                    ) : (
+                      <button type="button" className="pcat-breadcrumb-link-btn" onClick={() => navigateUp(idx)}>
+                        {cat.nom || cat.label}
+                      </button>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+              {selectedModel && (
+                <>
+                  <span className="pcat-breadcrumb-sep">/</span>
+                  <span className="pcat-breadcrumb-current">{selectedModel}</span>
+                </>
+              )}
             </div>
-
-            <p className="pcat-breadcrumb-path">
-              {activeCategory?.label}
-              {categoryStack.map(cat => ` / ${cat.nom || cat.label}`)}
-              {selectedModel ? ` / ${selectedModel}` : ""}
-            </p>
-          </section>
+            {categoryStack.length > 0 && (
+              <button type="button" className="pcat-outline-btn" onClick={() => navigateUp(-1)}>
+                ↑ Tout voir
+              </button>
+            )}
+          </nav>
         )}
 
-        {visibleSubcategories.length > 0 && (
+        {visibleSubcategories.length > 0 && !searchNormalized && (
           <section className="pcat-section">
             <div className="pcat-heading-row">
               <h2>Sous-catégories</h2>
@@ -1184,6 +1266,125 @@ export default function Produits() {
           </section>
         )}
 
+        {searchNormalized && filteredSubcategories.length > 0 && (
+          <section className="pcat-section">
+            <div className="pcat-heading-row">
+              <h2>Résultats de recherche ({filteredSubcategories.length})</h2>
+              <p>Sous-catégories correspondantes</p>
+            </div>
+
+            <div className="pcat-sub-grid">
+              {filteredSubcategories.map((item) => (
+                <article key={`search-${item.slug}-${item.id_categorie || item.id}`} className="pcat-sub-card pcat-search-match">
+                  <div className="pcat-sub-visual">
+                    <img
+                      src={item.image_url || "/images/produits/proj.webp"}
+                      alt={item.nom || item.label}
+                      loading="lazy"
+                      onLoad={applyOrientationClass}
+                      onError={(event) => handleImageError(event, "/images/produits/proj.webp")}
+                    />
+                    <div className="pcat-sub-overlay" aria-hidden="true" />
+                  </div>
+
+                  <div className="pcat-sub-content">
+                    <h3>{item.nom || item.label}</h3>
+                    <p>{item.description || "Sélectionnez cette catégorie pour voir la suite."}</p>
+                    <div className="pcat-sub-footer">
+                      <span className="pcat-sub-count">
+                        {item.id ? `${countsBySubcategory[item.id] || 0} produit(s) DB` : "Catalogue"}
+                      </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const mainAncestor = getNearestMainAncestorSlug(
+                              categoriesById[item.id] || categories.find((c) => Number(c.id_categorie || c.id) === item.id),
+                              categoriesById,
+                              mainCategorySlugs
+                            );
+                            if (mainAncestor) {
+                              setActiveCategorySlug(mainAncestor);
+                              setCategoryStack([]);
+                              setSelectedSubcategoryId("");
+                              setSelectedSubcategorySlug("");
+                            }
+                            setSearchTerm("");
+                          }}
+                          className="pcat-solid-btn"
+                        >
+                          Voir
+                        </button>
+                    </div>
+                  </div>                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {searchNormalized && globalProductResults.length > 0 && (
+          <section className="pcat-section">
+            <div className="pcat-heading-row">
+              <h2>Produits trouvés ({globalProductResults.length})</h2>
+              <p>Produits correspondant à votre recherche</p>
+            </div>
+
+            <div className="pcat-product-grid">
+              {globalProductResults.map((produit) => {
+                const prixFinal = produit.prix_promo ?? produit.prix;
+                const isFav = favoriteIds.has(Number(produit.id_produit));
+                const badgeClass = statusClasses[produit.statut] || "bg-slate-100 text-slate-800 border border-slate-200";
+
+                return (
+                  <article key={produit.id_produit} className="pcat-product-card">
+                    <div className="pcat-product-image-wrap">
+                      <img
+                        src={getProductImage(produit)}
+                        alt={produit.titre}
+                        className="pcat-product-image"
+                        loading="lazy"
+                        onLoad={applyOrientationClass}
+                        onError={handleImageError}
+                      />
+                      <span className={`pcat-status-chip ${badgeClass}`}>{statusLabel(produit.statut)}</span>
+                      <button
+                        type="button"
+                        className={`pcat-fav-btn ${isFav ? "is-active" : ""}`}
+                        aria-label={isFav ? "Retirer des favoris" : "Ajouter aux favoris"}
+                        onClick={() => toggleFavorite(produit)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="pcat-product-body">
+                      <p className="pcat-brand">{produit.marque || "Marque non renseignee"}</p>
+                      <h3 className="pcat-title">{produit.titre}</h3>
+                      <p className="pcat-description">{produit.description_courte || produit.description || "Description en cours."}</p>
+                      <div className="pcat-rating-row">
+                        <Stars note={produit.note_moyenne} />
+                        <span>{produit.nombre_avis > 0 ? `(${produit.nombre_avis})` : "Aucun avis"}</span>
+                      </div>
+                      <div className="pcat-footer-row">
+                        <p className="pcat-price">{formatPrice(prixFinal)} FCFA</p>
+                        <button type="button" onClick={() => { saveCatalogState(); navigate(`/produits/${produit.id_produit}`, { state: { from: `${location.pathname}${location.search}`, produitCatalog: { activeCategorySlug, categoryStack, selectedSubcategoryId, selectedSubcategorySlug, selectedModel } } }); }} className="pcat-solid-btn">
+                          Voir detail
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {searchNormalized && globalProductResults.length === 0 && filteredSubcategories.length === 0 && (
+          <section className="pcat-section">
+            <div className="pcat-empty-box">Aucun résultat pour "{searchTerm}".</div>
+          </section>
+        )}
+
         {/* Show model list if at a leaf node (no more subcategories) */}
         {categoryStack.length > 0 && visibleSubcategories.length === 0 && !selectedModel && (
           <section className="pcat-section">
@@ -1209,11 +1410,27 @@ export default function Produits() {
                         onLoad={applyOrientationClass}
                         onError={(event) => handleImageError(event, "/images/produits/proj.webp")}
                       />
+                      <button
+                        type="button"
+                        className={`pcat-fav-btn ${isModelFavorite ? "is-active" : ""}`}
+                        aria-label={isModelFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                        onClick={() => handleModelToggleFavorite(item)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                        </svg>
+                      </button>
                     </div>
                     <h3>{item.name}</h3>
                     <div className="pcat-model-actions">
                       <button type="button" onClick={() => handleModelClick(item.name)} className="pcat-solid-btn">
                         Voir produits
+                      </button>
+                      <button type="button" onClick={() => handleModelAddToCart(item)} className="pcat-solid-btn pcat-cart-icon-only" aria-label="Ajouter au panier">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                          <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+                          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                        </svg>
                       </button>
                     </div>
                   </article>
@@ -1230,20 +1447,8 @@ export default function Produits() {
               <h2>Produits du modele {selectedModel}</h2>
             </div>
 
-            {error && <p className="pcat-error-text">{error}</p>}
-
             <div className="pcat-product-grid">
-              {loading && Array.from({ length: 6 }).map((_, index) => (
-                <article key={`skeleton-${index}`} className="pcat-product-card is-skeleton">
-                  <div className="pcat-product-image-wrap" />
-                  <div className="pcat-product-body">
-                    <div className="pcat-skeleton-line" />
-                    <div className="pcat-skeleton-line short" />
-                  </div>
-                </article>
-              ))}
-
-              {!loading && filteredProduitsModele.map((produit) => {
+              {filteredProduitsModele.map((produit) => {
                 const prixFinal = produit.prix_promo ?? produit.prix;
                 const isFav = favoriteIds.has(Number(produit.id_produit));
                 const badgeClass = statusClasses[produit.statut] || "bg-slate-100 text-slate-800 border border-slate-200";
@@ -1286,7 +1491,7 @@ export default function Produits() {
 
                       <div className="pcat-footer-row">
                         <p className="pcat-price">{formatPrice(prixFinal)} FCFA</p>
-                        <button type="button" onClick={() => navigate(`/produits/${produit.id_produit}`)} className="pcat-solid-btn">
+                        <button type="button" onClick={() => { saveCatalogState(); navigate(`/produits/${produit.id_produit}`, { state: { from: `${location.pathname}${location.search}`, produitCatalog: { activeCategorySlug, categoryStack, selectedSubcategoryId, selectedSubcategorySlug, selectedModel } } }); }} className="pcat-solid-btn">
                           Voir detail
                         </button>
                       </div>
@@ -1296,7 +1501,7 @@ export default function Produits() {
               })}
             </div>
 
-            {!loading && !error && filteredProduitsModele.length === 0 && (
+            {!error && filteredProduitsModele.length === 0 && (
               <div className="pcat-empty-box">Aucun produit detaille trouve pour ce modele.</div>
             )}
           </section>

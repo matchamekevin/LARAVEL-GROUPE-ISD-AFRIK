@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import '../styles/catalogue-admin.css';
-import AdminToast, { useAdminToast } from '../components/AdminToast';
-import AdminNotice from '../components/AdminNotice';
+import { toastError, toastSuccess } from "../../utils/toast";
+import { notifyMutation } from "../../utils/mutationBus";
 import DeleteIconButton from '../components/DeleteIconButton';
 import { useLivePolling } from '../../hooks/useLivePolling';
 import '../styles/admin-shared.css';
 import '../styles/products.css';
+import SearchBar from '../../components/SearchBar';
 import {
   createProduct,
   deleteProductImage,
@@ -339,9 +340,6 @@ export default function Products() {
   const [saving, setSaving] = useState(false);
   const [lookupsLoading, setLookupsLoading] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState(null);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const { toast, showToast } = useAdminToast();
 
   const [activeTab, setActiveTab] = useState('categories');
 
@@ -369,8 +367,7 @@ export default function Products() {
   const [categoryEditorOpen, setCategoryEditorOpen] = useState(false);
   const [savingCategory, setSavingCategory] = useState(false);
   const [categoryActionLoadingId, setCategoryActionLoadingId] = useState(null);
-  const [categoryErrorMessage, setCategoryErrorMessage] = useState('');
-  const [categorySuccessMessage, setCategorySuccessMessage] = useState('');
+
   const [categoryImageFile, setCategoryImageFile] = useState(null);
   const [categoryImagePreview, setCategoryImagePreview] = useState(null);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState(new Set());
@@ -730,12 +727,11 @@ export default function Products() {
     } catch (error) {
       setCategories([]);
       setCountries([]);
-      setErrorMessage('Impossible de charger les categories ou les pays.');
-      showToast('Impossible de charger les categories ou les pays.', 'error');
+      toastError('Impossible de charger les categories ou les pays.');
     } finally {
       setLookupsLoading(false);
     }
-  }, [ensureFormDefaults, showToast]);
+  }, [ensureFormDefaults]);
 
   const backgroundLoadLookups = useCallback(async () => {
     try {
@@ -769,7 +765,6 @@ export default function Products() {
   const loadProducts = useCallback(
     async () => {
       setLoading(true);
-      setErrorMessage('');
 
       try {
         const params = {
@@ -826,7 +821,7 @@ export default function Products() {
         setProducts([]);
         setMeta(EMPTY_META);
         setProductStats({ total: 0, vedette: 0, lowStock: 0 });
-        setErrorMessage('Impossible de charger la liste des produits.');
+        toastError('Impossible de charger la liste des produits.');
       } finally {
         setLoading(false);
       }
@@ -905,7 +900,7 @@ export default function Products() {
       return backgroundLoadProducts();
     },
     {
-      intervalMs: 7000,
+      intervalMs: 3000,
       enabled: editorMode === 'idle' && !saving && !loading,
     }
   );
@@ -916,7 +911,7 @@ export default function Products() {
       return backgroundLoadLookups();
     },
     {
-      intervalMs: 30000,
+      intervalMs: 5000,
       enabled: editorMode === 'idle' && !lookupsLoading,
     }
   );
@@ -947,8 +942,6 @@ export default function Products() {
     setEditorMode('create');
     setCurrentProductId(null);
     setUploadFiles([]);
-    setErrorMessage('');
-    setSuccessMessage('');
 
     const defaultCategory = categories[0] ? String(categories[0].id ?? categories[0].id_categorie) : '';
     const defaultCountry = countries[0] ? String(countries[0].id ?? countries[0].id_pays) : '';
@@ -965,16 +958,12 @@ export default function Products() {
     setEditorMode('edit');
     setCurrentProductId(id);
     setUploadFiles([]);
-    setErrorMessage('');
-    setSuccessMessage('');
     setForm(productToForm(product));
   };
 
   const handleCancelEdit = () => {
     setEditorMode('idle');
     setUploadFiles([]);
-    setErrorMessage('');
-    setSuccessMessage('');
     if (selectedProduct) {
       setForm(productToForm(selectedProduct));
     } else {
@@ -986,26 +975,21 @@ export default function Products() {
     event.preventDefault();
 
     if (!form.title.trim()) {
-      setErrorMessage('Le titre du produit est obligatoire.');
-      showToast('Le titre du produit est obligatoire.', 'error');
+      toastError('Le titre du produit est obligatoire.');
       return;
     }
 
     if (!form.id_categorie) {
-      setErrorMessage('La categorie est obligatoire.');
-      showToast('La categorie est obligatoire.', 'error');
+      toastError('La categorie est obligatoire.');
       return;
     }
 
     if (!form.id_pays) {
-      setErrorMessage('Le pays est obligatoire.');
-      showToast('Le pays est obligatoire.', 'error');
+      toastError('Le pays est obligatoire.');
       return;
     }
 
     setSaving(true);
-    setErrorMessage('');
-    setSuccessMessage('');
 
     try {
       const reference = String(form.reference || '').trim();
@@ -1062,8 +1046,8 @@ export default function Products() {
       }
 
       const message = editorMode === 'edit' ? 'Produit mis a jour avec succes.' : 'Produit cree avec succes.';
-      setSuccessMessage(message);
-      showToast(message, 'success');
+      toastSuccess(message);
+      notifyMutation();
       setEditorMode('edit');
       setUploadFiles([]);
       if (targetId) {
@@ -1073,8 +1057,7 @@ export default function Products() {
       await loadProducts();
     } catch (error) {
       const message = parseApiError(error, 'Echec de la sauvegarde du produit.');
-      setErrorMessage(message);
-      showToast(message, 'error');
+      toastError(message);
     } finally {
       setSaving(false);
     }
@@ -1143,8 +1126,6 @@ export default function Products() {
     if (!window.confirm(confirmMessage)) return;
 
     setBulkProductDeleting(true);
-    setErrorMessage('');
-    setSuccessMessage('');
 
     let deletedCount = 0;
     let failedCount = 0;
@@ -1174,14 +1155,13 @@ export default function Products() {
       const message = failedCount > 0
         ? `${deletedCount} produit(s) supprime(s).`
         : `${deletedCount} produit(s) supprime(s) avec succes.`;
-      setSuccessMessage(message);
-      showToast(message, 'success');
+      toastSuccess(message);
+      notifyMutation();
     }
 
     if (failedCount > 0) {
       const message = lastErrorMessage || `${failedCount} produit(s) non supprime(s).`;
-      setErrorMessage(message);
-      showToast(message, 'error');
+      toastError(message);
     }
 
     setBulkProductDeleting(false);
@@ -1191,13 +1171,11 @@ export default function Products() {
     if (bulkProductDeleting) return;
     if (!window.confirm('Supprimer ce produit ?')) return;
     setActionLoadingId(id);
-    setErrorMessage('');
-    setSuccessMessage('');
 
     try {
       await deleteProduct(id);
-      setSuccessMessage('Produit supprime.');
-      showToast('Produit supprime.', 'success');
+      toastSuccess('Produit supprime.');
+      notifyMutation();
       setSelectedProductIds((previous) => {
         const next = new Set(previous);
         next.delete(Number(id));
@@ -1206,8 +1184,7 @@ export default function Products() {
       await loadProducts();
     } catch (error) {
       const message = parseApiError(error, 'Suppression impossible.');
-      setErrorMessage(message);
-      showToast(message, 'error');
+      toastError(message);
     } finally {
       setActionLoadingId(null);
     }
@@ -1216,18 +1193,15 @@ export default function Products() {
   const handleRestore = async (id) => {
     if (!window.confirm('Restaurer ce produit ?')) return;
     setActionLoadingId(id);
-    setErrorMessage('');
-    setSuccessMessage('');
 
     try {
       await restoreProduct(id);
-      setSuccessMessage('Produit restaure.');
-      showToast('Produit restaure.', 'success');
+      toastSuccess('Produit restaure.');
+      notifyMutation();
       await loadProducts();
     } catch (error) {
       const message = parseApiError(error, 'Restauration impossible.');
-      setErrorMessage(message);
-      showToast(message, 'error');
+      toastError(message);
     } finally {
       setActionLoadingId(null);
     }
@@ -1236,18 +1210,15 @@ export default function Products() {
   const handleForceDelete = async (id) => {
     if (!window.confirm('Supprimer definitivement ce produit ? Cette action est irreversible.')) return;
     setActionLoadingId(id);
-    setErrorMessage('');
-    setSuccessMessage('');
 
     try {
       await forceDeleteProduct(id);
-      setSuccessMessage('Produit supprime definitivement.');
-      showToast('Produit supprime definitivement.', 'success');
+      toastSuccess('Produit supprime definitivement.');
+      notifyMutation();
       await loadProducts();
     } catch (error) {
       const message = parseApiError(error, 'Suppression definitive impossible.');
-      setErrorMessage(message);
-      showToast(message, 'error');
+      toastError(message);
     } finally {
       setActionLoadingId(null);
     }
@@ -1255,18 +1226,15 @@ export default function Products() {
 
   const handleToggleVedette = async (id) => {
     setActionLoadingId(id);
-    setErrorMessage('');
-    setSuccessMessage('');
 
     try {
       await toggleProductVedette(id);
-      setSuccessMessage('Etat vedette mis a jour.');
-      showToast('Etat vedette mis a jour.', 'success');
+      toastSuccess('Etat vedette mis a jour.');
+      notifyMutation();
       await loadProducts();
     } catch (error) {
       const message = parseApiError(error, 'Mise a jour vedette impossible.');
-      setErrorMessage(message);
-      showToast(message, 'error');
+      toastError(message);
     } finally {
       setActionLoadingId(null);
     }
@@ -1276,18 +1244,15 @@ export default function Products() {
     if (!window.confirm('Supprimer cette image ?')) return;
 
     setActionLoadingId(productId);
-    setErrorMessage('');
-    setSuccessMessage('');
 
     try {
       await deleteProductImage(productId, imageId);
-      setSuccessMessage('Image supprimee avec succes.');
-      showToast('Image supprimee avec succes.', 'success');
+      toastSuccess('Image supprimee avec succes.');
+      notifyMutation();
       await loadProducts();
     } catch (error) {
       const message = parseApiError(error, 'Suppression de l image impossible.');
-      setErrorMessage(message);
-      showToast(message, 'error');
+      toastError(message);
     } finally {
       setActionLoadingId(null);
     }
@@ -1297,8 +1262,7 @@ export default function Products() {
     setEditingCategoryId(null);
     setCategoryEditorOpen(false);
     setCategoryForm(buildDefaultCategoryForm());
-    setCategoryErrorMessage('');
-    setCategorySuccessMessage('');
+
     setCategoryImageFile(null);
     if (categoryImagePreview) {
       try { URL.revokeObjectURL(categoryImagePreview); } catch (e) {}
@@ -1310,8 +1274,7 @@ export default function Products() {
     setEditingCategoryId(null);
     setCategoryEditorOpen(true);
     setCategoryForm(buildDefaultCategoryForm());
-    setCategoryErrorMessage('');
-    setCategorySuccessMessage('');
+
     setCategoryImageFile(null);
     if (categoryImagePreview) {
       try { URL.revokeObjectURL(categoryImagePreview); } catch (e) {}
@@ -1325,8 +1288,7 @@ export default function Products() {
     setCategoryEditorOpen(true);
     const base = buildDefaultCategoryForm();
     setCategoryForm({ ...base, parent_id: parentId ? String(parentId) : '' });
-    setCategoryErrorMessage('');
-    setCategorySuccessMessage('');
+
     setCategoryImageFile(null);
     if (categoryImagePreview) {
       try { URL.revokeObjectURL(categoryImagePreview); } catch (e) {}
@@ -1344,8 +1306,7 @@ export default function Products() {
     setActiveTab(tab);
     setCategoryEditorOpen(false);
     setEditingCategoryId(null);
-    setCategoryErrorMessage('');
-    setCategorySuccessMessage('');
+
     setCategoryForm(buildDefaultCategoryForm(tab));
 
     // If categories are not loaded yet (or were cleared), fetch them from the API
@@ -1371,8 +1332,7 @@ export default function Products() {
       image_url: getCategoryImage(category),
       actif: category.actif !== false,
     });
-    setCategoryErrorMessage('');
-    setCategorySuccessMessage('');
+
     setCategoryImageFile(null);
     if (categoryImagePreview) {
       try { URL.revokeObjectURL(categoryImagePreview); } catch (e) {}
@@ -1387,22 +1347,18 @@ export default function Products() {
 
     const nom = String(categoryForm.nom || '').trim();
     if (!nom) {
-      setCategoryErrorMessage('Le nom de la categorie est obligatoire.');
-      showToast('Le nom de la categorie est obligatoire.', 'error');
+      toastError('Le nom de la categorie est obligatoire.');
       return;
     }
 
     if (isSubcategoryMode && !categoryForm.parent_id) {
-      setCategoryErrorMessage('La categorie parente est obligatoire pour une sous-categorie.');
-      showToast('La categorie parente est obligatoire pour une sous-categorie.', 'error');
+      toastError('La categorie parente est obligatoire pour une sous-categorie.');
       return;
     }
 
     const isEditingCategory = Boolean(editingCategoryId);
 
     setSavingCategory(true);
-    setCategoryErrorMessage('');
-    setCategorySuccessMessage('');
 
     try {
       const payload = {
@@ -1437,13 +1393,13 @@ export default function Products() {
         : isSubcategoryMode
           ? 'Sous-categorie creee avec succes.'
           : 'Categorie principale creee avec succes.';
-      setCategorySuccessMessage(message);
-      showToast(message, 'success');
+      toastSuccess(message);
+      notifyMutation();
 
       setEditingCategoryId(null);
       setCategoryEditorOpen(false);
       setCategoryForm(buildDefaultCategoryForm(isSubcategoryMode ? 'subcategories' : 'categories'));
-      // clear any selected file preview
+
       setCategoryImageFile(null);
       if (categoryImagePreview) {
         try { URL.revokeObjectURL(categoryImagePreview); } catch (e) {}
@@ -1452,8 +1408,7 @@ export default function Products() {
       await loadLookups();
     } catch (error) {
       const message = parseApiError(error, 'Echec de la sauvegarde de la categorie.');
-      setCategoryErrorMessage(message);
-      showToast(message, 'error');
+      toastError(message);
     } finally {
       setSavingCategory(false);
     }
@@ -1511,16 +1466,15 @@ export default function Products() {
     }
 
     setCategoryActionLoadingId(id);
-    setCategoryErrorMessage('');
-    setCategorySuccessMessage('');
+
 
     try {
       await deleteCategory(id, { force: forceDelete });
       const message = forceDelete
         ? `Categorie et ${productCount} produit(s) supprimes.`
         : 'Categorie supprimee avec succes.';
-      setCategorySuccessMessage(message);
-      showToast(message, 'success');
+      toastSuccess(message);
+      notifyMutation();
 
       setSelectedCategoryIds((previous) => {
         const next = new Set(previous);
@@ -1541,8 +1495,7 @@ export default function Products() {
         message = 'Impossible de supprimer cette catégorie: des produits sont toujours associés à elle. Veuillez d\'abord modifier ou supprimer ces produits.';
       }
       
-      setCategoryErrorMessage(message);
-      showToast(message, 'error');
+      toastError(message);
     } finally {
       setCategoryActionLoadingId(null);
     }
@@ -1578,8 +1531,7 @@ export default function Products() {
     if (!window.confirm(confirmMessage)) return;
 
     setBulkCategoryDeleting(true);
-    setCategoryErrorMessage('');
-    setCategorySuccessMessage('');
+
 
     let deletedCount = 0;
     let failedCount = 0;
@@ -1610,14 +1562,13 @@ export default function Products() {
       const message = failedCount > 0
         ? `${deletedCount} ${deletedCount > 1 ? categoryLabelPlural : categoryLabel} supprimee(s).`
         : `${deletedCount} ${deletedCount > 1 ? categoryLabelPlural : categoryLabel} supprimee(s) avec succes.`;
-      setCategorySuccessMessage(message);
-      showToast(message, 'success');
+      toastSuccess(message);
+      notifyMutation();
     }
 
     if (failedCount > 0) {
       const message = lastErrorMessage || `${failedCount} ${failedCount > 1 ? categoryLabelPlural : categoryLabel} non supprimee(s).`;
-      setCategoryErrorMessage(message);
-      showToast(message, 'error');
+      toastError(message);
     }
 
     setBulkCategoryDeleting(false);
@@ -1842,15 +1793,16 @@ export default function Products() {
                 </div>
 
             <div className="admin-products-searchbar">
-              <input
-                placeholder="Rechercher titre, reference, modele..."
+              <SearchBar
                 value={filters.q}
                 onChange={(event) => setFilter('q', event.target.value)}
+                placeholder="Rechercher titre, reference, modele..."
+                compact
               />
-              <button type="button" className="admin-products-btn" onClick={loadProducts} disabled={loading}>
+              <button type="button" className="pp-search-admin-btn" onClick={loadProducts} disabled={loading}>
                 Recharger
               </button>
-              <button type="button" className="admin-products-btn" onClick={handleResetFilters} disabled={loading}>
+              <button type="button" className="pp-search-admin-btn" onClick={handleResetFilters} disabled={loading} style={{ background: 'transparent', color: '#172243' }}>
                 Reinitialiser
               </button>
             </div>
@@ -1923,7 +1875,6 @@ export default function Products() {
               </div>
             </div>
 
-            <AdminNotice type="error" message={errorMessage} className="admin-products-notice" />
             {renderTable()}
 
             <div className="admin-products-pagination-controls">
@@ -1983,10 +1934,11 @@ export default function Products() {
             ) : null}
 
             <div className="admin-products-searchbar admin-products-category-searchbar">
-              <input
+              <SearchBar
                 placeholder={isSubcategoryTab ? 'Rechercher sous-categorie (tous niveaux), slug, description...' : 'Rechercher categorie, slug, description...'}
                 value={categoryQuery}
                 onChange={(event) => setCategoryQuery(event.target.value)}
+                compact
               />
             </div>
 
@@ -2020,9 +1972,6 @@ export default function Products() {
                 </button>
               </div>
             </div>
-
-            <AdminNotice type="error" message={categoryErrorMessage} className="admin-products-notice" />
-            <AdminNotice type="success" message={categorySuccessMessage} className="admin-products-notice" />
 
             {lookupsLoading ? (
               <div className="admin-products-empty">{isSubcategoryTab ? 'Chargement des sous-categories (tous niveaux)...' : 'Chargement des categories...'}</div>
@@ -2405,8 +2354,6 @@ export default function Products() {
               <div className="admin-products-summary admin-products-summary--empty">Selectionnez un produit dans la liste ou cliquez sur Nouveau.</div>
             )}
 
-            <AdminNotice type="success" message={successMessage} className="admin-products-notice" />
-
             {(editorMode === 'create' || editorMode === 'edit') && (
               <form className="admin-products-form" onSubmit={handleSave}>
                 <div className="admin-products-grid">
@@ -2726,7 +2673,7 @@ export default function Products() {
         ) : null}
       </section>
 
-      <AdminToast toast={toast} />
+
     </div>
   );
 }

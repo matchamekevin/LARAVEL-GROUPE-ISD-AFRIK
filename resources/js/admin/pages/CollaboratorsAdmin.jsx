@@ -5,8 +5,9 @@ import {
   updateHomeCollaborator,
   deleteHomeCollaborator,
 } from '../api';
-import Loader from '../components/Loader';
-import AdminToast, { useAdminToast } from '../components/AdminToast';
+import Loader from '../../components/Loader';
+import { toastError, toastSuccess } from '../../utils/toast';
+import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
 import { pickDisplayMediaUrl } from '../../utils/mediaUrl';
 import '../styles/admin-shared.css';
@@ -31,7 +32,7 @@ export default function CollaboratorsAdmin() {
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const itemSelectionRef = useRef(null);
   const itemHeaderSelectionRef = useRef(null);
-  const { toast, showToast } = useAdminToast();
+
 
   function imageSrc(item) {
     return pickDisplayMediaUrl([item?.image_url, item?.image_path], '');
@@ -45,7 +46,7 @@ export default function CollaboratorsAdmin() {
     } catch (err) {
       console.error(err);
       setItems([]);
-      showToast('Impossible de charger les collaborateurs', 'error');
+      toastError('Impossible de charger les collaborateurs');
     } finally {
       setLoading(false);
     }
@@ -120,12 +121,12 @@ export default function CollaboratorsAdmin() {
     const editing = Boolean(editingId);
 
     if (!form.name?.trim()) {
-      showToast('Le nom est obligatoire', 'error');
+      toastError('Le nom est obligatoire');
       return;
     }
 
     if (!editingId && !form.image) {
-      showToast('Veuillez ajouter une image', 'error');
+      toastError('Veuillez ajouter une image');
       return;
     }
 
@@ -148,9 +149,10 @@ export default function CollaboratorsAdmin() {
 
       resetForm();
       await loadData();
-      showToast(editing ? 'Collaborateur mis a jour.' : 'Collaborateur cree.', 'success');
+      toastSuccess(editing ? 'Collaborateur mis a jour.' : 'Collaborateur cree.');
+      notifyMutation();
     } catch (err) {
-      showToast(err?.response?.data?.message || 'Erreur enregistrement collaborateur', 'error');
+      toastError(err?.response?.data?.message || 'Erreur enregistrement collaborateur');
     } finally {
       setSaving(false);
     }
@@ -223,16 +225,16 @@ export default function CollaboratorsAdmin() {
     setSelectedItemIds(new Set());
 
     if (deletedCount > 0) {
-      showToast(
+      toastSuccess(
         failedCount > 0
           ? `${deletedCount} collaborateur(s) supprimee(s).`
-          : `${deletedCount} collaborateur(s) supprimee(s) avec succes.`,
-        'success'
+          : `${deletedCount} collaborateur(s) supprimee(s) avec succes.`
       );
+      notifyMutation();
     }
 
     if (failedCount > 0) {
-      showToast(lastErrorMessage || `${failedCount} collaborateur(s) non supprimee(s).`, 'error');
+      toastError(lastErrorMessage || `${failedCount} collaborateur(s) non supprimee(s).`);
     }
 
     setBulkDeleting(false);
@@ -250,9 +252,10 @@ export default function CollaboratorsAdmin() {
         return next;
       });
       if (editingId === id) resetForm();
-      showToast('Collaborateur supprime.', 'success');
+      toastSuccess('Collaborateur supprime.');
+      notifyMutation();
     } catch (err) {
-      showToast('Erreur suppression collaborateur', 'error');
+      toastError('Erreur suppression collaborateur');
     }
   }
 
@@ -383,7 +386,7 @@ export default function CollaboratorsAdmin() {
             </button>
           </div>
         </div>
-        {loading ? <Loader /> : (
+        {loading ? <Loader variant="spinner" /> : (
           <table className="admin-bulk-table">
             <thead>
               <tr>
@@ -461,7 +464,7 @@ export default function CollaboratorsAdmin() {
         )}
       </div>
 
-      <AdminToast toast={toast} />
+
     </div>
   );
 }

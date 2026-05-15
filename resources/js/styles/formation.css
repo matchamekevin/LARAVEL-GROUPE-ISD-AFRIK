@@ -1185,3 +1185,22 @@
   color: #fff !important;
 }
 
+/* ── RESPONSIVE FORMATIONS ────────────────────────── */
+@media (max-width: 900px) {
+  .formations-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+}
+
+@media (max-width: 640px) {
+  .formations-grid { grid-template-columns: 1fr; }
+  .formation-hero h1 { font-size: clamp(1.3rem, 4vw, 1.8rem); }
+}
+
+/* ── RESPONSIVE FORMATION OVERRIDES ───────────────── */
+@media (max-width: 1100px) {
+  .formations-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+}
+@media (max-width: 640px) {
+  .formations-grid { grid-template-columns: 1fr; }
+  .formation-card { max-width: 400px; margin-inline: auto; }
+}
+

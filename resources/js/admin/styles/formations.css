@@ -121,13 +121,6 @@
   margin-bottom: var(--spacing-lg);
 }
 
-.admin-formations-searchbar input {
-  padding: var(--spacing-md) var(--spacing-lg);
-  border: 2px solid #d1d5db;
-  border-radius: var(--border-radius);
-  font-size: var(--font-size-base);
-}
-
 .admin-formations-empty {
   border: 2px dashed var(--color-gray-300);
   background: var(--color-gray-50);

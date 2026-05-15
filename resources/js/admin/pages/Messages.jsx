@@ -7,11 +7,13 @@ import {
   updateRevendeurDemandeStatus,
 } from '../api';
 import { useLivePolling } from '../../hooks/useLivePolling';
-import Loader from '../components/Loader';
-import AdminToast, { useAdminToast } from '../components/AdminToast';
+import Loader from '../../components/Loader';
+import { toastError, toastSuccess } from '../../utils/toast';
+import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
 import '../styles/admin-shared.css';
 import '../styles/messages.css';
+import SearchBar from '../../components/SearchBar';
 
 const CONTACT_STATUSES = ['nouveau', 'lu', 'traite'];
 const DEMANDE_STATUSES = ['nouveau', 'en_cours', 'valide', 'rejete'];
@@ -28,7 +30,7 @@ export default function Messages() {
   const [contactMessages, setContactMessages] = useState([]);
   const [demandes, setDemandes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { toast, showToast } = useAdminToast();
+
 
   const MESSAGES_PER_PAGE = 20;
   const EMPTY_PAGINATION = {
@@ -162,10 +164,11 @@ export default function Messages() {
     try {
       await updateContactMessageStatus(id, statut);
       setContactRefreshToken((t) => t + 1);
-      showToast('Statut du message mis a jour.', 'success');
+      toastSuccess('Statut du message mis a jour.');
+      notifyMutation();
     } catch (err) {
       console.error(err);
-      showToast('Erreur mise a jour statut message', 'error');
+      toastError('Erreur mise a jour statut message');
     }
   }
 
@@ -174,10 +177,11 @@ export default function Messages() {
     try {
       await deleteContactMessage(id);
       setContactRefreshToken((t) => t + 1);
-      showToast('Message supprime.', 'success');
+      toastSuccess('Message supprime.');
+      notifyMutation();
     } catch (err) {
       console.error(err);
-      showToast('Erreur suppression message', 'error');
+      toastError('Erreur suppression message');
     }
   }
 
@@ -185,10 +189,11 @@ export default function Messages() {
     try {
       await updateRevendeurDemandeStatus(id, statut);
       setDemandeRefreshToken((t) => t + 1);
-      showToast('Statut de la demande mis a jour.', 'success');
+      toastSuccess('Statut de la demande mis a jour.');
+      notifyMutation();
     } catch (err) {
       console.error(err);
-      showToast('Erreur mise a jour statut demande', 'error');
+      toastError('Erreur mise a jour statut demande');
     }
   }
 
@@ -206,7 +211,7 @@ export default function Messages() {
       setDemandeRefreshToken((token) => token + 1);
     },
     {
-      intervalMs: 8000,
+      intervalMs: 3000,
       enabled: !loading,
     }
   );
@@ -243,13 +248,14 @@ export default function Messages() {
             </div>
 
             <div className="admin-messages-filters">
-              <input
+              <SearchBar
                 placeholder="Rechercher (nom, email, sujet, contenu...)"
                 value={contactSearch}
                 onChange={(e) => {
                   setContactSearch(e.target.value);
                   setContactPage(1);
                 }}
+                compact
               />
               <select
                 value={contactStatusFilter}
@@ -362,13 +368,14 @@ export default function Messages() {
             </div>
 
             <div className="admin-messages-filters">
-              <input
+              <SearchBar
                 placeholder="Rechercher (entreprise, email, pays...)"
                 value={demandeSearch}
                 onChange={(e) => {
                   setDemandeSearch(e.target.value);
                   setDemandePage(1);
                 }}
+                compact
               />
               <select
                 value={demandeStatusFilter}
@@ -470,7 +477,7 @@ export default function Messages() {
         </>
       )}
 
-      <AdminToast toast={toast} />
+
     </div>
   );
 }

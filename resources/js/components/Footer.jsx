@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "../styles/footer.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import { notifyMutation } from "../utils/mutationBus";
+import { toastError, toastSuccess } from "../utils/toast";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
-  const [error, setError] = useState(null);
 
   // Liste des pays avec drapeaux et contacts
   const countries = [
@@ -44,7 +44,6 @@ export default function Footer() {
   // Soumission newsletter reliée au backend
   const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
     try {
       const response = await fetch("/api/newsletter", {
         method: "POST",
@@ -53,15 +52,15 @@ export default function Footer() {
       });
 
       if (response.ok) {
-        setSubscribed(true);
         setEmail("");
-        setTimeout(() => setSubscribed(false), 3000);
+        notifyMutation();
+        toastSuccess("Inscription à la newsletter réussie !");
       } else {
         const data = await response.json();
-        setError(data.message || "Erreur lors de l'inscription");
+        toastError(data.message || "Erreur lors de l'inscription");
       }
     } catch (err) {
-      setError("Impossible de contacter le serveur");
+      toastError("Impossible de contacter le serveur");
     }
   };
 
@@ -133,12 +132,6 @@ export default function Footer() {
                 <i className="fas fa-paper-plane"></i>
               </button>
             </form>
-            {subscribed && (
-              <p className="newsletter-success">✅ Inscription réussie !</p>
-            )}
-            {error && (
-              <p className="newsletter-error">❌ {error}</p>
-            )}
           </div>
 
           {/* Réseaux sociaux */}

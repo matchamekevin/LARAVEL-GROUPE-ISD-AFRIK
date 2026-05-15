@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { getDashboardSummary, warmAdminCaches } from '../api';
 import { useLivePolling } from '../../hooks/useLivePolling';
+import { toastError } from '../../utils/toast';
 
 const CURRENCY = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
@@ -32,7 +33,6 @@ const EMPTY_SUMMARY = {
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [summary, setSummary] = useState(EMPTY_SUMMARY);
   const [refreshToken, setRefreshToken] = useState(0);
 
@@ -41,7 +41,6 @@ export default function Dashboard() {
 
     async function loadDashboard() {
       setLoading(true);
-      setError('');
       if (typeof window !== 'undefined') {
         window.setTimeout(() => {
           warmAdminCaches();
@@ -63,7 +62,7 @@ export default function Dashboard() {
         });
       } catch (err) {
         if (mounted) {
-          setError('Le tableau de bord n\'a pas pu être chargé. Les caches admin restent disponibles.');
+          toastError('Le tableau de bord n\'a pas pu être chargé. Les caches admin restent disponibles.');
         }
       } finally {
         if (mounted) setLoading(false);
@@ -101,7 +100,7 @@ export default function Dashboard() {
   useLivePolling(
     () => backgroundLoadDashboard(),
     {
-      intervalMs: 10000,
+      intervalMs: 5000,
       enabled: true,
     }
   );
@@ -199,24 +198,6 @@ export default function Dashboard() {
           Vue pilotée par les données réelles de la base: ventes, utilisateurs, commandes et activité.
         </p>
       </div>
-
-      {error && (
-        <div
-          style={{
-            marginBottom: '1rem',
-            background: '#fff7ed',
-            border: '1px solid #fdba74',
-            color: '#9a3412',
-            borderRadius: '0.8rem',
-            padding: '0.8rem 1rem',
-            fontSize: '0.9rem',
-            position: 'relative',
-            zIndex: 1,
-          }}
-        >
-          {error}
-        </div>
-      )}
 
       <div
         style={{

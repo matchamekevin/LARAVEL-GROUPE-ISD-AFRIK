@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "../axios";
 import usePageMeta from "../hooks/usePageMeta";
+import { notifyMutation } from "../utils/mutationBus";
+import { toastError, toastSuccess } from "../utils/toast";
 import "../../css/devenirvendeur.css";
 
 export default function DevenirVendeur() {
@@ -38,8 +40,6 @@ export default function DevenirVendeur() {
     documents: []
   });
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
 
   const toggleArrayValue = (name, value) => {
     setForm((prev) => {
@@ -59,12 +59,11 @@ export default function DevenirVendeur() {
   const onSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    setMessage("");
-    setError("");
 
     try {
       const res = await axios.post("/revendeur-demandes", form);
-      setMessage(res.data?.message || "Demande envoyee avec succes.");
+      notifyMutation();
+      toastSuccess(res.data?.message || "Demande envoyee avec succes.");
       setForm({
         nom_entreprise: "", statut_juridique: "", rccm: "", identifiant_fiscal: "", annee_creation: "",
         adresse_siege: "", pays: "", ville: "", telephone: "", email_professionnel: "", site_web: "",
@@ -74,7 +73,7 @@ export default function DevenirVendeur() {
         activites: [], documents: []
       });
     } catch (err) {
-      setError(err.response?.data?.message || "Erreur lors de l'envoi de la demande.");
+      toastError(err.response?.data?.message || "Erreur lors de l'envoi de la demande.");
     } finally {
       setSubmitting(false);
     }
@@ -105,9 +104,6 @@ export default function DevenirVendeur() {
         </div>
 
         <div className="vendor-form-container">
-          {message && <div className="vendor-message success">{message}</div>}
-          {error && <div className="vendor-message error">{error}</div>}
-
           <form onSubmit={onSubmit}>
             {/* INFORMATIONS ENTREPRISE */}
             <div className="vendor-form-section">

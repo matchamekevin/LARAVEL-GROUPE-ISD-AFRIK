@@ -215,3 +215,18 @@
 
 .input-group:focus-within .toggle-icon{color:var(--auth-primary)}
 .toggle-icon:hover{color:var(--auth-primary);background:rgba(23,34,67,0.05)}
+
+/* ── RESPONSIVE AUTH ──────────────────────────────── */
+@media (max-width: 768px) {
+  .auth-container { padding: clamp(16px, 3vw, 24px); }
+  .auth-card { padding: clamp(20px, 3vw, 32px); }
+  .auth-card h2 { font-size: clamp(1.2rem, 4vw, 1.6rem); }
+  .auth-form input { padding: 10px 14px; font-size: 0.9rem; }
+  .auth-form button { padding: 12px; font-size: 0.95rem; }
+}
+
+@media (max-width: 480px) {
+  .auth-card { padding: 16px; border-radius: 0; box-shadow: none; }
+  .auth-container { min-height: 100vh; align-items: flex-start; padding-top: 20px; }
+  .auth-links { flex-direction: column; gap: 8px; }
+}

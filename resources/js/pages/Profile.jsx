@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Loader from "../components/Loader";
 import "../styles/profile.css";
 import { getApiBase } from "../utils/apiBase";
 import usePageMeta from "../hooks/usePageMeta";
+import { notifyMutation } from "../utils/mutationBus";
+import { toastError, toastSuccess } from "../utils/toast";
 
 function formatDate(value) {
   if (!value) return "Non disponible";
@@ -74,20 +77,22 @@ export default function Profile() {
   const handleChangePassword = () => navigate("/profile/password");
 
   const handleDeleteAccount = async () => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.")) {
-      try {
-        await axios.delete(`${API_BASE}/api/auth/delete-account`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            Accept: "application/json",
-          },
-        });
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        navigate("/register");
-      } catch (err) {
-        console.error("Erreur suppression :", err);
-      }
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.")) return;
+    try {
+      await axios.delete(`${API_BASE}/api/auth/delete-account`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Accept: "application/json",
+        },
+      });
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      toastSuccess("Compte supprimé avec succès");
+      notifyMutation();
+      navigate("/register");
+    } catch (err) {
+      console.error("Erreur suppression :", err);
+      toastError("Erreur lors de la suppression du compte");
     }
   };
 
@@ -109,14 +114,7 @@ export default function Profile() {
   };
 
   if (!utilisateur) {
-    return (
-      <div className="profile-page-wrapper premium-page">
-        <div className="profile-container" style={{ textAlign: 'center', padding: '100px 20px' }}>
-           <i className="fas fa-circle-notch fa-spin fa-3x" style={{ color: '#f59e0b', marginBottom: '20px' }}></i>
-           <p>Chargement de votre espace personnel...</p>
-        </div>
-      </div>
-    );
+    return <Loader variant="spinner" size="lg" text="Chargement de votre espace personnel..." />;
   }
 
   const avatarSrc =

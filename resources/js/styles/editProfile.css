@@ -68,3 +68,16 @@
     margin-bottom: 10px;
     text-align: center;
   }
+
+/* ── RESPONSIVE EDIT PROFILE ──────────────────────── */
+@media (max-width: 768px) {
+  .edit-profile { padding: 16px; }
+  .edit-profile form { gap: 12px; }
+  .edit-profile label { font-size: 0.9rem; }
+  .edit-profile input { font-size: 0.9rem; padding: 10px 12px; }
+}
+
+@media (max-width: 480px) {
+  .edit-profile { padding: 12px; }
+  .edit-profile .form-row { flex-direction: column; gap: 10px; }
+}

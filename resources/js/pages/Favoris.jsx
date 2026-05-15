@@ -63,7 +63,7 @@ export default function Favoris() {
   const total = useMemo(() => items.length, [items]);
 
   return (
-    <section style={{ maxWidth: "1100px", margin: "120px auto 40px", padding: "0 16px" }}>
+    <section style={{ maxWidth: "1100px", margin: "40px auto 40px", padding: "0 clamp(8px, 2vw, 16px)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
         <h1 style={{ margin: 0, color: "#172243" }}>Liste d'envies</h1>
         <span style={{ color: "#64748b", fontWeight: 600 }}>{total} produit(s)</span>
@@ -105,7 +105,7 @@ export default function Favoris() {
                   >
                     Ajouter au panier
                   </button>
-                  <Link to={`/produits/${item.id_produit}`} style={{ color: "#1d4ed8", fontWeight: 600 }}>Voir</Link>
+                  <Link to={`/produits/${item.id_produit}`} onClick={() => sessionStorage.setItem("produit_back_url", window.location.href)} style={{ color: "#1d4ed8", fontWeight: 600 }}>Voir</Link>
                   <button
                     type="button"
                     onClick={() => toggleFavorite(item)}

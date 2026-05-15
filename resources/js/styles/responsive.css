@@ -1,0 +1,152 @@
+/* ── Fluid Design System ──────────────────────────── */
+
+:root {
+  /* Fluid spacing scale */
+  --fluid-xs: clamp(2px, 0.2vw, 4px);
+  --fluid-sm: clamp(4px, 0.5vw, 8px);
+  --fluid-md: clamp(8px, 1vw, 16px);
+  --fluid-lg: clamp(12px, 1.5vw, 24px);
+  --fluid-xl: clamp(16px, 2vw, 32px);
+  --fluid-2xl: clamp(24px, 3vw, 48px);
+  --fluid-3xl: clamp(32px, 4vw, 64px);
+
+  /* Fluid font sizes */
+  --text-xs: clamp(0.65rem, 0.6vw, 0.75rem);
+  --text-sm: clamp(0.75rem, 0.8vw, 0.875rem);
+  --text-base: clamp(0.875rem, 1vw, 1rem);
+  --text-lg: clamp(1rem, 1.3vw, 1.125rem);
+  --text-xl: clamp(1.125rem, 1.6vw, 1.35rem);
+  --text-2xl: clamp(1.25rem, 2vw, 1.75rem);
+  --text-3xl: clamp(1.5rem, 2.5vw, 2.2rem);
+  --text-4xl: clamp(1.75rem, 3vw, 2.8rem);
+
+  /* Fluid container */
+  --container-sm: min(100% - 32px, 640px);
+  --container-md: min(100% - 32px, 768px);
+  --container-lg: min(100% - 32px, 1024px);
+  --container-xl: min(100% - 32px, 1320px);
+
+  /* Border radius */
+  --radius-sm: clamp(4px, 0.4vw, 8px);
+  --radius-md: clamp(8px, 0.6vw, 12px);
+  --radius-lg: clamp(12px, 0.8vw, 16px);
+  --radius-xl: clamp(16px, 1vw, 24px);
+
+  /* Section padding */
+  --section-y: clamp(32px, 4vw, 80px);
+  --section-x: clamp(12px, 2vw, 20px);
+}
+
+/* ── Fluid container utility ──────────────────────── */
+.responsive-container {
+  width: min(100% - 32px, 1320px);
+  margin-inline: auto;
+}
+
+/* ── Fluid grid utilities ─────────────────────────── */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: clamp(12px, 1.5vw, 28px);
+}
+
+.responsive-grid--2 {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+}
+
+.responsive-grid--compact {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: clamp(10px, 1vw, 20px);
+}
+
+/* ── Fluid flex utilities ──────────────────────────── */
+.responsive-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(8px, 1vw, 16px);
+}
+
+.responsive-flex--center {
+  justify-content: center;
+  align-items: center;
+}
+
+/* ── Fluid text truncation ─────────────────────────── */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.text-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.text-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Hide on mobile / desktop ──────────────────────── */
+.hide-mobile { display: none; }
+.show-mobile { display: block; }
+
+@media (min-width: 769px) {
+  .hide-mobile { display: block; }
+  .show-mobile { display: none; }
+}
+
+/* ── Safe area padding for modern phones ───────────── */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ── Main layout responsive spacing ───────────────── */
+.site-main {
+  padding-inline: clamp(0px, 2vw, 20px);
+}
+
+/* ── Touch-friendly targets on mobile ──────────────── */
+@media (pointer: coarse) {
+  .touch-target, 
+  .nav a, .nav button,
+  header a, header button,
+  [class*="pill"], [class*="pcat-pill"],
+  .pcat-solid-btn, .pcat-outline-btn,
+  .pp-add-btn, .pp-pill {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ── Ultra-wide screens (2400px+) ──────────────────── */
+@media (min-width: 2400px) {
+  .responsive-container { max-width: 1800px; }
+  :root {
+    --text-base: clamp(0.95rem, 0.7vw, 1.05rem);
+    --text-lg: clamp(1.05rem, 0.9vw, 1.15rem);
+  }
+}
+
+/* ── Print optimizations ────────────────────────────── */
+@media print {
+  .no-print, header, footer, nav, [class*="btn"], [class*="button"] { display: none !important; }
+  body { font-size: 12pt; color: #000; background: #fff; }
+}

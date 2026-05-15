@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import MainLayout from "./layouts/MainLayout";
 import AutoRefreshProvider from "./providers/AutoRefreshProvider";
+import Loader from "./components/Loader";
 import ScrollToTop from "./components/ScrollToTop";
 import { PAGE_ALIASES, PUBLIC_APP_ROUTES } from "./routes/publicRoutes";
 
@@ -14,6 +15,8 @@ import "./i18n";
 import "./styles/global.css";
 import "./styles/marketing-premium.css";
 import "./styles/auth.css";
+import "./styles/search-bar.css";
+import "./styles/responsive.css";
 
 // Compat: certaines dépendances attendent un global `process.env`.
 // Vite expose les variables via `import.meta.env`; on crée un shim
@@ -67,7 +70,7 @@ function App() {
             <MainLayout>
                 {/* Gestion unifiée du scroll: top sur navigation normale, restauration sur back/forward */}
                   <ScrollToTop />
-                <Suspense fallback={<div style={{ padding: "20px", textAlign: "center" }}>Chargement...</div>}>
+                <Suspense fallback={<Loader variant="spinner" size="md" />}>
                     <Routes>
                         {PUBLIC_APP_ROUTES.map(({ path, page }) => (
                             <Route key={path} path={path} element={<LazyPage name={page} />} />
