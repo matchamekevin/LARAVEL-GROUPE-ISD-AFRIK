@@ -16,7 +16,7 @@
   padding-top: 24px;
   font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif;
   position: relative;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Effet de particules animées */

@@ -175,5 +175,15 @@ return [
     'Pdf' => Barryvdh\DomPDF\Facade\Pdf::class,
 ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | This value is the URL of the frontend application. Used for generating
+    | password reset links and other frontend-facing URLs.
+    |
+    */
+    'frontend_url' => env('APP_FRONTEND_URL', env('APP_URL', 'http://localhost:8000')),
 
 ];

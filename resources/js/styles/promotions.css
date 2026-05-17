@@ -3,7 +3,6 @@
 .promotions-page {
   min-height: 100vh;
   background: #f8fafc;
-  padding-top: 80px;
   padding-bottom: 60px;
 }
 
@@ -305,7 +304,7 @@
 /* Responsive */
 @media (max-width: 768px) {
   .promotions-page {
-    padding-top: 70px;
+    padding-top: 0;
   }
 
   .promo-page-header h1 {

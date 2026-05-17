@@ -94,6 +94,7 @@ export default function ScrollToTop() {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       previousPathnameRef.current = currentPathname;
+      scrollInstant(0);
       return;
     }
 
@@ -113,6 +114,12 @@ export default function ScrollToTop() {
     previousPathnameRef.current = currentPathname;
   }, [keyByLocationKey, keyByRoute, location.pathname, navigationType]);
 
+  // Fallback: re-scroll after lazy components finish rendering
+  useEffect(() => {
+    if (navigationType === "POP") return;
+    const raf = requestAnimationFrame(() => requestAnimationFrame(() => scrollInstant(0)));
+    return () => cancelAnimationFrame(raf);
+  }, [location.pathname, navigationType]);
 
   return null;
 }

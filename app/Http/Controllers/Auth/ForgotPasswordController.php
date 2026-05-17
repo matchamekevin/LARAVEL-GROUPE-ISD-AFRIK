@@ -21,7 +21,7 @@ class ForgotPasswordController extends Controller
             $request->only('email'),
             function ($user, $token) {
                 // ✅ Utiliser APP_URL (backend) ou APP_FRONTEND_URL si défini
-                $frontendUrl = env('APP_FRONTEND_URL', env('APP_URL', 'http://localhost:8000'));
+                $frontendUrl = config('app.frontend_url', 'http://localhost:8000');
 
                 // ✅ Générer un lien vers ton frontend React intégré à Laravel
                 $url = "{$frontendUrl}/reset-password/{$token}?email=" . urlencode($user->email);
@@ -64,7 +64,7 @@ class ForgotPasswordController extends Controller
 
     public function showResetForm(Request $request, $token)
     {
-        $frontendUrl = env('APP_FRONTEND_URL', env('APP_URL', 'http://localhost:5173'));
+        $frontendUrl = config('app.frontend_url', 'http://localhost:5173');
         return redirect("{$frontendUrl}/reset-password/{$token}?email=" . urlencode($request->email));
     }
 }

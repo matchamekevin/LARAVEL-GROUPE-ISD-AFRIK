@@ -16,56 +16,64 @@ export default function Projets() {
             category: "Digital",
             description: "Solution complète de gestion d'entreprise incluant la facturation, le CRM et le suivi des stocks.",
             image: "/images/solutions/im1.webp",
-            url: "https://portal.isdafrik.com"
+            url: "https://portal.isdafrik.com",
+            slug: "isd-portal"
         },
         {
             title: "SafeCity Surveillance",
             category: "Sécurité",
             description: "Déploiement d'un réseau de vidéosurveillance IP haute définition pour une zone industrielle.",
             image: "/images/solutions/im2.webp",
-            url: "https://security.isdafrik.com"
+            url: "https://security.isdafrik.com",
+            slug: "safecity-surveillance"
         },
         {
             title: "AfrikPay",
             category: "Fintech",
             description: "Passerelle de paiement sécurisée pour le commerce électronique local et international.",
             image: "/images/solutions/im3.webp",
-            url: "https://pay.isdafrik.com"
+            url: "https://pay.isdafrik.com",
+            slug: "afrikpay"
         },
         {
             title: "EduAfrik Management",
             category: "Éducation",
             description: "Système de gestion universitaire (ERP) pour le suivi des étudiants et de la scolarité.",
             image: "/images/solutions/im4.webp",
-            url: "https://edu.isdafrik.com"
+            url: "https://edu.isdafrik.com",
+            slug: "eduafrik-management"
         },
         {
             title: "AgroDrone Mapping",
             category: "Agriculture",
             description: "Service de cartographie par drone pour l'optimisation des rendements agricoles.",
             image: "/images/prestations/default.jpg",
-            url: "https://drones.isdafrik.com"
+            url: "https://drones.isdafrik.com",
+            slug: "agrodrone-mapping"
         },
         {
             title: "HotelSync Pro",
             category: "Hôtellerie",
             description: "Logiciel de gestion hôtelière avec moteur de réservation en temps réel.",
             image: "/images/prestations/default.jpg",
-            url: "https://hotels.isdafrik.com"
+            url: "https://hotels.isdafrik.com",
+            slug: "hotelsync-pro"
         },
         {
             title: "BTP Connect",
             category: "Industrie",
             description: "Suivi technique et monitoring de chantiers via des capteurs IoT connectés.",
             image: "/images/prestations/default.jpg",
-            url: "https://btp.isdafrik.com"
+            url: "https://btp.isdafrik.com",
+            slug: "btp-connect"
         },
         {
             title: "ArchiveSafe GED",
             category: "Archivage",
             description: "Plateforme de gestion électronique de documents (GED) hautement sécurisée.",
             image: "/images/prestations/default.jpg",
-            url: "https://archive.isdafrik.com"
+            url: "https://archive.isdafrik.com",
+            slug: "archivesafe-ged"
         }
     ];
 
@@ -93,14 +101,22 @@ export default function Projets() {
                             <div className="projet-content">
                                 <h3 className="projet-title">{projet.title}</h3>
                                 <p className="projet-desc">{projet.description}</p>
-                                <a 
-                                    href={projet.url} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    className="projet-link-btn"
-                                >
-                                    Visiter le site <i className="fas fa-external-link-alt"></i>
-                                </a>
+                                <div className="projet-actions">
+                                    <button 
+                                        onClick={() => navigate(`/projets/${projet.slug}`)} 
+                                        className="projet-link-btn projet-link-btn--pres"
+                                    >
+                                        Présentation <i className="fas fa-info-circle"></i>
+                                    </button>
+                                    <a 
+                                        href={projet.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        className="projet-link-btn"
+                                    >
+                                        Visiter le site <i className="fas fa-external-link-alt"></i>
+                                    </a>
+                                </div>
                             </div>
                         </article>
                     ))}

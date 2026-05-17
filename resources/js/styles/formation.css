@@ -874,7 +874,7 @@
 
 @media (max-width: 768px) {
   .formations-container {
-    padding-top: 68px;
+    padding-top: 0;
   }
 
   .formations-container .hero-section {

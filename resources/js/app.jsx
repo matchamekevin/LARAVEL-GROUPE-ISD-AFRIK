@@ -1,7 +1,7 @@
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useLayoutEffect, useRef } from "react";
 import axios from "axios";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import MainLayout from "./layouts/MainLayout";
 import AutoRefreshProvider from "./providers/AutoRefreshProvider";
@@ -55,6 +55,20 @@ function getLazyComponent(name) {
 
 function LazyPage({ name }) {
     const Component = getLazyComponent(name);
+    const location = useLocation();
+    const prevKeyRef = useRef(null);
+
+    useLayoutEffect(() => {
+        if (prevKeyRef.current !== location.key) {
+            prevKeyRef.current = location.key;
+            const id = setInterval(() => {
+                window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+            }, 80);
+            setTimeout(() => clearInterval(id), 2000);
+            return () => clearInterval(id);
+        }
+    }, [location.key]);
+
     if (!Component) {
         return <div style={{ padding: 20 }}>Page introuvable: {name}</div>;
     }

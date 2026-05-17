@@ -6,7 +6,7 @@
    .pr-page {
     background: #f4f6f9;
     min-height: 100vh;
-    padding-top: 80px;
+    padding-top: 0;
     font-family: 'Segoe UI', system-ui, sans-serif;
   }
   

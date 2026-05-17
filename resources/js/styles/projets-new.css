@@ -152,6 +152,115 @@
   background: var(--primary-orange);
 }
 
+/* Button group */
+.projet-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.projet-actions .projet-link-btn {
+  flex: 1;
+  text-align: center;
+  font-size: 0.82rem;
+  padding: 10px 8px;
+}
+
+.projet-link-btn--pres {
+  background: transparent;
+  border: 2px solid var(--primary-blue);
+  color: var(--primary-blue);
+}
+
+.projet-link-btn--pres:hover {
+  background: var(--primary-blue);
+  color: #fff;
+  border-color: var(--primary-blue);
+}
+
+.projet-link-btn--ghost {
+  background: transparent;
+  border: 2px solid rgba(255,255,255,0.3);
+  color: #fff;
+}
+
+.projet-link-btn--ghost:hover {
+  border-color: var(--primary-orange);
+  background: transparent;
+}
+
+/* Presentation page */
+.projet-pres-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+.projet-pres-image img {
+  width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+.projet-pres-content h2 {
+  color: var(--primary-blue);
+  font-size: 1.5rem;
+  margin-bottom: 16px;
+}
+
+.projet-pres-desc {
+  color: var(--text-light-gray);
+  line-height: 1.8;
+  margin-bottom: 24px;
+}
+
+.projet-pres-meta {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.projet-pres-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.projet-pres-meta-item strong {
+  color: var(--text-dark);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.projet-pres-meta-item span {
+  color: var(--primary-orange);
+  font-weight: 700;
+}
+
+.projet-pres-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.projet-pres-actions .projet-link-btn {
+  padding: 12px 24px;
+}
+
+@media (max-width: 768px) {
+  .projet-pres-container {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .projet-actions {
+    flex-direction: column;
+  }
+}
+
 /* Responsive */
 @media (min-width: 1200px) {
   .projets-grid {

@@ -285,7 +285,7 @@ class UtilisateurController extends Controller
 
     private function dispatchTwoFactorCodeMail(Utilisateur $user, string $context = '2FA'): void
     {
-        $forceSync = filter_var((string) env('OTP_MAIL_FORCE_SYNC', false), FILTER_VALIDATE_BOOL);
+        $forceSync = filter_var(config('mail.otp_force_sync', false), FILTER_VALIDATE_BOOL);
 
         if ($forceSync) {
             Mail::to($user->email)->send(new TwoFactorCodeMail($user));
@@ -670,7 +670,8 @@ class UtilisateurController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Throwable $e) {
-            Log::error('Erreur login: '.$e->getMessage().' | '.$e->getFile().':'.$e->getLine());
+            Log::error('[LOGIN] ❌ Exception: '.get_class($e).' | '.$e->getMessage().' | '.$e->getFile().':'.$e->getLine());
+            Log::error('[LOGIN] 📋 Stack trace: '.$e->getTraceAsString());
 
             return response()->json([
                 'message' => 'Erreur lors de la connexion',

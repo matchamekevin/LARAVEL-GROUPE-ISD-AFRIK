@@ -126,4 +126,15 @@ return [
         'name' => env('BREVO_SENDER_NAME', env('MAIL_FROM_NAME', 'Example')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | OTP Mail Delivery
+    |--------------------------------------------------------------------------
+    |
+    | When true, OTP (2FA) emails are sent synchronously instead of being
+    | queued. Useful for environments where queue workers are not available.
+    |
+    */
+    'otp_force_sync' => env('OTP_MAIL_FORCE_SYNC', false),
+
 ];

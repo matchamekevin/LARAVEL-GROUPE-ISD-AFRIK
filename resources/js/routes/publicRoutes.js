@@ -14,6 +14,7 @@ export const PUBLIC_APP_ROUTES = [
   { path: "/solutions", page: "Solutions" },
   { path: "/formations", page: "Formations" },
   { path: "/projets", page: "Projets" },
+  { path: "/projets/:slug", page: "ProjetPresentation" },
   { path: "/actualites", page: "Actualites" },
   { path: "/contact", page: "Contact" },
   { path: "/prestation/:slug", page: "PrestationDetail" },

@@ -27,7 +27,7 @@
     /* Garder un offset pour que l'entête soit visible (ex : barre de navigation).
       La valeur est contrôlée dynamiquement par JS via la variable CSS --pp-hero-offset.
       Valeur de secours : 100px. */
-    padding-top: var(--pp-hero-offset, 100px);
+    padding-top: 0;
   padding-bottom: 48px;
 }
 
