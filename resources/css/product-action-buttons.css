@@ -196,3 +196,46 @@
 .pab-btn:disabled {
   animation: pab-pulse 1.5s ease-in-out infinite;
 }
+
+/* Minimal buttons for cards */
+.btn-cart-minimal, .btn-favorite-minimal {
+  background: none;
+  border: 1px solid #ddd;
+  color: #667eea;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-cart-minimal .material-icons,
+.btn-favorite-minimal .material-icons {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.btn-cart-minimal:hover {
+  background-color: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.btn-favorite-minimal:hover {
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+  background-color: rgba(255, 107, 107, 0.1);
+}
+
+.btn-favorite-minimal.active {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  border-color: #ff6b6b;
+}
+
+.btn-favorite-minimal.active:hover {
+  background-color: rgba(255, 107, 107, 0.2);
+}

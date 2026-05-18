@@ -40,7 +40,7 @@ return [
         'public' => env('FEDAPAY_PUBLIC_KEY'),
         'env' => env('FEDAPAY_ENVIRONMENT', 'live'),
         'webhook_secret' => env('FEDAPAY_WEBHOOK_SECRET'),
-        'callback_url' => env('FEDAPAY_CALLBACK_URL'),
+        'callback_url' => env('FEDAPAY_CALLBACK_URL', config('app.url') . '/api/paiement/callback'),
     ],
 
     // Brevo configuration (API)

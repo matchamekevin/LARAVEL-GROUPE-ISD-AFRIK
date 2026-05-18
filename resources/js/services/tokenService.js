@@ -42,6 +42,15 @@ export const tokenService = {
    */
   removeToken() {
     try {
+      // Clear merge marker so guest items added during logout
+      // session get merged back on next login
+      const user = this.getUser();
+      if (user) {
+        const userId = user.id_utilisateur || user.id;
+        if (userId) {
+          localStorage.removeItem(`isd_guest_merged_to_user:${userId}`);
+        }
+      }
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
       localStorage.removeItem(PAYS_KEY);

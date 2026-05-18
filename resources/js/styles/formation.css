@@ -55,7 +55,7 @@
       radial-gradient(circle at 20% 50%, var(--primary-orange) 0%, transparent 50%),
       radial-gradient(circle at 80% 80%, var(--primary-orange) 0%, transparent 50%),
       radial-gradient(circle at 40% 20%, var(--primary-orange) 0%, transparent 50%);
-    animation: formations-float 25s ease-in-out infinite;
+    /* animation désactivée - trop lourde */
   }
   
   .formations-container .hero-dots {
@@ -75,7 +75,7 @@
     background: radial-gradient(circle, var(--primary-orange) 0%, transparent 70%);
     opacity: 0.12;
     filter: blur(120px);
-    animation: formations-pulse 10s ease-in-out infinite;
+    /* animation désactivée */
   }
   
   .formations-container .hero-glow-secondary {
@@ -87,7 +87,7 @@
     background: radial-gradient(circle, var(--light-orange) 0%, transparent 70%);
     opacity: 0.08;
     filter: blur(100px);
-    animation: formations-pulse 12s ease-in-out infinite reverse;
+    /* animation désactivée */
   }
   
   /* Hero Content */
@@ -112,10 +112,9 @@
     font-size: 15px;
     font-weight: 600;
     box-shadow: 0 10px 35px rgba(251, 156, 8, 0.5);
-    animation: formations-slideInDown 0.8s ease-out;
     margin-bottom: 24px;
-    margin-left: auto; /* ✅ CORRIGÉ */
-    margin-right: auto; /* ✅ CORRIGÉ */
+    margin-left: auto;
+    margin-right: auto;
   }
   
   /* ✅ SUPPRESSION de la classe .hero-badge avec margin-left: 500px */
@@ -129,7 +128,6 @@
   .formations-container .hero-title {
     text-align: center;
     margin-bottom: 35px;
-    animation: formations-fadeInUp 1s ease-out 0.2s both;
   }
   
   .formations-container .title-main {
@@ -162,7 +160,6 @@
     max-width: 850px;
     margin: 0 auto 50px;
     line-height: 1.7;
-    animation: formations-fadeInUp 1s ease-out 0.4s both;
   }
   
   .formations-container .hero-features {
@@ -179,21 +176,12 @@
     border-radius: 18px;
     border: 1px solid rgba(251, 156, 8, 0.25);
     backdrop-filter: blur(12px);
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: formations-fadeInUp 1s ease-out calc(0.6s + var(--delay, 0s)) both;
+    transition: all 0.3s ease;
     text-align: center;
   }
   
-  .formations-container .hero-feature-card:nth-child(1) { --delay: 0s; }
-  .formations-container .hero-feature-card:nth-child(2) { --delay: 0.15s; }
-  .formations-container .hero-feature-card:nth-child(3) { --delay: 0.3s; }
-  .formations-container .hero-feature-card:nth-child(4) { --delay: 0.45s; }
-  
   .formations-container .hero-feature-card:hover {
-    transform: translateY(-12px) scale(1.03);
     border-color: rgba(251, 156, 8, 0.6);
-    box-shadow: 0 25px 50px rgba(251, 156, 8, 0.3);
-    background: linear-gradient(135deg, rgba(30, 45, 79, 0.95), rgba(23, 34, 67, 0.95));
   }
   
   .formations-container .feature-icon-wrapper {
@@ -205,17 +193,12 @@
     height: 48px;
     color: var(--primary-orange);
     margin: 0 auto;
-    transition: transform 0.4s ease;
   }
   
   .formations-container .feature-icon svg {
     width: 100%;
     height: 100%;
     filter: drop-shadow(0 4px 12px rgba(251, 156, 8, 0.4));
-  }
-  
-  .formations-container .hero-feature-card:hover .feature-icon {
-    transform: scale(1.15);
   }
   
   .formations-container .hero-feature-card h3 {
@@ -314,13 +297,12 @@
   border-radius: 22px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
   height: 620px;
   box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6);
 }
 
 .formations-container .category-card:hover {
-  transform: translateY(-12px) scale(1.01);
   box-shadow: 0 35px 70px rgba(251, 156, 8, 0.5);
 }
 
@@ -334,11 +316,10 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .formations-container .category-card:hover .card-image {
-  transform: scale(1.2) rotate(2deg);
+  transform: scale(1.05);
 }
 
 .formations-container .card-overlay {
@@ -350,17 +331,6 @@
     rgba(23, 34, 67, 0.97) 35%,
     rgba(23, 34, 67, 0.75) 65%,
     rgba(23, 34, 67, 0.35) 100%
-  );
-  transition: background 0.6s ease;
-}
-
-.formations-container .category-card:hover .card-overlay {
-  background: linear-gradient(
-    to top,
-    rgba(251, 156, 8, 0.95) 0%,
-    rgba(23, 34, 67, 0.9) 35%,
-    rgba(23, 34, 67, 0.7) 70%,
-    rgba(23, 34, 67, 0.3) 100%
   );
 }
 
@@ -377,14 +347,7 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 12px 35px rgba(251, 156, 8, 0.6);
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 10;
-}
-
-/* Hover simplifié - PAS de rotation */
-.formations-container .category-card:hover .card-icon-badge {
-  transform: scale(1.15); /* Rotation supprimée */
-  box-shadow: 0 15px 45px rgba(251, 156, 8, 0.8);
 }
 
 .formations-container .card-icon-badge svg {
@@ -437,7 +400,6 @@
   font-weight: 900;
   color: var(--text-white);
   margin-bottom: 12px;
-  transition: color 0.4s ease;
   letter-spacing: -1px;
   line-height: 1.2;
   word-break: normal;
@@ -542,72 +504,16 @@
   white-space: normal;
   gap: 12px;
   box-shadow: 0 12px 35px rgba(251, 156, 8, 0.5);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.formations-container .card-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 18px 45px rgba(251, 156, 8, 0.7);
 }
 
 .formations-container .button-icon {
   width: 22px;
   height: 22px;
-  transition: transform 0.3s ease;
 }
 
 .formations-container .button-icon svg {
   width: 100%;
   height: 100%;
-}
-
-.formations-container .card-button:hover .button-icon {
-  transform: translateX(6px);
-}
-
-.formations-container .card-glow {
-  position: absolute;
-  bottom: -120px;
-  right: -120px;
-  width: 280px;
-  height: 280px;
-  background: var(--primary-orange);
-  border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0;
-  transition: opacity 0.6s ease;
-  pointer-events: none;
-}
-
-.formations-container .category-card:hover .card-glow {
-  opacity: 0.5;
-}
-
-.formations-container .card-shine {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    45deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.05) 50%,
-    transparent 70%
-  );
-  opacity: 0;
-  transition: opacity 0.6s ease;
-  pointer-events: none;
-}
-
-.formations-container .category-card:hover .card-shine {
-  opacity: 1;
-  animation: formations-shine 2s ease-in-out;
-}
-
-@keyframes formations-shine {
-  0% { transform: translateX(-100%) translateY(-100%); }
-  100% { transform: translateX(100%) translateY(100%); }
 }
 
 /* =================================
@@ -661,15 +567,12 @@
   backdrop-filter: blur(12px);
   border-radius: 24px;
   border: 1px solid rgba(251, 156, 8, 0.25);
-  transition: all 0.4s ease;
   position: relative;
   overflow: hidden;
 }
 
 .formations-container .stat-card:hover {
-  transform: translateY(-15px);
   border-color: rgba(251, 156, 8, 0.6);
-  box-shadow: 0 25px 50px rgba(251, 156, 8, 0.4);
 }
 
 .formations-container .stat-card-icon {
@@ -711,11 +614,6 @@
   background: radial-gradient(circle, var(--primary-orange) 0%, transparent 70%);
   opacity: 0;
   filter: blur(40px);
-  transition: opacity 0.4s ease;
-}
-
-.formations-container .stat-card:hover .stat-card-decoration {
-  opacity: 0.3;
 }
 
 /* =================================
@@ -739,7 +637,7 @@
   opacity: 0.15;
   background-image: radial-gradient(circle, var(--primary-blue) 2px, transparent 2px);
   background-size: 45px 45px;
-  animation: formations-float 20s ease-in-out infinite;
+    /* animation désactivée */
 }
 
 .formations-container .cta-glow {
@@ -751,7 +649,7 @@
   height: 800px;
   background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
   filter: blur(80px);
-  animation: formations-pulse 8s ease-in-out infinite;
+    /* animation désactivée */
 }
 
 .formations-container .cta-content {
@@ -767,7 +665,7 @@
   height: 70px;
   color: white;
   margin: 0 auto 30px;
-  animation: formations-pulse 3s ease-in-out infinite;
+    /* animation désactivée */
 }
 
 .formations-container .cta-icon svg {
@@ -807,14 +705,7 @@
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 18px 45px rgba(23, 34, 67, 0.6);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 25px;
-}
-
-.formations-container .cta-button:hover {
-  transform: scale(1.08);
-  background: var(--secondary-blue);
-  box-shadow: 0 25px 60px rgba(23, 34, 67, 0.8);
 }
 
 .formations-container .cta-button-icon {

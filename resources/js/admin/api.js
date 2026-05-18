@@ -787,6 +787,35 @@ export async function updateRevendeurDemandeStatus(id, statut) {
   return api.patch(`/api/admin/revendeur-demandes/${id}/statut`, { statut });
 }
 
+export async function getDevisPrestations(params = {}) {
+  const res = await cachedAdminGet('/api/admin/devis-prestations', { params });
+  return normalizeListResponse(res);
+}
+
+export async function updateDevisPrestationStatus(id, statut) {
+  return api.patch(`/api/admin/devis-prestations/${id}/statut`, { statut });
+}
+
+export async function deleteDevisPrestation(id) {
+  return api.delete(`/api/admin/devis-prestations/${id}`);
+}
+
+export async function getFormMailRoutes() {
+  const res = await cachedAdminGet('/api/admin/form-mail-routes');
+  return {
+    ...res,
+    data: asArray(res.data),
+  };
+}
+
+export async function createFormMailRoute(payload) {
+  return api.post('/api/admin/form-mail-routes', payload);
+}
+
+export async function updateFormMailRoute(formKey, payload) {
+  return api.put(`/api/admin/form-mail-routes/${formKey}`, payload);
+}
+
 export async function getHomeMarketingCardsAdmin(params = {}) {
   const res = await cachedAdminGet('/api/admin/home-marketing-cards', { params });
   return {
@@ -935,10 +964,13 @@ export function warmAdminCaches() {
     getFormations(),
     getContactMessages(),
     getRevendeurDemandes(),
+    getDevisPrestations(),
+    getFormMailRoutes(),
     getHomeMarketingCardsAdmin(),
     getHomeTestimonialsAdmin(),
     getHomeCollaboratorsAdmin(),
     getHomePartnersAdmin(),
+    getProjetsAdmin(),
     getAdminActivities(),
   ]);
 }
@@ -968,7 +1000,76 @@ export async function deleteHomePartner(id) {
   return api.delete(`/api/admin/home-partners/${id}`);
 }
 
+// 📁 PROJETS
+export async function getProjetsAdmin(params = {}) {
+  const res = await cachedAdminGet('/api/admin/projets', { params });
+  return { ...res, data: asArray(res.data) };
+}
+
+export async function createProjet(payload) {
+  const formData = new FormData();
+  Object.entries(payload || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    if (value === '') return;
+    formData.append(key, value);
+  });
+  return api.post('/api/admin/projets', formData);
+}
+
+export async function updateProjet(id, payload) {
+  const formData = new FormData();
+  formData.append('_method', 'PUT');
+  Object.entries(payload || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    if (value === '') return;
+    formData.append(key, value);
+  });
+  return api.post(`/api/admin/projets/${id}`, formData);
+}
+
+export async function deleteProjet(id) {
+  return api.delete(`/api/admin/projets/${id}`);
+}
+
+// 🏠 GEOVISION HOMEPAGE SECTIONS
+export async function getHomeGeovisionSectionsAdmin(params = {}) {
+  return api.get('/api/admin/home-geovision-sections', { params });
+}
+
+export async function createHomeGeovisionSection(payload) {
+  const formData = new FormData();
+  Object.entries(payload || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    if (value === '') return;
+    formData.append(key, value);
+  });
+  return api.post('/api/admin/home-geovision-sections', formData);
+}
+
+export async function updateHomeGeovisionSection(id, payload) {
+  if (payload.image instanceof File) {
+    const formData = new FormData();
+    Object.entries(payload || {}).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      if (value === '') return;
+      formData.append(key, value);
+    });
+    formData.append('_method', 'PUT');
+    return api.post(`/api/admin/home-geovision-sections/${id}`, formData);
+  }
+  return api.put(`/api/admin/home-geovision-sections/${id}`, payload);
+}
+
+export async function deleteHomeGeovisionSection(id) {
+  return api.delete(`/api/admin/home-geovision-sections/${id}`);
+}
+
 export async function submitContactMessage(payload) {
+  if (!payload?.nom_complet || !payload?.email || !payload?.message || String(payload.message).trim().length < 10) {
+    console.warn('[submitContactMessage] ❌ Champs requis manquants — requête bloquée côté client', payload);
+    console.trace('[submitContactMessage] Stack trace appelant');
+    throw Object.assign(new Error('Champs requis manquants'), { response: { data: { message: 'Nom, email et message (min. 10 car.) sont requis.' } } });
+  }
   return api.post('/api/contact-messages', payload);
 }
 

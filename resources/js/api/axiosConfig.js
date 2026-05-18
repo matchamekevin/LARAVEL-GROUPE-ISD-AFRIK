@@ -13,8 +13,9 @@ export function resolveApiBase() {
     if (['localhost', '127.0.0.1'].includes(hostname)) {
       return `${protocol}//${hostname}:8000`;
     }
-    if (import.meta.env.VITE_API_BASE) {
-      const envBase = import.meta.env.VITE_API_BASE.replace(/\/$/, '');
+    const envBaseRaw = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_BASE_URL || '';
+    if (envBaseRaw) {
+      const envBase = envBaseRaw.replace(/\/$/, '');
       const envLooksLocal = /localhost|127\.0\.0\.1/i.test(envBase);
       const hostIsLocal = ['localhost', '127.0.0.1'].includes(hostname);
       if (!envLooksLocal || hostIsLocal) return envBase;
@@ -31,6 +32,7 @@ export const API_BASE = resolveApiBase();
  */
 export const apiClient = axios.create({
   baseURL: API_BASE,
+  timeout: 30000,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

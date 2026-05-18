@@ -68,5 +68,7 @@ export const PUBLIC_APP_ROUTES = [
   { path: "/produits/recherche", page: "ProduitRecherche" },
   { path: "/favoris", page: "Favoris" },
   { path: "/panier", page: "Panier" },
+  { path: "/paiement/result", page: "PaiementResult" },
+  { path: "/paiement-echec", page: "PaiementResult" },
   { path: "/promotions", page: "Promotions" },
 ];

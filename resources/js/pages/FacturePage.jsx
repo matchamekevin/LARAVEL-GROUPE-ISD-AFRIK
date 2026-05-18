@@ -66,20 +66,26 @@ function FacturePage() {
       doc.setFontSize(11);
       doc.setFont("helvetica", "normal");
 
-      doc.text("Numéro facture : FAC-" + paiement.id_paiement, 14, 50);
-      doc.text("Référence : " + paiement.reference_transaction, 14, 60);
-      doc.text("Date : " + formatDate(paiement.date_paiement), 14, 70);
-      doc.text("Montant : " + parseInt(paiement.montant).toLocaleString() + " FCFA", 14, 80);
-      doc.text("Statut : " + paiement.statut_paiement, 14, 90);
-      doc.text("Moyen de paiement : " + paiement.moyen_paiement, 14, 100);
+      let y = 50;
+      doc.text("Numéro facture : FAC-" + paiement.id_paiement, 14, y); y += 10;
+      doc.text("Référence : " + paiement.reference_transaction, 14, y); y += 10;
+      doc.text("Date : " + formatDate(paiement.date_paiement), 14, y); y += 10;
+      doc.text("Montant : " + parseInt(paiement.montant).toLocaleString() + " FCFA", 14, y); y += 10;
+      doc.text("Statut : " + paiement.statut_paiement, 14, y); y += 10;
+      doc.text("Moyen de paiement : " + paiement.moyen_paiement, 14, y); y += 10;
 
-      // ✅ Correction : formation.titre au lieu de nom_formation
       if (paiement.formation?.titre) {
-        doc.text("Formation : " + paiement.formation.titre, 14, 110);
+        doc.text("Formation : " + paiement.formation.titre, 14, y); y += 10;
       }
 
+      if (paiement.produit?.titre) {
+        const ligneProd = "Produit : " + paiement.produit.titre + (paiement.quantite > 1 ? " (x" + paiement.quantite + ")" : "");
+        doc.text(ligneProd, 14, y); y += 10;
+      }
+
+      y += 10;
       doc.setFont("helvetica", "italic");
-      doc.text("Merci pour votre confiance.", 14, 130);
+      doc.text("Merci pour votre confiance.", 14, y);
 
       doc.save("facture_" + paiement.reference_transaction + ".pdf");
     };
@@ -104,9 +110,22 @@ function FacturePage() {
         <div className="facture-content">
           <p><strong>Numéro facture :</strong> FAC-{paiement.id_paiement}</p>
 
-          {/* ✅ Correction : formation.titre au lieu de nom_formation */}
+          {/* ✅ Infos formation si applicable */}
           {paiement.formation?.titre && (
             <p><strong>Formation :</strong> {paiement.formation.titre}</p>
+          )}
+
+          {/* ✅ Infos produit si applicable */}
+          {paiement.produit?.titre && (
+            <>
+              <p><strong>Produit :</strong> {paiement.produit.titre}</p>
+              {paiement.quantite > 1 && (
+                <p><strong>Quantité :</strong> {paiement.quantite}</p>
+              )}
+              {paiement.commande?.numero_commande && (
+                <p><strong>Commande :</strong> {paiement.commande.numero_commande}</p>
+              )}
+            </>
           )}
 
           <p><strong>Référence :</strong> {paiement.reference_transaction}</p>

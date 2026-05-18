@@ -3,22 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Models\DevisPrestation;
+use App\Services\FormMailDispatcher;
+use App\Services\FormMailRouteService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class DevisPrestationController extends Controller
 {
+    public function __construct(private readonly FormMailDispatcher $formMailDispatcher)
+    {
+    }
+
     /**
      * POST /api/devis-prestation (public)
      * Store a new devis prestation request and send email
      */
     public function store(Request $request)
     {
+        $user = $request->user();
+
         $data = $request->validate([
             'prestation_slug' => 'required|string|max:255',
             'prestation_name' => 'required|string|max:255',
             'services' => 'nullable|array',
             'technologies' => 'nullable|array',
+            'deliverables' => 'nullable|array',
         ]);
 
         // Save to database
@@ -27,55 +36,41 @@ class DevisPrestationController extends Controller
             'prestation_name' => $data['prestation_name'],
             'services' => $data['services'] ?? [],
             'technologies' => $data['technologies'] ?? [],
+            'deliverables' => $data['deliverables'] ?? [],
             'statut' => 'nouveau',
         ]);
 
         // Send email with selected services/technologies
         try {
-            $this->sendDevisEmail($data);
-        } catch (\Exception $e) {
+            $services = ! empty($data['services']) ? implode(', ', $data['services']) : 'Aucun service selectionne';
+            $technologies = ! empty($data['technologies']) ? implode(', ', $data['technologies']) : 'Aucune technologie selectionnee';
+            $deliverables = ! empty($data['deliverables']) ? implode(', ', $data['deliverables']) : 'Aucun livrable selectionne';
+
+            $this->formMailDispatcher->sendText(
+                formKey: FormMailRouteService::FORM_DEVIS_PRESTATION,
+                subject: sprintf('Nouvelle demande de devis - %s', $data['prestation_name']),
+                lines: [
+                    'Nouvelle demande de devis recue.',
+                    '',
+                    'Prestation: ' . $data['prestation_name'],
+                    'Slug: ' . $data['prestation_slug'],
+                    'Services: ' . $services,
+                    'Technologies: ' . $technologies,
+                    'Livrables: ' . $deliverables,
+                    'Date: ' . now()->format('d/m/Y H:i:s'),
+                ],
+                replyToEmail: $user?->email ?? null,
+                replyToName: trim((string) (($user?->prenom ?? '') . ' ' . ($user?->nom ?? '')))
+            );
+        } catch (\Throwable $e) {
             // Log error but don't fail the API call
-            \Log::error('Error sending devis email: ' . $e->getMessage());
+            Log::error('Error sending devis email: ' . $e->getMessage());
         }
 
         return response()->json([
             'message' => 'Devis enregistré et envoyé avec succès',
             'data' => $devisPrestation,
         ], 201);
-    }
-
-    /**
-     * Send devis email with selected services/technologies
-     */
-    private function sendDevisEmail(array $data)
-    {
-        $to = 'matchamegnatikevin894@gmail.com';
-        $subject = "Demande de devis - {$data['prestation_name']}";
-        
-        $services = !empty($data['services']) ? implode(', ', $data['services']) : 'Aucun service sélectionné';
-        $technologies = !empty($data['technologies']) ? implode(', ', $data['technologies']) : 'Aucune technologie sélectionnée';
-
-        $message = "
-Nouvelle demande de devis reçue:
-
-Prestation: {$data['prestation_name']}
-Slug: {$data['prestation_slug']}
-
-Services sélectionnés:
-{$services}
-
-Technologies sélectionnées:
-{$technologies}
-
-Date/Heure: " . now()->format('d/m/Y H:i:s') . "
-
----
-Ce message a été généré automatiquement par la plateforme Groupe ISD AFRIK.
-        ";
-
-        Mail::raw($message, function ($mail) use ($to, $subject) {
-            $mail->to($to)->subject($subject);
-        });
     }
 
     /**

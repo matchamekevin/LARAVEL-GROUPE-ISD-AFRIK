@@ -10,11 +10,11 @@ WORKDIR /app
 
 # Install system dependencies for PHP extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git unzip zlib1g-dev libzip-dev libicu-dev libpq-dev curl ca-certificates && \
+    git unzip zlib1g-dev libzip-dev libicu-dev libpq-dev libsqlite3-dev curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 # Enable PHP extensions required by packages
-RUN docker-php-ext-install intl zip pdo pdo_pgsql
+RUN docker-php-ext-install intl zip pdo pdo_pgsql pdo_sqlite
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -40,11 +40,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install runtime dependencies including PostgreSQL dev for PDO
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    nginx supervisor git unzip libpng-dev libonig-dev libxml2-dev libzip-dev libpq-dev libicu-dev curl ca-certificates && \
+    nginx supervisor git unzip libpng-dev libonig-dev libxml2-dev libzip-dev libpq-dev libsqlite3-dev libicu-dev curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd zip intl
+RUN docker-php-ext-install pdo pdo_pgsql pdo_sqlite mbstring exif pcntl bcmath gd zip intl
 
 # Ensure runtime directories are writable by www-data
 RUN mkdir -p /var/run /var/run/nginx /var/run/php-fpm /var/log /var/log/nginx /var/log/php-fpm /var/log/supervisord && \

@@ -59,20 +59,6 @@ class ProduitService
             $query->whereHas('categorie', function ($categorieQuery) use ($filters) {
                 $categorieQuery->where('segment', $filters['segment']);
             });
-        } else {
-            // Par défaut, filtrer sur 'general' seulement si ce segment existe en base.
-            // Certains environnements locaux ont des catégories avec `segment = null`.
-            try {
-                $hasGeneral = CategorieProduit::query()->where('segment', 'general')->exists();
-            } catch (\Throwable $e) {
-                $hasGeneral = false;
-            }
-
-            if ($hasGeneral) {
-                $query->whereHas('categorie', function ($categorieQuery) {
-                    $categorieQuery->where('segment', 'general');
-                });
-            } // sinon : absence de segment 'general' détectée -> ne pas restreindre par segment (compatibilité local)
         }
 
         if (!empty($filters['category_slug'])) {
@@ -175,29 +161,32 @@ class ProduitService
             ->get();
     }
 
-    public function getEnVedette()
+    public function getEnVedette($idPays = null)
     {
         return Produit::with(['pays', 'images', 'commentaires', 'categorie.parent.parent'])
             ->where('est_en_vedette', true)
             ->whereIn('statut', ['disponible', 'actif'])
+            ->when($idPays, fn ($q) => $q->where('id_pays', $idPays))
             ->orderByDesc('date_creation')
             ->get();
     }
 
-    public function getNouveaux()
+    public function getNouveaux($idPays = null)
     {
         return Produit::with(['pays', 'images', 'commentaires', 'categorie.parent.parent'])
             ->where('est_nouveau', true)
             ->whereIn('statut', ['disponible', 'actif'])
+            ->when($idPays, fn ($q) => $q->where('id_pays', $idPays))
             ->orderByDesc('date_creation')
             ->get();
     }
 
-    public function getEnPromotion()
+    public function getEnPromotion($idPays = null)
     {
         return Produit::with(['pays', 'images', 'commentaires', 'categorie.parent.parent'])
             ->where('en_promo', true)
             ->whereIn('statut', ['disponible', 'actif'])
+            ->when($idPays, fn ($q) => $q->where('id_pays', $idPays))
             ->orderByDesc('date_creation')
             ->get();
     }

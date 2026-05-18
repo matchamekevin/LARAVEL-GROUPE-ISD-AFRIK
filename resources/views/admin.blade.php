@@ -56,33 +56,6 @@
     </script>
     @viteReactRefresh
     @vite('resources/js/admin/main.jsx')
-    <script>
-      (function () {
-        var host = window.location.hostname;
-        var isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1';
-        if (!isLocal || !('serviceWorker' in navigator)) {
-          return;
-        }
-
-        navigator.serviceWorker.getRegistrations()
-          .then(function (registrations) {
-            return Promise.all(registrations.map(function (registration) {
-              return registration.unregister();
-            }));
-          })
-          .catch(function () {});
-
-        if ('caches' in window) {
-          caches.keys()
-            .then(function (cacheNames) {
-              return Promise.all(cacheNames
-                .filter(function (name) { return name.indexOf('isd-afrik') === 0; })
-                .map(function (name) { return caches.delete(name); }));
-            })
-            .catch(function () {});
-        }
-      })();
-    </script>
     <title>Admin</title>
   </head>
   <body>

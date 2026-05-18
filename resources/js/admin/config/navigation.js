@@ -5,6 +5,7 @@ export const ADMIN_NAV_ITEMS = [
   { to: "/orders", icon: "fas fa-shopping-cart", label: "Commandes" },
   { to: "/formations", icon: "fas fa-graduation-cap", label: "Formations" },
   { to: "/messages", icon: "fas fa-envelope", label: "Messages" },
+  { to: "/email-routing", icon: "fas fa-at", label: "Routage Emails" },
   { to: "/catalogue", icon: "fas fa-puzzle-piece", label: "Catalogue" },
   { to: "/promotions", icon: "fas fa-images", label: "Promotions" },
   { to: "/marketing", icon: "fas fa-bullhorn", label: "Marketing Accueil" },
@@ -12,5 +13,7 @@ export const ADMIN_NAV_ITEMS = [
   { to: "/testimonials", icon: "fas fa-comments", label: "Avis Clients" },
   { to: "/collaborators", icon: "fas fa-handshake", label: "Collaborateurs" },
   { to: "/partners", icon: "fas fa-building", label: "Partenaires" },
+  { to: "/projets", icon: "fas fa-folder-open", label: "Projets" },
+  { to: "/home-geovision-sections", icon: "fas fa-map", label: "GeoVision Accueil" },
   { to: "/settings", icon: "fas fa-gear", label: "Paramètres" },
 ];

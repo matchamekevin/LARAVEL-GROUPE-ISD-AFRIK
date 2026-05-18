@@ -3,10 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\ContactMessage;
+use App\Services\FormMailDispatcher;
+use App\Services\FormMailRouteService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ContactMessageController extends Controller
 {
+    public function __construct(private readonly FormMailDispatcher $formMailDispatcher)
+    {
+    }
+
     /**
      * POST /api/contact-messages (public)
      */
@@ -24,6 +31,45 @@ class ContactMessageController extends Controller
             ...$data,
             'statut' => 'nouveau',
         ]);
+
+        try {
+            $user = $request->user();
+            $lines = [
+                'Nouveau message de contact recu.',
+                '',
+                'Nom: ' . $data['nom_complet'],
+                'Email: ' . $data['email'],
+                'Telephone: ' . ($data['telephone'] ?: '-'),
+                'Sujet: ' . ($data['sujet'] ?: '-'),
+            ];
+
+            if ($user) {
+                $lines[] = '';
+                $lines[] = '--- Utilisateur connecte ---';
+                $lines[] = 'ID: ' . ($user->id_utilisateur ?? $user->id ?? '-');
+                $lines[] = 'Nom: ' . trim(($user->prenom ?? '') . ' ' . ($user->nom ?? ''));
+                $lines[] = 'Email compte: ' . ($user->email ?? '-');
+            }
+
+            $lines[] = '';
+            $lines[] = 'Message:';
+            $lines[] = $data['message'];
+            $lines[] = '';
+            $lines[] = 'Date: ' . now()->format('d/m/Y H:i:s');
+
+            $this->formMailDispatcher->sendText(
+                formKey: FormMailRouteService::FORM_CONTACT_MESSAGE,
+                subject: sprintf('Nouveau message contact - %s', $data['sujet'] ?: 'Sans sujet'),
+                lines: $lines,
+                replyToEmail: $data['email'],
+                replyToName: $data['nom_complet']
+            );
+        } catch (\Throwable $exception) {
+            Log::error('Echec envoi email contact message', [
+                'exception' => $exception->getMessage(),
+                'email' => $data['email'],
+            ]);
+        }
 
         return response()->json([
             'message' => 'Message envoyé avec succès',

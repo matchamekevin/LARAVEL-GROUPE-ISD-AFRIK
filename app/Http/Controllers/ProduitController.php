@@ -11,6 +11,7 @@ use App\Services\ProduitService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -95,9 +96,9 @@ class ProduitController extends Controller
         ]);
     }
 
-    public function vedette(): JsonResponse
+    public function vedette(Request $request): JsonResponse
     {
-        $produits = $this->service->getEnVedette();
+        $produits = $this->service->getEnVedette($request->query('id_pays'));
 
         return response()->json([
             'message' => 'Produits en vedette',
@@ -105,9 +106,9 @@ class ProduitController extends Controller
         ]);
     }
 
-    public function nouveaux(): JsonResponse
+    public function nouveaux(Request $request): JsonResponse
     {
-        $produits = $this->service->getNouveaux();
+        $produits = $this->service->getNouveaux($request->query('id_pays'));
 
         return response()->json([
             'message' => 'Nouveaux produits',
@@ -115,9 +116,9 @@ class ProduitController extends Controller
         ]);
     }
 
-    public function promotions(): JsonResponse
+    public function promotions(Request $request): JsonResponse
     {
-        $produits = $this->service->getEnPromotion();
+        $produits = $this->service->getEnPromotion($request->query('id_pays'));
 
         return response()->json([
             'message' => 'Produits en promotion',
@@ -128,11 +129,15 @@ class ProduitController extends Controller
     public function recherche(Request $request)
     {
         $q = $request->input('q');
+        $idPays = $request->query('id_pays');
 
-        $produits = Produit::where('titre', 'ILIKE', "%{$q}%")
-            ->orWhere('slug', 'ILIKE', "%{$q}%")
-            ->orWhere('marque', 'ILIKE', "%{$q}%")
-            ->orWhere('description', 'ILIKE', "%{$q}%")
+        $produits = Produit::where(function ($query) use ($q) {
+                $query->where('titre', 'ILIKE', "%{$q}%")
+                    ->orWhere('slug', 'ILIKE', "%{$q}%")
+                    ->orWhere('marque', 'ILIKE', "%{$q}%")
+                    ->orWhere('description', 'ILIKE', "%{$q}%");
+            })
+            ->when($idPays, fn ($q) => $q->where('id_pays', $idPays))
             ->get();
 
         return response()->json([
@@ -365,45 +370,219 @@ class ProduitController extends Controller
     }
 
     /**
+     * Récupère les détails d'une transaction FedaPay pour enrichir le message d'erreur
+     */
+    private function fetchFedapayTransactionDetails(string $transactionId): ?array
+    {
+        try {
+            \FedaPay\FedaPay::setApiKey(config('services.fedapay.secret'));
+            \FedaPay\FedaPay::setEnvironment(config('services.fedapay.env', 'live'));
+
+            $transaction = \FedaPay\Transaction::retrieve($transactionId);
+
+            return [
+                'status' => $transaction->status ?? null,
+                'description' => $transaction->description ?? null,
+                'mode' => $transaction->mode ?? null,
+            ];
+        } catch (\Exception $e) {
+            Log::warning('Impossible de récupérer la transaction FedaPay', [
+                'transaction_id' => $transactionId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Restaurer le stock produit lié à un paiement
+     */
+    private function restaurerStockPaiement(int $idPaiement): void
+    {
+        $paiement = Paiement::find($idPaiement);
+
+        if (! $paiement || ! $paiement->id_produit || ! $paiement->quantite) {
+            return;
+        }
+
+        $produit = Produit::find($paiement->id_produit);
+        if ($produit) {
+            $produit->increment('stock', $paiement->quantite);
+            if ($produit->statut === 'rupture' && $produit->fresh()->stock > 0) {
+                $produit->update(['statut' => 'disponible']);
+            }
+        }
+    }
+
+    /**
+     * Redirige le navigateur avec une page HTML + JS pour garantir la redirection
+     */
+    private function redirectWithFallback(string $url): \Illuminate\Http\Response
+    {
+        $escapedUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+
+        return response()->make(
+            <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Redirection...</title>
+    <meta http-equiv="refresh" content="0;url={$escapedUrl}">
+    <script>window.location.replace("{$escapedUrl}");</script>
+</head>
+<body>
+    <p>Redirection en cours... <a href="{$escapedUrl}">Cliquez ici si rien ne se passe</a></p>
+</body>
+</html>
+HTML
+            , 200, ['Content-Type' => 'text/html']
+        );
+    }
+
+    /**
      * GET|POST /api/paiements-produit/callback
      * Webhook FedaPay — PUBLIQUE
      */
-    public function callbackPaiementProduit(Request $request): JsonResponse
+    public function callbackPaiementProduit(Request $request)
     {
         $transactionId = $request->input('id') ?? $request->input('transaction_id');
         $statut = strtolower((string) ($request->input('status') ?? ''));
+        $errorMessage = $request->input('message');
+
+        Log::info('FedaPay callback produit reçu', [
+            'id' => $transactionId,
+            'status' => $statut,
+            'message' => $errorMessage,
+            'method' => $request->method(),
+        ]);
+
+        $frontendUrl = config('app.frontend_url');
 
         if (! $transactionId) {
+            if ($request->isMethod('get')) {
+                return $this->redirectWithFallback($frontendUrl.'/paiement/result?status=erreur&message='.urlencode('Transaction introuvable'));
+            }
             return response()->json(['message' => 'Paramètre transaction manquant.'], 400);
         }
 
-        $paiement = Paiement::where('reference_transaction', (string) $transactionId)
+        $paiement = Paiement::with(['commande', 'produit'])
+            ->where('reference_transaction', (string) $transactionId)
             ->whereNotNull('id_commande')
             ->first();
 
         if (! $paiement) {
+            if ($request->isMethod('get')) {
+                return $this->redirectWithFallback($frontendUrl.'/paiement/result?status=erreur&message='.urlencode('Paiement introuvable'));
+            }
             return response()->json(['message' => 'Paiement introuvable.'], 404);
         }
 
-        $statutMapped = match ($statut) {
-            'approved' => 'complete',
-            'declined' => 'echoue',
-            'cancelled' => 'annule',
+        // ✅ Quand l'utilisateur ferme la page FedaPay
+        $close = $request->input('close');
+
+        // ✅ Statuts FedaPay → statuts applicatifs unifiés
+        $statutApp = match ($statut) {
+            'approved' => 'réussi',
+            'declined' => 'échoué',
+            'cancelled', 'canceled' => 'échoué',
+            'expired' => 'échoué',
+            'pending' => $close === 'true' ? 'échoué' : 'en_attente',
             default => 'en_attente',
         };
 
-        $paiement->update(['statut_paiement' => $statutMapped]);
+        // Éviter de retraiter un paiement déjà dans un état final
+        if (in_array($paiement->statut_paiement, ['réussi', 'échoué'])) {
+            Log::info('Paiement produit déjà traité', [
+                'id_paiement' => $paiement->id_paiement,
+                'statut' => $paiement->statut_paiement,
+                'nouveau' => $statutApp,
+            ]);
 
-        // Mettre à jour le statut de la commande
+            if ($request->isMethod('get')) {
+                if ($paiement->statut_paiement === 'réussi') {
+                    return $this->redirectWithFallback($frontendUrl.'/facture/'.$paiement->id_paiement);
+                }
+
+                $params = http_build_query([
+                    'status' => 'echoue',
+                    'message' => 'Paiement déjà traité',
+                    'type' => 'commande',
+                    'id' => $paiement->id_commande,
+                ]);
+                return $this->redirectWithFallback($frontendUrl.'/paiement/result?'.$params);
+            }
+
+            return response()->json(['message' => 'Déjà traité', 'statut' => $paiement->statut_paiement], 200);
+        }
+
+        // Mise à jour du statut
+        $paiement->update(['statut_paiement' => $statutApp, 'date_paiement' => now()]);
+
         if ($paiement->commande) {
             $paiement->commande->update([
-                'statut' => $statutMapped === 'complete' ? 'payée' : $statutMapped,
+                'statut' => $statutApp === 'réussi' ? 'payée' : 'échouée',
             ]);
+        }
+
+        // Restaurer le stock en cas d'échec
+        if ($statutApp === 'échoué' && $paiement->id_produit && $paiement->quantite) {
+            $this->restaurerStockPaiement($paiement->id_paiement);
+        }
+
+        // Redirection navigateur pour les requêtes GET
+        if ($request->isMethod('get')) {
+            if ($statutApp === 'réussi') {
+                return $this->redirectWithFallback($frontendUrl.'/facture/'.$paiement->id_paiement);
+            }
+
+            // Vérifier si l'utilisateur a fermé la page de paiement
+            if ($close === 'true') {
+                $errorMessage = 'Paiement annulé — vous avez fermé la page de paiement';
+            }
+
+            // Essayer d'obtenir le vrai message d'erreur depuis l'API FedaPay
+            if (! $errorMessage) {
+                $details = $this->fetchFedapayTransactionDetails($transactionId);
+
+                if ($details && $details['status']) {
+                    $fedapayStatus = $details['status'];
+                    $errorMessage = match ($fedapayStatus) {
+                        'canceled' => 'Paiement annulé par l\'utilisateur',
+                        'declined' => 'Transaction refusée par la banque ou l\'opérateur (solde insuffisant, code erroné, etc.)',
+                        'expired'  => 'Le délai de paiement a expiré',
+                        'pending'  => 'Paiement annulé — vous avez fermé la fenêtre de paiement',
+                        default    => 'Erreur de paiement : '.$fedapayStatus,
+                    };
+
+                    if (! empty($details['description'])) {
+                        $errorMessage = $details['description'];
+                    }
+                } else {
+                    $errorMessage = match ($statut) {
+                        'canceled', 'cancelled' => 'Paiement annulé',
+                        'declined' => 'Paiement refusé',
+                        'expired' => 'La session de paiement a expiré',
+                        'pending' => 'Paiement annulé',
+                        default => 'Erreur de paiement',
+                    };
+                }
+            }
+
+            $params = http_build_query([
+                'status' => 'echoue',
+                'message' => $errorMessage,
+                'type' => 'commande',
+                'id' => $paiement->id_commande,
+            ]);
+
+            return $this->redirectWithFallback($frontendUrl.'/paiement/result?'.$params);
         }
 
         return response()->json([
             'message' => 'Statut paiement mis à jour.',
-            'statut' => $statutMapped,
+            'statut' => $statutApp,
         ], 200);
     }
 

@@ -69,25 +69,25 @@ export default function Apropos() {
           
           <div className="about-values-grid">
             <article className="value-card">
-              <i className="fas fa-award"></i>
+              <span className="material-icons" style={{fontSize:36}}>workspace_premium</span>
               <h3>Excellence</h3>
               <p>Une rigueur professionnelle absolue dans chaque livraison et chaque conseil apporté.</p>
             </article>
 
             <article className="value-card">
-              <i className="fas fa-lightbulb"></i>
+              <span className="material-icons" style={{fontSize:36}}>lightbulb</span>
               <h3>Innovation</h3>
               <p>Une quête permanente des technologies de demain pour résoudre les problèmes d'aujourd'hui.</p>
             </article>
 
             <article className="value-card">
-              <i className="fas fa-handshake"></i>
+              <span className="material-icons" style={{fontSize:36}}>handshake</span>
               <h3>Fiabilité</h3>
               <p>Un engagement total pour garantir la continuité et la performance de vos systèmes.</p>
             </article>
 
             <article className="value-card">
-              <i className="fas fa-users"></i>
+              <span className="material-icons" style={{fontSize:36}}>groups</span>
               <h3>Impact Local</h3>
               <p>Le développement actif des compétences et des talents technologiques sur le continent.</p>
             </article>

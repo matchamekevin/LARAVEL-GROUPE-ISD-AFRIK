@@ -6,6 +6,7 @@ import { useLivePolling } from "../hooks/useLivePolling";
 import { toastError, toastSuccess } from "../utils/toast";
 import "../styles/produit.css";
 import SearchBar from "../components/SearchBar";
+import { countryCodeToId, getStoredCountry } from "../utils/country";
 
 const ALL_CATEGORY_SLUG = "tout";
 
@@ -103,6 +104,11 @@ const statusClasses = {
   occasion: "bg-amber-100 text-amber-800 border border-amber-200",
   rupture: "bg-rose-100 text-rose-800 border border-rose-200",
   indisponible: "bg-rose-100 text-rose-800 border border-rose-200",
+};
+
+const extractCollection = (response) => {
+  const items = response?.data?.data;
+  return Array.isArray(items) ? items : Array.isArray(response?.data) ? response.data : [];
 };
 
 const LOCALHOST_IMAGE_PATTERN = /(?:127\.0\.0\.1|localhost)/i;
@@ -806,19 +812,20 @@ export default function Produits() {
 
   const loadCategories = useCallback(async () => {
     try {
-      // Try with the 'general' segment first (production expectation).
-      let response = await getCategories({ segment: "general", tree: 1 });
-      let tree = response.data?.data || response.data || [];
+      let tree = extractCollection(await getCategories({ segment: "general", tree: 1 }));
 
-      // Fallback for local/dev DB where categories may not have a segment set.
-      if (!Array.isArray(tree) || tree.length === 0) {
-        response = await getCategories({ tree: 1 });
-        tree = response.data?.data || response.data || [];
+      if (tree.length === 0) {
+        tree = extractCollection(await getCategories({ segment: "general", tree: 1, id_pays: null }));
+      }
+
+      if (tree.length === 0) {
+        tree = extractCollection(await getCategories({ tree: 1, id_pays: null }));
       }
 
       setCategories(flattenCategories(tree));
     } catch {
-      setCategories([]);
+      // Conserver les catégories existantes en cas d'erreur réseau ponctuelle
+      // pour éviter de vider toute l'interface.
     }
   }, []);
 
@@ -968,13 +975,14 @@ export default function Produits() {
       return;
     }
 
-    try {
-      const params = {
-        segment: "general",
-        tri: "recent",
-        par_page: selectedModel ? 100 : 100, // Réduit de 250 à 100 pour optimiser les perfs
-      };
+    const queryParams = {
+      segment: "general",
+      tri: "recent",
+      id_pays: countryCodeToId(getStoredCountry()),
+      par_page: selectedModel ? 100 : 100, // Réduit de 250 à 100 pour optimiser les perfs
+    };
 
+    try {
       const categoryIds = [];
 
       if (selectedSubcategoryId) {
@@ -989,35 +997,61 @@ export default function Produits() {
       }
 
       if (categoryIds.length > 0) {
-        params.id_categorie = Array.from(new Set(categoryIds)).join(",");
+        queryParams.id_categorie = Array.from(new Set(categoryIds)).join(",");
       }
 
       if (selectedModel) {
-        params.modele = selectedModel;
+        queryParams.modele = selectedModel;
       }
 
-      const response = await getProduits(params);
-      setProduits(response.data?.data || []);
+      const noSegmentParams = { ...queryParams };
+      delete noSegmentParams.segment;
+      delete noSegmentParams.id_pays;
+
+      const attemptList = [
+        { ...queryParams },
+        { ...queryParams, id_pays: null },
+        noSegmentParams,
+      ];
+
+      let produitsData = [];
+
+      for (const params of attemptList) {
+        try {
+          const response = await getProduits(params);
+          produitsData = extractCollection(response);
+
+          if (produitsData.length > 0 || !params.segment) {
+            break;
+          }
+        } catch (error) {
+          if (!params.segment) {
+            throw error;
+          }
+        }
+      }
+
+      setProduits(produitsData);
+      setError("");
     } catch (err) {
-      toastError("Impossible de charger les produits pour le moment.");
+      setProduits((previous) => {
+        if (previous.length === 0) {
+          toastError("Impossible de charger les produits pour le moment.");
+        }
+        return previous;
+      });
       setError("Impossible de charger les produits pour le moment.");
-      setProduits([]);
     }
   }, [activeCategory, categories, selectedModel, selectedSubcategoryId]);
 
   useLivePolling(() => fetchProduits(), {
-    intervalMs: 5000,
+    intervalMs: 30000,
     enabled: !!activeCategory,
   });
 
   useEffect(() => {
     fetchProduits();
   }, [fetchProduits]);
-
-  useLivePolling(loadCategories, {
-    intervalMs: 5000,
-    enabled: true,
-  });
 
   const searchPlaceholder = selectedModel
     ? "Rechercher un produit dans ce modele"
@@ -1140,7 +1174,7 @@ export default function Produits() {
               onClear={() => setSearchTerm("")}
               placeholder={searchPlaceholder}
             />
-
+            
           </div>
         </section>
 
@@ -1421,17 +1455,20 @@ export default function Produits() {
                         </svg>
                       </button>
                     </div>
-                    <h3>{item.name}</h3>
-                    <div className="pcat-model-actions">
-                      <button type="button" onClick={() => handleModelClick(item.name)} className="pcat-solid-btn">
-                        Voir produits
-                      </button>
-                      <button type="button" onClick={() => handleModelAddToCart(item)} className="pcat-solid-btn pcat-cart-icon-only" aria-label="Ajouter au panier">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                          <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
-                          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                        </svg>
-                      </button>
+                    <div className="pcat-model-body">
+                      <h3>{item.name}</h3>
+                      {item.representativeProduct && (
+                        <div className="pcat-model-rating">
+                          <Stars note={item.representativeProduct.note_moyenne} />
+                          <span>{Number(item.representativeProduct.nombre_avis || 0) > 0 ? `(${item.representativeProduct.nombre_avis})` : "Aucun avis"}</span>
+                        </div>
+                      )}
+                      <div className="pcat-model-actions">
+                        <p className="pcat-model-price">{formatPrice(item.representativeProduct?.prix_promo || item.representativeProduct?.prix || 0)} FCFA</p>
+                        <button type="button" onClick={() => handleModelClick(item.name)} className="pcat-solid-btn">
+                          Voir produits
+                        </button>
+                      </div>
                     </div>
                   </article>
                 );

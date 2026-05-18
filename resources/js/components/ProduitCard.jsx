@@ -42,14 +42,14 @@ export default function ProduitCard({ produit, from }) {
 
       {/* ── Badges ─────────────────────────────────── */}
       <div className="pc-badges">
-        {isGeovision && <span className="pc-badge pc-badge--geovision">GeoVision</span>}
-        {produit.est_nouveau  && <span className="pc-badge pc-badge--nouveau">Nouveau</span>}
+        {isGeovision && <span className="pc-badge pc-badge--geovision"><span className="material-icons" style={{fontSize:14,marginRight:4}}>videocam</span>GeoVision</span>}
+        {produit.est_nouveau  && <span className="pc-badge pc-badge--nouveau"><span className="material-icons" style={{fontSize:14,marginRight:4}}>fiber_new</span>Nouveau</span>}
         {produit.en_promo     && reduction && (
-          <span className="pc-badge pc-badge--promo">-{reduction}%</span>
+          <span className="pc-badge pc-badge--promo"><span className="material-icons" style={{fontSize:14,marginRight:4}}>local_offer</span>-{reduction}%</span>
         )}
-        {produit.stock === 0  && <span className="pc-badge pc-badge--rupture">Rupture</span>}
+        {produit.stock === 0  && <span className="pc-badge pc-badge--rupture"><span className="material-icons" style={{fontSize:14,marginRight:4}}>remove_shopping_cart</span>Rupture</span>}
         {produit.est_en_vedette && !produit.est_nouveau && (
-          <span className="pc-badge pc-badge--vedette">⭐ Vedette</span>
+          <span className="pc-badge pc-badge--vedette"><span className="material-icons" style={{fontSize:14,marginRight:4}}>star</span>Vedette</span>
         )}
       </div>
 
@@ -59,7 +59,7 @@ export default function ProduitCard({ produit, from }) {
         onClick={handleFavori}
         title={favori ? "Retirer des favoris" : "Ajouter aux favoris"}
       >
-        {favori ? "❤️" : "🤍"}
+        <span className="material-icons">{favori ? 'favorite' : 'favorite_border'}</span>
       </button>
 
       {/* ── Image ──────────────────────────────────── */}

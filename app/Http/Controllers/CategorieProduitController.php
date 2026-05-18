@@ -29,6 +29,37 @@ class CategorieProduitController extends Controller
             $query->where('segment', $request->query('segment'));
         }
 
+        if ($request->filled('id_pays')) {
+            $idPays = (int) $request->query('id_pays');
+
+            $leafIds = CategorieProduit::whereHas('produits', fn ($q) => $q->where('id_pays', $idPays))
+                ->pluck('id_categorie');
+
+            if ($leafIds->isEmpty()) {
+                $query->whereRaw('1=0');
+            } else {
+                $allNodeIds = $leafIds->toArray();
+                $visited = $leafIds->toArray();
+
+                while (! empty($visited)) {
+                    $parents = CategorieProduit::whereIn('id_categorie', $visited)
+                        ->whereNotNull('parent_id')
+                        ->pluck('parent_id')
+                        ->unique()
+                        ->values()
+                        ->toArray();
+
+                    $newParents = array_diff($parents, $allNodeIds);
+                    if (empty($newParents)) break;
+
+                    $allNodeIds = array_merge($allNodeIds, $newParents);
+                    $visited = $newParents;
+                }
+
+                $query->whereIn('id_categorie', $allNodeIds);
+            }
+        }
+
         if ($request->boolean('tree')) {
             $query->whereNull('parent_id')
                 ->with('childrenRecursive');

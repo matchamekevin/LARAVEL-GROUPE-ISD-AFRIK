@@ -13,6 +13,8 @@ use App\Http\Controllers\HomeMarketingCardController;
 use App\Http\Controllers\HomeTestimonialController;
 use App\Http\Controllers\HomeCollaboratorController;
 use App\Http\Controllers\HomePartnerController;
+use App\Http\Controllers\HomeGeovisionSectionController;
+use App\Http\Controllers\ProjetController;
 
 // ======================================================
 // 🖼️ IMAGES
@@ -97,3 +99,14 @@ Route::get('/home-collaborators', [HomeCollaboratorController::class, 'index']);
 // 🤝 PARTENAIRES HOMEPAGE (public)
 // ======================================================
 Route::get('/home-partners', [HomePartnerController::class, 'index']);
+
+// ======================================================
+// 🏠 GEOVISION HOMEPAGE SECTIONS (public)
+// ======================================================
+Route::get('/home-geovision-sections', [HomeGeovisionSectionController::class, 'index']);
+
+// ======================================================
+// 📁 PROJETS (public)
+// ======================================================
+Route::get('/projets', [ProjetController::class, 'index']);
+Route::get('/projets/{slug}', [ProjetController::class, 'show']);

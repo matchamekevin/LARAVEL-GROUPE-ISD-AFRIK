@@ -1,5 +1,5 @@
 :root {
-  --site-header-height: 88px;
+  --site-header-height: 60px;
   --site-page-padding: clamp(12px, 2vw, 28px);
 }
 
@@ -66,14 +66,13 @@ button {
   padding-top: var(--site-header-height);
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 640px) {
   :root {
-    --site-header-height: 84px;
+    --site-page-padding: 8px;
   }
 }
 
-@media (max-width: 640px) {
-  :root {
-    --site-header-height: 76px;
-  }
-}
+/* Material Icons sizing */
+.material-icons { font-size: 24px; vertical-align: middle; }
+button .material-icons, a .material-icons { pointer-events: none; }
+.pc-badge .material-icons { font-size: 14px; margin-right: 4px; vertical-align: middle; }

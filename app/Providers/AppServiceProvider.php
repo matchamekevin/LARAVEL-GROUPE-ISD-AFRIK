@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -21,6 +22,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Ajout de crossorigin aux scripts Vite en dev pour les imports dynamiques cross-origin
+        Vite::useScriptTagAttributes([
+            'crossorigin' => 'anonymous',
+        ]);
+
         // Configuration du morph map pour les relations polymorphiques
         Relation::enforceMorphMap([
             'utilisateur' => 'App\Models\Utilisateur',

@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import usePageMeta from "../hooks/usePageMeta";
+import { getApiBase } from "../utils/apiBase";
 import "../styles/projets-new.css";
 
 export default function Projets() {
@@ -9,77 +10,25 @@ export default function Projets() {
         "Découvrez les projets emblématiques réalisés par le GROUPE ISD AFRIK : plateformes digitales, sécurité et ingénierie."
     );
     const navigate = useNavigate();
+    const [projets, setProjets] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const projets = [
-        {
-            title: "Plateforme ISD Portal",
-            category: "Digital",
-            description: "Solution complète de gestion d'entreprise incluant la facturation, le CRM et le suivi des stocks.",
-            image: "/images/solutions/im1.webp",
-            url: "https://portal.isdafrik.com",
-            slug: "isd-portal"
-        },
-        {
-            title: "SafeCity Surveillance",
-            category: "Sécurité",
-            description: "Déploiement d'un réseau de vidéosurveillance IP haute définition pour une zone industrielle.",
-            image: "/images/solutions/im2.webp",
-            url: "https://security.isdafrik.com",
-            slug: "safecity-surveillance"
-        },
-        {
-            title: "AfrikPay",
-            category: "Fintech",
-            description: "Passerelle de paiement sécurisée pour le commerce électronique local et international.",
-            image: "/images/solutions/im3.webp",
-            url: "https://pay.isdafrik.com",
-            slug: "afrikpay"
-        },
-        {
-            title: "EduAfrik Management",
-            category: "Éducation",
-            description: "Système de gestion universitaire (ERP) pour le suivi des étudiants et de la scolarité.",
-            image: "/images/solutions/im4.webp",
-            url: "https://edu.isdafrik.com",
-            slug: "eduafrik-management"
-        },
-        {
-            title: "AgroDrone Mapping",
-            category: "Agriculture",
-            description: "Service de cartographie par drone pour l'optimisation des rendements agricoles.",
-            image: "/images/prestations/default.jpg",
-            url: "https://drones.isdafrik.com",
-            slug: "agrodrone-mapping"
-        },
-        {
-            title: "HotelSync Pro",
-            category: "Hôtellerie",
-            description: "Logiciel de gestion hôtelière avec moteur de réservation en temps réel.",
-            image: "/images/prestations/default.jpg",
-            url: "https://hotels.isdafrik.com",
-            slug: "hotelsync-pro"
-        },
-        {
-            title: "BTP Connect",
-            category: "Industrie",
-            description: "Suivi technique et monitoring de chantiers via des capteurs IoT connectés.",
-            image: "/images/prestations/default.jpg",
-            url: "https://btp.isdafrik.com",
-            slug: "btp-connect"
-        },
-        {
-            title: "ArchiveSafe GED",
-            category: "Archivage",
-            description: "Plateforme de gestion électronique de documents (GED) hautement sécurisée.",
-            image: "/images/prestations/default.jpg",
-            url: "https://archive.isdafrik.com",
-            slug: "archivesafe-ged"
-        }
-    ];
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await fetch(`${getApiBase()}/api/projets`);
+                const data = await res.json();
+                setProjets(Array.isArray(data) ? data : []);
+            } catch {
+                setProjets([]);
+            } finally {
+                setLoading(false);
+            }
+        })();
+    }, []);
 
     return (
         <div className="projets-page projets-modern">
-            {/* Hero Section */}
             <section className="projets-hero-modern">
                 <div className="projets-hero-chip">Réalisations</div>
                 <h1 className="projets-hero-title">Nos Projets Emblématiques</h1>
@@ -89,38 +38,41 @@ export default function Projets() {
                 </p>
             </section>
 
-            {/* Projects Grid Section */}
             <section className="projets-section">
-                <div className="projets-grid">
-                    {projets.map((projet, index) => (
-                        <article key={index} className="projet-card">
-                            <div className="projet-image-wrap">
-                                <img src={projet.image} alt={projet.title} className="projet-image" />
-                                <span className="projet-category-badge">{projet.category}</span>
-                            </div>
-                            <div className="projet-content">
-                                <h3 className="projet-title">{projet.title}</h3>
-                                <p className="projet-desc">{projet.description}</p>
-                                <div className="projet-actions">
-                                    <button 
-                                        onClick={() => navigate(`/projets/${projet.slug}`)} 
-                                        className="projet-link-btn projet-link-btn--pres"
-                                    >
-                                        Présentation <i className="fas fa-info-circle"></i>
-                                    </button>
-                                    <a 
-                                        href={projet.url} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer" 
-                                        className="projet-link-btn"
-                                    >
-                                        Visiter le site <i className="fas fa-external-link-alt"></i>
-                                    </a>
+                {loading ? (
+                    <p style={{ textAlign: 'center', color: '#64748b', padding: '40px 0' }}>Chargement...</p>
+                ) : (
+                    <div className="projets-grid">
+                        {projets.map((projet) => (
+                            <article key={projet.id} className="projet-card">
+                                <div className="projet-image-wrap">
+                                    <img src={projet.image_url || projet.image_path} alt={projet.title} className="projet-image" />
+                                    <span className="projet-category-badge">{projet.category}</span>
                                 </div>
-                            </div>
-                        </article>
-                    ))}
-                </div>
+                                <div className="projet-content">
+                                    <h3 className="projet-title">{projet.title}</h3>
+                                    <p className="projet-desc">{projet.description}</p>
+                                    <div className="projet-actions">
+                                        <button 
+                                            onClick={() => navigate(`/projets/${projet.slug}`)} 
+                                            className="projet-link-btn projet-link-btn--pres"
+                                        >
+                                            Présentation <i className="fas fa-info-circle"></i>
+                                        </button>
+                                        <a 
+                                            href={projet.url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="projet-link-btn"
+                                        >
+                                            Visiter le site <i className="fas fa-external-link-alt"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                )}
             </section>
         </div>
     );

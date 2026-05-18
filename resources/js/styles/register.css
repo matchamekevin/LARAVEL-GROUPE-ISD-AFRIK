@@ -69,18 +69,22 @@
 /* 🔘 Bouton d'inscription */
 .submit-btn {
   width: 100%;                  /* occupe toute la largeur */
-  background-color: #080F70;    /* bleu foncé */
-  color: white;                 /* texte blanc */
-  padding: 0.5rem 0;            /* espace vertical */
-  border: none;                 /* pas de bordure */
-  border-radius: 0.375rem;      /* coins arrondis */
-  font-weight: bold;            /* texte en gras */
-  cursor: pointer;              /* curseur main */
-  transition: background-color 0.3s ease; /* effet hover fluide */
-  margin-top: 2rem; /* 🔽 espace au-dessus du bouton */
+  background-color: #fb9c08;
+  color: white;
+  padding: 0.5rem 0;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 2rem;
   margin-bottom: 0rem;
 
 
+}
+
+.submit-btn:hover {
+  background-color: #e88d00;
 }
 
 /* 🎨 Effet hover sur le bouton */
@@ -151,8 +155,8 @@
 }
 
 .input-group:focus-within {
-  border-color: #172243;
-  box-shadow: 0 0 0 4px rgba(23, 34, 67, 0.1);
+  border-color: #fb9c08;
+  box-shadow: 0 0 0 4px rgba(251, 156, 8, 0.12);
 }
 
 .input-group .icon {

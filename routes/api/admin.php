@@ -17,8 +17,11 @@ use App\Http\Controllers\HomeMarketingCardController;
 use App\Http\Controllers\HomeTestimonialController;
 use App\Http\Controllers\HomeCollaboratorController;
 use App\Http\Controllers\HomePartnerController;
+use App\Http\Controllers\HomeGeovisionSectionController;
 use App\Http\Controllers\AdminActivityController;
 use App\Http\Controllers\DevisPrestationController;
+use App\Http\Controllers\FormMailRouteController;
+use App\Http\Controllers\ProjetController;
 
 // ======================================================
 // 🔐 ROUTES ADMIN
@@ -90,6 +93,11 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     Route::patch('/admin/devis-prestations/{id}/statut', [DevisPrestationController::class, 'updateStatus'])->where('id', '[0-9]+');
     Route::delete('/admin/devis-prestations/{id}',    [DevisPrestationController::class, 'destroy'])->where('id', '[0-9]+');
 
+    // 📬 ROUTAGE EMAIL FORMULAIRES (admin)
+    Route::get('/admin/form-mail-routes', [FormMailRouteController::class, 'index']);
+    Route::post('/admin/form-mail-routes', [FormMailRouteController::class, 'store']);
+    Route::put('/admin/form-mail-routes/{formKey}', [FormMailRouteController::class, 'update']);
+
     // 🤝 DEMANDES REVENDEURS (admin)
     Route::get('/admin/revendeur-demandes',          [RevendeurDemandeController::class, 'index']);
     Route::get('/admin/revendeur-demandes/{id}',     [RevendeurDemandeController::class, 'show'])->where('id', '[0-9]+');
@@ -126,6 +134,18 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     Route::post('/admin/home-partners',             [HomePartnerController::class, 'store']);
     Route::put('/admin/home-partners/{partner}',    [HomePartnerController::class, 'update']);
     Route::delete('/admin/home-partners/{partner}', [HomePartnerController::class, 'destroy']);
+
+    // 🏠 GEOVISION HOMEPAGE SECTIONS (admin)
+    Route::get('/admin/home-geovision-sections',                [HomeGeovisionSectionController::class, 'adminIndex']);
+    Route::post('/admin/home-geovision-sections',               [HomeGeovisionSectionController::class, 'store']);
+    Route::put('/admin/home-geovision-sections/{section}',      [HomeGeovisionSectionController::class, 'update']);
+    Route::delete('/admin/home-geovision-sections/{section}',   [HomeGeovisionSectionController::class, 'destroy']);
+
+    // 📁 PROJETS (admin)
+    Route::get('/admin/projets',              [ProjetController::class, 'adminIndex']);
+    Route::post('/admin/projets',             [ProjetController::class, 'store']);
+    Route::put('/admin/projets/{projet}',     [ProjetController::class, 'update']);
+    Route::delete('/admin/projets/{projet}',  [ProjetController::class, 'destroy']);
 
     // 🖼️ IMAGES (admin)
     Route::get('/admin/images',                      [ImageController::class, 'index']);

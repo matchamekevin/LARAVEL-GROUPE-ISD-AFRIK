@@ -67,19 +67,19 @@
 }
 
 .ingenierie-card-image {
-  position: relative;
   width: 100%;
-  height: clamp(220px, 22vw, 300px);
-  object-fit: contain;
+  height: clamp(200px, 22vw, 280px);
+  object-fit: cover;
   object-position: center;
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-  padding: 0.75rem;
+  background: #fff7ed;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .ingenierie-card-image--empty {
   background:
-    linear-gradient(135deg, rgba(248, 250, 252, 1) 0%, rgba(226, 232, 240, 0.9) 100%);
+    radial-gradient(ellipse at 30% 20%, rgba(251, 146, 60, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 80%, rgba(23, 34, 67, 0.04) 0%, transparent 50%),
+    linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fef9ef 100%);
 }
 
 .ingenierie-card-overlay {

@@ -22,10 +22,10 @@ WORKDIR /var/www/html
 
 # Install system deps required by some PHP extensions (lightweight)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git unzip libzip-dev libpng-dev libonig-dev libxml2-dev curl && rm -rf /var/lib/apt/lists/*
+    git unzip libzip-dev libpng-dev libonig-dev libxml2-dev libsqlite3-dev curl && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions commonly used by Laravel
-RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd zip
+RUN docker-php-ext-install pdo pdo_pgsql pdo_sqlite mbstring exif pcntl bcmath gd zip
 
 # Copy vendor from composer stage
 COPY --from=composer /app/vendor ./vendor

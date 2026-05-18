@@ -96,17 +96,17 @@
 .input{flex:1;border:0;background:transparent;outline:none;font-size:0.98rem;color:var(--auth-text);padding:0.15rem 0;font-weight:600;line-height:1.3}
 
 .input-group:hover{border-color:#cfd8e3;background:linear-gradient(180deg,#ffffff 0%,#f6f9fc 100%)}
-.input-group:focus-within{border-color:var(--auth-primary);background:#fff;box-shadow:0 0 0 4px rgba(23,34,67,0.10)}
-.input-group:focus-within .icon{color:var(--auth-primary)}
+.input-group:focus-within{border-color:var(--auth-accent);background:#fff;box-shadow:0 0 0 4px rgba(251,156,8,0.12)}
+.input-group:focus-within .icon{color:var(--auth-accent)}
 .input::placeholder{color:#a5b2c4;font-weight:500}
 .input:-webkit-autofill,
 .input:-webkit-autofill:hover,
 .input:-webkit-autofill:focus{
   -webkit-box-shadow:0 0 0 30px #fff inset !important;
-  -webkit-text-fill-color:#172243 !important;
+  -webkit-text-fill-color:var(--auth-text) !important;
 }
 .submit-btn{
-  background:linear-gradient(135deg, var(--auth-primary) 0%, #0d1420 100%);
+  background:linear-gradient(135deg, var(--auth-accent) 0%, #d47f00 100%);
   color:#fff;
   border:none;
   padding:1rem;

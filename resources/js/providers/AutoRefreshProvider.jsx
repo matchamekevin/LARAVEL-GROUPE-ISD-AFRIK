@@ -17,32 +17,26 @@ export const AutoRefreshProvider = ({ children }) => {
   // Activer seulement en production et pas en localhost
   const enabled = !isDev && !isLocal;
 
-  // Prévenir reloads répétés et appliquer la mise à jour quand l'utilisateur est actif
+  // Prévenir reloads répétés et notifier les composants d'une mise à jour
   const handleVersionChange = () => {
     if (typeof window === 'undefined') return;
-
-    // Si un reload est déjà en cours, ignorer
-    if (window.__autoRefreshReloading) return;
 
     const now = Date.now();
     const last = window.__autoRefreshLastReloadTime || 0;
 
-    // Cooldown minimal entre reloads (5s)
+    // Cooldown minimal entre notifications (5s)
     if (now - last < 5000) return;
 
-    // Si l'onglet est caché, différer le reload jusqu'au retour
+    // Si l'onglet est caché, différer jusqu'au retour
     if (document.visibilityState !== 'visible') {
       window.__autoRefreshPending = true;
       return;
     }
 
-    window.__autoRefreshReloading = true;
     window.__autoRefreshLastReloadTime = now;
 
-    // Laisser un petit délai pour fermer les modales, etc.
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
+    // Dispatcher un événement pour que les composants se rafraîchissent
+    window.dispatchEvent(new CustomEvent('content-changed', { detail: { at: now } }));
   };
 
   useAutoRefresh();

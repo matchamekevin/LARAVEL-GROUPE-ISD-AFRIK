@@ -7,6 +7,7 @@ import { getApiBase } from "../utils/apiBase";
 import usePageMeta from "../hooks/usePageMeta";
 import { notifyMutation } from "../utils/mutationBus";
 import { toastError, toastSuccess } from "../utils/toast";
+import tokenService from "../services/tokenService";
 
 function formatDate(value) {
   if (!value) return "Non disponible";
@@ -104,13 +105,12 @@ export default function Profile() {
           Accept: "application/json",
         },
       });
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.dispatchEvent(new Event("userUpdated"));
-      navigate("/login");
     } catch (err) {
       console.error("Erreur déconnexion :", err);
     }
+    tokenService.clearSession();
+    window.dispatchEvent(new Event("userUpdated"));
+    navigate("/login");
   };
 
   if (!utilisateur) {
@@ -199,7 +199,7 @@ export default function Profile() {
         {/* IDENTITY CARD */}
         <section className="profile-card">
           <div className="profile-card-head">
-            <h2><i className="fas fa-user-circle"></i> Informations personnelles</h2>
+            <h2><span className="material-icons" style={{fontSize:22,verticalAlign:'middle',marginRight:8}}>account_circle</span> Informations personnelles</h2>
             <span className="profile-role-badge">{utilisateur.role || "client"}</span>
           </div>
           <div className="profile-info-grid">
@@ -233,7 +233,7 @@ export default function Profile() {
         {/* FORMATIONS */}
         <section className="profile-card">
           <div className="profile-card-head">
-            <h2><i className="fas fa-graduation-cap"></i> Mes Formations</h2>
+            <h2><span className="material-icons" style={{fontSize:22,verticalAlign:'middle',marginRight:8}}>school</span> Mes Formations</h2>
             <span className="section-meta">{formations.length} formation(s)</span>
           </div>
           {formations.length > 0 ? (
@@ -264,7 +264,7 @@ export default function Profile() {
         {/* PRODUITS */}
         <section className="profile-card">
           <div className="profile-card-head">
-            <h2><i className="fas fa-box-open"></i> Mes Produits</h2>
+            <h2><span className="material-icons" style={{fontSize:22,verticalAlign:'middle',marginRight:8}}>inventory</span> Mes Produits</h2>
             <span className="section-meta">{produits.length} produit(s)</span>
           </div>
           {produits.length > 0 ? (
@@ -293,7 +293,7 @@ export default function Profile() {
         {/* COMMANDES */}
         <section className="profile-card">
           <div className="profile-card-head">
-            <h2><i className="fas fa-file-invoice-dollar"></i> Mes Commandes</h2>
+            <h2><span className="material-icons" style={{fontSize:22,verticalAlign:'middle',marginRight:8}}>receipt_long</span> Mes Commandes</h2>
             <span className="section-meta">{commandes.length} commande(s)</span>
           </div>
           {commandes.length > 0 ? (
@@ -322,16 +322,16 @@ export default function Profile() {
         {/* ACTIONS SECTION */}
         <section className="profile-actions">
           <button className="btn-primary" onClick={handleEditProfile}>
-            <i className="fas fa-user-edit"></i> Modifier mon profil
+            <span className="material-icons" style={{fontSize:18,verticalAlign:'middle',marginRight:8}}>edit</span> Modifier mon profil
           </button>
           <button className="btn-secondary" onClick={handleChangePassword}>
-            <i className="fas fa-key"></i> Changer mon mot de passe
+            <span className="material-icons" style={{fontSize:18,verticalAlign:'middle',marginRight:8}}>key</span> Changer mon mot de passe
           </button>
           <button className="btn-logout" onClick={handleLogout}>
-            <i className="fas fa-sign-out-alt"></i> Déconnexion
+            <span className="material-icons" style={{fontSize:18,verticalAlign:'middle',marginRight:8}}>logout</span> Déconnexion
           </button>
           <button className="btn-danger" onClick={handleDeleteAccount}>
-            <i className="fas fa-trash-alt"></i> Supprimer mon compte
+            <span className="material-icons" style={{fontSize:18,verticalAlign:'middle',marginRight:8}}>delete</span> Supprimer mon compte
           </button>
         </section>
       </div>

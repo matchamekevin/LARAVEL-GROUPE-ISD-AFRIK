@@ -2,11 +2,13 @@ import React, { useDeferredValue, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/home.css";
 import "../styles/geovision-categories.css";
+import "../../css/product-action-buttons.css";
 import SearchBar from "../components/SearchBar";
 import Loader from "../components/Loader";
 import { getCategories, getProduits } from "../services/ProduitService";
 import { toastError } from "../utils/toast";
 import { useLivePolling } from "../hooks/useLivePolling";
+import GeovisionProductCard from "../components/GeovisionProductCard";
 import {
   getCategoryChildren,
   matchCategory,
@@ -14,6 +16,11 @@ import {
   readGeovisionSpecifications,
   resolveGeovisionImage,
 } from "../utils/geovision";
+
+const extractCollection = (response) => {
+  const items = response?.data?.data;
+  return Array.isArray(items) ? items : Array.isArray(response?.data) ? response.data : [];
+};
 
 const GEOVISION_FAMILY_ORDER = [
   "geovision-cameras",
@@ -47,12 +54,31 @@ export default function Geovision() {
     setLoading(true);
     setError("");
 
-    getCategories({ segment: "geovision", tree: 1, parent_id: "null" })
-      .then((response) => {
-        if (!isMounted) return;
+    const loadFamilies = async () => {
+      const attempts = [
+        { segment: "geovision", tree: 1, parent_id: "null" },
+        { segment: "geovision", tree: 1, parent_id: "null", id_pays: null },
+        { tree: 1, parent_id: "null", id_pays: null },
+      ];
 
-        const items = Array.isArray(response.data?.data) ? response.data.data : (response.data || []);
+      for (const params of attempts) {
+        let items = [];
+
+        try {
+          const response = await getCategories(params);
+          items = extractCollection(response);
+        } catch (error) {
+          if (params === attempts[attempts.length - 1]) {
+            throw error;
+          }
+          continue;
+        }
+
         const geovisionRoots = items.filter((item) => (item.segment || "").toLowerCase() === "geovision");
+
+        if (geovisionRoots.length === 0 && params.id_pays !== null && params.segment === "geovision") {
+          continue;
+        }
 
         const bySlug = geovisionRoots.reduce((acc, item) => {
           acc[item.slug] = item;
@@ -63,8 +89,20 @@ export default function Geovision() {
           .map((slug) => bySlug[slug])
           .filter(Boolean);
 
-        setFamilies(nextFamilies);
-      })
+        if (nextFamilies.length > 0 || params === attempts[attempts.length - 1]) {
+          if (isMounted) {
+            setFamilies(nextFamilies);
+          }
+          return;
+        }
+      }
+
+      if (isMounted) {
+        setFamilies([]);
+      }
+    };
+
+    loadFamilies()
       .catch((requestError) => {
         if (!isMounted) return;
         setFamilies([]);
@@ -83,8 +121,27 @@ export default function Geovision() {
 
   const backgroundLoadFamilies = async () => {
     try {
-      const response = await getCategories({ segment: "geovision", tree: 1, parent_id: "null" });
-      const items = Array.isArray(response.data?.data) ? response.data.data : (response.data || []);
+      const attempts = [
+        { segment: "geovision", tree: 1, parent_id: "null" },
+        { segment: "geovision", tree: 1, parent_id: "null", id_pays: null },
+        { tree: 1, parent_id: "null", id_pays: null },
+      ];
+
+      let items = [];
+      for (const params of attempts) {
+        try {
+          const response = await getCategories(params);
+          items = extractCollection(response);
+          if (items.length > 0 || params.id_pays === null) {
+            break;
+          }
+        } catch (error) {
+          if (params === attempts[attempts.length - 1]) {
+            throw error;
+          }
+        }
+      }
+
       const geovisionRoots = items.filter((item) => (item.segment || "").toLowerCase() === "geovision");
 
       const bySlug = geovisionRoots.reduce((acc, item) => {
@@ -157,17 +214,43 @@ export default function Geovision() {
 
     setModelLoading(true);
 
-    getProduits(params)
-      .then((response) => {
-        if (!isMounted) return;
+    const fetchModels = async () => {
+      const noSegParams = { ...params };
+      delete noSegParams.segment;
+      delete noSegParams.id_pays;
 
-        const items = Array.isArray(response.data?.data) ? response.data.data : [];
-        const uniqueItems = Array.from(
-          new Map(items.map((item) => [item.slug || item.id_produit, item])).values()
-        );
+      const attempts = [
+        { ...params, id_pays: null },
+        noSegParams,
+      ];
 
-        setModelResults(uniqueItems);
-      })
+      for (const attempt of attempts) {
+        try {
+          const response = await getProduits(attempt);
+          const items = extractCollection(response);
+          const uniqueItems = Array.from(
+            new Map(items.map((item) => [item.slug || item.id_produit, item])).values()
+          );
+
+          if (uniqueItems.length > 0 || !attempt.segment) {
+            if (isMounted) {
+              setModelResults(uniqueItems);
+            }
+            return;
+          }
+        } catch (error) {
+          if (!attempt.segment) {
+            throw error;
+          }
+        }
+      }
+
+      if (isMounted) {
+        setModelResults([]);
+      }
+    };
+
+    fetchModels()
       .catch(() => {
         if (isMounted) setModelResults([]);
       })
@@ -301,40 +384,12 @@ export default function Geovision() {
                   <div className="pp-empty">Aucun modèle trouvé pour cette recherche.</div>
                 ) : (
                   <div className="pp-grid" aria-label="Modèles GeoVision trouvés">
-                    {modelResults.map((product) => {
-                      const specs = readGeovisionSpecifications(product);
-
-                      return (
-                        <article key={product.id_produit || product.slug} className="pp-card">
-                          <button
-                            type="button"
-                            className="pp-image-wrap"
-                            onClick={() => navigate(`/geovision/produit/${product.slug}`)}
-                          >
-                            <img
-                              alt={product.titre}
-                              className="pp-image"
-                              loading="lazy"
-                              src={resolveGeovisionImage(product)}
-                            />
-                            <div className="pp-image-overlay"></div>
-                            <span className="pp-badge pp-badge--neuf">
-                              {product.categorie?.nom || specs.taxonomy.subcategory || "GeoVision"}
-                            </span>
-                          </button>
-
-                          <div className="pp-body">
-                            <h3 className="pp-title">{product.titre}</h3>
-                            <p className="pp-desc">{product.description_courte || product.description}</p>
-                            <div className="pp-footer-row">
-                              <button className="pp-add-btn" onClick={() => navigate(`/geovision/produit/${product.slug}`)}>
-                                Voir la fiche →
-                              </button>
-                            </div>
-                          </div>
-                        </article>
-                      );
-                    })}
+                    {modelResults.map((product) => (
+                      <GeovisionProductCard
+                        key={product.id_produit || product.slug}
+                        product={product}
+                      />
+                    ))}
                   </div>
                 )}
               </div>

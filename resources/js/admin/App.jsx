@@ -7,13 +7,16 @@ import Orders from './pages/Orders';
 import Settings from './pages/Settings';
 import Formations from './pages/Formations';
 import Messages from './pages/Messages';
+import FormMailRoutes from './pages/FormMailRoutes';
 import CatalogueAdmin from './pages/CatalogueAdmin';
 import MarketingAdmin from './pages/MarketingAdmin';
 import PromotionsAdmin from './pages/PromotionsAdmin';
 import TestimonialsAdmin from './pages/TestimonialsAdmin';
 import CollaboratorsAdmin from './pages/CollaboratorsAdmin';
 import PartnersAdmin from './pages/PartnersAdmin';
+import GeovisionHomeAdmin from './pages/GeovisionHomeAdmin';
 import IngenieriePageAdmin from './pages/IngenieriePageAdmin';
+import ProjetsAdmin from './pages/ProjetsAdmin';
 import Login from './pages/Login';
 import Loader from '../components/Loader';
 import ScrollToTop from '../components/ScrollToTop';
@@ -259,7 +262,6 @@ export default function App() {
 
         <main style={{
           flex: 1,
-          overflowY: 'auto',
           background: '#f8f9fa',
         }}>
           <Routes>
@@ -269,6 +271,7 @@ export default function App() {
             <Route path="/orders" element={<Orders />} />
             <Route path="/formations" element={<Formations />} />
             <Route path="/messages" element={<Messages />} />
+            <Route path="/email-routing" element={<FormMailRoutes />} />
             <Route path="/catalogue" element={<Navigate to="/catalogue/familles" replace />} />
             <Route path="/catalogue/:section" element={<CatalogueAdmin />} />
             <Route path="/ventes-assets" element={<Navigate to="/promotions" replace />} />
@@ -277,6 +280,8 @@ export default function App() {
             <Route path="/testimonials" element={<TestimonialsAdmin />} />
             <Route path="/collaborators" element={<CollaboratorsAdmin />} />
             <Route path="/partners" element={<PartnersAdmin />} />
+            <Route path="/home-geovision-sections" element={<GeovisionHomeAdmin />} />
+            <Route path="/projets" element={<ProjetsAdmin />} />
             <Route path="/ingenierie-page" element={<IngenieriePageAdmin />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />

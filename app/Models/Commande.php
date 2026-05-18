@@ -69,10 +69,10 @@ class Commande extends Model
         return $this->hasMany(Paiement::class, 'id_commande');
     }
 
-    // Une commande peut avoir plusieurs factures (si plusieurs paiements)
+    // Une commande peut avoir plusieurs factures (via paiements)
     public function factures()
     {
-        return $this->hasMany(Facture::class, 'id_commande');
+        return $this->hasManyThrough(Facture::class, Paiement::class, 'id_commande', 'id_paiement', 'id_commande', 'id_paiement');
     }
 
     // Une commande peut avoir une livraison (si produit physique)

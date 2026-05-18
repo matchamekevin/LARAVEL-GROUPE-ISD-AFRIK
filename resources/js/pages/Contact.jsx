@@ -49,9 +49,6 @@ export default function Contact() {
                         <h2>Contactez-nous</h2>
                         <p>Vous souhaitez en savoir plus sur nos solutions technologiques ? Notre equipe est a votre disposition.</p>
                     </div>
-                    <div className="contact-hero-actions">
-                        <button className="btn-primary">Prendre rendez-vous</button>
-                    </div>
                 </div>
             </section>
 

@@ -11,11 +11,13 @@ class DevisPrestation extends Model
         'prestation_name',
         'services',
         'technologies',
+        'deliverables',
         'statut',
     ];
 
     protected $casts = [
         'services' => 'array',
         'technologies' => 'array',
+        'deliverables' => 'array',
     ];
 }

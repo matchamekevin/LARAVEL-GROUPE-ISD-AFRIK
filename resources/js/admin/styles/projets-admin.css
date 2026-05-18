@@ -1,0 +1,197 @@
+/* ── Page layout ── */
+.projets-admin-page {
+  padding: 2rem;
+}
+
+/* ── Header ── */
+.projets-admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.projets-admin-header h1 {
+  font-size: 1.75rem;
+  color: #172243;
+  margin: 0;
+  font-weight: 800;
+}
+
+.projets-admin-header p {
+  color: #4b5563;
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+/* ── Card heading ── */
+.card > h2 {
+  margin-bottom: 0.75rem !important;
+}
+
+/* ── Table thumbnails ── */
+.projets-admin-thumb {
+  width: 80px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  display: block;
+}
+
+/* ── Title cell ── */
+.projets-admin-cell-title {
+  font-weight: 600;
+  color: #172243;
+  white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Category badge ── */
+.projets-admin-cat {
+  display: inline-block;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* ── Slug ── */
+.projets-admin-slug {
+  font-size: 0.78rem;
+  background: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: #475569;
+}
+
+/* ── Status badge ── */
+.projets-admin-status {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.projets-admin-status--active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.projets-admin-status--inactive {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+/* ── Edit button ── */
+.projets-admin-btn-edit {
+  cursor: pointer;
+  vertical-align: middle;
+  border: none;
+  background: transparent;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.projets-admin-btn-edit:hover {
+  background: #eef2ff;
+}
+
+/* ── Modal form ── */
+.projets-modal-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.projets-modal-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: #374151;
+}
+
+.projets-modal-form input[type="text"],
+.projets-modal-form input[type="url"],
+.projets-modal-form input[type="number"],
+.projets-modal-form textarea,
+.projets-modal-form select {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.projets-modal-form input:focus,
+.projets-modal-form textarea:focus {
+  outline: none;
+  border-color: #172243;
+  box-shadow: 0 0 0 3px rgba(23, 34, 67, 0.1);
+}
+
+.projets-modal-form .projets-modal-full {
+  grid-column: 1 / -1;
+}
+
+.projets-modal-form .projets-modal-check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: end;
+}
+
+.projets-modal-form .projets-modal-check input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #172243;
+}
+
+/* ── Modal close button ── */
+.projets-modal-close {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background 0.2s;
+  line-height: 0;
+}
+
+.projets-modal-close:hover {
+  background: #f3f4f6;
+}
+
+/* ── Modal actions ── */
+.projets-modal-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ── Preview image ── */
+.projets-admin-preview {
+  width: 120px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  margin-top: 8px;
+}

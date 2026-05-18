@@ -139,8 +139,8 @@ export default function ProductActionButtons({
           title={favori ? "Retirer des favoris" : "Ajouter aux favoris"}
           aria-label={favori ? "Retirer des favoris" : "Ajouter aux favoris"}
         >
-          <i className={`fas ${favori ? "fa-heart" : "fa-heart"}`}></i>
-          <span>{favori ? "Favoris" : "Favoris"}</span>
+          <i className={`${favori ? "fas" : "far"} fa-heart`}></i>
+          <span>{favori ? "Dans vos favoris" : "Ajouter aux favoris"}</span>
         </button>
 
         {/* Bouton Paiement */}

@@ -100,7 +100,6 @@ const SparklesIcon = () => (
 
 const Formations = () => {
   const navigate = useNavigate();
-  const [hoveredCard, setHoveredCard] = useState(null);
   const [categoryImages, setCategoryImages] = useState({});
 
   // Charger les images de catégories depuis l'API
@@ -277,9 +276,7 @@ const Formations = () => {
             return (
               <div
                 key={category.key}
-                className={`category-card ${hoveredCard === idx ? 'hovered' : ''}`}
-                onMouseEnter={() => setHoveredCard(idx)}
-                onMouseLeave={() => setHoveredCard(null)}
+                className="category-card"
                 onClick={() => handleNavigate(category.key)}
               >
                 <div className="card-image-container">

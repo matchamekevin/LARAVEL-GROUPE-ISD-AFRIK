@@ -2,11 +2,13 @@ import React, { useCallback, useDeferredValue, useEffect, useState } from "react
 import { Link, useNavigate, useParams } from "react-router-dom";
 import "../styles/home.css";
 import "../styles/geovision-categories.css";
+import "../../css/product-action-buttons.css";
 import SearchBar from "../components/SearchBar";
 import Loader from "../components/Loader";
 import { getCategorie, getCategorieBySlug, getProduits } from "../services/ProduitService";
 import { toastError } from "../utils/toast";
 import { useLivePolling } from "../hooks/useLivePolling";
+import GeovisionProductCard from "../components/GeovisionProductCard";
 import {
   getCategoryChildren,
   normalizeGeovisionKey,
@@ -424,59 +426,15 @@ export default function GeovisionCategorie() {
                       <div key={groupName} className="pp-group-section">
                         {showGroups && <h3 className="pp-group-title">{groupName}</h3>}
                         <div className="pp-grid" aria-label={`Modèles ${groupName}`}>
-                          {items.map((product) => {
-                            const specs = readGeovisionSpecifications(product);
-                            const taxonomyText = [
-                              specs.taxonomy.category,
-                              specs.taxonomy.subcategory,
-                              specs.taxonomy.series,
-                            ].filter(Boolean).join(" / ");
-
-                            return (
-                              <article key={product.id_produit || product.slug} className="pp-card">
-                                <button
-                                  type="button"
-                                  className="pp-image-wrap"
-                                  onClick={() => navigate(`/geovision/produit/${product.slug}`)}
-                                >
-                                  <img
-                                    alt={product.titre}
-                                    className="pp-image"
-                                    loading="lazy"
-                                    src={resolveGeovisionImage(product)}
-                                    onError={(e) => {
-                                      e.target.onerror = null;
-                                      e.target.src = "/images/geovision/cam1.webp";
-                                    }}
-                                  />
-                                  <div className="pp-image-overlay"></div>
-                                  <span className="pp-badge pp-badge--neuf">{product.categorie?.nom || specs.taxonomy.subcategory || category?.nom}</span>
-                                </button>
-
-                                <div className="pp-body">
-                                  <h3 className="pp-title">{product.titre}</h3>
-                                  <p className="pp-desc">{product.description_courte || product.description}</p>
-                                  {taxonomyText && <p className="pp-card-note">{taxonomyText}</p>}
-                                  <div className="pp-meta-row">
-                                    {specs.tags.slice(0, 4).map((tag) => (
-                                      <span key={`${product.slug}-${normalizeGeovisionKey(tag)}`} className="pp-meta-chip">{tag}</span>
-                                    ))}
-                                  </div>
-                                  <div className="pp-footer-row">
-                                    <button className="pp-add-btn" onClick={() => navigate(`/geovision/produit/${product.slug}`)}>
-                                      Voir la fiche →
-                                    </button>
-                                    <button className="pp-icon-btn" title="Ajouter au panier" aria-label="Ajouter au panier" onClick={(e) => { e.stopPropagation(); /* TODO: addToCart */ }}>
-                                      <i className="fa-solid fa-cart-shopping"></i>
-                                    </button>
-                                    <button className="pp-icon-btn" title="Ajouter aux favoris" aria-label="Ajouter aux favoris" onClick={(e) => { e.stopPropagation(); /* TODO: toggleFavorite */ }}>
-                                      <i className="fa-regular fa-heart"></i>
-                                    </button>
-                                  </div>
-                                </div>
-                              </article>
-                            );
-                          })}
+                          {items.map((product) => (
+                            <GeovisionProductCard
+                              key={product.id_produit || product.slug}
+                              product={product}
+                              badgeLabel={category?.nom}
+                              showSpecs
+                              fallbackImage="/images/geovision/cam1.webp"
+                            />
+                          ))}
                         </div>
                       </div>
                     ))}

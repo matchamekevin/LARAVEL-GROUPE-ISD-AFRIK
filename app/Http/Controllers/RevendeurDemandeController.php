@@ -3,10 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\RevendeurDemande;
+use App\Services\FormMailDispatcher;
+use App\Services\FormMailRouteService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class RevendeurDemandeController extends Controller
 {
+    public function __construct(private readonly FormMailDispatcher $formMailDispatcher)
+    {
+    }
+
     public function index(Request $request)
     {
         $perPage = max(1, min(50, (int) $request->query('per_page', 20)));
@@ -107,6 +114,40 @@ class RevendeurDemandeController extends Controller
         ]);
 
         $demande = RevendeurDemande::create($validated);
+
+        try {
+            $this->formMailDispatcher->sendText(
+                formKey: FormMailRouteService::FORM_REVENDEUR_DEMANDE,
+                subject: sprintf('Nouvelle demande revendeur - %s', $validated['nom_entreprise']),
+                lines: [
+                    'Nouvelle demande revendeur recue.',
+                    '',
+                    'Entreprise: ' . $validated['nom_entreprise'],
+                    'Pays: ' . $validated['pays'],
+                    'Ville: ' . ($validated['ville'] ?? '-'),
+                    'Telephone: ' . $validated['telephone'],
+                    'Email professionnel: ' . $validated['email_professionnel'],
+                    'Representant: ' . $validated['representant_nom'],
+                    'Fonction: ' . ($validated['representant_fonction'] ?? '-'),
+                    'Telephone representant: ' . ($validated['representant_telephone'] ?? '-'),
+                    'Email representant: ' . ($validated['representant_email'] ?? '-'),
+                    'Zone couverture: ' . ($validated['zone_couverture'] ?? '-'),
+                    'Experience: ' . ($validated['experience_annees'] ?? '-'),
+                    'Motivation:',
+                    (string) ($validated['motivation'] ?? '-'),
+                    '',
+                    'Date: ' . now()->format('d/m/Y H:i:s'),
+                ],
+                replyToEmail: $validated['email_professionnel'],
+                replyToName: $validated['nom_entreprise']
+            );
+        } catch (\Throwable $exception) {
+            Log::error('Echec envoi email demande revendeur', [
+                'exception' => $exception->getMessage(),
+                'email' => $validated['email_professionnel'],
+                'entreprise' => $validated['nom_entreprise'] ?? null,
+            ]);
+        }
 
         return response()->json([
             'message' => 'Votre demande revendeur a ete enregistree avec succes.',

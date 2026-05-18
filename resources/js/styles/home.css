@@ -2565,10 +2565,6 @@ body.modal-open {
 
 /* ── Home card images responsive ──────────────────── */
 @media (max-width: 768px) {
-  .home .product-card .card-image img,
-  .home .offer-card .card-image img,
-  .home .sector-card .icon,
-  .home .formation-img { object-fit: contain; background: #f8f9fa; }
-  .home .product-card .card-image,
+  .home .product-card .card-image { background: #f8f9fa; }
   .home .offer-card .card-image { background: #f8f9fa; }
 }

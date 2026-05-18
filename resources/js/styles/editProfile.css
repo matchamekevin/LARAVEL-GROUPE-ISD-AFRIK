@@ -12,7 +12,7 @@
   /* Titre */
   .edit-profile h2 {
     font-size: 1.8rem;
-    color: #080F70;
+    color: #172243;
     margin-bottom: 20px;
     text-align: center;
   }
@@ -41,13 +41,14 @@
   }
   
   .edit-profile input:focus {
-    border-color: #080F70;
+    border-color: #fb9c08;
+    box-shadow: 0 0 0 3px rgba(251, 156, 8, 0.12);
     outline: none;
   }
   
   /* Bouton principal */
   .edit-profile .btn-primary {
-    background: #080F70;
+    background: #fb9c08;
     color: #fff;
     padding: 12px;
     border: none;
@@ -55,6 +56,10 @@
     font-size: 1rem;
     cursor: pointer;
     transition: background 0.3s ease;
+  }
+  
+  .edit-profile .btn-primary:hover {
+    background: #e88d00;
   }
   
   .edit-profile .btn-primary:hover {

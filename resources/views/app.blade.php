@@ -13,7 +13,6 @@
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #ffffff; height: 100%; }
         #react-root { min-height: 100vh; display: block; }
     </style>
-    @vite('resources/css/app.css')
     <script>
         /* Répondre silencieusement aux appels du browser logger pour éviter le spam console */
         const origFetch = window.fetch.bind(window);
@@ -56,37 +55,10 @@
             }
         }, true);
     </script>
-    <script>
-        (function () {
-            var host = window.location.hostname;
-            var isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1';
-            if (!isLocal || !('serviceWorker' in navigator)) {
-                return;
-            }
-
-            navigator.serviceWorker.getRegistrations()
-                .then(function (registrations) {
-                    return Promise.all(registrations.map(function (registration) {
-                        return registration.unregister();
-                    }));
-                })
-                .catch(function () {});
-
-            if ('caches' in window) {
-                caches.keys()
-                    .then(function (cacheNames) {
-                        return Promise.all(cacheNames
-                            .filter(function (name) { return name.indexOf('isd-afrik') === 0; })
-                            .map(function (name) { return caches.delete(name); }));
-                    })
-                    .catch(function () {});
-            }
-        })();
-    </script>
 </head>
 <body class="font-[Corbel] bg-gray-50 text-gray-900">
     <div id="react-root"></div>
     @viteReactRefresh
-    @vite('resources/js/app.jsx')
+    @vite(['resources/css/app.css', 'resources/js/app.jsx'])
 </body>
 </html>

@@ -6,6 +6,7 @@ use App\Models\AdminLog;
 use App\Models\AuditLog;
 use App\Models\Commande;
 use App\Models\ContactMessage;
+use App\Models\DevisPrestation;
 use App\Models\Formation;
 use App\Models\HomeCollaborator;
 use App\Models\HomeMarketingCard;
@@ -250,6 +251,7 @@ class AdminActivityController extends Controller
             'formations' => Formation::query()->count(),
             'messages' => ContactMessage::query()->count(),
             'revendeurDemandes' => RevendeurDemande::query()->count(),
+            'devisPrestations' => DevisPrestation::query()->count(),
             'marketingCardsCount' => HomeMarketingCard::query()->whereIn('section', ['offer', 'featured_product'])->count(),
             'homePromotionsCount' => HomeMarketingCard::query()->whereIn('section', ['home_promotion', 'promotion_page'])->count(),
             'testimonials' => HomeTestimonial::query()->count(),

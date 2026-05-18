@@ -13,7 +13,8 @@ import ProduitCard from "../components/ProduitCard";
 import usePageMeta from "../hooks/usePageMeta";
 import { pickDisplayMediaUrl } from "../utils/mediaUrl";
 import { notifyMutation } from "../utils/mutationBus";
-import { toastSuccess } from "../utils/toast";
+import { toastError, toastSuccess } from "../utils/toast";
+import { submitContactMessage } from "../admin/api";
 import {
   HOME_MARKETING_SECTIONS,
   mapFeaturedProductCard,
@@ -328,12 +329,18 @@ export default function Home() {
       }
     };
 
+    const handleContentChanged = () => {
+      refreshAllDynamicSections();
+    };
+
     window.addEventListener('focus', handleFocus);
+    window.addEventListener('content-changed', handleContentChanged);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.clearInterval(intervalId);
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('content-changed', handleContentChanged);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
@@ -354,13 +361,22 @@ export default function Home() {
 
   // État pour gérer le formulaire d'avis (déclaré avant useEffect pour éviter TDZ)
   const [showReviewForm, setShowReviewForm] = useState(false);
-  const [reviewData, setReviewData] = useState({
+  const getInitialReviewEmail = () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      return String(user?.email || "").trim();
+    } catch {
+      return "";
+    }
+  };
+  const [reviewData, setReviewData] = useState(() => ({
     name: "",
+    email: getInitialReviewEmail(),
     role: "",
     company: "",
     text: "",
     rating: 5
-  });
+  }));
 
   // Bloque le scroll de la page quand une modal est ouverte (promo ou review)
   useEffect(() => {
@@ -447,14 +463,40 @@ export default function Home() {
     { number: "15+", label: "Ans d'expérience" },
   ];
 
-  const handleReviewSubmit = (e) => {
+  const handleReviewSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Envoyer l'avis au backend
-    console.log("Nouvel avis:", reviewData);
-    toastSuccess("Merci pour votre avis ! Il sera publié après validation.");
-    notifyMutation();
-    setShowReviewForm(false);
-    setReviewData({ name: "", role: "", company: "", text: "", rating: 5 });
+
+    try {
+      await submitContactMessage({
+        nom_complet: reviewData.name,
+        email: reviewData.email,
+        telephone: "",
+        sujet: "Avis client (page accueil)",
+        message: [
+          `Fonction: ${reviewData.role || "-"}`,
+          `Entreprise: ${reviewData.company || "-"}`,
+          `Note: ${reviewData.rating}/5`,
+          "",
+          "Avis:",
+          reviewData.text,
+        ].join("\\n"),
+      });
+
+      toastSuccess("Merci pour votre avis ! Il sera publié après validation.");
+      notifyMutation();
+      setShowReviewForm(false);
+      setReviewData({
+        name: "",
+        email: getInitialReviewEmail(),
+        role: "",
+        company: "",
+        text: "",
+        rating: 5,
+      });
+    } catch (error) {
+      const backendMessage = error?.response?.data?.message || "Impossible d'envoyer votre avis pour le moment.";
+      toastError(backendMessage);
+    }
   };
 
   return (
@@ -814,13 +856,24 @@ export default function Home() {
                   </div>
 
                   <label className="visually-hidden" htmlFor="rev-company">Votre entreprise</label>
-                  <input
-                    id="rev-company"
-                    type="text"
-                    placeholder="Votre entreprise"
-                    value={reviewData.company}
-                    onChange={(e) => setReviewData({ ...reviewData, company: e.target.value })}
-                  />
+                  <div className="form-row">
+                    <input
+                      id="rev-company"
+                      type="text"
+                      placeholder="Votre entreprise"
+                      value={reviewData.company}
+                      onChange={(e) => setReviewData({ ...reviewData, company: e.target.value })}
+                    />
+                    <label className="visually-hidden" htmlFor="rev-email">Votre email</label>
+                    <input
+                      id="rev-email"
+                      type="email"
+                      placeholder="Votre email *"
+                      required
+                      value={reviewData.email}
+                      onChange={(e) => setReviewData({ ...reviewData, email: e.target.value })}
+                    />
+                  </div>
 
                   <label className="visually-hidden" htmlFor="rev-text">Votre avis</label>
                   <textarea

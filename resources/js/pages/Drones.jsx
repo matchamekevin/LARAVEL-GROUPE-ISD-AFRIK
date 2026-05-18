@@ -32,41 +32,41 @@ export default function Drones() {
             </p>
           </div>
           <div className="service-image-placeholder" style={{ background: '#f8fafc', height: '300px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '1.2rem', border: '1px dashed #cbd5e1' }}>
-             <i className="fas fa-helicopter fa-4x"></i>
+             <span className="material-icons" style={{fontSize:48}}>helicopter</span>
           </div>
         </div>
 
         <div className="service-cards-grid">
           <article className="service-card-item">
-            <div className="service-card-icon"><i className="fas fa-shopping-cart"></i></div>
+            <div className="service-card-icon"><span className="material-icons" style={{fontSize:36}}>shopping_cart</span></div>
             <h3>Vente d'Équipements</h3>
             <p>Drones multirotors et ailes fixes pour la cartographie, l'inspection thermique et la surveillance longue portée.</p>
             <ul className="service-card-list">
-              <li><i className="fas fa-check"></i> Partenariats Grandes Marques</li>
-              <li><i className="fas fa-check"></i> Capteurs Haute Résolution</li>
-              <li><i className="fas fa-check"></i> Accessoires & Pièces Détachées</li>
+              <li><span className="material-icons" style={{fontSize:16,verticalAlign:'middle',marginRight:6}}>check</span> Partenariats Grandes Marques</li>
+              <li><span className="material-icons" style={{fontSize:16,verticalAlign:'middle',marginRight:6}}>check</span> Capteurs Haute Résolution</li>
+              <li><span className="material-icons" style={{fontSize:16,verticalAlign:'middle',marginRight:6}}>check</span> Accessoires & Pièces Détachées</li>
             </ul>
           </article>
 
           <article className="service-card-item">
-            <div className="service-card-icon"><i className="fas fa-graduation-cap"></i></div>
-            <h3>Académie de Formation</h3>
-            <p>Parcours certifiants pour devenir pilote de drone professionnel, incluant la réglementation et les techniques de vol.</p>
+            <div className="service-card-icon"><span className="material-icons" style={{fontSize:36}}>school</span></div>
+            <h3>Formation & Certification</h3>
+            <p>Programmes pratiques pour former vos équipes à un usage opérationnel, réglementaire et sécurisé des drones.</p>
             <ul className="service-card-list">
-              <li><i className="fas fa-check"></i> Pilotage de Base & Avancé</li>
-              <li><i className="fas fa-check"></i> Photogrammétrie & SIG</li>
-              <li><i className="fas fa-check"></i> Maintenance de Premier Niveau</li>
+              <li><span className="material-icons" style={{fontSize:16,verticalAlign:'middle',marginRight:6}}>check</span> Pilotage de Base & Avancé</li>
+              <li><span className="material-icons" style={{fontSize:16,verticalAlign:'middle',marginRight:6}}>check</span> Photogrammétrie & SIG</li>
+              <li><span className="material-icons" style={{fontSize:16,verticalAlign:'middle',marginRight:6}}>check</span> Maintenance de Premier Niveau</li>
             </ul>
           </article>
 
           <article className="service-card-item">
-            <div className="service-card-icon"><i className="fas fa-chart-area"></i></div>
-            <h3>Services & Analyse</h3>
-            <p>Nous réalisons pour vous des missions de captation technique et traitons les données pour des livrables exploitables.</p>
+            <div className="service-card-icon"><span className="material-icons" style={{fontSize:36}}>query_stats</span></div>
+            <h3>Services Techniques</h3>
+            <p>Acquisition, traitement et valorisation de données aériennes pour des décisions plus rapides et plus fiables.</p>
             <ul className="service-card-list">
-              <li><i className="fas fa-check"></i> Modélisation 3D (BIM)</li>
-              <li><i className="fas fa-check"></i> Agriculture de Précision</li>
-              <li><i className="fas fa-check"></i> Inspection de Structures</li>
+              <li><span className="material-icons" style={{fontSize:16,verticalAlign:'middle',marginRight:6}}>check</span> Modélisation 3D (BIM)</li>
+              <li><span className="material-icons" style={{fontSize:16,verticalAlign:'middle',marginRight:6}}>check</span> Agriculture de Précision</li>
+              <li><span className="material-icons" style={{fontSize:16,verticalAlign:'middle',marginRight:6}}>check</span> Inspection de Structures</li>
             </ul>
           </article>
         </div>

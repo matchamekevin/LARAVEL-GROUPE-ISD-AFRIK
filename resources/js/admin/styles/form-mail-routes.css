@@ -1,0 +1,101 @@
+.admin-mail-routes-page {
+  padding: 2rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.admin-mail-routes-hero {
+  background: linear-gradient(145deg, #1f3c73 0%, #1f6aa5 70%, #2d8ac7 100%);
+  color: #fff;
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 16px 30px rgba(31, 106, 165, 0.2);
+}
+
+.admin-mail-routes-hero h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.45rem;
+}
+
+.admin-mail-routes-hero p {
+  margin: 0;
+  opacity: 0.95;
+}
+
+.admin-mail-routes-card {
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+}
+
+.admin-mail-routes-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.admin-mail-routes-card-head h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+.admin-mail-routes-form {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.admin-mail-routes-empty {
+  padding: 1.25rem;
+  color: #64748b;
+}
+
+.admin-mail-routes-list {
+  padding: 1rem 1.25rem 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.admin-mail-routes-item {
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 0.85rem;
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.admin-mail-routes-item-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-mail-routes-item-head h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.admin-mail-routes-item-head code {
+  font-size: 0.78rem;
+  color: #475569;
+  background: #e2e8f0;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.35rem;
+}
+
+@media (max-width: 768px) {
+  .admin-mail-routes-page {
+    padding: 1rem;
+  }
+
+  .admin-mail-routes-list {
+    grid-template-columns: 1fr;
+  }
+}

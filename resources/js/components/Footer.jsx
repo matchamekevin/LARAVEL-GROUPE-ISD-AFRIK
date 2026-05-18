@@ -4,6 +4,7 @@ import "../styles/footer.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { notifyMutation } from "../utils/mutationBus";
 import { toastError, toastSuccess } from "../utils/toast";
+import api from "../axios";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
@@ -45,22 +46,13 @@ export default function Footer() {
   const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("/api/newsletter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (response.ok) {
-        setEmail("");
-        notifyMutation();
-        toastSuccess("Inscription à la newsletter réussie !");
-      } else {
-        const data = await response.json();
-        toastError(data.message || "Erreur lors de l'inscription");
-      }
+      await api.post("/newsletter", { email });
+      setEmail("");
+      notifyMutation();
+      toastSuccess("Inscription à la newsletter réussie !");
     } catch (err) {
-      toastError("Impossible de contacter le serveur");
+      const msg = err.response?.data?.message || err.response?.data?.error || "Erreur lors de l'inscription";
+      toastError(msg);
     }
   };
 

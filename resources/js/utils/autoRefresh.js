@@ -7,6 +7,9 @@
 
 const isDev = import.meta.env.DEV;
 const isProd = import.meta.env.PROD;
+const swFeatureEnabled = String(import.meta.env.VITE_ENABLE_SERVICE_WORKER || '').toLowerCase() === 'true';
+const shouldUseServiceWorker = isProd && swFeatureEnabled;
+let autoRefreshInitialized = false;
 
 const isLocalHost = (() => {
   if (typeof window === 'undefined') return false;
@@ -18,26 +21,10 @@ const isLocalHost = (() => {
  * Enregistrer le Service Worker en production
  */
 export const initServiceWorker = async () => {
-  if (isDev || isLocalHost) {
-    try {
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registrations.map((registration) => registration.unregister()));
-      }
-
-      if ('caches' in window) {
-        const cacheNames = await caches.keys();
-        await Promise.all(
-          cacheNames
-            .filter((name) => name.startsWith('isd-afrik'))
-            .map((name) => caches.delete(name))
-        );
-      }
-    } catch (error) {
-      console.warn('[AutoRefresh] Dev cleanup failed:', error);
+  if (!shouldUseServiceWorker || isLocalHost) {
+    if (isDev || !swFeatureEnabled) {
+      console.log('[AutoRefresh] Service Worker disabled');
     }
-
-    console.log('[AutoRefresh] Local/dev mode - Service Worker disabled and old caches cleared');
     return;
   }
 
@@ -61,6 +48,9 @@ export const initServiceWorker = async () => {
     // Update found handler
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
+      if (!newWorker) {
+        return;
+      }
 
       newWorker.addEventListener('statechange', () => {
         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
@@ -96,7 +86,7 @@ export const updateManifestVersion = async () => {
  * Vérifier et installer les updates du Service Worker
  */
 export const checkServiceWorkerUpdates = () => {
-  if (!('serviceWorker' in navigator)) return;
+  if (!shouldUseServiceWorker || !('serviceWorker' in navigator)) return;
 
   navigator.serviceWorker.ready.then((registration) => {
     // Check for updates immediately
@@ -130,17 +120,19 @@ export const applyServiceWorkerUpdate = () => {
  * Initialiser le système complet
  */
 export const initAutoRefresh = async () => {
+  if (autoRefreshInitialized) {
+    return;
+  }
+  autoRefreshInitialized = true;
+
   console.log('[AutoRefresh] Initializing auto-refresh system');
 
   // Enregistrer Service Worker
   await initServiceWorker();
-
-  if (isDev) {
-    return;
+  if (shouldUseServiceWorker) {
+    // Checker les updates
+    checkServiceWorkerUpdates();
   }
-
-  // Checker les updates
-  checkServiceWorkerUpdates();
 
   // Update manifest version
   await updateManifestVersion();

@@ -47,6 +47,25 @@ function start() {
   echo "-> Lancement de Vite (npm run dev)"
   nohup npm run dev > "$LOG_DIR/vite.log" 2>&1 &
   echo $! >> "$PIDS_FILE"
+  VITE_DEV_PORT="${VITE_DEV_PORT:-5173}"
+  VITE_DEV_SERVER_URL="${VITE_DEV_SERVER_URL:-http://localhost:$VITE_DEV_PORT}"
+
+  # Attendre que Vite soit réellement prêt pour éviter les erreurs "failed to load module"
+  # au premier chargement de la page.
+  echo "-> Attente disponibilité Vite sur $VITE_DEV_SERVER_URL/@vite/client"
+  VITE_READY=false
+  for _ in $(seq 1 30); do
+    if curl -fsS "$VITE_DEV_SERVER_URL/@vite/client" >/dev/null 2>&1; then
+      VITE_READY=true
+      break
+    fi
+    sleep 1
+  done
+  if [ "$VITE_READY" = true ]; then
+    echo "-> Vite prêt."
+  else
+    echo "-> Avertissement: Vite ne répond pas encore (voir $LOG_DIR/vite.log)."
+  fi
 
   # Lancer le serveur PHP intégré
   APP_HOST="${APP_HOST:-127.0.0.1}"

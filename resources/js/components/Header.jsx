@@ -1,26 +1,32 @@
-import React, { useState, useEffect, useRef, memo } from "react";
+import React, { useState, useEffect, useRef, memo, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 import CountrySelector from "./CountrySelector";
 import LanguageSelector from "./LanguageSelector";
 import { getCartCount, getFavoritesCount, subscribeStoreUpdates } from "../utils/shopStorage";
+import { getApiBase } from "../utils/apiBase";
+import tokenService from "../services/tokenService";
+import { getStoredCountry, setStoredCountry } from "../utils/country";
 import "../styles/header.css";
 
 // FontAwesome est importé via `@fortawesome/fontawesome-free` dans `resources/js/app.jsx`
+// Account button: avatar/initials + name below + hover dropdown
 
 function Header() {
   const { t } = useTranslation();
 
-  const [country, setCountry] = useState("TG");
+  const [country, setCountry] = useState(getStoredCountry());
   const [lang, setLang] = useState(localStorage.getItem("lang") || "fr");
   const [isOpen, setIsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [userName, setUserName] = useState(null);
+  const [userData, setUserData] = useState(null);
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [cartCount, setCartCount] = useState(0);
   const accountRef = useRef();
+  const hoverTimeout = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,13 +40,27 @@ function Header() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    tokenService.clearSession();
     window.dispatchEvent(new Event("userUpdated"));
     setUserName(null);
+    setUserData(null);
     setCountry("TG");
     navigate("/");
   };
+
+  const handleCountryChange = (code) => {
+    setStoredCountry(code);
+    setCountry(code);
+  };
+
+  const handleMouseEnter = useCallback(() => {
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+    setAccountOpen(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    hoverTimeout.current = setTimeout(() => setAccountOpen(false), 150);
+  }, []);
 
   useEffect(() => {
     i18n.changeLanguage(lang);
@@ -57,12 +77,14 @@ function Header() {
       const storedUser = localStorage.getItem("user");
       if (!storedUser) {
         setUserName(null);
+        setUserData(null);
         setCountry("TG");
         return;
       }
 
       try {
         const u = JSON.parse(storedUser);
+        setUserData(u);
         setUserName(`${u.nom || ""} ${u.prenom || ""}`.trim() || u.name || null);
         setCountry(countryMap[u.id_pays] || "TG");
         if (u.langue) {
@@ -70,6 +92,7 @@ function Header() {
         }
       } catch {
         setUserName(null);
+        setUserData(null);
         setCountry("TG");
       }
     };
@@ -149,7 +172,7 @@ function Header() {
       </div>
 
       <button className="hamburger" onClick={() => setIsOpen(!isOpen)}>
-        <i className="fas fa-bars"></i>
+        <span className="material-icons">menu</span>
       </button>
 
       <button
@@ -164,107 +187,138 @@ function Header() {
         <div className="nav-mobile-top">
           <strong>Navigation</strong>
           <button type="button" className="nav-close" onClick={() => setIsOpen(false)} aria-label="Fermer le menu">
-            <i className="fas fa-times"></i>
+            <span className="material-icons">close</span>
           </button>
         </div>
 
-        <Link to="/" className="nav-link" onClick={() => setIsOpen(false)}>
-          <i className="fas fa-home nav-icon"></i> {t("nav.home")}
-        </Link>
-        <Link to="/ingenierie" className="nav-link" onClick={() => setIsOpen(false)}>
-          <i className="fas fa-cogs nav-icon"></i> {t("nav.engineering")}
-        </Link>
-        <Link to="/solutions" className="nav-link" onClick={() => setIsOpen(false)}>
-          <i className="fas fa-lightbulb nav-icon"></i> {t("nav.solutions")}
-        </Link>
-        <Link to="/formations" className="nav-link" onClick={() => setIsOpen(false)}>
-          <i className="fas fa-graduation-cap nav-icon"></i> {t("nav.trainings")}
-        </Link>
-        <Link to="/produits" className="nav-link" onClick={() => setIsOpen(false)}>
-          <i className="fas fa-box-open nav-icon"></i> {t("nav.products")}
-        </Link>
-        <Link to="/projets" className="nav-link" onClick={() => setIsOpen(false)}>
-          <i className="fas fa-project-diagram nav-icon"></i> {t("nav.projects")}
-        </Link>
-        <Link to="/contact" className="nav-link" onClick={() => setIsOpen(false)}>
-          <i className="fas fa-envelope nav-icon"></i> {t("nav.contact")}
-        </Link>
-
-        <div className="header-quick-actions">
-          <Link
-            to="/favoris"
-            className="quick-icon-btn"
-            onClick={() => setIsOpen(false)}
-            title="Liste d'envies"
-            aria-label="Liste d'envies"
-          >
-            <i className="fa-regular fa-heart"></i>
-            {favoritesCount > 0 && <span className="quick-badge">{favoritesCount}</span>}
+        <div className="nav-links">
+          <Link to="/" className="nav-link" onClick={() => setIsOpen(false)}>
+            <span className="material-icons nav-icon">home</span> {t("nav.home")}
           </Link>
-
-          <Link
-            to="/panier"
-            className="quick-icon-btn"
-            onClick={() => setIsOpen(false)}
-            title="Panier"
-            aria-label="Panier"
-          >
-            <i className="fa-solid fa-cart-shopping"></i>
-            {cartCount > 0 && <span className="quick-badge">{cartCount}</span>}
+          <Link to="/ingenierie" className="nav-link" onClick={() => setIsOpen(false)}>
+            <span className="material-icons nav-icon">engineering</span> {t("nav.engineering")}
+          </Link>
+          <Link to="/solutions" className="nav-link" onClick={() => setIsOpen(false)}>
+            <span className="material-icons nav-icon">lightbulb</span> {t("nav.solutions")}
+          </Link>
+          <Link to="/formations" className="nav-link" onClick={() => setIsOpen(false)}>
+            <span className="material-icons nav-icon">school</span> {t("nav.trainings")}
+          </Link>
+          <Link to="/produits" className="nav-link" onClick={() => setIsOpen(false)}>
+            <span className="material-icons nav-icon">inventory</span> {t("nav.products")}
+          </Link>
+          <Link to="/projets" className="nav-link" onClick={() => setIsOpen(false)}>
+            <span className="material-icons nav-icon">account_tree</span> {t("nav.projects")}
+          </Link>
+          <Link to="/contact" className="nav-link" onClick={() => setIsOpen(false)}>
+            <span className="material-icons nav-icon">mail</span> {t("nav.contact")}
           </Link>
         </div>
 
-        {!token ? (
-          <Link to="/login" className="account-btn login-btn" onClick={() => setIsOpen(false)}>
-            <i className="fas fa-sign-in-alt"></i>
-            <span>{t("auth.login")}</span>
-          </Link>
-        ) : (
-          <div className="account" ref={accountRef}>
-            <div
-              className="account-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                setAccountOpen(!accountOpen);
-              }}
+        <div className="nav-right">
+          <div className="header-quick-actions">
+            <Link
+              to="/favoris"
+              className="quick-icon-btn"
+              onClick={() => setIsOpen(false)}
+              title="Liste d'envies"
+              aria-label="Liste d'envies"
             >
-              <i className="fas fa-user-circle"></i>
-              <span>{userName || t("auth.account")}</span>
-              <i className={`fas fa-chevron-${accountOpen ? "up" : "down"}`}></i>
-            </div>
+              <span className="material-icons">favorite_border</span>
+              {favoritesCount > 0 && <span className="quick-badge">{favoritesCount}</span>}
+            </Link>
 
-            {accountOpen && (
-              <ul className="account-menu">
-                <li onClick={() => { setIsOpen(false); setAccountOpen(false); navigate("/profile"); }}>
-                  <i className="fas fa-id-card"></i> {t("auth.profile")}
-                </li>
-                <li onClick={() => { setIsOpen(false); setAccountOpen(false); navigate("/mes-commandes"); }}>
-                  <i className="fas fa-box"></i> {t("auth.orders")}
-                </li>
-                <li onClick={() => { setIsOpen(false); setAccountOpen(false); navigate("/mes-produits"); }}>
-                  <i className="fas fa-flask"></i> {t("auth.myProducts")}
-                </li>
-                <li onClick={() => { setIsOpen(false); setAccountOpen(false); navigate("/mes-formations"); }}>
-                  <i className="fas fa-chalkboard-teacher"></i> {t("auth.myTrainings")}
-                </li>
-                <li onClick={() => { setIsOpen(false); setAccountOpen(false); handleLogout(); }}>
-                  <i className="fas fa-sign-out-alt"></i> {t("auth.logout")}
-                </li>
-              </ul>
-            )}
+            <Link
+              to="/panier"
+              className="quick-icon-btn"
+              onClick={() => setIsOpen(false)}
+              title="Panier"
+              aria-label="Panier"
+            >
+              <span className="material-icons">shopping_cart</span>
+              {cartCount > 0 && <span className="quick-badge">{cartCount}</span>}
+            </Link>
           </div>
-        )}
 
-        <div className="mobile-selectors">
-          <CountrySelector value={country} onChange={setCountry} />
+          {!token ? (
+            <Link to="/login" className="account-btn login-btn" onClick={() => setIsOpen(false)}>
+              <span className="material-icons" style={{fontSize:18,marginRight:6}}>login</span>
+              <span>{t("auth.login")}</span>
+            </Link>
+          ) : (
+            <div
+              className="account"
+              ref={accountRef}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              <div className="account-trigger">
+                <div className="account-avatar">
+                  {userData?.avatar ? (
+                    <img
+                      src={`${getApiBase()}/storage/${userData.avatar}`}
+                      alt={userName}
+                      className="account-avatar-img"
+                    />
+                  ) : (
+                    <span className="account-avatar-initials">
+                      {(userData?.prenom?.[0] || userData?.nom?.[0] || "?").toUpperCase()}
+                      {(userData?.prenom?.[0] && userData?.nom?.[0] ? userData.nom[0].toUpperCase() : "")}
+                    </span>
+                  )}
+                </div>
+                {userName && <span className="account-name">{userName}</span>}
+              </div>
+
+              {accountOpen && (
+                <ul className="account-menu">
+                  <li className="account-menu-header">
+                    <div className="account-menu-avatar">
+                      {userData?.avatar ? (
+                        <img src={`${getApiBase()}/storage/${userData.avatar}`} alt={userName} className="account-menu-avatar-img" />
+                      ) : (
+                        <span className="account-menu-avatar-initials">
+                          {(userData?.prenom?.[0] || userData?.nom?.[0] || "?").toUpperCase()}
+                          {(userData?.prenom?.[0] && userData?.nom?.[0] ? userData.nom[0].toUpperCase() : "")}
+                        </span>
+                      )}
+                    </div>
+                    <div className="account-menu-user-info">
+                      <strong>{userName}</strong>
+                      <span>{userData?.email || ""}</span>
+                    </div>
+                  </li>
+                  <li onClick={() => { setIsOpen(false); setAccountOpen(false); navigate("/profile"); }}>
+                    <span className="material-icons">person</span> {t("auth.profile")}
+                  </li>
+                  <li onClick={() => { setIsOpen(false); setAccountOpen(false); navigate("/mes-commandes"); }}>
+                    <span className="material-icons">receipt_long</span> {t("auth.orders")}
+                  </li>
+                  <li onClick={() => { setIsOpen(false); setAccountOpen(false); navigate("/mes-produits"); }}>
+                    <span className="material-icons">inventory</span> {t("auth.myProducts")}
+                  </li>
+                  <li onClick={() => { setIsOpen(false); setAccountOpen(false); navigate("/mes-formations"); }}>
+                    <span className="material-icons">school</span> {t("auth.myTrainings")}
+                  </li>
+                  <li className="account-menu-divider"></li>
+                  <li onClick={() => { setIsOpen(false); setAccountOpen(false); handleLogout(); }}>
+                    <span className="material-icons">logout</span> {t("auth.logout")}
+                  </li>
+                </ul>
+              )}
+            </div>
+          )}
+
+          </div>
+          <div className="nav-desktop-selectors">
+            <CountrySelector value={country} onChange={handleCountryChange} />
+            <LanguageSelector value={lang} onChange={setLang} />
+          </div>
+          <div className="mobile-selectors">
+            <CountrySelector value={country} onChange={handleCountryChange} />
           <LanguageSelector value={lang} onChange={setLang} />
         </div>
       </nav>
-
-      <div className="selectors">
-        <CountrySelector value={country} onChange={setCountry} />
-        <LanguageSelector value={lang} onChange={setLang} />
-      </div>
     </header>
   );
 }

@@ -362,8 +362,8 @@ export default function ProduitDetail() {
           {/* ── Galerie images ──────────────────── */}
           <div className="pd-gallery">
             <div className="pd-img-main-wrapper">
-              {reduction && <span className="pd-badge-promo">-{reduction}%</span>}
-              {produit.est_nouveau && <span className="pd-badge-nouveau">Nouveau</span>}
+              {reduction && <span className="pd-badge-promo"><span className="material-icons" style={{fontSize:14,marginRight:4}}>local_offer</span>-{reduction}%</span>}
+              {produit.est_nouveau && <span className="pd-badge-nouveau"><span className="material-icons" style={{fontSize:14,marginRight:4}}>fiber_new</span>Nouveau</span>}
               <img src={images[imageActive]} alt={produit.titre} className="pd-img-main" onError={(e) => { const img = e.currentTarget; if (img && !img.dataset.fallback) { img.dataset.fallback = "1"; img.src = "/images/produits/proj.webp"; } }} />
             </div>
           </div>
@@ -394,11 +394,11 @@ export default function ProduitDetail() {
 
             <div className="pd-stock">
               {produit.stock === 0 ? (
-                <span className="pd-stock--rupture"><i className="fa-solid fa-circle-xmark pd-icon-inline" aria-hidden="true"></i>Rupture de stock</span>
+                <span className="pd-stock--rupture"><span className="material-icons" style={{fontSize:18,verticalAlign:'middle',marginRight:6}}>block</span>Rupture de stock</span>
               ) : produit.stock <= 5 ? (
-                <span className="pd-stock--alerte"><i className="fa-solid fa-triangle-exclamation pd-icon-inline" aria-hidden="true"></i>Plus que {produit.stock} en stock !</span>
+                <span className="pd-stock--alerte"><span className="material-icons" style={{fontSize:18,verticalAlign:'middle',marginRight:6}}>warning</span>Plus que {produit.stock} en stock !</span>
               ) : (
-                <span className="pd-stock--dispo"><i className="fa-solid fa-circle-check pd-icon-inline" aria-hidden="true"></i>En stock ({produit.stock} disponibles)</span>
+                <span className="pd-stock--dispo"><span className="material-icons" style={{fontSize:18,verticalAlign:'middle',marginRight:6}}>check_circle</span>En stock ({produit.stock} disponibles)</span>
               )}
             </div>
 

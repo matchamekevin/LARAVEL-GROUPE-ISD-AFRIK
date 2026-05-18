@@ -1,11 +1,18 @@
 <?php
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Newsletter;
+use App\Services\FormMailDispatcher;
+use App\Services\FormMailRouteService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class NewsletterController extends Controller
 {
+    public function __construct(private readonly FormMailDispatcher $formMailDispatcher)
+    {
+    }
+
     // POST /api/newsletter
     public function store(Request $request)
     {
@@ -16,6 +23,27 @@ class NewsletterController extends Controller
         $newsletter = Newsletter::create([
             'email' => $request->email,
         ]);
+
+        try {
+            $user = $request->user();
+            $this->formMailDispatcher->sendText(
+                formKey: FormMailRouteService::FORM_NEWSLETTER,
+                subject: 'Nouvelle inscription newsletter',
+                lines: [
+                    'Nouvelle inscription a la newsletter.',
+                    '',
+                    'Email: ' . $request->email,
+                    'Date: ' . now()->format('d/m/Y H:i:s'),
+                ],
+                replyToEmail: $request->email,
+                replyToName: $user ? trim(($user->prenom ?? '') . ' ' . ($user->nom ?? '')) : null,
+            );
+        } catch (\Throwable $exception) {
+            Log::error('Echec envoi email newsletter', [
+                'exception' => $exception->getMessage(),
+                'email' => $request->email,
+            ]);
+        }
 
         return response()->json(['success' => true, 'data' => $newsletter]);
     }

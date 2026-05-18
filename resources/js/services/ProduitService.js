@@ -1,8 +1,23 @@
 import api from "../axios";
+import { countryCodeToId, getStoredCountry } from "../utils/country";
+
+const SELECTED_COUNTRY_KEY = "isd_selected_country";
+
+function hasExplicitCountry() {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(SELECTED_COUNTRY_KEY) !== null;
+}
+
+function withCountry(params = {}) {
+  if (hasExplicitCountry() && (params.id_pays === undefined || params.id_pays === null)) {
+    return { ...params, id_pays: countryCodeToId(getStoredCountry()) };
+  }
+  return params;
+}
 
 // ── Liste avec filtres & pagination ──────────────────────
 export const getProduits = (params = {}) =>
-  api.get("/produits", { params });
+  api.get("/produits", { params: withCountry(params) });
 
 // ── Détail par ID ─────────────────────────────────────────
 export const getProduit = (id) =>
@@ -14,19 +29,19 @@ export const getProduitBySlug = (slug) =>
 
 // ── Recherche textuelle ───────────────────────────────────
 export const searchProduits = (q) =>
-  api.get(`/produits/recherche`, { params: { q } });
+  api.get(`/produits/recherche`, { params: withCountry({ q }) });
 
 // ── Produits en vedette ───────────────────────────────────
-export const getProduitsVedette = () =>
-  api.get("/produits/vedette");
+export const getProduitsVedette = (params = {}) =>
+  api.get("/produits/vedette", { params: withCountry(params) });
 
 // ── Nouveaux produits ─────────────────────────────────────
-export const getProduitsNouveaux = () =>
-  api.get("/produits/nouveaux");
+export const getProduitsNouveaux = (params = {}) =>
+  api.get("/produits/nouveaux", { params: withCountry(params) });
 
 // ── Promotions ────────────────────────────────────────────
-export const getProduitsPromo = () =>
-  api.get("/produits/promotions");
+export const getProduitsPromo = (params = {}) =>
+  api.get("/produits/promotions", { params: withCountry(params) });
 
 // ── Liste des marques ─────────────────────────────────────
 export const getMarques = (id_pays) =>
@@ -34,7 +49,7 @@ export const getMarques = (id_pays) =>
 
 // ── Catégories ────────────────────────────────────────────
 export const getCategories = (params = {}) =>
-  api.get("/categories-produits", { params });
+  api.get("/categories-produits", { params: withCountry(params) });
 
 export const getCategorie = (id, params = {}) =>
   api.get(`/categories-produits/${id}`, { params });
