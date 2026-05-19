@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Foundation\Application;
+use Throwable;
+use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\IsClient;
@@ -19,17 +21,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(SecurityHeaders::class);
 
-        // ✅ Alias des middlewares custom
         $middleware->alias([
             'isClient'      => IsClient::class,
             'isAdmin'       => IsAdmin::class,
             'isSuperAdmin'  => IsSuperAdmin::class,
             'redirectTo2FA' => RedirectTo2FA::class,
-            
-   
         ]);
 
-        // ✅ Middlewares globaux pour l’API
         $middleware->api([
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
@@ -37,6 +35,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Gestion globale des exceptions (optionnel)
+        $exceptions->renderable(function (Throwable $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Erreur lors de la connexion',
+                    'error' => get_class($e).': '.$e->getMessage(),
+                    'file' => $e->getFile().':'.$e->getLine(),
+                ], 500);
+            }
+        });
     })
     ->create();
