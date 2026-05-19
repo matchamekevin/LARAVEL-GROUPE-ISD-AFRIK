@@ -24,7 +24,13 @@ if [ "${SESSION_DRIVER}" = "database" ]; then
 	export SESSION_DRIVER=file
 fi
 
-echo "Effective env: CACHE_STORE=${CACHE_STORE}, SESSION_DRIVER=${SESSION_DRIVER}, QUEUE_CONNECTION=${QUEUE_CONNECTION}"
+# Forcer LOG_CHANNEL=stderr : les commandes artisan en root créent le fichier
+# storage/logs/laravel.log avec root:root, et PHP-FPM (www-data) ne peut plus y écrire.
+# stderr envoie les logs vers la sortie standard du conteneur (capturé par Render).
+: "${LOG_CHANNEL:=stderr}"
+export LOG_CHANNEL
+
+echo "Effective env: CACHE_STORE=${CACHE_STORE}, SESSION_DRIVER=${SESSION_DRIVER}, QUEUE_CONNECTION=${QUEUE_CONNECTION}, LOG_CHANNEL=${LOG_CHANNEL}"
 
 # Rendre les logs PHP visibles dans les logs Render (stderr)
 export PHP_FPM_LOG_LEVEL=${PHP_FPM_LOG_LEVEL:-notice}
@@ -56,6 +62,9 @@ chown -R www-data:www-data storage bootstrap/cache public || true
 mkdir -p storage/framework/views storage/framework/cache/data storage/logs
 chown -R www-data:www-data storage bootstrap/cache public storage/framework storage/logs || true
 chmod -R 0777 storage bootstrap/cache public storage/framework storage/logs || true
+# Supprime tout log file existant (créé par root pendant les commandes artisan)
+# pour éviter Permission denied quand www-data tente d'y écrire via le handler `single`.
+rm -f storage/logs/laravel.log || true
 
 # Supprime les caches commités / obsolètes (cause fréquente de 500 en prod quand --no-dev).
 rm -f bootstrap/cache/*.php || true
