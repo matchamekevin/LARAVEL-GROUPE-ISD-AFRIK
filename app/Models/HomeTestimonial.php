@@ -14,6 +14,8 @@ class HomeTestimonial extends Model
         'text',
         'rating',
         'avatar_path',
+        'avatar_data',
+        'avatar_mime',
         'is_active',
         'sort_order',
     ];
@@ -28,6 +30,10 @@ class HomeTestimonial extends Model
 
     public function getAvatarUrlAttribute(): ?string
     {
+        if ($this->avatar_data) {
+            return url('/api/home-testimonials/' . $this->id . '/image');
+        }
+
         if (!$this->avatar_path) {
             return null;
         }

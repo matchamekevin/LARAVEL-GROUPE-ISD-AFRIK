@@ -16,6 +16,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/resend-2fa',      [UtilisateurController::class, 'resend2FACode'])->middleware('throttle:3,1');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->middleware('throttle:3,1');
     Route::post('/reset-password',  [ForgotPasswordController::class, 'resetPassword'])->middleware('throttle:5,1');
+    Route::get('/{id}/avatar',      [UtilisateurController::class, 'avatarImage']);
 });
 
 // ======================================================

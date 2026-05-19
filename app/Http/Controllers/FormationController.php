@@ -427,7 +427,11 @@ class FormationController extends Controller
         $categoryImages = Image::where('imageable_type', 'CATEGORY')
             ->get()
             ->map(function ($image) {
-                $image->url = asset($image->url);
+                if ($image->image_data) {
+                    $image->url = $image->image_url;
+                } elseif ($image->url) {
+                    $image->url = asset($image->url);
+                }
                 return $image;
             });
 

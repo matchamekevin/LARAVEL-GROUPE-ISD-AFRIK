@@ -39,7 +39,26 @@ class Utilisateur extends Authenticatable implements FilamentUser
         'remember_token',
         'admin_role',
         'last_login',
+        'avatar',
+        'avatar_data',
+        'avatar_mime',
     ];
+
+    protected $appends = ['avatar_url'];
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if ($this->avatar_data) {
+            return url('/api/auth/' . $this->id_utilisateur . '/avatar');
+        }
+        if (!$this->avatar) {
+            return null;
+        }
+        if (str_starts_with($this->avatar, 'http://') || str_starts_with($this->avatar, 'https://')) {
+            return $this->avatar;
+        }
+        return url('/api/auth/' . $this->id_utilisateur . '/avatar');
+    }
 
     protected static function booted()
     {

@@ -15,6 +15,7 @@ class ImageResource extends JsonResource
         return [
             'id' => $this->id_image,               // Clé primaire
             'url' => $this->url,                   // URL publique
+            'image_url' => $this->image_url,       // URL résolue (base64 ou url)
             'path' => $this->path,                 // Chemin interne (stockage)
             'alt' => $this->alt,                   // Texte alternatif (accessibilité/SEO)
             'attached_to' => $this->imageable_type, // Type d'entité liée (PRODUIT, FORMATION, BLOG)

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CategorieProduit;
 use App\Models\Produit;
+use App\Services\Base64ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -136,6 +137,45 @@ class CategorieProduitController extends Controller
     }
 
     /**
+     * GET /api/categories-produits/{id}/image
+     */
+    public function image($id)
+    {
+        $categorie = CategorieProduit::find($id);
+
+        if (!$categorie) {
+            return self::placeholderResponse();
+        }
+
+        if ($categorie->image_data) {
+            return Base64ImageService::response($categorie->image_data, $categorie->image_mime);
+        }
+
+        if ($categorie->image_url && !str_starts_with($categorie->image_url, 'http')) {
+            $path = ltrim(parse_url($categorie->image_url, PHP_URL_PATH), '/');
+            $path = preg_replace('#^storage/#', '', $path);
+            if (Storage::disk('public')->exists($path)) {
+                return response()->file(Storage::disk('public')->path($path));
+            }
+        }
+
+        return self::placeholderResponse();
+    }
+
+    private static function placeholderResponse()
+    {
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#f1f5f9"/>
+  <g transform="translate(400,260)" fill="#94a3b8">
+    <rect x="-40" y="-30" width="80" height="60" rx="8" opacity="0.4"/>
+    <circle cx="0" cy="0" r="12" opacity="0.4"/>
+  </g>
+  <text x="400" y="330" text-anchor="middle" font-family="system-ui,sans-serif" font-size="18" fill="#94a3b8">Image non disponible</text>
+</svg>';
+        return response($svg, 200, ['Content-Type' => 'image/svg+xml', 'Cache-Control' => 'no-cache']);
+    }
+
+    /**
      * POST /api/categories-produits (admin)
      */
     public function store(Request $request)
@@ -158,8 +198,9 @@ class CategorieProduitController extends Controller
 
         $uploaded = $request->file('image') ?: $request->file('image_file');
         if ($uploaded) {
-            $storedPath = $uploaded->store('geovision-categories', 'public');
-            $data['image_url'] = '/storage/' . ltrim($storedPath, '/');
+            $encoded = Base64ImageService::encode($uploaded);
+            $data['image_data'] = $encoded['data'];
+            $data['image_mime'] = $encoded['mime'];
         }
 
         $data = $this->preparePayload($data);
@@ -170,9 +211,13 @@ class CategorieProduitController extends Controller
 
         $categorie = CategorieProduit::create($data);
 
+        if (!empty($data['image_data'])) {
+            $categorie->update(['image_url' => url('/api/categories-produits/' . $categorie->id_categorie . '/image')]);
+        }
+
         return response()->json([
             'message' => 'Catégorie créée avec succès',
-            'categorie' => $categorie->load('parent'),
+            'categorie' => $categorie->fresh()->load('parent'),
         ], 201);
     }
 
@@ -200,11 +245,10 @@ class CategorieProduitController extends Controller
 
         $uploaded = $request->file('image') ?: $request->file('image_file');
         if ($uploaded) {
-            $storedPath = $uploaded->store('geovision-categories', 'public');
-            $data['image_url'] = '/storage/' . ltrim($storedPath, '/');
-
-            $this->deletePublicStoredImage($categorie->image_url);
-            $this->deletePublicStoredImage($categorie->image);
+            $encoded = Base64ImageService::encode($uploaded);
+            $data['image_data'] = $encoded['data'];
+            $data['image_mime'] = $encoded['mime'];
+            $data['image_url'] = url('/api/categories-produits/' . $categorie->id_categorie . '/image');
         }
 
         $data = $this->preparePayload($data, $categorie);

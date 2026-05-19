@@ -12,12 +12,14 @@ use App\Mail\TwoFactorCodeMail;
 use App\Models\Pays;
 use App\Models\Utilisateur;
 use App\Services\AuthService;
+use App\Services\Base64ImageService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -625,7 +627,7 @@ class UtilisateurController extends Controller
             }
 
             // 🔐 Si 2FA est activé
-            if ($user->two_factor_enabled) {
+            if ($user->two_factor_enabled ?? false) {
                 Log::info('[LOGIN] 🔐 2FA requis pour user: '.$normalizedEmail);
                 // Génération du code OTP
                 $user->generateTwoFactorCode();
@@ -679,6 +681,9 @@ class UtilisateurController extends Controller
             if (config('app.debug')) {
                 $payload['error'] = $e->getMessage();
                 $payload['class'] = get_class($e);
+                $payload['file'] = $e->getFile().':'.$e->getLine();
+            } else {
+                $payload['error'] = get_class($e).': '.$e->getMessage();
                 $payload['file'] = $e->getFile().':'.$e->getLine();
             }
 
@@ -1454,18 +1459,20 @@ class UtilisateurController extends Controller
     {
         try {
             $request->validate([
-                'avatar' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+                'avatar' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
             ]);
 
-            $path = $request->file('avatar')->store('avatars', 'public');
+            $encoded = Base64ImageService::encode($request->file('avatar'));
 
             $user = $request->user();
-            $user->avatar = $path;
+            $user->avatar_data = $encoded['data'];
+            $user->avatar_mime = $encoded['mime'];
+            $user->avatar = null; // clear legacy path
             $user->save();
 
             return response()->json([
                 'message' => 'Avatar mis à jour',
-                'avatar' => $path,
+                'avatar_url' => $user->avatar_url,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
@@ -1473,5 +1480,23 @@ class UtilisateurController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * 🖼️ Servir l'avatar d'un utilisateur.
+     */
+    public function avatarImage($id)
+    {
+        $user = Utilisateur::find($id);
+        if (!$user) {
+            abort(404);
+        }
+        if ($user->avatar_data) {
+            return Base64ImageService::response($user->avatar_data, $user->avatar_mime);
+        }
+        if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+            return response()->file(Storage::disk('public')->path($user->avatar));
+        }
+        abort(404);
     }
 }

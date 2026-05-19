@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\HomeMarketingCard;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use App\Services\Base64ImageService;
 use Illuminate\Validation\Rule;
 
 class HomeMarketingCardController extends Controller
@@ -229,19 +229,6 @@ class HomeMarketingCardController extends Controller
         }
     }
 
-    private function shouldDeleteStoredImage(?string $path): bool
-    {
-        if (!$path) {
-            return false;
-        }
-
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            return false;
-        }
-
-        return !str_starts_with($path, '/');
-    }
-
     public function index(Request $request)
     {
         $this->seedDefaultSections();
@@ -293,7 +280,9 @@ class HomeMarketingCardController extends Controller
             'image' => ['required', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ]);
 
-        $validated['image_path'] = $request->file('image')->store('home-marketing', 'public');
+        $encoded = Base64ImageService::encode($request->file('image'));
+        $validated['image_data'] = $encoded['data'];
+        $validated['image_mime'] = $encoded['mime'];
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['sort_order'] = (int) ($validated['sort_order'] ?? 0);
 
@@ -320,10 +309,9 @@ class HomeMarketingCardController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            if ($this->shouldDeleteStoredImage($card->image_path)) {
-                Storage::disk('public')->delete($card->image_path);
-            }
-            $validated['image_path'] = $request->file('image')->store('home-marketing', 'public');
+            $encoded = Base64ImageService::encode($request->file('image'));
+            $validated['image_data'] = $encoded['data'];
+            $validated['image_mime'] = $encoded['mime'];
         }
 
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -336,12 +324,16 @@ class HomeMarketingCardController extends Controller
         return response()->json($card->fresh());
     }
 
+    public function image(HomeMarketingCard $card)
+    {
+        if ($card->image_data) {
+            return Base64ImageService::response($card->image_data, $card->image_mime);
+        }
+        abort(404);
+    }
+
     public function destroy(HomeMarketingCard $card)
     {
-        if ($this->shouldDeleteStoredImage($card->image_path)) {
-            Storage::disk('public')->delete($card->image_path);
-        }
-
         $card->delete();
 
         return response()->json(['success' => true]);

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\HomeCollaborator;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use App\Services\Base64ImageService;
 
 class HomeCollaboratorController extends Controller
 {
@@ -57,19 +57,6 @@ class HomeCollaboratorController extends Controller
         HomeCollaborator::insert($rows);
     }
 
-    private function shouldDeleteStoredImage(?string $path): bool
-    {
-        if (!$path) {
-            return false;
-        }
-
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            return false;
-        }
-
-        return !str_starts_with($path, '/');
-    }
-
     public function index()
     {
         $this->seedDefaultsIfEmpty();
@@ -105,7 +92,9 @@ class HomeCollaboratorController extends Controller
             'image' => ['required', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ]);
 
-        $validated['image_path'] = $request->file('image')->store('home-collaborators', 'public');
+        $encoded = Base64ImageService::encode($request->file('image'));
+        $validated['image_data'] = $encoded['data'];
+        $validated['image_mime'] = $encoded['mime'];
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['sort_order'] = (int) ($validated['sort_order'] ?? 0);
 
@@ -127,10 +116,9 @@ class HomeCollaboratorController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            if ($this->shouldDeleteStoredImage($collaborator->image_path)) {
-                Storage::disk('public')->delete($collaborator->image_path);
-            }
-            $validated['image_path'] = $request->file('image')->store('home-collaborators', 'public');
+            $encoded = Base64ImageService::encode($request->file('image'));
+            $validated['image_data'] = $encoded['data'];
+            $validated['image_mime'] = $encoded['mime'];
         }
 
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -143,12 +131,16 @@ class HomeCollaboratorController extends Controller
         return response()->json($collaborator->fresh());
     }
 
+    public function image(HomeCollaborator $collaborator)
+    {
+        if ($collaborator->image_data) {
+            return Base64ImageService::response($collaborator->image_data, $collaborator->image_mime);
+        }
+        abort(404);
+    }
+
     public function destroy(HomeCollaborator $collaborator)
     {
-        if ($this->shouldDeleteStoredImage($collaborator->image_path)) {
-            Storage::disk('public')->delete($collaborator->image_path);
-        }
-
         $collaborator->delete();
 
         return response()->json(['success' => true]);

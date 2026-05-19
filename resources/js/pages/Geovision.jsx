@@ -387,7 +387,7 @@ export default function Geovision() {
             </div>
           )}
 
-          {!loading && !error && visibleCategories.length > 0 && (
+          {!error && visibleCategories.length > 0 && (
             <div className="pp-grid" aria-label="Catégories GeoVision">
               {visibleCategories.map(({ category, family }) => {
                 const childCount = getCategoryChildren(category).length;

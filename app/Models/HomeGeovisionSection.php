@@ -11,6 +11,8 @@ class HomeGeovisionSection extends Model
         'title',
         'description',
         'image_path',
+        'image_data',
+        'image_mime',
         'link',
         'sort_order',
         'is_active',
@@ -25,6 +27,10 @@ class HomeGeovisionSection extends Model
 
     public function getImageUrlAttribute(): ?string
     {
+        if ($this->image_data) {
+            return url('/api/home-geovision-sections/' . $this->id . '/image');
+        }
+
         if (!$this->image_path) {
             return null;
         }

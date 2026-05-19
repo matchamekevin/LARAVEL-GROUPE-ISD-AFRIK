@@ -23,6 +23,8 @@ class HomeMarketingCard extends Model
         'cta_label',
         'target_url',
         'image_path',
+        'image_data',
+        'image_mime',
         'is_active',
         'sort_order',
     ];
@@ -41,6 +43,10 @@ class HomeMarketingCard extends Model
 
     public function getImageUrlAttribute(): ?string
     {
+        if ($this->image_data) {
+            return url('/api/home-marketing-cards/' . $this->id . '/image');
+        }
+
         if (!$this->image_path) {
             return null;
         }

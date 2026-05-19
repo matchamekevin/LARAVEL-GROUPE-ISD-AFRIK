@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\HomeTestimonial;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use App\Services\Base64ImageService;
 
 class HomeTestimonialController extends Controller
 {
@@ -88,19 +88,6 @@ class HomeTestimonialController extends Controller
         HomeTestimonial::insert($rows);
     }
 
-    private function shouldDeleteStoredAvatar(?string $path): bool
-    {
-        if (!$path) {
-            return false;
-        }
-
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            return false;
-        }
-
-        return !str_starts_with($path, '/');
-    }
-
     public function index()
     {
         $this->seedDefaultsIfEmpty();
@@ -139,7 +126,9 @@ class HomeTestimonialController extends Controller
             'avatar' => ['required', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ]);
 
-        $validated['avatar_path'] = $request->file('avatar')->store('home-testimonials', 'public');
+        $encoded = Base64ImageService::encode($request->file('avatar'));
+        $validated['avatar_data'] = $encoded['data'];
+        $validated['avatar_mime'] = $encoded['mime'];
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['sort_order'] = (int) ($validated['sort_order'] ?? 0);
         $validated['rating'] = (int) $validated['rating'];
@@ -165,10 +154,9 @@ class HomeTestimonialController extends Controller
         ]);
 
         if ($request->hasFile('avatar')) {
-            if ($this->shouldDeleteStoredAvatar($testimonial->avatar_path)) {
-                Storage::disk('public')->delete($testimonial->avatar_path);
-            }
-            $validated['avatar_path'] = $request->file('avatar')->store('home-testimonials', 'public');
+            $encoded = Base64ImageService::encode($request->file('avatar'));
+            $validated['avatar_data'] = $encoded['data'];
+            $validated['avatar_mime'] = $encoded['mime'];
         }
 
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -182,12 +170,16 @@ class HomeTestimonialController extends Controller
         return response()->json($testimonial->fresh());
     }
 
+    public function image(HomeTestimonial $testimonial)
+    {
+        if ($testimonial->avatar_data) {
+            return Base64ImageService::response($testimonial->avatar_data, $testimonial->avatar_mime);
+        }
+        abort(404);
+    }
+
     public function destroy(HomeTestimonial $testimonial)
     {
-        if ($this->shouldDeleteStoredAvatar($testimonial->avatar_path)) {
-            Storage::disk('public')->delete($testimonial->avatar_path);
-        }
-
         $testimonial->delete();
 
         return response()->json(['success' => true]);

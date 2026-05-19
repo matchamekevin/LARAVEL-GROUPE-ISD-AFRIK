@@ -10,6 +10,8 @@ class HomeCollaborator extends Model
     protected $fillable = [
         'name',
         'image_path',
+        'image_data',
+        'image_mime',
         'object_position',
         'is_active',
         'sort_order',
@@ -24,6 +26,10 @@ class HomeCollaborator extends Model
 
     public function getImageUrlAttribute(): ?string
     {
+        if ($this->image_data) {
+            return url('/api/home-collaborators/' . $this->id . '/image');
+        }
+
         if (!$this->image_path) {
             return null;
         }

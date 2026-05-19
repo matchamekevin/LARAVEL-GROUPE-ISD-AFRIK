@@ -22,6 +22,8 @@ class Image extends Model
         'url',
         'path',
         'alt',
+        'image_data',
+        'image_mime',
         'imageable_type',
         'imageable_id',
     ];
@@ -30,6 +32,22 @@ class Image extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    protected $appends = ['image_url'];
+
+    public function getImageUrlAttribute(): ?string
+    {
+        if ($this->image_data) {
+            return url('/api/images/' . $this->id_image . '/serve');
+        }
+        if ($this->url) {
+            if (str_starts_with($this->url, 'http://') || str_starts_with($this->url, 'https://') || str_starts_with($this->url, '/')) {
+                return $this->url;
+            }
+            return url($this->url);
+        }
+        return null;
+    }
 
     /**
      * Relation polymorphique vers produit, formation ou blog.

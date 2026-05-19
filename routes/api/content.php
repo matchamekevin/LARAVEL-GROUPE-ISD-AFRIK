@@ -15,12 +15,14 @@ use App\Http\Controllers\HomeCollaboratorController;
 use App\Http\Controllers\HomePartnerController;
 use App\Http\Controllers\HomeGeovisionSectionController;
 use App\Http\Controllers\ProjetController;
+use App\Http\Controllers\CategorieProduitController;
 
 // ======================================================
 // 🖼️ IMAGES
 // ======================================================
 Route::prefix('images')->group(function () {
     Route::get('/',                [ImageController::class, 'index']);
+    Route::get('/{id}/serve',      [ImageController::class, 'serve']);
     Route::get('/{id}',            [ImageController::class, 'show']);
     Route::middleware(['auth:sanctum', 'isAdmin'])->post('/', [ImageController::class, 'store']);
     Route::middleware(['auth:sanctum', 'isAdmin'])->put('/{id}', [ImageController::class, 'update']);
@@ -28,6 +30,15 @@ Route::prefix('images')->group(function () {
     Route::middleware(['auth:sanctum', 'isAdmin'])->patch('/{id}/restore', [ImageController::class, 'restore']);
     Route::middleware(['auth:sanctum', 'isAdmin'])->delete('/{id}/force', [ImageController::class, 'forceDelete']);
 });
+
+// ======================================================
+// 🖼️ IMAGE SERVE ROUTES (public)
+// ======================================================
+Route::get('/home-marketing-cards/{card}/image', [HomeMarketingCardController::class, 'image']);
+Route::get('/home-testimonials/{testimonial}/image', [HomeTestimonialController::class, 'image']);
+Route::get('/home-collaborators/{collaborator}/image', [HomeCollaboratorController::class, 'image']);
+Route::get('/home-partners/{partner}/image', [HomePartnerController::class, 'image']);
+Route::get('/home-geovision-sections/{section}/image', [HomeGeovisionSectionController::class, 'image']);
 
 // ======================================================
 // 💬 COMMENTAIRES

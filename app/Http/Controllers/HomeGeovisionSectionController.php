@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\HomeGeovisionSection;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use App\Services\Base64ImageService;
 
 class HomeGeovisionSectionController extends Controller
 {
@@ -59,13 +59,6 @@ class HomeGeovisionSectionController extends Controller
         HomeGeovisionSection::insert($rows);
     }
 
-    private function shouldDeleteStoredImage(?string $path): bool
-    {
-        if (!$path) return false;
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) return false;
-        return !str_starts_with($path, '/');
-    }
-
     public function index()
     {
         $this->seedDefaultsIfEmpty();
@@ -103,7 +96,9 @@ class HomeGeovisionSectionController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image_path'] = $request->file('image')->store('home-geovision', 'public');
+            $encoded = Base64ImageService::encode($request->file('image'));
+            $validated['image_data'] = $encoded['data'];
+            $validated['image_mime'] = $encoded['mime'];
         }
 
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -128,10 +123,9 @@ class HomeGeovisionSectionController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            if ($this->shouldDeleteStoredImage($section->image_path)) {
-                Storage::disk('public')->delete($section->image_path);
-            }
-            $validated['image_path'] = $request->file('image')->store('home-geovision', 'public');
+            $encoded = Base64ImageService::encode($request->file('image'));
+            $validated['image_data'] = $encoded['data'];
+            $validated['image_mime'] = $encoded['mime'];
         }
 
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -144,12 +138,16 @@ class HomeGeovisionSectionController extends Controller
         return response()->json($section->fresh());
     }
 
+    public function image(HomeGeovisionSection $section)
+    {
+        if ($section->image_data) {
+            return Base64ImageService::response($section->image_data, $section->image_mime);
+        }
+        abort(404);
+    }
+
     public function destroy(HomeGeovisionSection $section)
     {
-        if ($this->shouldDeleteStoredImage($section->image_path)) {
-            Storage::disk('public')->delete($section->image_path);
-        }
-
         $section->delete();
 
         return response()->json(['success' => true]);

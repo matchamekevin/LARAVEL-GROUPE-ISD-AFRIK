@@ -19,6 +19,8 @@ class CategorieProduit extends Model
         'segment',
         'image_url',
         'image',
+        'image_data',
+        'image_mime',
         'slug',
         'icone',
         'parent_id',

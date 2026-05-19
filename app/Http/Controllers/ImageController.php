@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ImageRequest;
 use App\Http\Resources\ImageResource;
+use App\Models\Image;
+use App\Services\Base64ImageService;
 use App\Services\ImageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -37,20 +39,22 @@ class ImageController extends Controller
     {
         $validated = $request->validate([
             'image' => ['required', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
-            'folder' => ['nullable', 'string', 'max:120'],
         ]);
 
-        $folder = trim((string) ($validated['folder'] ?? 'uploads'), '/');
-        if ($folder === '') {
-            $folder = 'uploads';
-        }
+        $encoded = Base64ImageService::encode($request->file('image'));
 
-        $path = $request->file('image')->store($folder, 'public');
-        $publicUrl = Storage::disk('public')->url($path);
+        $image = Image::create([
+            'image_data' => $encoded['data'],
+            'image_mime' => $encoded['mime'],
+            'url' => null,
+            'path' => null,
+            'alt' => $request->input('alt', ''),
+        ]);
 
         return response()->json([
-            'url' => $publicUrl,
-            'path' => $path,
+            'id' => $image->id_image,
+            'url' => $image->image_url,
+            'path' => null,
         ], 201);
     }
 
@@ -131,5 +135,27 @@ class ImageController extends Controller
         }
 
         return response()->json(['message' => 'Image supprimée définitivement'], 200);
+    }
+
+    /**
+     * GET /api/images/{id}/serve : servir une image (base64 ou fichier)
+     */
+    public function serve(int $id)
+    {
+        $image = Image::find($id);
+
+        if (!$image) {
+            abort(404);
+        }
+
+        if ($image->image_data) {
+            return Base64ImageService::response($image->image_data, $image->image_mime);
+        }
+
+        if ($image->path && Storage::disk('public')->exists($image->path)) {
+            return response()->file(Storage::disk('public')->path($image->path));
+        }
+
+        abort(404);
     }
 }

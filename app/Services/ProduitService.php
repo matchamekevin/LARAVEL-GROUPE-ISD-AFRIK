@@ -260,15 +260,15 @@ class ProduitService
 
         $urls = [];
         foreach ($images as $image) {
-            $path = $image->store('produits', 'public');
-            // Stocker un chemin web stable, indépendant de APP_URL (évite les URLs localhost en prod).
-            $publicUrl = '/storage/' . ltrim($path, '/');
-            $produit->images()->create([
-                'url' => $publicUrl,
-                'path' => $path,
+            $encoded = Base64ImageService::encode($image);
+            $img = $produit->images()->create([
+                'image_data' => $encoded['data'],
+                'image_mime' => $encoded['mime'],
+                'url' => null,
+                'path' => null,
                 'alt' => $produit->titre,
             ]);
-            $urls[] = $publicUrl;
+            $urls[] = $img->image_url;
         }
         return $urls;
     }
