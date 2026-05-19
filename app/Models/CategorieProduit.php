@@ -13,6 +13,8 @@ class CategorieProduit extends Model
     protected $primaryKey = 'id_categorie';
     public $timestamps = true;
 
+    protected $hidden = ['image_data', 'image_mime'];
+
     protected $fillable = [
         'nom',
         'description',

@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Storage;
 
 class HomeGeovisionSection extends Model
 {
+    protected $hidden = ['image_data', 'image_mime'];
+
     protected $fillable = [
         'title',
         'description',

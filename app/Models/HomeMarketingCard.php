@@ -14,6 +14,8 @@ class HomeMarketingCard extends Model
         'promotion_page' => 'Page promotions',
     ];
 
+    protected $hidden = ['image_data', 'image_mime'];
+
     protected $fillable = [
         'section',
         'title',

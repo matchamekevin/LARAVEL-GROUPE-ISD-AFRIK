@@ -18,6 +18,8 @@ class Image extends Model
     protected $primaryKey = 'id_image';
     public $timestamps = true;
 
+    protected $hidden = ['image_data', 'image_mime'];
+
     protected $fillable = [
         'url',
         'path',

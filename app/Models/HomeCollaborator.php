@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Storage;
 
 class HomeCollaborator extends Model
 {
+    protected $hidden = ['image_data', 'image_mime'];
+
     protected $fillable = [
         'name',
         'image_path',

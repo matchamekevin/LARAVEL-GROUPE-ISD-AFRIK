@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Projet extends Model
 {
+    protected $hidden = ['image_data', 'image_mime'];
+
     protected $fillable = [
         'title',
         'category',

@@ -74,6 +74,8 @@ class Utilisateur extends Authenticatable implements FilamentUser
         'remember_token',
         'two_factor_code',
         'two_factor_expires_at',
+        'avatar_data',
+        'avatar_mime',
     ];
 
     protected $casts = [

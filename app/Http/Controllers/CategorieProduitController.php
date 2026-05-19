@@ -77,7 +77,8 @@ class CategorieProduitController extends Controller
             $query->with('produits.images');
         }
 
-        return response()->json($query->get());
+        $categories = $query->get()->makeHidden(['image_data', 'image_mime']);
+        return response()->json($categories);
     }
 
     /**
@@ -90,9 +91,11 @@ class CategorieProduitController extends Controller
             ->with(['parent.parent'])
             ->findOrFail($id);
 
+        $hidden = ['image_data', 'image_mime'];
+
         if ($request->boolean('tree')) {
             $categorie->load('childrenRecursive');
-            return response()->json($categorie);
+            return response()->json($categorie->makeHidden($hidden));
         }
 
         $displayMode = $categorie->display_mode ?? 'auto';
@@ -100,12 +103,11 @@ class CategorieProduitController extends Controller
 
         if ($displayMode === 'children' || ($displayMode === 'auto' && $hasChildren)) {
             $categorie->load('children');
-            return response()->json($categorie);
+            return response()->json($categorie->makeHidden($hidden));
         }
 
-        // sinon afficher directement les produits
         $categorie->load('produits.images');
-        return response()->json($categorie);
+        return response()->json($categorie->makeHidden($hidden));
     }
 
     /**
@@ -119,9 +121,11 @@ class CategorieProduitController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
+        $hidden = ['image_data', 'image_mime'];
+
         if ($request->boolean('tree')) {
             $categorie->load('childrenRecursive');
-            return response()->json($categorie);
+            return response()->json($categorie->makeHidden($hidden));
         }
 
         $displayMode = $categorie->display_mode ?? 'auto';
@@ -129,11 +133,11 @@ class CategorieProduitController extends Controller
 
         if ($displayMode === 'children' || ($displayMode === 'auto' && $hasChildren)) {
             $categorie->load('children');
-            return response()->json($categorie);
+            return response()->json($categorie->makeHidden($hidden));
         }
 
         $categorie->load('produits.images');
-        return response()->json($categorie);
+        return response()->json($categorie->makeHidden($hidden));
     }
 
     /**
@@ -143,36 +147,11 @@ class CategorieProduitController extends Controller
     {
         $categorie = CategorieProduit::find($id);
 
-        if (!$categorie) {
-            return self::placeholderResponse();
+        if (!$categorie || !$categorie->image_data) {
+            return response()->noContent(204);
         }
 
-        if ($categorie->image_data) {
-            return Base64ImageService::response($categorie->image_data, $categorie->image_mime);
-        }
-
-        if ($categorie->image_url && !str_starts_with($categorie->image_url, 'http')) {
-            $path = ltrim(parse_url($categorie->image_url, PHP_URL_PATH), '/');
-            $path = preg_replace('#^storage/#', '', $path);
-            if (Storage::disk('public')->exists($path)) {
-                return response()->file(Storage::disk('public')->path($path));
-            }
-        }
-
-        return self::placeholderResponse();
-    }
-
-    private static function placeholderResponse()
-    {
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
-  <rect width="800" height="600" fill="#f1f5f9"/>
-  <g transform="translate(400,260)" fill="#94a3b8">
-    <rect x="-40" y="-30" width="80" height="60" rx="8" opacity="0.4"/>
-    <circle cx="0" cy="0" r="12" opacity="0.4"/>
-  </g>
-  <text x="400" y="330" text-anchor="middle" font-family="system-ui,sans-serif" font-size="18" fill="#94a3b8">Image non disponible</text>
-</svg>';
-        return response($svg, 200, ['Content-Type' => 'image/svg+xml', 'Cache-Control' => 'no-cache']);
+        return Base64ImageService::response($categorie->image_data, $categorie->image_mime);
     }
 
     /**
