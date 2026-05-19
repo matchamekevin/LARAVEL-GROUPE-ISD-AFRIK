@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use App\Http\Middleware\IsClient;
 use App\Http\Middleware\IsAdmin;
 use App\Http\Middleware\IsSuperAdmin;
@@ -34,13 +35,17 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->renderable(function (\Throwable $e, $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => 'Erreur lors de la connexion',
-                    'error' => get_class($e).': '.$e->getMessage(),
-                    'file' => $e->getFile().':'.$e->getLine(),
-                ], 500);
+            if (! $request->is('api/*')) {
+                return;
             }
+            if ($e instanceof HttpExceptionInterface) {
+                return;
+            }
+            return response()->json([
+                'message' => 'Erreur lors de la connexion',
+                'error' => get_class($e).': '.$e->getMessage(),
+                'file' => $e->getFile().':'.$e->getLine(),
+            ], 500);
         });
     })
     ->create();
