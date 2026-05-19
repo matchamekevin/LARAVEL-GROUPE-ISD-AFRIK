@@ -14,6 +14,7 @@ class Projet extends Model
         'url',
         'slug',
         'image_path',
+        'image_data',
         'is_active',
         'sort_order',
     ];
@@ -27,6 +28,9 @@ class Projet extends Model
 
     public function getImageUrlAttribute(): ?string
     {
+        if ($this->image_data) {
+            return url('/api/projets/' . $this->id . '/image');
+        }
         if (!$this->image_path) return null;
         if (str_starts_with($this->image_path, 'http://') || str_starts_with($this->image_path, 'https://'))
             return $this->image_path;

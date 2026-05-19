@@ -4,126 +4,32 @@ namespace App\Http\Controllers;
 
 use App\Models\Projet;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class ProjetController extends Controller
 {
-    private const DEFAULT_PROJETS = [
-        [
-            'title' => 'Plateforme ISD Portal',
-            'category' => 'Digital',
-            'description' => 'Solution complète de gestion d\'entreprise incluant la facturation, le CRM et le suivi des stocks.',
-            'image_path' => '/images/solutions/im1.webp',
-            'url' => 'https://portal.isdafrik.com',
-            'slug' => 'isd-portal',
-            'long_desc' => 'ISD Portal est une plateforme tout-en-un qui centralise la gestion de votre entreprise : facturation automatisée, CRM intégré, suivi des stocks en temps réel, rapports financiers et tableau de bord personnalisable. Conçue pour les PME africaines, elle s\'adapte à vos processus métier.',
-            'sort_order' => 10,
-        ],
-        [
-            'title' => 'SafeCity Surveillance',
-            'category' => 'Sécurité',
-            'description' => 'Déploiement d\'un réseau de vidéosurveillance IP haute définition pour une zone industrielle.',
-            'image_path' => '/images/solutions/im2.webp',
-            'url' => 'https://security.isdafrik.com',
-            'slug' => 'safecity-surveillance',
-            'long_desc' => 'SafeCity est un système de vidéosurveillance IP nouvelle génération. Caméras HD, analyse vidéo intelligente, stockage cloud sécurisé et supervision 24h/24. Solution déployée pour les zones industrielles, les centres commerciaux et les administrations publiques.',
-            'sort_order' => 20,
-        ],
-        [
-            'title' => 'AfrikPay',
-            'category' => 'Fintech',
-            'description' => 'Passerelle de paiement sécurisée pour le commerce électronique local et international.',
-            'image_path' => '/images/solutions/im3.webp',
-            'url' => 'https://pay.isdafrik.com',
-            'slug' => 'afrikpay',
-            'long_desc' => 'AfrikPay est une passerelle de paiement qui permet aux entreprises d\'accepter les paiements en ligne en toute sécurité. Supporte TMoney, Flooz, Visa, Mastercard et mobile money. Interface API RESTful pour une intégration facile avec votre site e-commerce.',
-            'sort_order' => 30,
-        ],
-        [
-            'title' => 'EduAfrik Management',
-            'category' => 'Éducation',
-            'description' => 'Système de gestion universitaire (ERP) pour le suivi des étudiants et de la scolarité.',
-            'image_path' => '/images/solutions/im4.webp',
-            'url' => 'https://edu.isdafrik.com',
-            'slug' => 'eduafrik-management',
-            'long_desc' => 'EduAfrik est un ERP universitaire complet : gestion des inscriptions, des notes, des emplois du temps, de la scolarité et des frais. Portail étudiant, espace enseignant et tableau de bord direction. Solution déployée dans plusieurs universités africaines.',
-            'sort_order' => 40,
-        ],
-        [
-            'title' => 'AgroDrone Mapping',
-            'category' => 'Agriculture',
-            'description' => 'Service de cartographie par drone pour l\'optimisation des rendements agricoles.',
-            'image_path' => '/images/solutions/im1.webp',
-            'url' => 'https://drones.isdafrik.com',
-            'slug' => 'agrodrone-mapping',
-            'long_desc' => 'AgroDrone Mapping utilise des drones professionnels pour la cartographie agricole : analyse NDVI des cultures, détection des stress hydriques, estimation des rendements et création d\'orthophotos. Optimisez vos rendements avec des données précises.',
-            'sort_order' => 50,
-        ],
-        [
-            'title' => 'HotelSync Pro',
-            'category' => 'Hôtellerie',
-            'description' => 'Logiciel de gestion hôtelière avec moteur de réservation en temps réel.',
-            'image_path' => '/images/solutions/im2.webp',
-            'url' => 'https://hotels.isdafrik.com',
-            'slug' => 'hotelsync-pro',
-            'long_desc' => 'HotelSync Pro est un logiciel de gestion hôtelière complet : module de réservation, gestion des chambres, check-in/check-out, facturation, reporting et intégration avec les OTA. Moteur de réservation en temps réel pour votre site web.',
-            'sort_order' => 60,
-        ],
-        [
-            'title' => 'BTP Connect',
-            'category' => 'Industrie',
-            'description' => 'Suivi technique et monitoring de chantiers via des capteurs IoT connectés.',
-            'image_path' => '/images/solutions/im3.webp',
-            'url' => 'https://btp.isdafrik.com',
-            'slug' => 'btp-connect',
-            'long_desc' => 'BTP Connect est une solution IoT pour le suivi de chantiers : capteurs de vibration, température, humidité et localisation. Tableau de bord en temps réel, alertes automatiques et rapports d\'avancement. Optimisez la gestion de vos projets BTP.',
-            'sort_order' => 70,
-        ],
-        [
-            'title' => 'ArchiveSafe GED',
-            'category' => 'Archivage',
-            'description' => 'Plateforme de gestion électronique de documents (GED) hautement sécurisée.',
-            'image_path' => '/images/solutions/im4.webp',
-            'url' => 'https://archive.isdafrik.com',
-            'slug' => 'archivesafe-ged',
-            'long_desc' => 'ArchiveSafe GED est une plateforme de gestion électronique de documents avec chiffrement de bout en bout. Indexation automatique, recherche plein texte, gestion des versions, signatures électroniques et conformité RGPD. Solution cloud ou on-premise.',
-            'sort_order' => 80,
-        ],
-    ];
-
-    private function seedDefaultsIfEmpty(): void
+    public function image(Projet $projet)
     {
-        if (Projet::query()->exists()) return;
+        if (!$projet->image_data) {
+            abort(404);
+        }
 
-        $rows = collect(self::DEFAULT_PROJETS)->map(fn (array $item) => [
-            'title' => $item['title'],
-            'category' => $item['category'],
-            'description' => $item['description'],
-            'url' => $item['url'],
-            'slug' => $item['slug'],
-            'long_desc' => $item['long_desc'] ?? null,
-            'image_path' => $item['image_path'],
-            'is_active' => true,
-            'sort_order' => $item['sort_order'],
-            'created_at' => now(),
-            'updated_at' => now(),
-        ])->all();
+        $data = $projet->image_data;
 
-        Projet::insert($rows);
-    }
+        if (str_starts_with($data, 'data:')) {
+            $parts = explode(',', $data, 2);
+            $content = isset($parts[1]) ? base64_decode($parts[1]) : base64_decode($parts[0]);
+            preg_match('/^data:(image\/\w+);/', $data, $mime);
+            $mimeType = $mime[1] ?? 'image/jpeg';
+        } else {
+            $content = base64_decode($data);
+            $mimeType = 'image/jpeg';
+        }
 
-    private function shouldDeleteStoredImage(?string $path): bool
-    {
-        if (!$path) return false;
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) return false;
-        return !str_starts_with($path, '/');
+        return response($content, 200, ['Content-Type' => $mimeType]);
     }
 
     public function index()
     {
-        $this->seedDefaultsIfEmpty();
-
         return response()->json(
             Projet::query()
                 ->where('is_active', true)
@@ -135,8 +41,6 @@ class ProjetController extends Controller
 
     public function adminIndex()
     {
-        $this->seedDefaultsIfEmpty();
-
         return response()->json(
             Projet::query()
                 ->orderBy('sort_order')
@@ -166,7 +70,10 @@ class ProjetController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image_path'] = $request->file('image')->store('projets', 'public');
+            $file = $request->file('image');
+            $mime = $file->getMimeType();
+            $b64 = base64_encode($file->get());
+            $validated['image_data'] = 'data:' . $mime . ';base64,' . $b64;
         }
 
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -194,10 +101,10 @@ class ProjetController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            if ($this->shouldDeleteStoredImage($projet->image_path)) {
-                Storage::disk('public')->delete($projet->image_path);
-            }
-            $validated['image_path'] = $request->file('image')->store('projets', 'public');
+            $file = $request->file('image');
+            $mime = $file->getMimeType();
+            $b64 = base64_encode($file->get());
+            $validated['image_data'] = 'data:' . $mime . ';base64,' . $b64;
         }
 
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -212,10 +119,6 @@ class ProjetController extends Controller
 
     public function destroy(Projet $projet)
     {
-        if ($this->shouldDeleteStoredImage($projet->image_path)) {
-            Storage::disk('public')->delete($projet->image_path);
-        }
-
         $projet->delete();
 
         return response()->json(['success' => true]);

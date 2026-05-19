@@ -109,4 +109,5 @@ Route::get('/home-geovision-sections', [HomeGeovisionSectionController::class, '
 // 📁 PROJETS (public)
 // ======================================================
 Route::get('/projets', [ProjetController::class, 'index']);
+Route::get('/projets/{projet}/image', [ProjetController::class, 'image']);
 Route::get('/projets/{slug}', [ProjetController::class, 'show']);

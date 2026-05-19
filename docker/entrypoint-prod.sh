@@ -79,7 +79,7 @@ fi
 # Nécessaire pour créer les tables Sanctum (personal_access_tokens) et autres.
 if [ -n "${DB_CONNECTION:-}" ] || [ -n "${DATABASE_URL:-}" ] || [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
 	echo "Running database migrations..."
-	php artisan migrate --force || echo "WARN: Migration failed (DB may not be ready yet). Continuing..." >&2
+	php artisan migrate --force 2>/dev/null || echo "WARN: Migration failed (DB may not be ready yet). Continuing..." >&2
 else
 	echo "Skipping migrations (no DB connection configured)"
 fi
