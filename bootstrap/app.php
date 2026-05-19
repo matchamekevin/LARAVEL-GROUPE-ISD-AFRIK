@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Foundation\Application;
-use Throwable;
-use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\IsClient;
@@ -35,7 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->renderable(function (Throwable $e, $request) {
+        $exceptions->renderable(function (\Throwable $e, $request) {
             if ($request->is('api/*')) {
                 return response()->json([
                     'message' => 'Erreur lors de la connexion',
