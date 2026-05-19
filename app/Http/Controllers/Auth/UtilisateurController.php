@@ -289,6 +289,8 @@ class UtilisateurController extends Controller
     {
         $forceSync = filter_var(config('mail.otp_force_sync', false), FILTER_VALIDATE_BOOL);
 
+        Log::info("[OTP] Envoi {$context} pour {$user->email} | mailer=".config('mail.default').' | forceSync='.($forceSync ? 'true' : 'false'));
+
         try {
             if ($forceSync) {
                 Mail::to($user->email)->send(new TwoFactorCodeMail($user));

@@ -30,7 +30,12 @@ fi
 : "${LOG_CHANNEL:=stderr}"
 export LOG_CHANNEL
 
-echo "Effective env: CACHE_STORE=${CACHE_STORE}, SESSION_DRIVER=${SESSION_DRIVER}, QUEUE_CONNECTION=${QUEUE_CONNECTION}, LOG_CHANNEL=${LOG_CHANNEL}"
+# Forcer le mailer Brevo sur Render (SMTP/Gmail est bloqué sur le plan gratuit).
+# L'utilisateur doit configurer BREVO_API_KEY dans les variables d'env Render.
+: "${MAIL_MAILER:=brevo}"
+export MAIL_MAILER
+
+echo "Effective env: CACHE_STORE=${CACHE_STORE}, SESSION_DRIVER=${SESSION_DRIVER}, QUEUE_CONNECTION=${QUEUE_CONNECTION}, LOG_CHANNEL=${LOG_CHANNEL}, MAIL_MAILER=${MAIL_MAILER}"
 
 # Rendre les logs PHP visibles dans les logs Render (stderr)
 export PHP_FPM_LOG_LEVEL=${PHP_FPM_LOG_LEVEL:-notice}
