@@ -289,18 +289,16 @@ class UtilisateurController extends Controller
     {
         $forceSync = filter_var(config('mail.otp_force_sync', false), FILTER_VALIDATE_BOOL);
 
-        if ($forceSync) {
-            Mail::to($user->email)->send(new TwoFactorCodeMail($user));
-            Log::info("OTP {$context} envoyé en synchrone (forcé)", [
-                'user_id' => $user->id_utilisateur,
-                'email' => $user->email,
-            ]);
-
-            return;
-        }
-
         try {
-            // Use regular queue dispatch to avoid lifecycle edge-cases on some prod stacks.
+            if ($forceSync) {
+                Mail::to($user->email)->send(new TwoFactorCodeMail($user));
+                Log::info("OTP {$context} envoyé en synchrone (forcé)", [
+                    'user_id' => $user->id_utilisateur,
+                    'email' => $user->email,
+                ]);
+                return;
+            }
+
             SendTwoFactorCodeJob::dispatch($user);
             Log::info("OTP {$context} mis en file d'attente", [
                 'user_id' => $user->id_utilisateur,
@@ -309,7 +307,6 @@ class UtilisateurController extends Controller
         } catch (\Throwable $e) {
             Log::warning("Envoi OTP {$context} differe indisponible: ".$e->getMessage());
 
-            // Fallback safety: send immediately when queue dispatch fails.
             try {
                 Mail::to($user->email)->send(new TwoFactorCodeMail($user));
                 Log::info("OTP {$context} envoyé en synchrone (fallback)", [
