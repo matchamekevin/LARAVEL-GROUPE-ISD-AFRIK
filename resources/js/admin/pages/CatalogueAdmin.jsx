@@ -12,7 +12,6 @@ import {
   uploadProductImages,
 } from '../api';
 import { useLivePolling } from '../../hooks/useLivePolling';
-import Loader from '../../components/Loader';
 import { toastError, toastSuccess } from '../../utils/toast';
 import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
@@ -1110,7 +1109,7 @@ export default function CatalogueAdmin() {
         </div>
         <div className="admin-catalogue-hero-actions">
           <span className="admin-catalogue-count">
-            {categories.length} categories · {loadingModels ? 'Chargement...' : `${resolveTotalFromMeta(modelsMeta)} modeles`}
+            {categories.length} categories · {`${resolveTotalFromMeta(modelsMeta)} modeles`}
           </span>
         </div>
       </header>
@@ -1176,9 +1175,7 @@ export default function CatalogueAdmin() {
               </div>
             </div>
 
-            {loading ? (
-              <Loader text="Chargement des categories GeoVision..." />
-            ) : filteredCategories.length === 0 ? (
+            {filteredCategories.length === 0 ? (
               <div className="admin-catalogue-empty">Aucune categorie GeoVision trouvee.</div>
             ) : (
               <div className="admin-catalogue-table-wrap">
@@ -1324,9 +1321,7 @@ export default function CatalogueAdmin() {
               </div>
             </div>
 
-            {loadingModels ? (
-              <Loader text="Chargement des modeles GeoVision..." />
-            ) : filteredModels.length === 0 ? (
+            {filteredModels.length === 0 ? (
               <div className="admin-catalogue-empty">Aucun modele GeoVision trouve.</div>
             ) : (
               <div className="admin-catalogue-table-wrap">
@@ -1480,9 +1475,7 @@ export default function CatalogueAdmin() {
               </div>
             </div>
 
-            {loading ? (
-              <Loader text="Chargement des familles GeoVision..." />
-            ) : filteredFamilies.length === 0 ? (
+            {filteredFamilies.length === 0 ? (
               <div className="admin-catalogue-empty">Aucune famille GeoVision trouvee.</div>
             ) : (
               <div className="admin-catalogue-table-wrap">

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import usePageMeta from "../hooks/usePageMeta";
-import Loader from "../components/Loader";
 import { getCategories } from "../services/ProduitService";
 import { resolveIngenierieDomaines } from "../data/ingenierieDomains";
 import "../styles/ingenierie-new.css";
@@ -112,9 +111,7 @@ export default function Ingenierie() {
 </section>
 
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-                {isLoading ? (
-                    <Loader variant="skeleton" count={6} />
-                ) : (
+                {!isLoading && (
                     <div className="ingenierie-grid"> 
                         {domaines.length ? domaines.map((domaine) => (
                             <article 

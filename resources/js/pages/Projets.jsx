@@ -39,9 +39,7 @@ export default function Projets() {
             </section>
 
             <section className="projets-section">
-                {loading ? (
-                    <p style={{ textAlign: 'center', color: '#64748b', padding: '40px 0' }}>Chargement...</p>
-                ) : (
+                {!loading && (
                     <div className="projets-grid">
                         {projets.map((projet) => (
                             <article key={projet.id} className="projet-card">

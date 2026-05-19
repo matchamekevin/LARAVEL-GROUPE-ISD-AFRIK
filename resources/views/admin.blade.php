@@ -10,7 +10,10 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { background: #ffffff; height: 100%; }
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #ffffff; height: 100%; }
-        #root { display: block; min-height: 100vh; }
+        #admin-root { display: block; min-height: 100vh; }
+        .init-loader { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #fff; z-index: 9999; transition: opacity 0.4s ease; }
+        .init-loader svg { width: 48px; height: 48px; animation: init-spin 1s linear infinite; }
+        @keyframes init-spin { to { transform: rotate(360deg); } }
     </style>
     <script>
       /* Répondre silencieusement aux appels du browser logger pour éviter le spam console */
@@ -59,6 +62,12 @@
     <title>Admin</title>
   </head>
   <body>
-    <div id="admin-root"></div>
+    <div id="admin-root">
+        <div class="init-loader">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#172243" stroke-width="2">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+            </svg>
+        </div>
+    </div>
   </body>
 </html>

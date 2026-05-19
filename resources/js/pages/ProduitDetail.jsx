@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
 import api from "../axios";
-import Loader from "../components/Loader";
 import { getCategorie, getProduit, getProduits } from "../services/ProduitService";
 import { useLivePolling } from "../hooks/useLivePolling";
 import { addToCart, isFavorite, subscribeStoreUpdates, toggleFavorite } from "../utils/shopStorage";
@@ -282,13 +281,7 @@ export default function ProduitDetail() {
     handlePaiementProduit(quantityToPay);
   }, [location.state, paiementLoading, produit?.id_produit]);
 
-  if (loading) {
-    return (
-      <div className="pd-page">
-        <Loader variant="skeleton" type="detail" />
-      </div>
-    );
-  }
+  if (loading) return null;
 
   if (!produit) {
     return (

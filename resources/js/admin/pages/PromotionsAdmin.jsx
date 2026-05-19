@@ -5,7 +5,6 @@ import {
   updateHomeMarketingCard,
   deleteHomeMarketingCard,
 } from '../api';
-import Loader from '../../components/Loader';
 import { toastError, toastSuccess } from '../../utils/toast';
 import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
@@ -447,8 +446,7 @@ export default function PromotionsAdmin() {
             <p>{activeSectionMeta.description}</p>
           </div>
 
-          {loading ? <Loader variant="spinner" /> : (
-            filteredCards.length === 0 ? (
+          {filteredCards.length === 0 ? (
               <div className="admin-promotions-empty-box">Aucune promotion trouvee pour les filtres actuels.</div>
             ) : (
               <div className="admin-promotions-cards-grid">
@@ -512,7 +510,7 @@ export default function PromotionsAdmin() {
                 })}
               </div>
             )
-          )}
+          }
         </section>
 
         {modalOpen && (

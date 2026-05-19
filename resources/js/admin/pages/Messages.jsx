@@ -10,7 +10,6 @@ import {
   deleteDevisPrestation,
 } from '../api';
 import { useLivePolling } from '../../hooks/useLivePolling';
-import Loader from '../../components/Loader';
 import { toastError, toastSuccess } from '../../utils/toast';
 import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
@@ -330,9 +329,7 @@ export default function Messages() {
         </div>
       </header>
 
-      {loading ? (
-        <Loader text="Chargement des messages..." />
-      ) : (
+      {(
         <>
           <section className="admin-messages-card">
             <div className="admin-messages-card-head">

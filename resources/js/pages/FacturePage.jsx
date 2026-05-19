@@ -95,7 +95,7 @@ function FacturePage() {
   };
 
   if (error) return <p className="facture-error">{error}</p>;
-  if (!paiement) return <p className="facture-loading">Chargement de la facture...</p>;
+  if (!paiement) return null;
 
   return (
     <div className="facture-wrapper">

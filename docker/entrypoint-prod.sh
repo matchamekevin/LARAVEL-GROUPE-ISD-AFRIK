@@ -75,12 +75,13 @@ if ! nginx -t 2>/tmp/nginx_test.err; then
 	exit 1
 fi
 
-# Exécute les migrations seulement si explicitement demandé (par sécurité en prod)
-if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
-	echo "Running migrations because RUN_MIGRATIONS=true"
-	php artisan migrate --force
+# Exécute les migrations si la DB est configurée, sans bloquer le démarrage.
+# Nécessaire pour créer les tables Sanctum (personal_access_tokens) et autres.
+if [ -n "${DB_CONNECTION:-}" ] || [ -n "${DATABASE_URL:-}" ] || [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
+	echo "Running database migrations..."
+	php artisan migrate --force || echo "WARN: Migration failed (DB may not be ready yet). Continuing..." >&2
 else
-	echo "Skipping migrations (set RUN_MIGRATIONS=true to enable)"
+	echo "Skipping migrations (no DB connection configured)"
 fi
 
 # Nettoyage + rebuild des caches.

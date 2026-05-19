@@ -12,7 +12,6 @@ import {
 import { resolveFormationImageUrl } from '../../utils/mediaUrl';
 import { getApiBase } from '../../utils/apiBase';
 import { useLivePolling } from '../../hooks/useLivePolling';
-import Loader from '../../components/Loader';
 import { toastError, toastSuccess } from '../../utils/toast';
 import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
@@ -578,9 +577,7 @@ export default function Formations() {
           </div>
         </div>
 
-        {loading ? (
-          <Loader text="Chargement des formations..." />
-        ) : (pagination.total === 0 && formations.length === 0) ? (
+        {(pagination.total === 0 && formations.length === 0) ? (
           <div className="admin-formations-empty">Aucune formation trouvee.</div>
         ) : (
           <>

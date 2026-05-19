@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Loader from "../components/Loader";
 import "../styles/profile.css";
 import { getApiBase } from "../utils/apiBase";
 import usePageMeta from "../hooks/usePageMeta";
@@ -113,9 +112,7 @@ export default function Profile() {
     navigate("/login");
   };
 
-  if (!utilisateur) {
-    return <Loader variant="spinner" size="lg" text="Chargement de votre espace personnel..." />;
-  }
+  if (!utilisateur) return null;
 
   const avatarSrc =
     preview ||

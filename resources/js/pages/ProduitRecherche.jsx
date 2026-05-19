@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { searchProduits } from "../services/ProduitService";
 import ProduitCard from "../components/ProduitCard";
-import Loader from "../components/Loader";
 import "../styles/produitrecherche.css";
 import SearchBar from "../components/SearchBar";
 
@@ -78,9 +77,6 @@ export default function ProduitRecherche() {
             }
           </div>
         )}
-
-        {/* Loading */}
-        {loading && <Loader variant="skeleton" count={8} type="card" />}
 
         {/* Résultats */}
         {!loading && resultats.length > 0 && (

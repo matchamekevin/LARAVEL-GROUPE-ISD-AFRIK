@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import Loader from "../components/Loader";
 import "../styles/formationDetails.css";
 import { getApiBase } from "../utils/apiBase";
 import { resolveFormationImageUrl } from "../utils/mediaUrl";
@@ -44,9 +43,7 @@ const FormationDetails = () => {
     return resolveFormationImageUrl(formation?.images?.[0]?.url, getApiBase());
   };
 
-  if (loading) {
-    return <Loader variant="spinner" size="lg" text="Chargement..." overlay />;
-  }
+  if (loading) return null;
 
   if (error || !formation) {
     return (

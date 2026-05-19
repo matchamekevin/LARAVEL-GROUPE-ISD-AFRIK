@@ -6,7 +6,6 @@ import {
 } from '../api';
 import { toastError, toastSuccess } from '../../utils/toast';
 import { notifyMutation } from '../../utils/mutationBus';
-import Loader from '../../components/Loader';
 import '../styles/admin-shared.css';
 import '../styles/form-mail-routes.css';
 
@@ -231,9 +230,7 @@ export default function FormMailRoutes() {
           <span>{routes.length}</span>
         </div>
 
-        {loading ? (
-          <Loader text="Chargement des formulaires..." />
-        ) : routes.length === 0 ? (
+        {routes.length === 0 ? (
           <div className="admin-mail-routes-empty">Aucune configuration email disponible.</div>
         ) : (
           <div className="admin-mail-routes-list">

@@ -1,6 +1,5 @@
 import { submitContactMessage } from '../api';
 import React, { useEffect, useMemo, useState } from 'react';
-import Loader from '../../components/Loader';
 import { toastError, toastSuccess } from "../../utils/toast";
 import { notifyMutation } from "../../utils/mutationBus";
 import { useLivePolling } from '../../hooks/useLivePolling';
@@ -489,8 +488,6 @@ export default function IngenieriePageAdmin() {
       setSeeding(false);
     }
   };
-
-  if (loading) return <Loader variant="spinner" size="lg" text="Chargement..." />;
 
   return (
     <div className="admin-page admin-page-max admin-ingenierie-page">

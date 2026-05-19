@@ -3,7 +3,6 @@ import { createAdminAdjoint, getCountries, getUsers, me, updateUser, updateUserS
 import { useLivePolling } from '../../hooks/useLivePolling';
 import { toastError, toastSuccess } from "../../utils/toast";
 import { notifyMutation } from "../../utils/mutationBus";
-import Loader from '../../components/Loader';
 import '../styles/admin-shared.css';
 import '../styles/users.css';
 import SearchBar from '../../components/SearchBar';
@@ -476,10 +475,6 @@ export default function Users() {
     // Fallback: accept generic between 8 and 15 digits
     if (d.length >= 8 && d.length <= 15) return `+${d}`;
     return null;
-  }
-
-  if (loading) {
-    return <Loader text="Chargement des utilisateurs..." />;
   }
 
   const visibleUsers = (users || []).filter((uu) => {

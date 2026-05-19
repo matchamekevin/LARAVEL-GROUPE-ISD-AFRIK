@@ -5,7 +5,6 @@ import {
   updateProjet,
   deleteProjet,
 } from '../api';
-import Loader from '../../components/Loader';
 import { toastError, toastSuccess } from '../../utils/toast';
 import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
@@ -333,7 +332,7 @@ export default function ProjetsAdmin() {
             <button type="button" className="btn-secondary" onClick={handleBulkDeleteItems} disabled={isBulkActionDisabled}>Supprimer la selection</button>
           </div>
         </div>
-        {loading ? <Loader variant="spinner" /> : (
+        {(
           <table className="admin-bulk-table">
             <thead>
               <tr>

@@ -30,15 +30,7 @@ export default function ProjetPresentation() {
     projet?.long_desc || projet?.description || "Présentation de nos projets"
   );
 
-  if (loading) {
-    return (
-      <div className="projets-page projets-modern">
-        <section className="projets-hero-modern" style={{ padding: "60px 20px" }}>
-          <p style={{ textAlign: 'center', color: '#64748b' }}>Chargement...</p>
-        </section>
-      </div>
-    );
-  }
+  if (loading) return null;
 
   if (!projet) {
     return (

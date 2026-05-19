@@ -5,7 +5,6 @@ import {
   updateHomePartner,
   deleteHomePartner,
 } from '../api';
-import Loader from '../../components/Loader';
 import { toastError, toastSuccess } from '../../utils/toast';
 import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
@@ -373,7 +372,7 @@ export default function PartnersAdmin() {
             </button>
           </div>
         </div>
-        {loading ? <Loader variant="spinner" /> : (
+        {(
           <table className="admin-bulk-table">
             <thead>
               <tr>

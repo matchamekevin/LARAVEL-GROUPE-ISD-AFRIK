@@ -18,7 +18,6 @@ import GeovisionHomeAdmin from './pages/GeovisionHomeAdmin';
 import IngenieriePageAdmin from './pages/IngenieriePageAdmin';
 import ProjetsAdmin from './pages/ProjetsAdmin';
 import Login from './pages/Login';
-import Loader from '../components/Loader';
 import ScrollToTop from '../components/ScrollToTop';
 import { ADMIN_NAV_ITEMS } from './config/navigation';
 
@@ -46,12 +45,20 @@ function navLinkStyle({ isActive }) {
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => {
+    const el = document.querySelector(".init-loader");
+    if (el) {
+      el.style.opacity = "0";
+      setTimeout(() => el.remove(), 500);
+    }
+  }, []);
 
   useEffect(() => {
     const handleSessionInvalidated = () => {
       setUser(null);
-      setLoading(false);
+      setAuthReady(true);
       if (typeof window !== 'undefined' && window.location.pathname !== '/admin/login') {
         window.location.href = '/admin/login';
       }
@@ -62,7 +69,7 @@ export default function App() {
     let mounted = true;
     if (!hasAdminToken()) {
       setUser(null);
-      setLoading(false);
+      setAuthReady(true);
       window.removeEventListener('admin-session-invalidated', handleSessionInvalidated);
       return () => {
         mounted = false;
@@ -85,7 +92,7 @@ export default function App() {
         setUser(profile);
       })
       .catch(() => { if (mounted) setUser(null); })
-      .finally(() => { if (mounted) setLoading(false); });
+      .finally(() => { if (mounted) setAuthReady(true); });
     return () => {
       mounted = false;
       window.removeEventListener('admin-session-invalidated', handleSessionInvalidated);
@@ -119,7 +126,7 @@ export default function App() {
     return () => clearInterval(intervalId);
   }, [user]);
 
-  if (loading) return <Loader variant="spinner" size="lg" overlay text="Chargement..." />;
+  if (!authReady) return null;
 
   if (!user) {
     return (

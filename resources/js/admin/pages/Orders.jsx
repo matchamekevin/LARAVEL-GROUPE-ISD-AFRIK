@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { getOrders, getOrder, updateOrderStatus, updateOrderDeliveryStatus } from '../api';
 import { toastError, toastSuccess } from "../../utils/toast";
 import { notifyMutation } from "../../utils/mutationBus";
-import Loader from '../../components/Loader';
 import { useLivePolling } from '../../hooks/useLivePolling';
 import '../styles/admin-shared.css';
 import '../styles/orders.css';
@@ -226,9 +225,7 @@ export default function Orders() {
 
 
 
-      {loading ? (
-        <Loader text="Chargement des commandes..." />
-      ) : (pagination.total === 0 && orders.length === 0) ? (
+      {(pagination.total === 0 && orders.length === 0) ? (
         <div className="admin-orders-empty">
           <div className="admin-orders-empty-icon">Aucune commande</div>
           <h3>Aucune commande trouvee</h3>

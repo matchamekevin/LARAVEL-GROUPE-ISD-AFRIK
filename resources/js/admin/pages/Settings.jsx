@@ -157,9 +157,7 @@ export default function Settings() {
             Profil du compte
           </h2>
 
-          {loading ? (
-            <p style={{ color: '#6B7280', marginTop: 0 }}>Chargement du profil...</p>
-          ) : null}
+          {null}
 
           <div style={{ marginBottom: '1rem', color: '#374151', fontSize: '0.9rem' }}>
             <strong>Nom complet:</strong> {fullNamePreview || 'Non renseigne'}

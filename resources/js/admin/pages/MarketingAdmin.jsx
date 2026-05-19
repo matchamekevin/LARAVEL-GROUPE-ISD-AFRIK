@@ -5,7 +5,6 @@ import {
   updateHomeMarketingCard,
   deleteHomeMarketingCard,
 } from '../api';
-import Loader from '../../components/Loader';
 import { toastError, toastSuccess } from '../../utils/toast';
 import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
@@ -291,7 +290,7 @@ export default function MarketingAdmin() {
 
       <div className="card">
         <h2 style={{ marginBottom: '0.75rem' }}>Cartes configurées</h2>
-        {loading ? <Loader variant="spinner" /> : (
+        {(
           <div style={{ display: 'grid', gap: '1rem' }}>
             <div>
               <h3 style={{ marginBottom: '0.45rem', color: '#172243' }}>Nos Offres ({grouped.offer.length})</h3>

@@ -4,7 +4,6 @@ import "../styles/home.css";
 import "../styles/geovision-categories.css";
 import "../../css/product-action-buttons.css";
 import SearchBar from "../components/SearchBar";
-import Loader from "../components/Loader";
 import { getCategories, getProduits } from "../services/ProduitService";
 import { toastError } from "../utils/toast";
 import { useLivePolling } from "../hooks/useLivePolling";
@@ -43,7 +42,6 @@ export default function Geovision() {
   const [searchQuery, setSearchQuery] = useState("");
   const [modelResults, setModelResults] = useState([]);
   const [modelLoading, setModelLoading] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshToken, setRefreshToken] = useState(0);
   const deferredSearch = useDeferredValue(searchQuery);
@@ -51,7 +49,6 @@ export default function Geovision() {
   useEffect(() => {
     let isMounted = true;
 
-    setLoading(true);
     setError("");
 
     const loadFamilies = async () => {
@@ -109,9 +106,6 @@ export default function Geovision() {
         const geoErr = requestError.response?.data?.message || "Impossible de charger le catalogue GeoVision.";
         toastError(geoErr);
         setError(geoErr);
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
       });
 
     return () => {
@@ -163,7 +157,7 @@ export default function Geovision() {
     () => backgroundLoadFamilies(),
     {
       intervalMs: 4000,
-      enabled: !loading,
+      enabled: true,
     }
   );
 
@@ -368,19 +362,16 @@ export default function Geovision() {
             </div>
           )}
 
-          {loading && <Loader variant="skeleton" count={4} />}
-          {!loading && error && <div className="pp-empty">{error}</div>}
-          {!loading && !error && !modelLoading && isSearching && visibleCategories.length === 0 && modelResults.length === 0 && (
+          {error && <div className="pp-empty">{error}</div>}
+          {!error && !modelLoading && isSearching && visibleCategories.length === 0 && modelResults.length === 0 && (
             <div className="pp-empty">Aucune catégorie ou modèle ne correspond à votre recherche.</div>
           )}
 
-          {!loading && !error && isSearching && (
+          {!error && isSearching && (
             <div className="pp-group-stack" style={{ marginTop: "1rem" }}>
               <div className="pp-group-section">
                 <h3 className="pp-group-title">Modèles trouvés</h3>
-                {modelLoading ? (
-                  <Loader text="Recherche des modèles GeoVision..." />
-                ) : modelResults.length === 0 ? (
+                {modelResults.length === 0 ? (
                   <div className="pp-empty">Aucun modèle trouvé pour cette recherche.</div>
                 ) : (
                   <div className="pp-grid" aria-label="Modèles GeoVision trouvés">

@@ -5,7 +5,6 @@ import {
   updateHomeGeovisionSection,
   deleteHomeGeovisionSection,
 } from '../api';
-import Loader from '../../components/Loader';
 import { toastError, toastSuccess } from '../../utils/toast';
 import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
@@ -167,9 +166,7 @@ export default function GeovisionHomeAdmin() {
         </button>
       </div>
 
-      {loading ? (
-        <Loader />
-      ) : (
+      {(
         <div className="admin-geovision-card">
           <table className="admin-table">
             <thead>

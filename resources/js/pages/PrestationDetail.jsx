@@ -133,15 +133,7 @@ export default function PrestationDetail() {
     prestation ? prestation.description : "Prestation non disponible"
   );
 
-  if (isLoading) {
-    return (
-      <div className="prestation-not-found">
-        <div className="prestation-not-found-content">
-          <p>Chargement de la prestation...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return null;
 
   const toggleService = (service) => {
     const updated = new Set(selectedServices);

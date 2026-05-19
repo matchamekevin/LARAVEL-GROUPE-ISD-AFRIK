@@ -268,66 +268,12 @@ export default function Dashboard() {
               <i className="fas fa-wave-square" style={{ marginRight: '0.5rem', color: '#2563eb' }} />
               Activité récente
             </h2>
-            <span style={{ color: '#64748b', fontSize: '0.85rem' }}>{loading ? 'Chargement...' : `${mergedRecentActivity.length} évènements`}</span>
+            <span style={{ color: '#64748b', fontSize: '0.85rem' }}>{mergedRecentActivity.length} évènements</span>
           </div>
 
-          {loading && (
-            <div style={{ color: '#64748b', textAlign: 'center', padding: '1.8rem 1rem' }}>
-              Mise à jour de l&apos;activité...
-            </div>
-          )}
-
-          {!loading && mergedRecentActivity.length === 0 && (
+          {mergedRecentActivity.length === 0 && (
             <div style={{ color: '#64748b', textAlign: 'center', padding: '1.8rem 1rem' }}>
               Aucune activité à afficher pour le moment.
-            </div>
-          )}
-
-          {!loading && mergedRecentActivity.length > 0 && (
-            <div style={{ display: 'grid', gap: '0.75rem' }}>
-              {mergedRecentActivity.map((item) => (
-                <article
-                  key={item.id}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'auto 1fr auto',
-                    gap: '0.8rem',
-                    alignItems: 'center',
-                    borderRadius: '0.75rem',
-                    border: '1px solid rgba(148, 163, 184, 0.2)',
-                    padding: '0.72rem 0.8rem',
-                  }}
-                >
-                  <span
-                    style={{
-                      width: '2rem',
-                      height: '2rem',
-                      borderRadius: '0.6rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: `${item.color}20`,
-                      color: item.color,
-                    }}
-                  >
-                    <i className={`fas ${item.icon}`} />
-                  </span>
-
-                  <div>
-                    <p style={{ margin: 0, fontSize: '0.92rem', color: '#0f172a', fontWeight: 600 }}>{item.title}</p>
-                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.82rem', color: '#64748b' }}>{item.subtitle}</p>
-                  </div>
-
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{ margin: 0, color: '#0f172a', fontWeight: 700, fontSize: '0.88rem' }}>
-                      {item.amount > 0 ? CURRENCY.format(item.amount) : '—'}
-                    </p>
-                    <p style={{ margin: '0.2rem 0 0', color: '#94a3b8', fontSize: '0.78rem' }}>
-                      {item.date ? item.date.toLocaleDateString('fr-FR') : '-'}
-                    </p>
-                  </div>
-                </article>
-              ))}
             </div>
           )}
         </section>
@@ -350,11 +296,6 @@ export default function Dashboard() {
             <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Basé sur le volume d&apos;achat</span>
           </div>
 
-          {loading ? (
-            <div style={{ color: '#64748b', textAlign: 'center', padding: '1.8rem 1rem' }}>
-              Chargement du classement...
-            </div>
-          ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.92rem' }}>
                 <thead>
@@ -410,8 +351,7 @@ export default function Dashboard() {
                 </tbody>
               </table>
             </div>
-          )}
-        </section>
+          </section>
       </div>
     </div>
   );

@@ -1,11 +1,10 @@
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import axios from "axios";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import MainLayout from "./layouts/MainLayout";
 import AutoRefreshProvider from "./providers/AutoRefreshProvider";
-import Loader from "./components/Loader";
 import ScrollToTop from "./components/ScrollToTop";
 import { PAGE_ALIASES, PUBLIC_APP_ROUTES } from "./routes/publicRoutes";
 
@@ -66,13 +65,20 @@ function LazyPage({ name }) {
 }
 
 function App() {
+    useEffect(() => {
+        const el = document.querySelector(".init-loader");
+        if (el) {
+            el.style.opacity = "0";
+            setTimeout(() => el.remove(), 500);
+        }
+    }, []);
+
     return (
         <BrowserRouter>
             <Toaster position="top-right" reverseOrder={false} />
             <MainLayout>
-                {/* Gestion unifiée du scroll: top sur navigation normale, restauration sur back/forward */}
                   <ScrollToTop />
-                <Suspense fallback={<Loader variant="spinner" size="md" />}>
+                <Suspense fallback={null}>
                     <Routes>
                         {PUBLIC_APP_ROUTES.map(({ path, page }) => (
                             <Route key={path} path={path} element={<LazyPage name={page} />} />

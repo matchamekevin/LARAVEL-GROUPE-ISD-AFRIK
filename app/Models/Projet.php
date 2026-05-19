@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class Projet extends Model
 {
@@ -33,8 +32,6 @@ class Projet extends Model
             return $this->image_path;
         if (str_starts_with($this->image_path, '/'))
             return $this->image_path;
-        if (!Storage::disk('public')->exists($this->image_path))
-            return null;
         return '/storage/' . $this->image_path;
     }
 }

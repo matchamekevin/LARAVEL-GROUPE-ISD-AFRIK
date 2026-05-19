@@ -4,7 +4,6 @@ import "../styles/home.css";
 import "../styles/geovision-categories.css";
 import "../../css/product-action-buttons.css";
 import SearchBar from "../components/SearchBar";
-import Loader from "../components/Loader";
 import { getCategorie, getCategorieBySlug, getProduits } from "../services/ProduitService";
 import { toastError } from "../utils/toast";
 import { useLivePolling } from "../hooks/useLivePolling";
@@ -405,7 +404,6 @@ export default function GeovisionCategorie() {
                 </div>
               )}
 
-              {(loadingCategory || loadingProducts) && <Loader variant="skeleton" count={4} />}
               {!loadingCategory && error && <div className="pp-empty">{error}</div>}
               {!loadingCategory && !loadingProducts && !error && visibleProducts.length === 0 && (
                 <div className="pp-empty">Aucun modèle trouvé pour cette catégorie avec ces critères.</div>

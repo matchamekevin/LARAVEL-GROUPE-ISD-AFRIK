@@ -48,14 +48,7 @@ const PaymentPage = () => {
     }
   };
 
-  if (!formation) {
-    return (
-      <div className="loading-container">
-        <div className="spinner"></div>
-        <p>Chargement...</p>
-      </div>
-    );
-  }
+  if (!formation) return null;
 
   return (
     <div className="payment-page">
