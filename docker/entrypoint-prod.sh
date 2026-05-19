@@ -89,6 +89,10 @@ fi
 if [ -n "${DB_CONNECTION:-}" ] || [ -n "${DATABASE_URL:-}" ] || [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
 	echo "Running database migrations..."
 	php artisan migrate --force 2>/dev/null || echo "WARN: Migration failed (DB may not be ready yet). Continuing..." >&2
+
+	# Seed admin users on first deploy (vérifie si l'admin test existe déjà)
+	echo "Seeding admin users if needed..."
+	php artisan db:seed --class=UtilisateurSeeder --force 2>/dev/null || true
 else
 	echo "Skipping migrations (no DB connection configured)"
 fi
