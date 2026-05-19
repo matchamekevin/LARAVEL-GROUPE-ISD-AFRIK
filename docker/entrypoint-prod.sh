@@ -53,7 +53,7 @@ chown -R www-data:www-data storage bootstrap/cache public || true
 # Rendre les dossiers de cache/writes tolérants pour les environnements de déploiement
 # (temporaire/diagnostique) — permet d'éviter les erreurs de chemin de cache Laravel
 ## Assure l'existence des sous-dossiers attendus par Laravel
-mkdir -p storage/framework/views storage/logs
+mkdir -p storage/framework/views storage/framework/cache/data storage/logs
 chown -R www-data:www-data storage bootstrap/cache public storage/framework storage/logs || true
 chmod -R 0777 storage bootstrap/cache public storage/framework storage/logs || true
 

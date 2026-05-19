@@ -4,28 +4,46 @@ namespace App\Http\Controllers;
 
 use App\Models\Projet;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProjetController extends Controller
 {
     public function image(Projet $projet)
     {
-        if (!$projet->image_data) {
-            abort(404);
+        if ($projet->image_data) {
+            $data = $projet->image_data;
+
+            if (str_starts_with($data, 'data:')) {
+                $parts = explode(',', $data, 2);
+                $content = isset($parts[1]) ? base64_decode($parts[1]) : base64_decode($parts[0]);
+                preg_match('/^data:(image\/\w+);/', $data, $mime);
+                $mimeType = $mime[1] ?? 'image/jpeg';
+            } else {
+                $content = base64_decode($data);
+                $mimeType = 'image/jpeg';
+            }
+
+            return response($content, 200, ['Content-Type' => $mimeType]);
         }
 
-        $data = $projet->image_data;
-
-        if (str_starts_with($data, 'data:')) {
-            $parts = explode(',', $data, 2);
-            $content = isset($parts[1]) ? base64_decode($parts[1]) : base64_decode($parts[0]);
-            preg_match('/^data:(image\/\w+);/', $data, $mime);
-            $mimeType = $mime[1] ?? 'image/jpeg';
-        } else {
-            $content = base64_decode($data);
-            $mimeType = 'image/jpeg';
+        if ($projet->image_path && Storage::disk('public')->exists($projet->image_path)) {
+            return response()->file(Storage::disk('public')->path($projet->image_path));
         }
 
-        return response($content, 200, ['Content-Type' => $mimeType]);
+        return self::placeholderResponse();
+    }
+
+    private static function placeholderResponse()
+    {
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#f1f5f9"/>
+  <g transform="translate(400,260)" fill="#94a3b8">
+    <rect x="-40" y="-30" width="80" height="60" rx="8" opacity="0.4"/>
+    <circle cx="0" cy="0" r="12" opacity="0.4"/>
+  </g>
+  <text x="400" y="330" text-anchor="middle" font-family="system-ui,sans-serif" font-size="18" fill="#94a3b8">Image non disponible</text>
+</svg>';
+        return response($svg, 200, ['Content-Type' => 'image/svg+xml', 'Cache-Control' => 'no-cache']);
     }
 
     public function index()

@@ -592,8 +592,10 @@ class UtilisateurController extends Controller
             $normalizedEmail = Str::lower(trim((string) $credentials['email']));
             Log::debug('Login attempt for email: '.$normalizedEmail.', portal: '.($credentials['portal'] ?? 'none'));
 
-            // ✅ Recherche de l'utilisateur
-            $user = Utilisateur::whereRaw('LOWER(email) = ?', [$normalizedEmail])->first();
+            // ✅ Recherche de l'utilisateur (exclut les comptes supprimés)
+            $user = Utilisateur::whereRaw('LOWER(email) = ?', [$normalizedEmail])
+                ->whereNull('deleted_at')
+                ->first();
 
             if (! $user) {
                 Log::warning('Login failed: User not found for email: '.$normalizedEmail);
@@ -673,9 +675,14 @@ class UtilisateurController extends Controller
             Log::error('[LOGIN] ❌ Exception: '.get_class($e).' | '.$e->getMessage().' | '.$e->getFile().':'.$e->getLine());
             Log::error('[LOGIN] 📋 Stack trace: '.$e->getTraceAsString());
 
-            return response()->json([
-                'message' => 'Erreur lors de la connexion',
-            ], 500);
+            $payload = ['message' => 'Erreur lors de la connexion'];
+            if (config('app.debug')) {
+                $payload['error'] = $e->getMessage();
+                $payload['class'] = get_class($e);
+                $payload['file'] = $e->getFile().':'.$e->getLine();
+            }
+
+            return response()->json($payload, 500);
         }
     }
 

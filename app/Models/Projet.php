@@ -34,8 +34,8 @@ class Projet extends Model
         if (!$this->image_path) return null;
         if (str_starts_with($this->image_path, 'http://') || str_starts_with($this->image_path, 'https://'))
             return $this->image_path;
-        if (str_starts_with($this->image_path, '/'))
-            return $this->image_path;
-        return '/storage/' . $this->image_path;
+        // Route through controller for all local files, so missing files
+        // on ephemeral storage (e.g. Render) show a placeholder instead of 404
+        return url('/api/projets/' . $this->id . '/image');
     }
 }
