@@ -30,9 +30,9 @@ fi
 : "${LOG_CHANNEL:=stderr}"
 export LOG_CHANNEL
 
-# Forcer le mailer Brevo sur Render (SMTP/Gmail est bloqué sur le plan gratuit).
-# L'utilisateur doit configurer BREVO_API_KEY dans les variables d'env Render.
-: "${MAIL_MAILER:=brevo}"
+# Forcer le mailer Resend sur Render (SMTP/Gmail est bloqué sur le plan gratuit).
+# L'utilisateur doit configurer RESEND_API_KEY dans les variables d'env Render.
+: "${MAIL_MAILER:=resend}"
 export MAIL_MAILER
 
 echo "Effective env: CACHE_STORE=${CACHE_STORE}, SESSION_DRIVER=${SESSION_DRIVER}, QUEUE_CONNECTION=${QUEUE_CONNECTION}, LOG_CHANNEL=${LOG_CHANNEL}, MAIL_MAILER=${MAIL_MAILER}"
@@ -111,6 +111,18 @@ php artisan package:discover --ansi
 php artisan config:cache
 php artisan view:cache
 
+# Force PHP-FPM pool to listen on TCP 127.0.0.1:9000 (default www.conf may vary)
+PHP_FPM_POOL_CONF="${PHP_FPM_POOL_CONF:-/usr/local/etc/php-fpm.d/zz-render.conf}"
+cat > "$PHP_FPM_POOL_CONF" <<'POOLEOF'
+[www]
+listen = 127.0.0.1:9000
+pm = dynamic
+pm.max_children = 5
+pm.start_servers = 1
+pm.min_spare_servers = 1
+pm.max_spare_servers = 3
+POOLEOF
+
 echo "✓ Setup complete, launching supervisord..."
 
 # Render free tier: ne pas lancer worker/scheduler par défaut.
@@ -127,7 +139,7 @@ logfile=/dev/null
 logfile_maxbytes=0
 
 [program:php-fpm]
-command=/usr/local/sbin/php-fpm
+command=/usr/local/sbin/php-fpm -F
 autostart=true
 autorestart=true
 stderr_logfile=/dev/stderr
