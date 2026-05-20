@@ -121,9 +121,8 @@ return [
     */
 
     'from' => [
-        // Prefer Brevo sender config when present, fallback to MAIL_FROM_* envs
-        'address' => env('BREVO_SENDER_EMAIL', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
-        'name' => env('BREVO_SENDER_NAME', env('MAIL_FROM_NAME', 'Example')),
+        'address' => env('MAIL_FROM_ADDRESS', env('BREVO_SENDER_EMAIL', 'hello@example.com')),
+        'name' => env('MAIL_FROM_NAME', env('BREVO_SENDER_NAME', 'Example')),
     ],
 
     /*
