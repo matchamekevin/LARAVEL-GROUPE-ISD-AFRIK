@@ -18,11 +18,15 @@ services:
         value: https://laravel-groupe-isd-afrik.onrender.com
       - key: VITE_API_BASE
         value: https://laravel-groupe-isd-afrik.onrender.com
-      # Mail configuration (production): API provider (Resend)
+      # Mail configuration (production): API provider (Brevo)
       - key: MAIL_MAILER
-        value: resend
-      - key: RESEND_API_KEY
-        value: 'REPLACE_WITH_RESEND_API_KEY'
+        value: brevo
+      - key: BREVO_API_KEY
+        value: 'REPLACE_WITH_BREVO_API_KEY'
+      - key: BREVO_SENDER_EMAIL
+        value: no-reply@your-domain.com
+      - key: BREVO_SENDER_NAME
+        value: "ISD Afrik"
       - key: MAIL_FROM_ADDRESS
         value: no-reply@your-domain.com
       - key: MAIL_FROM_NAME
