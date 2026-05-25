@@ -536,7 +536,7 @@ class GeovisionCatalogSyncService
     /**
      * @param array<string, mixed> $definition
      */
-    private function syncProduct(array $definition, CategorieProduit $category, int $countryId, int $userId): void
+    private function syncProduct(array $definition, CategorieProduit $category, string $countryId, string $userId): void
     {
         $product = Produit::query()
             ->where('slug', $definition['slug'])

@@ -2,17 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-/**
- * Class Commentaire
- * Représente un commentaire associé à un produit, une formation ou un blog.
- */
 class Commentaire extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasUuid;
 
     protected $table = 'commentaires';
     protected $primaryKey = 'id_commentaire';

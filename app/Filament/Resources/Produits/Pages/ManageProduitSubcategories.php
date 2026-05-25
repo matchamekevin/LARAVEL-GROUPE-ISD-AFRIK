@@ -22,13 +22,13 @@ class ManageProduitSubcategories extends Page
 
     protected static ?string $title = 'Sous-catégories';
 
-    public ?int $parentCategoryId = null;
+    public ?string $parentCategoryId = null;
 
     public bool $isCreateModalOpen = false;
 
     public bool $isEditModalOpen = false;
 
-    public ?int $editingSubcategoryId = null;
+    public ?string $editingSubcategoryId = null;
 
     public array $form = [
         'nom' => '',
@@ -93,7 +93,7 @@ class ManageProduitSubcategories extends Page
 
     public function updatedParentCategoryId($value): void
     {
-        $this->parentCategoryId = $value ? (int) $value : null;
+        $this->parentCategoryId = $value ?: null;
         $this->form['parent_id'] = $this->parentCategoryId;
     }
 
@@ -104,17 +104,17 @@ class ManageProduitSubcategories extends Page
         $this->isCreateModalOpen = true;
     }
 
-    public function openEditModal(int $subcategoryId): void
+    public function openEditModal(string $subcategoryId): void
     {
         $subcategory = CategorieProduit::query()->findOrFail($subcategoryId);
 
-        $this->editingSubcategoryId = (int) $subcategory->id_categorie;
+        $this->editingSubcategoryId = $subcategory->id_categorie;
         $this->form = [
             'nom' => (string) $subcategory->nom,
             'slug' => (string) ($subcategory->slug ?? ''),
             'description' => (string) ($subcategory->description ?? ''),
             'image_url' => (string) ($subcategory->image_url ?? $subcategory->image ?? ''),
-            'parent_id' => $subcategory->parent_id ? (int) $subcategory->parent_id : null,
+            'parent_id' => $subcategory->parent_id ?: null,
             'ordre' => (int) ($subcategory->ordre ?? 0),
             'actif' => (bool) $subcategory->actif,
         ];
@@ -186,7 +186,7 @@ class ManageProduitSubcategories extends Page
             ->send();
     }
 
-    public function deleteSubcategory(int $subcategoryId): void
+    public function deleteSubcategory(string $subcategoryId): void
     {
         $subcategory = CategorieProduit::query()
             ->with(['produits', 'childrenRecursive'])
@@ -238,7 +238,7 @@ class ManageProduitSubcategories extends Page
             ],
             'form.description' => ['nullable', 'string'],
             'form.image_url' => ['nullable', 'string', 'max:255'],
-            'form.parent_id' => ['nullable', 'integer', 'exists:categories_produits,id_categorie'],
+            'form.parent_id' => ['nullable', 'string', 'exists:categories_produits,id_categorie'],
             'form.ordre' => ['nullable', 'integer', 'min:0'],
             'form.actif' => ['boolean'],
             'imageUpload' => ['nullable', 'image', 'max:5120'],

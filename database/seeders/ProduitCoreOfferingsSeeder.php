@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class ProduitCoreOfferingsSeeder extends Seeder
 {
@@ -19,6 +20,7 @@ class ProduitCoreOfferingsSeeder extends Seeder
 
         DB::table('categories_produits')->insert([
             [
+                'id_categorie' => (string) Str::uuid(),
                 'nom' => 'Solutions de gestion d\'entreprise ERP, CRM, BI et workflows adaptés à votre activité',
                 'slug' => 'solutions-gestion-erp-crm-bi-workflows',
                 'description' => "Solutions de gestion d'entreprise ERP, CRM, BI et workflows adaptés à votre activité",
@@ -31,6 +33,7 @@ class ProduitCoreOfferingsSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id_categorie' => (string) Str::uuid(),
                 'nom' => 'Fourniture de drone et formation en pilotage de drones',
                 'slug' => 'fourniture-drone-formation-pilotage',
                 'description' => 'Fourniture de drone et formation en pilotage de drones',
@@ -43,6 +46,7 @@ class ProduitCoreOfferingsSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id_categorie' => (string) Str::uuid(),
                 'nom' => 'Ingénierie',
                 'slug' => 'ingenierie',
                 'description' => 'Solutions d\'ingénierie pour vos projets techniques et opérationnels',

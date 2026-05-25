@@ -97,9 +97,9 @@ class ProduitRequest extends FormRequest
         'stock_alerte'       => 'nullable|integer|min:0',
         'statut'             => 'nullable|string|in:disponible,indisponible,rupture,actif',
         'date_creation'      => 'nullable|date',
-        'id_categorie'       => ['required', 'integer', $categoryRule, $geoVisionLeafCategoryRule],
-        'id_pays'            => 'required|integer|exists:pays,id_pays',
-        'id_utilisateur'     => 'nullable|integer|exists:utilisateurs,id_utilisateur',
+        'id_categorie'       => ['required', 'string', $categoryRule, $geoVisionLeafCategoryRule],
+        'id_pays'            => 'required|string|exists:pays,id_pays',
+        'id_utilisateur'     => 'nullable|string|exists:utilisateurs,id_utilisateur',
         'segment'            => 'nullable|string|in:general,geovision',
 
         // Champs qui posaient problème
@@ -172,7 +172,7 @@ class ProduitRequest extends FormRequest
             'statut.in'          => 'Le statut doit être "disponible" ou "indisponible".',
             'date_creation.date' => 'La date de création doit être une date valide.',
             'id_pays.required'   => 'Le pays est obligatoire.',
-            'id_pays.integer'    => 'Le pays doit être un entier valide.',
+            'id_pays.string'    => 'Le pays doit être une chaîne valide.',
             'id_pays.exists'     => 'Le pays spécifié est introuvable.',
             'id_categorie.exists' => 'La catégorie sélectionnée ne correspond pas au segment du catalogue.',
             'reference.unique'   => 'Cette référence produit existe déjà.',

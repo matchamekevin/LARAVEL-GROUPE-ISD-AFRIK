@@ -70,7 +70,7 @@ class ImageController extends Controller
     /**
      * GET /api/images/{id} : récupérer une image
      */
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         $image = $this->imageService->find($id);
 
@@ -84,7 +84,7 @@ class ImageController extends Controller
     /**
      * PUT /api/images/{id} : mettre à jour une image
      */
-    public function update(ImageRequest $request, int $id): JsonResponse
+    public function update(ImageRequest $request, string $id): JsonResponse
     {
         $image = $this->imageService->update($id, $request->validated());
 
@@ -98,7 +98,7 @@ class ImageController extends Controller
     /**
      * DELETE /api/images/{id} : supprimer une image (soft delete)
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(string $id): JsonResponse
     {
         $deleted = $this->imageService->delete($id);
 
@@ -112,7 +112,7 @@ class ImageController extends Controller
     /**
      * PATCH /api/images/{id}/restore : restaurer une image supprimée
      */
-    public function restore(int $id): JsonResponse
+    public function restore(string $id): JsonResponse
     {
         $image = $this->imageService->restore($id);
 
@@ -126,7 +126,7 @@ class ImageController extends Controller
     /**
      * DELETE /api/images/{id}/force : suppression définitive
      */
-    public function forceDelete(int $id): JsonResponse
+    public function forceDelete(string $id): JsonResponse
     {
         $deleted = $this->imageService->forceDelete($id);
 
@@ -140,7 +140,7 @@ class ImageController extends Controller
     /**
      * GET /api/images/{id}/serve : servir une image (base64 ou fichier)
      */
-    public function serve(int $id)
+    public function serve(string $id)
     {
         $image = Image::find($id);
 

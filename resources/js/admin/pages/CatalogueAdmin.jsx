@@ -171,8 +171,8 @@ const matchesSearchQuery = (query, values) => {
   return tokens.every((token) => haystack.includes(token));
 };
 
-const getCategoryId = (category) => Number(category?.id || category?.id_categorie || 0);
-const getCategoryParentId = (category) => Number(category?.parent_id || category?.parent?.id || category?.parent?.id_categorie || 0);
+const getCategoryId = (category) => String(category?.id || category?.id_categorie || 0);
+const getCategoryParentId = (category) => String(category?.parent_id || category?.parent?.id || category?.parent?.id_categorie || 0);
 
 const normalizeImageSrc = (value) => {
   const raw = String(value || '').trim();
@@ -330,7 +330,7 @@ export default function CatalogueAdmin() {
 
   const filteredModels = useMemo(() => {
     return models.filter((model) => {
-      const categoryOk = modelCategoryFilter === 'all' || Number(model.category_id || model.id_categorie) === Number(modelCategoryFilter);
+      const categoryOk = modelCategoryFilter === 'all' || String(model.category_id || model.id_categorie) === String(modelCategoryFilter);
       if (!categoryOk) return false;
       const values = [
         model.id,
@@ -371,7 +371,7 @@ export default function CatalogueAdmin() {
   const isBulkCategoryActionDisabled = bulkCategoryDeleting || selectedCategoryCount === 0;
 
   const modelIds = useMemo(
-    () => filteredModels.map((model) => Number(model.id || model.id_produit)).filter(Boolean),
+    () => filteredModels.map((model) => String(model.id || model.id_produit)).filter(Boolean),
     [filteredModels]
   );
   const selectedModelIdList = useMemo(
@@ -515,17 +515,14 @@ export default function CatalogueAdmin() {
     try {
       const params = { segment: GEOVISION_SEGMENT, per_page: 50 };
       if (modelCategoryFilter !== 'all') {
-        params.id_categorie = Number(modelCategoryFilter);
+params.id_categorie = String(modelCategoryFilter);
       }
       const res = await getProducts(params);
       setModels(Array.isArray(res.data) ? res.data : []);
       setModelsMeta(res.meta || { total: 0 });
     } catch (err) {
-      console.error(err);
-      setModels([]);
-      setModelsMeta({ total: 0 });
-    } finally {
-      setLoadingModels(false);
+      console.error('Erreur chargement modèles:', err);
+      toastError('Erreur lors du chargement des modèles');
     }
   }
 
@@ -533,7 +530,7 @@ export default function CatalogueAdmin() {
     try {
       const params = { segment: GEOVISION_SEGMENT, per_page: 50 };
       if (modelCategoryFilter !== 'all') {
-        params.id_categorie = Number(modelCategoryFilter);
+        params.id_categorie = String(modelCategoryFilter);
       }
       const res = await getProducts(params);
       setModels(Array.isArray(res.data) ? res.data : []);
@@ -581,7 +578,7 @@ export default function CatalogueAdmin() {
         nom: categoryForm.nom,
         slug: categoryForm.slug || undefined,
         description: categoryForm.description || null,
-        parent_id: isFamilyEditor ? null : (categoryForm.parent_id ? Number(categoryForm.parent_id) : null),
+        parent_id: isFamilyEditor ? null : (categoryForm.parent_id ? String(categoryForm.parent_id) : null),
         ordre: Number(categoryForm.ordre || 0),
         image_url: categoryForm.image_url || null,
         actif: Boolean(categoryForm.actif),
@@ -911,7 +908,7 @@ export default function CatalogueAdmin() {
 
     const modelsById = new Map();
     models.forEach((model) => {
-      const id = Number(model.id || model.id_produit);
+      const id = String(model.id || model.id_produit);
       if (id) {
         modelsById.set(id, model);
       }
@@ -936,7 +933,7 @@ export default function CatalogueAdmin() {
     let lastErrorMessage = '';
 
     for (const model of selectedModels) {
-      const id = Number(model.id || model.id_produit);
+      const id = String(model.id || model.id_produit);
       if (!id) continue;
 
       try {
@@ -1007,7 +1004,7 @@ export default function CatalogueAdmin() {
       return;
     }
 
-    const selectedCategoryId = Number(modelForm.id_categorie);
+    const selectedCategoryId = String(modelForm.id_categorie);
     const selectedCategory = categoriesById.get(selectedCategoryId);
     const selectedCategoryHasChildren = categoryChildIds.has(selectedCategoryId);
     if (!selectedCategory || !getCategoryParentId(selectedCategory) || selectedCategoryHasChildren) {
@@ -1020,7 +1017,7 @@ export default function CatalogueAdmin() {
       const payload = {
         ...modelForm,
         segment: GEOVISION_SEGMENT,
-        id_categorie: Number(modelForm.id_categorie),
+        id_categorie: String(modelForm.id_categorie),
         price: Number(modelForm.price || 0),
         stock: Number(modelForm.stock || 0),
         stock_alerte: Number(modelForm.stock_alerte || 0),
@@ -1349,8 +1346,8 @@ export default function CatalogueAdmin() {
                   </thead>
                   <tbody>
                     {filteredModels.map((model) => {
-                      const isChecked = selectedModelIds.has(Number(model.id || model.id_produit));
-                      const categoryName = categoriesById.get(Number(model.category_id || model.id_categorie))?.nom || model.category_name || '—';
+                      const isChecked = selectedModelIds.has(String(model.id || model.id_produit));
+                      const categoryName = categoriesById.get(String(model.category_id || model.id_categorie))?.nom || model.category_name || '—';
                       const thumb = model.image_url || (Array.isArray(model.image_urls) ? model.image_urls[0] : null);
                       const features = Array.isArray(model.specifications?.features) ? model.specifications.features : [];
 
@@ -1360,7 +1357,7 @@ export default function CatalogueAdmin() {
                             <input
                               type="checkbox"
                               checked={isChecked}
-                              onChange={() => toggleModelSelection(Number(model.id || model.id_produit))}
+                              onChange={() => toggleModelSelection(String(model.id || model.id_produit))}
                               disabled={bulkModelDeleting}
                               aria-label={`Selectionner le modele ${model?.title || model.id}`}
                             />

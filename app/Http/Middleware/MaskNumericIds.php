@@ -1,5 +1,7 @@
 <?php
 
+// TODO: Remove - UUIDs are already non-numeric
+
 namespace App\Http\Middleware;
 
 use Closure;

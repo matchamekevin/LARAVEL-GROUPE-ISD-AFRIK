@@ -60,10 +60,6 @@ class UserFactory extends Factory
             'date_creation' => now(),
         ];
 
-        if (Schema::hasColumn('utilisateurs', 'uuid')) {
-            $data['uuid'] = (string) Str::uuid();
-        }
-
         if (Schema::hasColumn('utilisateurs', 'email_verified_at')) {
             $data['email_verified_at'] = now();
         }

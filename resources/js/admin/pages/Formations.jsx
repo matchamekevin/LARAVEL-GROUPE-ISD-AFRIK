@@ -234,7 +234,7 @@ export default function Formations() {
         duree: Number(newFormation.duree),
         prix: Number(newFormation.prix),
         places_disponibles: Number(newFormation.places_disponibles),
-        id_pays: Number(newFormation.id_pays),
+        id_pays: String(newFormation.id_pays),
       });
 
       const created = createRes?.data || {};
@@ -374,7 +374,7 @@ export default function Formations() {
         categorie: f._categorie ?? f.categorie,
         date_debut: f._date_debut ?? f.date_debut,
         places_disponibles: Number(f._places_disponibles ?? f.places_disponibles),
-        id_pays: Number(f._id_pays ?? f.id_pays),
+        id_pays: String(f._id_pays ?? f.id_pays),
       });
 
       const nextImageFile = f._image_file || null;
@@ -455,7 +455,7 @@ export default function Formations() {
         categorie: editForm.categorie,
         date_debut: editForm.date_debut,
         places_disponibles: Number(editForm.places_disponibles || 1),
-        id_pays: Number(editForm.id_pays || 0),
+        id_pays: String(editForm.id_pays || 0),
       });
 
       const nextImageFile = editForm.image_file || null;

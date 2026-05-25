@@ -14,6 +14,7 @@ Route::middleware('auth:sanctum')->post('formations/{id}/commentaires', [Formati
 
 Route::get('formations',                [FormationController::class, 'index']);
 Route::middleware(['auth:sanctum', 'isAdmin'])->post('formations', [FormationController::class, 'store']);
+Route::get('formations/catalogue',       [FormationController::class, 'downloadCatalogue']);
 Route::get('formations/{formation}',    [FormationController::class, 'show']);
 Route::middleware(['auth:sanctum', 'isAdmin'])->put('formations/{formation}', [FormationController::class, 'update']);
 Route::middleware(['auth:sanctum', 'isAdmin'])->patch('formations/{formation}', [FormationController::class, 'update']);

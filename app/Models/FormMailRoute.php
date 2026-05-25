@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class FormMailRoute extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $table = 'form_mail_routes';
 

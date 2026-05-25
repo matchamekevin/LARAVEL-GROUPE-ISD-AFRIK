@@ -378,7 +378,7 @@ export default function Products() {
   const categoriesById = useMemo(() => {
     const map = new Map();
     categories.forEach((category) => {
-      const id = Number(category.id ?? category.id_categorie);
+      const id = String(category.id ?? category.id_categorie ?? "");
       if (id) map.set(id, category);
     });
     return map;
@@ -387,21 +387,21 @@ export default function Products() {
   const countriesById = useMemo(() => {
     const map = new Map();
     countries.forEach((country) => {
-      const id = Number(country.id ?? country.id_pays);
+      const id = String(country.id ?? country.id_pays ?? "");
       if (id) map.set(id, country);
     });
     return map;
   }, [countries]);
 
   const selectedProduct = useMemo(
-    () => products.find((item) => Number(item.id ?? item.id_produit) === Number(currentProductId)) || null,
+    () => products.find((item) => String(item.id ?? item.id_produit) === String(currentProductId)) || null,
     [products, currentProductId]
   );
 
   const selectedProductImages = useMemo(() => getProductImages(selectedProduct), [selectedProduct]);
 
   const visibleProductIds = useMemo(
-    () => products.map((product) => Number(product.id ?? product.id_produit)).filter(Boolean),
+    () => products.map((product) => String(product.id ?? product.id_produit)).filter(Boolean),
     [products]
   );
 
@@ -427,12 +427,12 @@ export default function Products() {
   }, [categories, categoryQuery]);
 
   const getCategoryId = useCallback(
-    (category) => Number(category?.id ?? category?.id_categorie ?? 0),
+    (category) => String(category?.id ?? category?.id_categorie ?? ""),
     []
   );
 
   const getCategoryParentId = useCallback(
-    (category) => Number(category?.parent_id ?? category?.parent?.id ?? category?.parent?.id_categorie ?? 0),
+    (category) => String(category?.parent_id ?? category?.parent?.id ?? category?.parent?.id_categorie ?? ""),
     []
   );
 
@@ -782,7 +782,7 @@ export default function Products() {
         }
 
         if (filters.id_categorie !== 'all') {
-          params.id_categorie = Number(filters.id_categorie);
+          params.id_categorie = String(filters.id_categorie);
         }
 
         if (filters.trashed) {
@@ -807,15 +807,15 @@ export default function Products() {
 
         setCurrentProductId((previous) => {
           if (!previous) {
-            return nextProducts[0] ? Number(nextProducts[0].id ?? nextProducts[0].id_produit) : null;
+            return nextProducts[0] ? String(nextProducts[0].id ?? nextProducts[0].id_produit) : null;
           }
 
-          const exists = nextProducts.some((item) => Number(item.id ?? item.id_produit) === Number(previous));
+          const exists = nextProducts.some((item) => String(item.id ?? item.id_produit) === String(previous));
           if (exists) {
             return previous;
           }
 
-          return nextProducts[0] ? Number(nextProducts[0].id ?? nextProducts[0].id_produit) : null;
+          return nextProducts[0] ? String(nextProducts[0].id ?? nextProducts[0].id_produit) : null;
         });
       } catch (error) {
         setProducts([]);
@@ -846,7 +846,7 @@ export default function Products() {
       }
 
       if (filters.id_categorie !== 'all') {
-        params.id_categorie = Number(filters.id_categorie);
+        params.id_categorie = String(filters.id_categorie);
       }
 
       if (filters.trashed) {
@@ -871,15 +871,15 @@ export default function Products() {
 
       setCurrentProductId((previous) => {
         if (!previous) {
-          return nextProducts[0] ? Number(nextProducts[0].id ?? nextProducts[0].id_produit) : null;
+          return nextProducts[0] ? String(nextProducts[0].id ?? nextProducts[0].id_produit) : null;
         }
 
-        const exists = nextProducts.some((item) => Number(item.id ?? item.id_produit) === Number(previous));
+        const exists = nextProducts.some((item) => String(item.id ?? item.id_produit) === String(previous));
         if (exists) {
           return previous;
         }
 
-        return nextProducts[0] ? Number(nextProducts[0].id ?? nextProducts[0].id_produit) : null;
+        return nextProducts[0] ? String(nextProducts[0].id ?? nextProducts[0].id_produit) : null;
       });
     } catch (error) {
       // silent background refresh
@@ -954,7 +954,8 @@ export default function Products() {
   };
 
   const handleStartEdit = (product) => {
-    const id = Number(product.id ?? product.id_produit);
+    const id = String(product.id ?? product.id_produit);
+    setCurrentProductId(id);
     setEditorMode('edit');
     setCurrentProductId(id);
     setUploadFiles([]);
@@ -1010,8 +1011,8 @@ export default function Products() {
         prix_promo: form.prix_promo === '' ? null : Number(form.prix_promo),
         stock: Number(form.stock || 0),
         stock_alerte: Number(form.stock_alerte || 0),
-        id_categorie: Number(form.id_categorie),
-        id_pays: Number(form.id_pays),
+        id_categorie: String(form.id_categorie),
+        id_pays: String(form.id_pays),
         garantie: garantie || null,
         poids: form.poids === '' ? null : Number(form.poids),
         slug: slug || null,
@@ -1102,7 +1103,7 @@ export default function Products() {
 
     const productsByIdMap = new Map();
     products.forEach((product) => {
-      const id = Number(product.id ?? product.id_produit);
+      const id = String(product.id ?? product.id_produit ?? "");
       if (id) {
         productsByIdMap.set(id, product);
       }
@@ -1132,7 +1133,7 @@ export default function Products() {
     let lastErrorMessage = '';
 
     for (const product of selectedProducts) {
-      const id = Number(product.id ?? product.id_produit);
+      const id = String(product.id ?? product.id_produit ?? "");
       if (!id) continue;
 
       try {
@@ -1320,7 +1321,7 @@ export default function Products() {
   };
 
   const handleStartEditCategory = (category) => {
-    const id = Number(category.id ?? category.id_categorie);
+    const id = String(category.id ?? category.id_categorie ?? "");
     setEditingCategoryId(id);
     setCategoryEditorOpen(true);
     setCategoryForm({
@@ -1365,7 +1366,7 @@ export default function Products() {
         nom,
         slug: String(categoryForm.slug || '').trim() || undefined,
         description: String(categoryForm.description || '').trim() || null,
-        parent_id: isSubcategoryMode ? Number(categoryForm.parent_id) : (technicalRootId || null),
+        parent_id: isSubcategoryMode ? String(categoryForm.parent_id) : (technicalRootId || null),
         ordre: Number(categoryForm.ordre || 0),
         actif: Boolean(categoryForm.actif),
         segment: 'general',
@@ -1450,7 +1451,7 @@ export default function Products() {
 
   const handleDeleteCategory = async (id) => {
     if (bulkCategoryDeleting) return;
-    const category = categories.find(cat => Number(cat.id ?? cat.id_categorie) === Number(id));
+    const category = categories.find(cat => String(cat.id ?? cat.id_categorie) === String(id));
     const productCount = Number(category?.produits_count ?? 0);
 
     let forceDelete = false;
@@ -1607,12 +1608,12 @@ export default function Products() {
           </thead>
           <tbody>
             {products.map((product) => {
-              const id = Number(product.id ?? product.id_produit);
+              const id = String(product.id ?? product.id_produit ?? "");
               const isTrashed = isTrashedProduct(product);
-              const isSelected = Number(currentProductId) === id;
+              const isSelected = String(currentProductId) === id;
               const isChecked = selectedProductIds.has(id);
               const categoryName =
-                categoriesById.get(Number(product.category_id ?? product.id_categorie))?.nom ||
+                categoriesById.get(String(product.category_id ?? product.id_categorie ?? ""))?.nom ||
                 product.category_name ||
                 product.categorie?.nom ||
                 '-';
@@ -2026,8 +2027,8 @@ export default function Products() {
 
                         const renderNode = (node, depth = 0) => {
                           const id = node.__id || getCategoryId(node);
-                          const isChecked = selectedCategoryIds.has(Number(id));
-                          const parentName = node.parent?.nom || categoriesById.get(Number(node.parent_id || 0))?.nom || '-';
+                          const isChecked = selectedCategoryIds.has(String(id));
+                          const parentName = node.parent?.nom || categoriesById.get(String(node.parent_id || ""))?.nom || '-';
                           const categoryThumb = getCategoryImage(node);
 
                           rows.push(
@@ -2344,8 +2345,8 @@ export default function Products() {
                   <h3>{selectedProduct.title || selectedProduct.titre || 'Sans titre'}</h3>
                   <p>{selectedProduct.description_courte || selectedProduct.description || 'Aucune description.'}</p>
                   <div className="admin-products-summary-tags">
-                    <span>{categoriesById.get(Number(selectedProduct.category_id ?? selectedProduct.id_categorie))?.nom || selectedProduct.category_name || 'Categorie inconnue'}</span>
-                    <span>{countriesById.get(Number(selectedProduct.id_pays))?.nom || 'Pays inconnu'}</span>
+                    <span>{categoriesById.get(String(selectedProduct.category_id ?? selectedProduct.id_categorie ?? ""))?.nom || selectedProduct.category_name || 'Categorie inconnue'}</span>
+                    <span>{countriesById.get(String(selectedProduct.id_pays ?? ""))?.nom || 'Pays inconnu'}</span>
                     <span>{formatPrice(selectedProduct.price ?? selectedProduct.prix)}</span>
                   </div>
                 </div>
@@ -2652,7 +2653,7 @@ export default function Products() {
                           <span>{image.alt || 'Image produit'}</span>
                           {typeof image.id === 'number' ? (
                             <DeleteIconButton
-                              onClick={() => handleDeleteImage(Number(selectedProduct.id ?? selectedProduct.id_produit), image.id)}
+                              onClick={() => handleDeleteImage(String(selectedProduct.id ?? selectedProduct.id_produit ?? ""), image.id)}
                               className="admin-products-btn admin-products-danger"
                               title="Supprimer"
                               ariaLabel={`Supprimer l'image ${image?.id}`}

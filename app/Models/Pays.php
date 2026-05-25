@@ -2,30 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-/**
- * Class Pays
- * Représente un pays enregistré sur la plateforme ISD Afrik.
- * Chaque pays peut avoir plusieurs produits, formations et utilisateurs.
- */
 class Pays extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasUuid;
 
-    // Table associée
     protected $table = 'pays';
-
-    // Clé primaire personnalisée
     protected $primaryKey = 'id_pays';
-
-    // Type de clé primaire
-    protected $keyType = 'int';
-
-    // Auto-incrémentation activée
-    public $incrementing = true;
 
     // Gestion des timestamps
     public $timestamps = true;

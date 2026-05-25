@@ -69,7 +69,6 @@ class NestedCategoryExampleSeeder extends Seeder
             Produit::updateOrCreate(
                 ['slug' => 'macbook-pro-m3-exemple'],
                 [
-                    'uuid' => (string) Str::uuid(),
                     'titre' => 'MacBook Pro M3 (Exemple Nesting)',
                     'reference' => 'MBP-M3-NEST',
                     'description' => 'Un exemple de produit dans une sous-sous-sous-catégorie.',

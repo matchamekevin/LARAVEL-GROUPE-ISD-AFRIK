@@ -110,7 +110,7 @@ class CategorieProduitSeeder extends Seeder
             ],
         ];
 
-        $upsertNode = function (array $node, ?int $parentId = null, int $order = 0) use (&$upsertNode) {
+        $upsertNode = function (array $node, ?string $parentId = null, int $order = 0) use (&$upsertNode) {
             $slug = $node['slug'] ?? Str::slug($node['nom']);
 
             $category = CategorieProduit::query()->updateOrCreate(
@@ -128,7 +128,7 @@ class CategorieProduitSeeder extends Seeder
             );
 
             foreach ($node['children'] ?? [] as $index => $child) {
-                $upsertNode($child, (int) $category->id_categorie, $index + 1);
+                $upsertNode($child, $category->id_categorie, $index + 1);
             }
         };
 

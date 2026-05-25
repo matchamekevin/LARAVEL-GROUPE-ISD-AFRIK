@@ -6,79 +6,134 @@ use App\Models\CategorieProduit;
 use App\Models\Produit;
 use App\Services\Base64ImageService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Support\CacheVersion;
 
 class CategorieProduitController extends Controller
 {
     private const SLUG_MAX_TRIES = 50;
+    private const CACHE_TTL_SECONDS = 300;
+
+    private function categorySelectColumns(): array
+    {
+        return [
+            'id_categorie',
+            'nom',
+            'description',
+            'segment',
+            'image_url',
+            'image',
+            'slug',
+            'icone',
+            'parent_id',
+            'ordre',
+            'display_mode',
+            'actif',
+            'created_at',
+            'updated_at',
+        ];
+    }
+
+    private function selectImageColumns($query): void
+    {
+        $query->select([
+            'id_image',
+            'url',
+            'path',
+            'alt',
+            'imageable_id',
+            'imageable_type',
+            'created_at',
+            'updated_at',
+        ])->addSelect(DB::raw('image_data IS NOT NULL AS has_image_data'));
+    }
+
+    private function cacheKey(Request $request, string $suffix): string
+    {
+        return CacheVersion::key('categories', $suffix . '.' . md5($request->fullUrl()));
+    }
+
+    private function bumpCache(): void
+    {
+        CacheVersion::bump('categories');
+    }
 
     /**
      * GET /api/categories-produits
      */
     public function index(Request $request)
     {
-        $query = CategorieProduit::query()
+        $cacheKey = $this->cacheKey($request, 'index');
+
+        $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($request) {
+            $query = CategorieProduit::query()
+            ->select($this->categorySelectColumns())
             ->withCount('produits')
-            ->with('parent')
+            ->with(['parent' => fn ($q) => $q->select($this->categorySelectColumns())])
             ->orderBy('ordre')
             ->orderBy('nom');
 
-        if ($request->filled('segment')) {
-            $query->where('segment', $request->query('segment'));
-        }
+            if ($request->filled('segment')) {
+                $query->where('segment', $request->query('segment'));
+            }
 
-        if ($request->filled('id_pays')) {
-            $idPays = (int) $request->query('id_pays');
+            if ($request->filled('id_pays') && \Illuminate\Support\Str::isUuid($request->query('id_pays'))) {
+                $idPays = $request->query('id_pays');
 
-            $leafIds = CategorieProduit::whereHas('produits', fn ($q) => $q->where('id_pays', $idPays))
-                ->pluck('id_categorie');
+                $leafIds = CategorieProduit::whereHas('produits', fn ($q) => $q->parPays($idPays))
+                    ->pluck('id_categorie');
 
-            if ($leafIds->isEmpty()) {
-                $query->whereRaw('1=0');
-            } else {
-                $allNodeIds = $leafIds->toArray();
-                $visited = $leafIds->toArray();
+                if ($leafIds->isEmpty()) {
+                    $query->whereRaw('1=0');
+                } else {
+                    $allNodeIds = $leafIds->toArray();
+                    $visited = $leafIds->toArray();
 
-                while (! empty($visited)) {
-                    $parents = CategorieProduit::whereIn('id_categorie', $visited)
-                        ->whereNotNull('parent_id')
-                        ->pluck('parent_id')
-                        ->unique()
-                        ->values()
-                        ->toArray();
+                    while (! empty($visited)) {
+                        $parents = CategorieProduit::whereIn('id_categorie', $visited)
+                            ->whereNotNull('parent_id')
+                            ->pluck('parent_id')
+                            ->unique()
+                            ->values()
+                            ->toArray();
 
-                    $newParents = array_diff($parents, $allNodeIds);
-                    if (empty($newParents)) break;
+                        $newParents = array_diff($parents, $allNodeIds);
+                        if (empty($newParents)) break;
 
-                    $allNodeIds = array_merge($allNodeIds, $newParents);
-                    $visited = $newParents;
+                        $allNodeIds = array_merge($allNodeIds, $newParents);
+                        $visited = $newParents;
+                    }
+
+                    $query->whereIn('id_categorie', $allNodeIds);
                 }
-
-                $query->whereIn('id_categorie', $allNodeIds);
             }
-        }
 
-        if ($request->boolean('tree')) {
-            $query->whereNull('parent_id')
-                ->with('childrenRecursive');
-        } elseif ($request->filled('parent_id')) {
-            $parentId = $request->query('parent_id');
-            if ($parentId === 'null') {
-                $query->whereNull('parent_id');
-            } else {
-                $query->where('parent_id', $parentId);
+            if ($request->boolean('tree')) {
+                $query->whereNull('parent_id')
+                    ->with('childrenRecursive');
+            } elseif ($request->filled('parent_id')) {
+                $parentId = $request->query('parent_id');
+                if ($parentId === 'null') {
+                    $query->whereNull('parent_id');
+                } else {
+                    $query->where('parent_id', $parentId);
+                }
             }
-        }
 
-        if ($request->boolean('with_products')) {
-            $query->with('produits.images');
-        }
+            if ($request->boolean('with_products')) {
+                $query->with(['produits.images' => function ($q) {
+                    $this->selectImageColumns($q);
+                }]);
+            }
 
-        $categories = $query->get()->makeHidden(['image_data', 'image_mime']);
-        return response()->json($categories);
+            return $query->get()->makeHidden(['image_data', 'image_mime'])->toArray();
+        });
+
+        return response()->json($payload);
     }
 
     /**
@@ -86,28 +141,37 @@ class CategorieProduitController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $categorie = CategorieProduit::query()
-            ->withCount('produits')
-            ->with(['parent.parent'])
-            ->findOrFail($id);
+        $cacheKey = $this->cacheKey($request, 'show.' . $id);
 
-        $hidden = ['image_data', 'image_mime'];
+        $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($request, $id) {
+            $categorie = CategorieProduit::query()
+                ->select($this->categorySelectColumns())
+                ->withCount('produits')
+                ->with(['parent.parent' => fn ($q) => $q->select($this->categorySelectColumns())])
+                ->findOrFail($id);
 
-        if ($request->boolean('tree')) {
-            $categorie->load('childrenRecursive');
-            return response()->json($categorie->makeHidden($hidden));
-        }
+            $hidden = ['image_data', 'image_mime'];
 
-        $displayMode = $categorie->display_mode ?? 'auto';
-        $hasChildren = $categorie->children()->exists();
+            if ($request->boolean('tree')) {
+                $categorie->load('childrenRecursive');
+                return $categorie->makeHidden($hidden)->toArray();
+            }
 
-        if ($displayMode === 'children' || ($displayMode === 'auto' && $hasChildren)) {
-            $categorie->load('children');
-            return response()->json($categorie->makeHidden($hidden));
-        }
+            $displayMode = $categorie->display_mode ?? 'auto';
+            $hasChildren = $categorie->children()->exists();
 
-        $categorie->load('produits.images');
-        return response()->json($categorie->makeHidden($hidden));
+            if ($displayMode === 'children' || ($displayMode === 'auto' && $hasChildren)) {
+                $categorie->load('children');
+                return $categorie->makeHidden($hidden)->toArray();
+            }
+
+            $categorie->load(['produits.images' => function ($q) {
+                $this->selectImageColumns($q);
+            }]);
+            return $categorie->makeHidden($hidden)->toArray();
+        });
+
+        return response()->json($payload);
     }
 
     /**
@@ -115,29 +179,38 @@ class CategorieProduitController extends Controller
      */
     public function showBySlug(Request $request, string $slug)
     {
-        $categorie = CategorieProduit::query()
-            ->withCount('produits')
-            ->with(['parent.parent'])
-            ->where('slug', $slug)
-            ->firstOrFail();
+        $cacheKey = $this->cacheKey($request, 'slug.' . $slug);
 
-        $hidden = ['image_data', 'image_mime'];
+        $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($request, $slug) {
+            $categorie = CategorieProduit::query()
+                ->select($this->categorySelectColumns())
+                ->withCount('produits')
+                ->with(['parent.parent' => fn ($q) => $q->select($this->categorySelectColumns())])
+                ->where('slug', $slug)
+                ->firstOrFail();
 
-        if ($request->boolean('tree')) {
-            $categorie->load('childrenRecursive');
-            return response()->json($categorie->makeHidden($hidden));
-        }
+            $hidden = ['image_data', 'image_mime'];
 
-        $displayMode = $categorie->display_mode ?? 'auto';
-        $hasChildren = $categorie->children()->exists();
+            if ($request->boolean('tree')) {
+                $categorie->load('childrenRecursive');
+                return $categorie->makeHidden($hidden)->toArray();
+            }
 
-        if ($displayMode === 'children' || ($displayMode === 'auto' && $hasChildren)) {
-            $categorie->load('children');
-            return response()->json($categorie->makeHidden($hidden));
-        }
+            $displayMode = $categorie->display_mode ?? 'auto';
+            $hasChildren = $categorie->children()->exists();
 
-        $categorie->load('produits.images');
-        return response()->json($categorie->makeHidden($hidden));
+            if ($displayMode === 'children' || ($displayMode === 'auto' && $hasChildren)) {
+                $categorie->load('children');
+                return $categorie->makeHidden($hidden)->toArray();
+            }
+
+            $categorie->load(['produits.images' => function ($q) {
+                $this->selectImageColumns($q);
+            }]);
+            return $categorie->makeHidden($hidden)->toArray();
+        });
+
+        return response()->json($payload);
     }
 
     /**
@@ -145,6 +218,10 @@ class CategorieProduitController extends Controller
      */
     public function image($id)
     {
+        if (!Str::isUuid($id)) {
+            return response()->noContent(204);
+        }
+
         $categorie = CategorieProduit::find($id);
 
         if (!$categorie || !$categorie->image_data) {
@@ -170,7 +247,7 @@ class CategorieProduitController extends Controller
             'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
             // allow legacy/alternate field name from some forms
             'image_file' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
-            'parent_id' => 'nullable|integer|exists:categories_produits,id_categorie',
+            'parent_id' => 'nullable|uuid|exists:categories_produits,id_categorie',
             'ordre' => 'nullable|integer|min:0',
             'actif' => 'nullable|boolean',
         ]);
@@ -193,6 +270,8 @@ class CategorieProduitController extends Controller
         if (!empty($data['image_data'])) {
             $categorie->update(['image_url' => url('/api/categories-produits/' . $categorie->id_categorie . '/image')]);
         }
+
+        $this->bumpCache();
 
         return response()->json([
             'message' => 'Catégorie créée avec succès',
@@ -217,7 +296,7 @@ class CategorieProduitController extends Controller
             'image_url' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
             'image_file' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
-            'parent_id' => 'nullable|integer|exists:categories_produits,id_categorie',
+            'parent_id' => 'nullable|uuid|exists:categories_produits,id_categorie',
             'ordre' => 'nullable|integer|min:0',
             'actif' => 'nullable|boolean',
         ]);
@@ -232,11 +311,13 @@ class CategorieProduitController extends Controller
 
         $data = $this->preparePayload($data, $categorie);
         if (! empty($data['slug'])) {
-            $data['slug'] = $this->ensureUniqueSlug((string) $data['slug'], (int) $categorie->id_categorie);
+            $data['slug'] = $this->ensureUniqueSlug((string) $data['slug'], $categorie->id_categorie);
         }
         $this->validateCategoryHierarchy($data, $categorie);
 
         $categorie->update($data);
+
+        $this->bumpCache();
 
         return response()->json([
             'message' => 'Catégorie mise à jour',
@@ -287,6 +368,8 @@ class CategorieProduitController extends Controller
         }
 
         $categorie->delete();
+
+        $this->bumpCache();
 
         return response()->json([
             'message' => 'Categorie supprimee',
@@ -431,12 +514,12 @@ class CategorieProduitController extends Controller
                     $childrenByParent = [];
                     foreach ($all as $item) {
                         if ($item->parent_id) {
-                            $childrenByParent[(int) $item->parent_id][] = (int) $item->id_categorie;
+                            $childrenByParent[$item->parent_id][] = $item->id_categorie;
                         }
                     }
 
                     $ids = [];
-                    $stack = $roots->pluck('id_categorie')->map(fn ($id) => (int) $id)->all();
+                    $stack = $roots->pluck('id_categorie')->all();
 
                     while (! empty($stack)) {
                         $current = array_pop($stack);
@@ -457,7 +540,7 @@ class CategorieProduitController extends Controller
                 }
             }
 
-            $upsertNode = function (array $node, ?int $parentId = null, int $order = 0) use (&$upsertNode, &$created, &$updated) {
+            $upsertNode = function (array $node, ?string $parentId = null, int $order = 0) use (&$upsertNode, &$created, &$updated) {
                 $slug = $node['slug'] ?? Str::slug($node['nom']);
 
                 $existing = CategorieProduit::query()->where('slug', $slug)->first();
@@ -482,7 +565,7 @@ class CategorieProduitController extends Controller
                 }
 
                 foreach ($node['children'] ?? [] as $index => $child) {
-                    $upsertNode($child, (int) $category->id_categorie, $index + 1);
+                    $upsertNode($child, $category->id_categorie, $index + 1);
                 }
             };
 
@@ -490,6 +573,8 @@ class CategorieProduitController extends Controller
                 $upsertNode($rootNode, null, $index + 1);
             }
         });
+
+        $this->bumpCache();
 
         return response()->json([
             'message' => $replace
@@ -524,7 +609,7 @@ class CategorieProduitController extends Controller
             if ($catalogRoot) {
                 $sourceRoots = CategorieProduit::query()
                     ->where('segment', 'general')
-                    ->where('parent_id', (int) $catalogRoot->id_categorie)
+                    ->where('parent_id', $catalogRoot->id_categorie)
                     ->with('children')
                     ->orderBy('ordre')
                     ->orderBy('nom')
@@ -565,7 +650,7 @@ class CategorieProduitController extends Controller
         $updated = 0;
 
         DB::transaction(function () use ($sourceRoots, &$created, &$updated) {
-            $upsertNode = function ($sourceNode, ?int $parentId = null, int $order = 0) use (&$upsertNode, &$created, &$updated) {
+            $upsertNode = function ($sourceNode, ?string $parentId = null, int $order = 0) use (&$upsertNode, &$created, &$updated) {
                 $slug = Str::slug((string) ($sourceNode->slug ?: $sourceNode->nom));
                 if ($slug === '') {
                     return;
@@ -612,7 +697,7 @@ class CategorieProduitController extends Controller
 
                 $children = collect($sourceNode->children ?? []);
                 foreach ($children as $index => $child) {
-                    $upsertNode($child, (int) $target->id_categorie, $index + 1);
+                    $upsertNode($child, $target->id_categorie, $index + 1);
                 }
             };
 
@@ -620,6 +705,8 @@ class CategorieProduitController extends Controller
                 $upsertNode($rootNode, null, $index + 1);
             }
         });
+
+        $this->bumpCache();
 
         return response()->json([
             'message' => 'Arborescence Ingenierie page synchronisee avec succes.',
@@ -640,7 +727,7 @@ class CategorieProduitController extends Controller
             return;
         }
 
-        if ($current && (int) $parentId === (int) $current->id_categorie) {
+        if ($current && $parentId === $current->id_categorie) {
             throw ValidationException::withMessages([
                 'parent_id' => ['Une catégorie ne peut pas être son propre parent.'],
             ]);
@@ -655,7 +742,7 @@ class CategorieProduitController extends Controller
         }
 
         if ($current) {
-            $this->assertNoHierarchyCycle((int) $parentId, $current);
+            $this->assertNoHierarchyCycle($parentId, $current);
         }
 
         $parentSegment = strtolower(trim((string) ($parent->segment ?? '')));
@@ -693,34 +780,34 @@ class CategorieProduitController extends Controller
         return null;
     }
 
-    private function resolveEffectiveParentId(array $data, ?CategorieProduit $current = null): ?int
+    private function resolveEffectiveParentId(array $data, ?CategorieProduit $current = null): ?string
     {
         if (array_key_exists('parent_id', $data)) {
-            return filled($data['parent_id']) ? (int) $data['parent_id'] : null;
+            return filled($data['parent_id']) ? $data['parent_id'] : null;
         }
 
         if ($current && filled($current->parent_id)) {
-            return (int) $current->parent_id;
+            return $current->parent_id;
         }
 
         return null;
     }
 
-    private function assertNoHierarchyCycle(int $parentId, CategorieProduit $current): void
+    private function assertNoHierarchyCycle(string $parentId, CategorieProduit $current): void
     {
         $ancestorId = $parentId;
         $guard = 0;
 
-        while ($ancestorId > 0 && $guard < 25) {
-            if ((int) $ancestorId === (int) $current->id_categorie) {
+        while ($ancestorId !== null && $guard < 25) {
+            if ($ancestorId === $current->id_categorie) {
                 throw ValidationException::withMessages([
                     'parent_id' => ['Hiérarchie invalide: boucle détectée dans les parents.'],
                 ]);
             }
 
-            $ancestorId = (int) (CategorieProduit::query()
+            $ancestorId = CategorieProduit::query()
                 ->where('id_categorie', $ancestorId)
-                ->value('parent_id') ?? 0);
+                ->value('parent_id');
 
             $guard += 1;
         }
@@ -786,7 +873,7 @@ class CategorieProduitController extends Controller
         return null;
     }
 
-    private function ensureUniqueSlug(string $slug, ?int $ignoreId): string
+    private function ensureUniqueSlug(string $slug, ?string $ignoreId): string
     {
         $base = Str::slug($slug);
         $candidate = $base;

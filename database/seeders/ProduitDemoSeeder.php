@@ -13,10 +13,12 @@ class ProduitDemoSeeder extends Seeder
      */
     public function run(): void
     {
-        // S'assure qu'une catégorie existe (id 1)
-        if (!DB::table('categories_produits')->where('id_categorie', 1)->exists()) {
+        // S'assure qu'une catégorie existe
+        $catId = DB::table('categories_produits')->value('id_categorie');
+        if (!$catId) {
+            $catId = (string) Str::uuid();
             DB::table('categories_produits')->insert([
-                'id_categorie' => 1,
+                'id_categorie' => $catId,
                 'nom' => 'Informatique',
                 'slug' => 'informatique',
                 'description' => 'Matériel informatique',
@@ -32,7 +34,7 @@ class ProduitDemoSeeder extends Seeder
                 continue; // Produit déjà présent, on skip
             }
             DB::table('produits')->insert([
-                'uuid' => (string) Str::uuid(),
+                'id_produit' => (string) Str::uuid(),
                 'titre' => "Produit Informatique $i",
                 'slug' => $slug,
                 'reference' => strtoupper(Str::random(8)),
@@ -53,9 +55,9 @@ class ProduitDemoSeeder extends Seeder
                 'vues' => rand(0, 1000),
                 'note_moyenne' => rand(30, 50) / 10,
                 'nombre_avis' => rand(0, 100),
-                'id_categorie' => 1,
-                'id_pays' => 1,
-                'id_utilisateur' => 1,
+                'id_categorie' => $catId,
+                'id_pays' => DB::table('pays')->value('id_pays'),
+                'id_utilisateur' => DB::table('utilisateurs')->value('id_utilisateur'),
                 'date_creation' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),

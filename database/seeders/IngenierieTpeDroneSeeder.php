@@ -71,7 +71,7 @@ class IngenierieTpeDroneSeeder extends Seeder
                 foreach ($items as $item) {
                     $title = $item['title'];
                     $payload = [
-                        'uuid' => (string) Str::uuid(),
+                        'id_produit' => (string) Str::uuid(),
                         'titre' => $title,
                         'slug' => Str::slug($title),
                         'reference' => $item['reference'],
@@ -411,7 +411,7 @@ class IngenierieTpeDroneSeeder extends Seeder
     /**
      * @param array<int, string> $images
      */
-    private function syncImages(int $productId, string $title, array $images): void
+    private function syncImages(string $productId, string $title, array $images): void
     {
         DB::table('images')
             ->where('imageable_type', 'PRODUIT')
@@ -432,6 +432,7 @@ class IngenierieTpeDroneSeeder extends Seeder
             $path = ltrim($path, '/');
 
             DB::table('images')->insert([
+                'id_image' => Str::uuid()->toString(),
                 'url' => $url,
                 'path' => $path,
                 'alt' => sprintf('%s - visuel %d', $title, $index + 1),

@@ -2,25 +2,20 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Str;
 
-/**
- * Class Formation
- * Représente une formation proposée sur la plateforme.
- */
 class Formation extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasUuid;
 
     protected $table = 'formations';
     protected $primaryKey = 'id_formation';
     public $timestamps = true;
 
     protected $fillable = [
-        'uuid',
         'titre',
         'description',
         'duree',
@@ -38,17 +33,6 @@ class Formation extends Model
         'updated_at' => 'datetime',
         'benefices' => 'json',
     ];
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function (self $formation) {
-            if (empty($formation->uuid)) {
-                $formation->uuid = (string) Str::uuid();
-            }
-        });
-    }
 
     /** Relations */
 

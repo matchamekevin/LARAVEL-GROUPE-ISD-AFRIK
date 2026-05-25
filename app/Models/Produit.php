@@ -2,25 +2,20 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Str;
 
-/**
- * Class Produit - VERSION COMPLÈTE
- * Représente un produit de la boutique ISD AFRIK.
- */
 class Produit extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasUuid;
 
     protected $table      = 'produits';
     protected $primaryKey = 'id_produit';
     public    $timestamps = true;
 
     protected $fillable = [
-        'uuid',
         'titre',
         'slug',
         'reference',
@@ -75,10 +70,6 @@ class Produit extends Model
         parent::boot();
 
         static::creating(function ($produit) {
-            if (empty($produit->uuid)) {
-                $produit->uuid = (string) Str::uuid();
-            }
-
             if (empty($produit->slug)) {
                 $baseSlug = Str::slug($produit->titre);
                 $slug = $baseSlug;
@@ -174,9 +165,12 @@ class Produit extends Model
                      });
     }
 
-    public function scopeParPays($query, int $idPays)
+    public function scopeParPays($query, ?string $idPays)
     {
-        return $query->where('id_pays', $idPays);
+        if ($idPays && \Illuminate\Support\Str::isUuid($idPays)) {
+            return $query->where('id_pays', $idPays);
+        }
+        return $query;
     }
 
     public function scopePrixEntre($query, float $min, float $max)

@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 
 class SuiviTechnique extends Model
 {
+    use HasUuid;
     protected $table = 'suivi_techniques';
     protected $primaryKey = 'id_suivi';
     public $timestamps = false;

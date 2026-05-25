@@ -2,31 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-/**
- * Modèle représentant une entreprise du système.
- *
- * @property int $id_entreprise
- * @property string $nom
- * @property string $email
- * @property string $telephone
- * @property string $mot_de_passe
- * @property string $secteur
- * @property string $pays
- * @property string $adresse
- * @property int $nombre_participants
- * @property string $statut
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- */
 class Entreprise extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, HasUuid;
 
     protected $table = 'entreprises';
     protected $primaryKey = 'id_entreprise';

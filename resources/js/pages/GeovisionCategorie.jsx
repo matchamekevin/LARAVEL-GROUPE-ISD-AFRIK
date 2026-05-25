@@ -1,4 +1,4 @@
-import React, { useCallback, useDeferredValue, useEffect, useState } from "react";
+import React, { useCallback, useDeferredValue, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import "../styles/home.css";
 import "../styles/geovision-categories.css";
@@ -105,6 +105,22 @@ function buildSearchText(product) {
   ].join(" "));
 }
 
+const GEO_STORAGE_KEY = "geovision_cat_state";
+
+function loadGeovisionState() {
+  try {
+    return JSON.parse(sessionStorage.getItem(GEO_STORAGE_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+
+function saveGeovisionState(state) {
+  try {
+    sessionStorage.setItem(GEO_STORAGE_KEY, JSON.stringify(state));
+  } catch {}
+}
+
 export default function GeovisionCategorie() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -203,6 +219,30 @@ export default function GeovisionCategorie() {
     intervalMs: 5000,
     enabled: !loadingCategory,
   });
+
+  // Restore GeoVision catalog state when coming back from product detail
+  useEffect(() => {
+    if (loadingCategory || !slug) return;
+    const saved = loadGeovisionState();
+    if (saved && saved.slug === slug) {
+      if (saved.searchQuery) setSearchQuery(saved.searchQuery);
+      if (saved.filters) setFilters(saved.filters);
+    }
+    sessionStorage.removeItem(GEO_STORAGE_KEY);
+  }, [slug, loadingCategory]);
+
+  // Save GeoVision state right before navigating away
+  const stateRef = useRef({ searchQuery, filters, slug });
+  stateRef.current = { searchQuery, filters, slug };
+
+  useEffect(() => {
+    return () => {
+      const s = stateRef.current;
+      if (s.slug) {
+        saveGeovisionState({ searchQuery: s.searchQuery, filters: s.filters, slug: s.slug });
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (loadingCategory || !category?.slug) {

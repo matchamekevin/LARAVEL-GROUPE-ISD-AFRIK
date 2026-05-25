@@ -38,10 +38,10 @@ class PaysController extends Controller
     /**
      * Affiche un pays spécifique avec ses produits et formations.
      *
-     * @param int $id
+     * @param string $id
      * @return JsonResponse|PaysResource
      */
-    public function show(int $id)
+    public function show(string $id)
     {
         $pays = $this->service->getPays($id);
 
@@ -78,10 +78,10 @@ class PaysController extends Controller
      * Met à jour un pays existant.
      *
      * @param PaysRequest $request
-     * @param int $id
+     * @param string $id
      * @return JsonResponse
      */
-    public function update(PaysRequest $request, int $id): JsonResponse
+    public function update(PaysRequest $request, string $id): JsonResponse
     {
         try {
             $pays = $this->service->update($id, $request->validated());
@@ -102,10 +102,10 @@ class PaysController extends Controller
     /**
      * Supprime un pays.
      *
-     * @param int $id
+     * @param string $id
      * @return JsonResponse
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(string $id): JsonResponse
     {
         if (!$this->service->delete($id)) {
             return response()->json(['message' => 'Pays introuvable'], 404);

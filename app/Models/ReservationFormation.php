@@ -2,24 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * Modèle représentant une réservation de formation.
- *
- * @property int $id_reservation
- * @property int|null $id_utilisateur
- * @property int|null $id_entreprise
- * @property int $id_formation
- * @property string $type_reservation
- * @property int $nombre_places
- * @property string $statut
- * @property \Illuminate\Support\Carbon $date_reservation
- */
 class ReservationFormation extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $table = 'reservation_formation';
     protected $primaryKey = 'id_reservation';

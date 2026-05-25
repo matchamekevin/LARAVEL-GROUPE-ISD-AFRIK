@@ -207,7 +207,7 @@ export default function ProduitDetail() {
           from: `${location.pathname}${location.search || ""}`,
           post_login_intent: "pay_product",
           post_login_payload: {
-            id_produit: Number(produit.id_produit),
+            id_produit: String(produit.id_produit),
             quantite: quantityToPay,
           },
         },
@@ -222,7 +222,7 @@ export default function ProduitDetail() {
       const user = getCurrentUser();
 
       const response = await api.post("/produits/paiement", {
-        id_produit:       Number(produit.id_produit),
+        id_produit:       String(produit.id_produit),
         quantite:         quantityToPay,
         nom_livraison:    user.nom       || "Client",
         prenom_livraison: user.prenom    || "ISD",
@@ -244,7 +244,7 @@ export default function ProduitDetail() {
             from: `${location.pathname}${location.search || ""}`,
             post_login_intent: "pay_product",
             post_login_payload: {
-              id_produit: Number(produit.id_produit),
+              id_produit: String(produit.id_produit),
               quantite: quantityToPay,
             },
           },
@@ -270,8 +270,8 @@ export default function ProduitDetail() {
       return;
     }
 
-    const targetProductId = Number(payload?.id_produit || 0);
-    if (targetProductId && targetProductId !== Number(produit.id_produit)) {
+    const targetProductId = String(payload?.id_produit || 0);
+    if (targetProductId && targetProductId !== String(produit.id_produit)) {
       return;
     }
 
@@ -302,7 +302,7 @@ export default function ProduitDetail() {
   }
 
   const localGallery = collectProductMedia(produit);
-  const images = modelGallery.length > 0 ? modelGallery : localGallery.length > 0 ? localGallery : ["/images/produits/proj.webp"];
+  const images = modelGallery.length > 0 ? modelGallery : localGallery.length > 0 ? localGallery : [];
   const prixFinal = produit.prix_promo ?? produit.prix;
   const reduction = produit.prix_promo ? Math.round(((produit.prix - produit.prix_promo) / produit.prix) * 100) : null;
   const avisCount = Number(produit.nombre_avis || 0) || (Array.isArray(produit.commentaires) ? produit.commentaires.length : 0);
@@ -357,7 +357,9 @@ export default function ProduitDetail() {
             <div className="pd-img-main-wrapper">
               {reduction && <span className="pd-badge-promo"><span className="material-icons" style={{fontSize:14,marginRight:4}}>local_offer</span>-{reduction}%</span>}
               {produit.est_nouveau && <span className="pd-badge-nouveau"><span className="material-icons" style={{fontSize:14,marginRight:4}}>fiber_new</span>Nouveau</span>}
-              <img src={images[imageActive]} alt={produit.titre} className="pd-img-main" onError={(e) => { const img = e.currentTarget; if (img && !img.dataset.fallback) { img.dataset.fallback = "1"; img.src = "/images/produits/proj.webp"; } }} />
+              {images.length > 0 ? (
+                <img src={images[imageActive]} alt={produit.titre} className="pd-img-main" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+              ) : null}
             </div>
           </div>
 
@@ -511,8 +513,8 @@ export default function ProduitDetail() {
                         contenu: String(avisForm.contenu || "").trim(),
                         note: Number(avisForm.note),
                         commentable_type: "PRODUIT",
-                        commentable_id: Number(produit.id_produit),
-                        id_utilisateur: Number(userId),
+                        commentable_id: String(produit.id_produit),
+                        id_utilisateur: String(userId),
                       });
                       const refreshed = await getProduit(id);
                       setProduit(refreshed.data?.data || produit);

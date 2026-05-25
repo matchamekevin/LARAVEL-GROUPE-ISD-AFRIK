@@ -59,7 +59,7 @@ const getDescendantIds = (rootId, categories) => {
 
     ids.push(currentId);
     const children = byParent[String(currentId)] || [];
-    children.forEach((child) => stack.push(Number(child.id_categorie || child.id)));
+    children.forEach((child) => stack.push(String(child.id_categorie || child.id)));
   }
 
   return ids;
@@ -78,8 +78,8 @@ const getNearestMainAncestorSlug = (category, categoriesById, mainCategorySlugs 
       return slug;
     }
 
-    const parentId = Number(current.parent_id || 0);
-    if (!parentId) break;
+    const parentId = String(current.parent_id || 0);
+    if (!parentId || parentId === "0") break;
 
     current = categoriesById[parentId] || null;
     guard += 1;
@@ -170,53 +170,25 @@ const getProductImage = (produit) => {
     { allowDefault: true }
   )[0];
 
-  if (directImage) {
-    return directImage;
-  }
-
-  const titre = String(produit.titre || "").toLowerCase();
-  const modele = String(produit.modele || "").toLowerCase();
-  const category = normalizeSlug(produit.categorie?.slug || produit.categorie?.nom || "");
-
-  if (titre.includes("drone") || modele.includes("dji") || category.includes("drone")) {
-    return "/images/produits/drone.webp";
-  }
-  if (titre.includes("tpe") || category.includes("tpe")) {
-    return "/images/produits/tpe.webp";
-  }
-  if (category.includes("reseau") || category.includes("securite")) {
-    return "/images/produits/int.webp";
-  }
-  if (category.includes("energie") || category.includes("incendie")) {
-    return "/images/produits/ond.webp";
-  }
-
-  return "/images/produits/proj.webp";
+  return directImage || null;
 };
 
 const getDbProductImage = (produit) => {
-  const candidates = getImageCandidates([
-    produit.image_url,
-    ...(Array.isArray(produit.image_urls) ? produit.image_urls : []),
-  ]);
-
-  return candidates[0] || null;
-};
+    const candidates = [
+     produit.image_url,
+     ...(Array.isArray(produit.image_urls) ? produit.image_urls : []),
+    ].filter(Boolean);
+    return candidates[0] || null;
+   };
 
 const getCategoryImage = (category) => {
-  const candidates = [
-    category?.image_url,
-    category?.image_path,
-    category?.thumbnail,
-    category?.photo_url,
-    category?.image?.url,
-    category?.image,
-  ]
-    .map((value) => String(value || "").trim())
-    .filter(Boolean);
-
-  return candidates[0] || "/images/produits/proj.webp";
-};
+    const candidates = [
+     category?.image_url,
+     category?.image,
+     category?.display_image_url,
+    ].filter(Boolean);
+    return candidates[0] || null;
+   };
 
 const buildSearchBlob = (item) =>
   [
@@ -272,17 +244,17 @@ export default function Produits() {
   
 
   const handleSubcategoryClick = (item) => {
-    const ownId = Number(item.id_categorie || item.id || 0);
+    const ownId = String(item.id_categorie || item.id || 0);
     const ownSlug = normalizeSlug(item.slug || item.nom || "");
 
-    const hasChildren = categories.some((c) => Number(c.parent_id || 0) === ownId) ||
+    const hasChildren = categories.some((c) => String(c.parent_id || 0) === ownId) ||
       (Array.isArray(item.children_recursive) && item.children_recursive.length > 0) ||
       (Array.isArray(item.children) && item.children.length > 0);
 
     setSearchTerm("");
 
     const existingIndex = categoryStack.findIndex((c) => {
-      const cId = Number(c.id);
+      const cId = String(c.id);
       const cSlug = normalizeSlug(c.slug || c.nom || "");
       return cId === ownId || (ownSlug && cSlug === ownSlug);
     });
@@ -305,10 +277,12 @@ export default function Produits() {
 
   const saveCatalogState = () => {
     sessionStorage.setItem("produit_back_url", `${location.pathname}${location.search}`);
+    sessionStorage.setItem("produit_back_active_slug", activeCategorySlug);
     sessionStorage.setItem("produit_back_stack", JSON.stringify(categoryStack));
     sessionStorage.setItem("produit_back_sub_id", selectedSubcategoryId);
     sessionStorage.setItem("produit_back_sub_slug", selectedSubcategorySlug);
     sessionStorage.setItem("produit_back_model", selectedModel);
+    sessionStorage.setItem("produit_back_search", searchTerm);
   };
 
   const navigateUp = (index = -1) => {
@@ -323,13 +297,13 @@ export default function Produits() {
 
   const categoriesById = useMemo(() => {
     return categories.reduce((accumulator, item) => {
-      accumulator[Number(item.id_categorie || item.id)] = item;
+      accumulator[String(item.id_categorie || item.id)] = item;
       return accumulator;
     }, {});
   }, [categories]);
 
   const topLevelCategories = useMemo(
-    () => categories.filter((item) => Number(item.parent_id || 0) === 0),
+    () => categories.filter((item) => String(item.parent_id || 0) === "0"),
     [categories]
   );
 
@@ -346,7 +320,7 @@ export default function Produits() {
     return byName || null;
   }, [topLevelCategories]);
 
-  const technicalRootId = Number(technicalRootCategory?.id_categorie || technicalRootCategory?.id || 0);
+  const technicalRootId = String(technicalRootCategory?.id_categorie || technicalRootCategory?.id || 0);
 
   const GEOVISION_SLUG = "geovision";
 
@@ -380,7 +354,7 @@ export default function Produits() {
         .map((item) => ({
           slug: normalizeSlug(item.slug || item.nom),
           label: item.nom,
-          id: Number(item.id_categorie || item.id),
+          id: String(item.id_categorie || item.id),
           node: item,
           image: getCategoryImage(item),
         }));
@@ -389,7 +363,7 @@ export default function Produits() {
     }
 
     const dbMain = categories
-      .filter((item) => Number(item.parent_id || 0) === technicalRootId)
+      .filter((item) => String(item.parent_id || 0) === technicalRootId)
       .sort((a, b) => {
         const orderDiff = Number(a.ordre || 0) - Number(b.ordre || 0);
         if (orderDiff !== 0) return orderDiff;
@@ -398,7 +372,7 @@ export default function Produits() {
       .map((item) => ({
         slug: normalizeSlug(item.slug || item.nom),
         label: item.nom,
-        id: Number(item.id_categorie || item.id),
+        id: String(item.id_categorie || item.id),
         node: item,
         image: getCategoryImage(item),
       }));
@@ -419,22 +393,22 @@ export default function Produits() {
     if (activeCategorySlug === ALL_CATEGORY_SLUG && categoryStack.length === 0) {
       const mainIds = mainCategories
         .filter((item) => item.slug !== ALL_CATEGORY_SLUG && item.slug !== GEOVISION_SLUG && item.id)
-        .map((item) => Number(item.id));
+        .map((item) => String(item.id));
       const mainIdSet = new Set(mainIds);
-      const firstLevel = categories.filter((item) => mainIdSet.has(Number(item.parent_id || 0)));
+      const firstLevel = categories.filter((item) => mainIdSet.has(String(item.parent_id || 0)));
       if (firstLevel.length > 0) {
         return firstLevel;
       }
-      return categories.filter((c) => Number(c.parent_id || 0) !== 0);
+      return categories.filter((c) => String(c.parent_id || 0) !== 0);
     }
 
     let parentId = 0;
     if (categoryStack.length > 0) {
-      parentId = Number(currentCategory?.id_categorie || currentCategory?.id || 0);
+      parentId = String(currentCategory?.id_categorie || currentCategory?.id || 0);
     } else if (activeCategory && activeCategory.id) {
-      parentId = Number(activeCategory.id);
+      parentId = String(activeCategory.id);
     }
-    return categories.filter((c) => Number(c.parent_id || 0) === Number(parentId));
+    return categories.filter((c) => String(c.parent_id || 0) === String(parentId));
   }, [activeCategory, activeCategorySlug, categories, categoryStack, currentCategory, mainCategories]);
 
 
@@ -446,12 +420,12 @@ export default function Produits() {
     }
 
     let source = [];
-    const activeRootId = Number(activeCategory.id || 0);
+    const activeRootId = String(activeCategory.id || 0);
 
     if (activeCategory.slug === ALL_CATEGORY_SLUG) {
       const mainCategoryIds = mainCategories
         .filter((item) => item.slug !== ALL_CATEGORY_SLUG && item.id)
-        .map((item) => Number(item.id));
+        .map((item) => String(item.id));
 
       const idSet = new Set();
       mainCategoryIds.forEach((mainId) => {
@@ -462,19 +436,19 @@ export default function Produits() {
         });
       });
 
-      source = categories.filter((item) => idSet.has(Number(item.id_categorie || item.id)));
+      source = categories.filter((item) => idSet.has(String(item.id_categorie || item.id)));
 
       // Fallback: si aucune catégorie enfant, afficher les catégories principales elles-mêmes.
       if (source.length === 0) {
         const mainSet = new Set(mainCategoryIds);
-        source = categories.filter((item) => mainSet.has(Number(item.id_categorie || item.id)));
+        source = categories.filter((item) => mainSet.has(String(item.id_categorie || item.id)));
       }
     } else if (activeCategory.id) {
-      const descendants = getDescendantIds(Number(activeCategory.id), categories).filter(
-        (id) => id !== Number(activeCategory.id)
+      const descendants = getDescendantIds(String(activeCategory.id), categories).filter(
+        (id) => id !== String(activeCategory.id)
       );
       const idSet = new Set(descendants);
-      source = categories.filter((item) => idSet.has(Number(item.id_categorie || item.id)));
+      source = categories.filter((item) => idSet.has(String(item.id_categorie || item.id)));
 
       // Fallback: catégorie principale sans enfants, la rendre cliquable comme sous-catégorie.
       if (source.length === 0 && activeCategory.node) {
@@ -490,22 +464,22 @@ export default function Produits() {
       })
       .map((item) => ({
         ...(function buildDisplayItem() {
-          const id = Number(item.id_categorie || item.id);
+          const id = String(item.id_categorie || item.id);
           const ancestors = [];
-          let parentId = Number(item.parent_id || 0);
+          let parentId = String(item.parent_id || 0);
           let guard = 0;
 
-          while (parentId && guard < 20) {
+          while (parentId && parentId !== "0" && guard < 20) {
             const parent = categoriesById[parentId];
             if (!parent) break;
-            const parentOwnId = Number(parent.id_categorie || parent.id || 0);
+            const parentOwnId = String(parent.id_categorie || parent.id || 0);
 
             if (activeRootId && parentOwnId === activeRootId) {
               break;
             }
 
             ancestors.unshift(String(parent.nom || "").trim());
-            parentId = Number(parent.parent_id || 0);
+            parentId = String(parent.parent_id || 0);
             guard += 1;
           }
 
@@ -545,17 +519,17 @@ export default function Produits() {
 
   const allCategoriesWithPath = useMemo(() => {
     return categories
-      .filter((item) => Number(item.parent_id || 0) > 0)
+      .filter((item) => item.parent_id && String(item.parent_id) !== "0")
       .map((item) => {
-        const id = Number(item.id_categorie || item.id);
+        const id = String(item.id_categorie || item.id);
         const ancestors = [];
-        let parentId = Number(item.parent_id || 0);
+        let parentId = String(item.parent_id || 0);
         let guard = 0;
-        while (parentId && guard < 20) {
+        while (parentId && parentId !== "0" && guard < 20) {
           const parent = categoriesById[parentId];
           if (!parent) break;
           ancestors.unshift(String(parent.nom || "").trim());
-          parentId = Number(parent.parent_id || 0);
+          parentId = String(parent.parent_id || 0);
           guard += 1;
         }
         return {
@@ -564,28 +538,28 @@ export default function Produits() {
           nom: item.nom,
           pathLabel: ancestors.length ? `${ancestors.join(" / ")} / ${item.nom}` : item.nom,
           depth: ancestors.length,
-          hasChildren: categories.some((c) => Number(c.parent_id || 0) === id),
+          hasChildren: categories.some((c) => String(c.parent_id || 0) === id),
         };
       });
   }, [categories, categoriesById]);
 
   const filteredSubcategories = useMemo(() => {
-    const subcategoryIds = new Set(subcategories.filter((item) => item.id).map((item) => Number(item.id)));
+    const subcategoryIds = new Set(subcategories.filter((item) => item.id).map((item) => String(item.id)));
     const productSearchIndex = new Map();
 
     if (subcategoryIds.size > 0) {
       produits.forEach((produit) => {
-        let current = Number(produit.id_categorie || produit.categorie?.id_categorie || 0);
-        let resolvedSubcategoryId = 0;
+        let current = String(produit.id_categorie || produit.categorie?.id_categorie || 0);
+        let resolvedSubcategoryId = null;
         let guard = 0;
 
-        while (current && guard < 15) {
+        while (current && current !== "0" && guard < 15) {
           if (subcategoryIds.has(current)) {
             resolvedSubcategoryId = current;
             break;
           }
 
-          current = Number(categoriesById[current]?.parent_id || 0);
+          current = String(categoriesById[current]?.parent_id || 0);
           guard += 1;
         }
 
@@ -619,7 +593,7 @@ export default function Produits() {
         return false;
       }
 
-      const productBlob = productSearchIndex.get(Number(item.id)) || "";
+      const productBlob = productSearchIndex.get(String(item.id)) || "";
       return productBlob.includes(searchNormalized);
     });
 
@@ -633,7 +607,7 @@ export default function Produits() {
       });
     }
 
-    const localIds = new Set(subcategories.map((item) => Number(item.id)));
+    const localIds = new Set(subcategories.map((item) => String(item.id)));
     const fallback = allCategoriesWithPath
       .filter((cat) => {
         if (localIds.has(cat.id)) return false;
@@ -642,7 +616,7 @@ export default function Produits() {
       })
       .slice(0, 20)
       .map((cat) => {
-        const raw = categories.find((c) => Number(c.id_categorie || c.id) === cat.id);
+        const raw = categories.find((c) => String(c.id_categorie || c.id) === cat.id);
         return {
           id: cat.id,
           slug: cat.slug,
@@ -673,23 +647,23 @@ export default function Produits() {
       return buckets;
     }
 
-    const subcategoryIds = new Set(subcategories.filter((item) => item.id).map((item) => Number(item.id)));
+    const subcategoryIds = new Set(subcategories.filter((item) => item.id).map((item) => String(item.id)));
     if (subcategoryIds.size === 0) {
       return buckets;
     }
 
     produits.forEach((produit) => {
-      let current = Number(produit.id_categorie || produit.categorie?.id_categorie || 0);
+      let current = String(produit.id_categorie || produit.categorie?.id_categorie || 0);
       let guard = 0;
 
-      while (current && guard < 15) {
+      while (current && current !== "0" && guard < 15) {
         if (subcategoryIds.has(current)) {
           buckets[current] = (buckets[current] || 0) + 1;
           break;
         }
 
         const parent = categoriesById[current];
-        current = Number(parent?.parent_id || 0);
+        current = String(parent?.parent_id || 0);
         guard += 1;
       }
     });
@@ -710,7 +684,7 @@ export default function Produits() {
       }
 
       const key = modelName.toLowerCase();
-      const productId = Number(item.id_produit || item.id || 0);
+      const productId = String(item.id_produit || item.id || "");
       const dbImage = getDbProductImage(item);
 
       if (!byModel[key]) {
@@ -839,7 +813,7 @@ export default function Produits() {
       .split(",")
       .map((item) => normalizeSlug(item))
       .filter(Boolean);
-    const subcategoryIdParam = Number(params.get("sous_categorie_id") || 0);
+    const subcategoryIdParam = params.get("sous_categorie_id") || "";
     const modelParam = String(params.get("modele") || "").trim();
 
     if (categoriesParam.length === 0 && !subcategoryIdParam) {
@@ -855,14 +829,14 @@ export default function Produits() {
     }
 
     const categoryFromId = subcategoryIdParam
-      ? categoriesById[subcategoryIdParam] || categories.find((item) => Number(item.id_categorie || item.id) === subcategoryIdParam)
+      ? categoriesById[subcategoryIdParam] || categories.find((item) => String(item.id_categorie || item.id) === subcategoryIdParam)
       : null;
 
     if (categoryFromId) {
       const ownSlug = normalizeSlug(categoryFromId.slug || categoryFromId.nom);
-      const ownId = Number(categoryFromId.id_categorie || categoryFromId.id || 0);
+      const ownId = String(categoryFromId.id_categorie || categoryFromId.id || 0);
       const mainAncestorSlug = getNearestMainAncestorSlug(categoryFromId, categoriesById, mainCategorySlugs);
-      const hasChildren = categories.some((item) => Number(item.parent_id || 0) === ownId);
+      const hasChildren = categories.some((item) => String(item.parent_id || 0) === ownId);
 
       if (mainCategorySlugs.includes(ownSlug)) {
         // Cas fallback: une catégorie principale peut aussi être sélectionnée
@@ -890,9 +864,9 @@ export default function Produits() {
 
     if (!categoryFromId && categoryFromDb) {
       const ownSlug = normalizeSlug(categoryFromDb.slug || categoryFromDb.nom);
-      const ownId = Number(categoryFromDb.id_categorie || categoryFromDb.id || 0);
+      const ownId = String(categoryFromDb.id_categorie || categoryFromDb.id || 0);
       const mainAncestorSlug = getNearestMainAncestorSlug(categoryFromDb, categoriesById, mainCategorySlugs);
-      const hasChildren = categories.some((item) => Number(item.parent_id || 0) === ownId);
+      const hasChildren = categories.some((item) => String(item.parent_id || 0) === ownId);
 
       if (mainCategorySlugs.includes(ownSlug)) {
         if (subcategoryIdParam && ownId === subcategoryIdParam && !hasChildren) {
@@ -915,21 +889,35 @@ export default function Produits() {
       setSelectedModel(modelParam);
     }
 
-    // Restore saved catalog state (from sessionStorage on back navigation)
-    const savedSubId = sessionStorage.getItem("produit_back_sub_id") || "";
-    const savedStack = sessionStorage.getItem("produit_back_stack") || "";
-    if (subcategoryIdParam > 0 && savedSubId && savedStack) {
+    // Restore saved catalog state (from sessionStorage on back navigation).
+    // URL params take precedence; sessionStorage fills in what URL doesn't carry.
+    const savedActiveSlug = sessionStorage.getItem("produit_back_active_slug");
+    const savedStack = sessionStorage.getItem("produit_back_stack");
+    const savedSubId = sessionStorage.getItem("produit_back_sub_id");
+    const savedSubSlug = sessionStorage.getItem("produit_back_sub_slug");
+    const savedModel = sessionStorage.getItem("produit_back_model");
+    const savedSearch = sessionStorage.getItem("produit_back_search");
+
+    if (savedStack) {
       try {
         const parsed = JSON.parse(savedStack);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           setCategoryStack(parsed);
         }
       } catch (_) {}
-      sessionStorage.removeItem("produit_back_stack");
-      sessionStorage.removeItem("produit_back_sub_id");
-      sessionStorage.removeItem("produit_back_sub_slug");
-      sessionStorage.removeItem("produit_back_model");
+      if (savedActiveSlug && categoriesParam.length === 0) setActiveCategorySlug(savedActiveSlug);
+      if (savedSubId && !subcategoryIdParam) setSelectedSubcategoryId(savedSubId);
+      if (savedSubSlug && !subcategoryIdParam) setSelectedSubcategorySlug(savedSubSlug);
+      if (savedModel && !modelParam) setSelectedModel(savedModel);
+      if (savedSearch) setSearchTerm(savedSearch);
     }
+    sessionStorage.removeItem("produit_back_url");
+    sessionStorage.removeItem("produit_back_active_slug");
+    sessionStorage.removeItem("produit_back_stack");
+    sessionStorage.removeItem("produit_back_sub_id");
+    sessionStorage.removeItem("produit_back_sub_slug");
+    sessionStorage.removeItem("produit_back_model");
+    sessionStorage.removeItem("produit_back_search");
   }, [categories, categoriesById, location.search, mainCategorySlugs]);
 
   useEffect(() => {
@@ -950,7 +938,7 @@ export default function Produits() {
       const nextFavorites = new Set();
 
       produits.forEach((item) => {
-        const id = Number(item.id_produit || item.id);
+        const id = String(item.id_produit || item.id);
         if (id && isFavorite(id)) {
           nextFavorites.add(id);
         }
@@ -958,8 +946,8 @@ export default function Produits() {
 
       const nextCart = new Set(
         getCartItems()
-          .map((item) => Number(item.id_produit || item.id))
-          .filter((id) => Number.isFinite(id) && id > 0)
+          .map((item) => String(item.id_produit || item.id))
+          .filter((id) => id && id !== "0")
       );
 
       setFavoriteIds(nextFavorites);
@@ -986,11 +974,11 @@ export default function Produits() {
       const categoryIds = [];
 
       if (selectedSubcategoryId) {
-        categoryIds.push(...getDescendantIds(Number(selectedSubcategoryId), categories));
+        categoryIds.push(...getDescendantIds(String(selectedSubcategoryId), categories));
       } else if (activeCategory.id) {
-        const descendants = getDescendantIds(Number(activeCategory.id), categories);
+        const descendants = getDescendantIds(String(activeCategory.id), categories);
         descendants.forEach((id) => {
-          if (id !== Number(activeCategory.id)) {
+          if (id !== String(activeCategory.id)) {
             categoryIds.push(id);
           }
         });
@@ -1151,12 +1139,8 @@ export default function Produits() {
     }
   };
 
-  const handleImageError = (event, fallback = "/images/produits/proj.webp") => {
-    const img = event.currentTarget || event.target;
-    if (!img) return;
-    if (img.dataset.fallbackApplied === "1") return;
-    img.dataset.fallbackApplied = "1";
-    img.src = fallback;
+  const handleImageError = (event) => {
+    event.currentTarget.style.display = "none";
   };
 
   return (
@@ -1265,13 +1249,14 @@ export default function Produits() {
               {visibleSubcategories.map((item) => (
                 <article key={`${item.slug}-${item.id_categorie || item.id}`} className="pcat-sub-card">
                   <div className="pcat-sub-visual">
-                    <img
-                      src={item.image_url || "/images/produits/proj.webp"}
-                      alt={item.nom || item.label}
-                      loading="lazy"
-                      onLoad={applyOrientationClass}
-                      onError={(event) => handleImageError(event, "/images/produits/proj.webp")}
-                    />
+                    {item.image_url ? (
+                      <img
+                        src={item.image_url}
+                        alt={item.nom || item.label}
+                        loading="lazy"
+                        onLoad={applyOrientationClass}
+                      />
+                    ) : null}
                     <div className="pcat-sub-overlay" aria-hidden="true" />
                   </div>
 
@@ -1288,7 +1273,7 @@ export default function Produits() {
                           className="pcat-solid-btn"
                         >
                           {(
-                            categories.some(c => Number(c.parent_id) === Number(item.id)) ||
+                            categories.some(c => String(c.parent_id) === String(item.id)) ||
                             (Array.isArray(item.children_recursive) && item.children_recursive.length > 0) ||
                             (Array.isArray(item.children) && item.children.length > 0)
                           ) ? "Voir sous-catégories" : "Voir produits"}
@@ -1311,13 +1296,14 @@ export default function Produits() {
               {filteredSubcategories.map((item) => (
                 <article key={`search-${item.slug}-${item.id_categorie || item.id}`} className="pcat-sub-card pcat-search-match">
                   <div className="pcat-sub-visual">
-                    <img
-                      src={item.image_url || "/images/produits/proj.webp"}
-                      alt={item.nom || item.label}
-                      loading="lazy"
-                      onLoad={applyOrientationClass}
-                      onError={(event) => handleImageError(event, "/images/produits/proj.webp")}
-                    />
+                    {item.image_url ? (
+                      <img
+                        src={item.image_url}
+                        alt={item.nom || item.label}
+                        loading="lazy"
+                        onLoad={applyOrientationClass}
+                      />
+                    ) : null}
                     <div className="pcat-sub-overlay" aria-hidden="true" />
                   </div>
 
@@ -1332,7 +1318,7 @@ export default function Produits() {
                           type="button"
                           onClick={() => {
                             const mainAncestor = getNearestMainAncestorSlug(
-                              categoriesById[item.id] || categories.find((c) => Number(c.id_categorie || c.id) === item.id),
+                              categoriesById[item.id] || categories.find((c) => String(c.id_categorie || c.id) === item.id),
                               categoriesById,
                               mainCategorySlugs
                             );
@@ -1365,20 +1351,25 @@ export default function Produits() {
             <div className="pcat-product-grid">
               {globalProductResults.map((produit) => {
                 const prixFinal = produit.prix_promo ?? produit.prix;
-                const isFav = favoriteIds.has(Number(produit.id_produit));
+                const isFav = favoriteIds.has(String(produit.id_produit));
                 const badgeClass = statusClasses[produit.statut] || "bg-slate-100 text-slate-800 border border-slate-200";
 
                 return (
                   <article key={produit.id_produit} className="pcat-product-card">
                     <div className="pcat-product-image-wrap">
-                      <img
-                        src={getProductImage(produit)}
-                        alt={produit.titre}
-                        className="pcat-product-image"
-                        loading="lazy"
-                        onLoad={applyOrientationClass}
-                        onError={handleImageError}
-                      />
+                      {(() => {
+                        const imgSrc = getProductImage(produit);
+                        return imgSrc ? (
+                          <img
+                            src={imgSrc}
+                            alt={produit.titre}
+                            className="pcat-product-image"
+                            loading="lazy"
+                            onLoad={applyOrientationClass}
+                            onError={handleImageError}
+                          />
+                        ) : <div className="pcat-sub-empty-visual" />;
+                      })()}
                       <span className={`pcat-status-chip ${badgeClass}`}>{statusLabel(produit.statut)}</span>
                       <button
                         type="button"
@@ -1429,21 +1420,22 @@ export default function Produits() {
 
             <div className="pcat-model-grid">
               {modelCards.map((item) => {
-                const representativeId = Number(item.representativeId || item.representativeProduct?.id_produit || item.representativeProduct?.id || 0);
-                const isModelFavorite = representativeId > 0 ? favoriteIds.has(representativeId) : false;
-                const isModelInCart = representativeId > 0 ? cartIds.has(representativeId) : false;
+                const representativeId = String(item.representativeId || item.representativeProduct?.id_produit || item.representativeProduct?.id || 0);
+                const isModelFavorite = representativeId && representativeId !== "0" ? favoriteIds.has(representativeId) : false;
+                const isModelInCart = representativeId && representativeId !== "0" ? cartIds.has(representativeId) : false;
 
                 return (
                   <article key={`${item.name}`} className="pcat-model-card">
                     <div className="pcat-model-visual">
+                      {item.image ? (
                       <img
-                        src={item.image || "/images/produits/proj.webp"}
+                        src={item.image}
                         alt={`Modèle ${item.name}`}
                         className="pcat-model-image"
                         loading="lazy"
                         onLoad={applyOrientationClass}
-                        onError={(event) => handleImageError(event, "/images/produits/proj.webp")}
                       />
+                      ) : null}
                       <button
                         type="button"
                         className={`pcat-fav-btn ${isModelFavorite ? "is-active" : ""}`}
@@ -1487,20 +1479,25 @@ export default function Produits() {
             <div className="pcat-product-grid">
               {filteredProduitsModele.map((produit) => {
                 const prixFinal = produit.prix_promo ?? produit.prix;
-                const isFav = favoriteIds.has(Number(produit.id_produit));
+                const isFav = favoriteIds.has(String(produit.id_produit));
                 const badgeClass = statusClasses[produit.statut] || "bg-slate-100 text-slate-800 border border-slate-200";
 
                 return (
                   <article key={produit.id_produit} className="pcat-product-card">
                     <div className="pcat-product-image-wrap">
-                      <img
-                        src={getProductImage(produit)}
-                        alt={produit.titre}
-                        className="pcat-product-image"
-                        loading="lazy"
-                        onLoad={applyOrientationClass}
-                        onError={handleImageError}
-                      />
+                      {(() => {
+                        const imgSrc = getProductImage(produit);
+                        return imgSrc ? (
+                          <img
+                            src={imgSrc}
+                            alt={produit.titre}
+                            className="pcat-product-image"
+                            loading="lazy"
+                            onLoad={applyOrientationClass}
+                            onError={handleImageError}
+                          />
+                        ) : <div className="pcat-sub-empty-visual" />;
+                      })()}
 
                       <span className={`pcat-status-chip ${badgeClass}`}>{statusLabel(produit.statut)}</span>
 

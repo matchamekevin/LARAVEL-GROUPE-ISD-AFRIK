@@ -2,16 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * Class Blog
- * Articles de blog créés par les utilisateurs.
- */
 class Blog extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $table = 'blogs';
     protected $primaryKey = 'id_blog';

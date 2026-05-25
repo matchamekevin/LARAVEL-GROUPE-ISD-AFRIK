@@ -31,12 +31,7 @@ function Header() {
   const location = useLocation();
 
   const countryMap = {
-    "1": "TG",
-    "2": "BJ",
-    "3": "BF",
-    "4": "CI",
-    "5": "NE",
-    "6": "OT",
+    "2185de10-a169-43af-8513-5fa9a2117031": "TG",
   };
 
   const handleLogout = () => {

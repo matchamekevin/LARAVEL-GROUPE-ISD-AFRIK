@@ -78,7 +78,7 @@ class GeovisionCatalogSeeder extends Seeder
     /**
      * @param array<string, mixed> $definition
      */
-    private function syncProduct(array $definition, CategorieProduit $category, int $countryId, int $userId): void
+    private function syncProduct(array $definition, CategorieProduit $category, string $countryId, string $userId): void
     {
         $product = Produit::query()
             ->where('slug', $definition['slug'])
@@ -140,7 +140,7 @@ class GeovisionCatalogSeeder extends Seeder
     /**
      * @param array<int, string> $images
      */
-    private function syncImages(int $productId, string $title, array $images): void
+    private function syncImages(string $productId, string $title, array $images): void
     {
         DB::table('images')
             ->where('imageable_type', 'PRODUIT')
@@ -149,6 +149,7 @@ class GeovisionCatalogSeeder extends Seeder
 
         foreach (array_values(array_unique(array_filter($images))) as $index => $image) {
             DB::table('images')->insert([
+                'id_image' => Str::uuid()->toString(),
                 'url' => $image,
                 'path' => ltrim($image, '/'),
                 'alt' => sprintf('%s - visuel %d', $title, $index + 1),

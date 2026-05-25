@@ -6,70 +6,111 @@ use App\Models\Formation;
 use App\Models\Image;
 use App\Models\Paiement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Barryvdh\DomPDF\Facade\Pdf;
 use FedaPay\Transaction;
 use FedaPay\FedaPay;
+use App\Support\CacheVersion;
 
 class FormationController extends Controller
 {
+    private const CACHE_TTL_SECONDS = 300;
+
+    private function selectImageColumns($query): void
+    {
+        $query->select([
+            'id_image',
+            'url',
+            'path',
+            'alt',
+            'imageable_id',
+            'imageable_type',
+            'created_at',
+            'updated_at',
+        ])->addSelect(DB::raw('image_data IS NOT NULL AS has_image_data'));
+    }
+
+    private function cacheKey(Request $request, string $suffix): string
+    {
+        return CacheVersion::key('formations', $suffix . '.' . md5($request->fullUrl()));
+    }
+
+    private function bumpCache(): void
+    {
+        CacheVersion::bump('formations');
+    }
+
     /** Liste paginée des formations (admin et public) */
     public function index(Request $request)
     {
-        $perPage = max(1, min(50, (int) $request->query('per_page', 20)));
-        $page = max(1, (int) $request->query('page', 1));
-        $search = trim((string) $request->query('q', ''));
-        $categorie = trim((string) $request->query('categorie', ''));
+        $cacheKey = $this->cacheKey($request, 'index');
 
-        $query = Formation::with(['pays', 'images'])->orderByDesc('created_at');
+        $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($request) {
+            $perPage = max(1, min(50, (int) $request->query('per_page', 20)));
+            $page = max(1, (int) $request->query('page', 1));
+            $search = trim((string) $request->query('q', ''));
+            $categorie = trim((string) $request->query('categorie', ''));
 
-        if ($search !== '') {
-            $like = "%{$search}%";
-            $query->where(function ($q) use ($like) {
-                $q->where('titre', 'ILIKE', $like)
-                    ->orWhere('description', 'ILIKE', $like);
-            });
-        }
+            $query = Formation::with([
+                'pays',
+                'images' => function ($q) {
+                    $this->selectImageColumns($q);
+                },
+            ])->orderByDesc('created_at');
 
-        if ($categorie !== '' && strtolower($categorie) !== 'all') {
-            $query->where('categorie', $categorie);
-        }
-
-        $paginator = $query->paginate($perPage, ['*'], 'page', $page)->appends($request->query());
-
-        // Normalise les URLs d'images
-        foreach ($paginator->items() as $formation) {
-            foreach ($formation->images as $img) {
-                $img->url = $this->normalizeImageUrl($img->url);
+            if ($search !== '') {
+                $like = "%{$search}%";
+                $query->where(function ($q) use ($like) {
+                    $q->where('titre', 'ILIKE', $like)
+                        ->orWhere('description', 'ILIKE', $like);
+                });
             }
-        }
 
-        $particulier = Formation::where('categorie', 'particulier')->count();
-        $etudiant = Formation::where('categorie', 'etudiant')->count();
-        $entreprise = Formation::where('categorie', 'entreprise')->count();
+            if ($categorie !== '' && strtolower($categorie) !== 'all') {
+                $query->where('categorie', $categorie);
+            }
 
-        return response()->json([
-            'data' => $paginator->items(),
-            'meta' => [
-                'total' => $paginator->total(),
-                'per_page' => $paginator->perPage(),
-                'current_page' => $paginator->currentPage(),
-                'last_page' => $paginator->lastPage(),
-                'from' => $paginator->firstItem(),
-                'to' => $paginator->lastItem(),
-            ],
-            'links' => [
-                'first' => $paginator->url(1),
-                'last' => $paginator->url($paginator->lastPage()),
-                'next' => $paginator->nextPageUrl(),
-                'prev' => $paginator->previousPageUrl(),
-            ],
-            'stats' => [
-                'total' => $paginator->total(),
-                'particulier' => $particulier,
-                'etudiant' => $etudiant,
-                'entreprise' => $entreprise,
-            ],
-        ], 200);
+            $paginator = $query->paginate($perPage, ['*'], 'page', $page)->appends($request->query());
+
+            foreach ($paginator->items() as $formation) {
+                foreach ($formation->images as $img) {
+                    $img->url = $this->normalizeImageUrl($img->url);
+                }
+            }
+
+            $stats = Formation::query()
+                ->select('categorie', DB::raw('COUNT(*) as total'))
+                ->groupBy('categorie')
+                ->pluck('total', 'categorie');
+
+            return [
+                'data' => $paginator->items(),
+                'meta' => [
+                    'total' => $paginator->total(),
+                    'per_page' => $paginator->perPage(),
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                    'from' => $paginator->firstItem(),
+                    'to' => $paginator->lastItem(),
+                ],
+                'links' => [
+                    'first' => $paginator->url(1),
+                    'last' => $paginator->url($paginator->lastPage()),
+                    'next' => $paginator->nextPageUrl(),
+                    'prev' => $paginator->previousPageUrl(),
+                ],
+                'stats' => [
+                    'total' => $paginator->total(),
+                    'particulier' => (int) ($stats['particulier'] ?? 0),
+                    'etudiant' => (int) ($stats['etudiant'] ?? 0),
+                    'entreprise' => (int) ($stats['entreprise'] ?? 0),
+                ],
+            ];
+        });
+
+        return response()->json($payload, 200);
     }
 
     /** Crée une nouvelle formation */
@@ -88,25 +129,32 @@ class FormationController extends Controller
 
         $formation = Formation::create($data);
 
+        $this->bumpCache();
+
         return response()->json($formation->load(['pays']), 201);
     }
 
     /** Affiche une formation précise par ID */
-    public function show($id)
+    public function show(string $id)
     {
-        if (!is_numeric($id)) {
-            return response()->json([
-                'error' => 'L\'identifiant doit être un nombre. Utilisez /formations/type/{categorie} pour filtrer par type.'
-            ], 400);
-        }
+        $cacheKey = CacheVersion::key('formations', 'show.' . $id);
 
-        $formation = Formation::with(['pays', 'images'])->findOrFail((int)$id);
+        $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($id) {
+            $formation = Formation::with([
+                'pays',
+                'images' => function ($q) {
+                    $this->selectImageColumns($q);
+                },
+            ])->findOrFail($id);
 
-        foreach ($formation->images as $img) {
-            $img->url = $this->normalizeImageUrl($img->url);
-        }
+            foreach ($formation->images as $img) {
+                $img->url = $this->normalizeImageUrl($img->url);
+            }
 
-        return response()->json($formation, 200);
+            return $formation->toArray();
+        });
+
+        return response()->json($payload, 200);
     }
 
     /** Met à jour une formation */
@@ -127,6 +175,8 @@ class FormationController extends Controller
 
         $formation->update($data);
 
+        $this->bumpCache();
+
         return response()->json($formation->load(['pays']), 200);
     }
 
@@ -134,6 +184,7 @@ class FormationController extends Controller
     public function destroy($id)
     {
         Formation::findOrFail($id)->delete();
+        $this->bumpCache();
         return response()->json(['message' => 'Formation supprimée avec succès'], 200);
     }
 
@@ -158,21 +209,54 @@ class FormationController extends Controller
             ->unique()
             ->values();
 
-        $formations = Formation::with(['pays', 'images'])
-            ->where(function ($query) use ($matchValues) {
-                foreach ($matchValues as $value) {
-                    $query->orWhereRaw('LOWER(TRIM(categorie)) = ?', [$value]);
+        $cacheKey = CacheVersion::key('formations', 'type.' . $normalizedType);
+
+        $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($matchValues) {
+            $formations = Formation::with([
+                'pays',
+                'images' => function ($q) {
+                    $this->selectImageColumns($q);
+                },
+            ])
+                ->where(function ($query) use ($matchValues) {
+                    foreach ($matchValues as $value) {
+                        $query->orWhereRaw('LOWER(TRIM(categorie)) = ?', [$value]);
+                    }
+                })
+                ->get();
+
+            foreach ($formations as $formation) {
+                foreach ($formation->images as $img) {
+                    $img->url = $this->normalizeImageUrl($img->url);
                 }
-            })
-            ->get();
-
-        foreach ($formations as $formation) {
-            foreach ($formation->images as $img) {
-                $img->url = $this->normalizeImageUrl($img->url);
             }
-        }
 
-        return response()->json($formations, 200);
+            return $formations->toArray();
+        });
+
+        return response()->json($payload, 200);
+    }
+
+    /** Télécharger le catalogue PDF de toutes les formations */
+    public function downloadCatalogue()
+    {
+        $formations = Formation::with(['pays'])
+            ->orderBy('categorie')
+            ->orderBy('date_debut')
+            ->get()
+            ->groupBy('categorie');
+
+        $labels = [
+            'etudiant' => 'Étudiants',
+            'particulier' => 'Particuliers',
+            'entreprise' => 'Entreprises',
+        ];
+
+        $total = $formations->flatten()->count();
+
+        $pdf = Pdf::loadView('catalogue-formation', compact('formations', 'labels', 'total'));
+
+        return $pdf->download('catalogue-formations-isd-afrik.pdf');
     }
 
     private function normalizeImageUrl(?string $url): ?string
@@ -228,7 +312,7 @@ class FormationController extends Controller
         'facturation'             => 'required|string|in:participant,societe',
     ]);
 
-    $userId = (int) $user->getKey();
+    $userId = $user->getKey();
 
     // ✅ BLOCAGE DOUBLON — vérifier avant tout INSERT
     $dejaInscrit = $formation->users()
@@ -316,7 +400,7 @@ class FormationController extends Controller
         // Récupérer le paiement
         $paiement = Paiement::findOrFail($idPaiement);
 
-        if ((int) $paiement->id_utilisateur !== (int) $authUser->getKey() && !$authUser->is_admin) {
+        if ($paiement->id_utilisateur !== $authUser->getKey() && !$authUser->is_admin) {
             return response()->json([
                 'message' => 'Accès interdit à ce paiement.'
             ], 403);

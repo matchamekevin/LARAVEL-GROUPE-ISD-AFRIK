@@ -454,7 +454,7 @@ export async function createAdminAdjoint(payload) {
     prenom: payload.prenom,
     email: payload.email,
     telephone: payload.telephone || null,
-    id_pays: payload.id_pays !== undefined && payload.id_pays !== null && payload.id_pays !== '' ? Number(payload.id_pays) : undefined,
+    id_pays: payload.id_pays !== undefined && payload.id_pays !== null && payload.id_pays !== '' ? String(payload.id_pays) : undefined,
     admin_role: payload.admin_role || 'admin_adjoint',
     can_access_client: Boolean(payload.can_access_client),
     two_factor_enabled: payload.two_factor_enabled !== undefined ? Boolean(payload.two_factor_enabled) : true,
@@ -514,10 +514,10 @@ export async function createProduct(data) {
   };
 
   if (data.id_categorie !== undefined && data.id_categorie !== null && data.id_categorie !== '') {
-    payload.id_categorie = Number(data.id_categorie);
+    payload.id_categorie = String(data.id_categorie);
   }
   if (data.id_pays !== undefined && data.id_pays !== null && data.id_pays !== '') {
-    payload.id_pays = Number(data.id_pays);
+    payload.id_pays = String(data.id_pays);
   }
 
   return api.post('/api/produits', payload);
@@ -566,8 +566,8 @@ export async function updateProduct(id, data) {
     image_urls: imageUrls,
     segment,
     statut: data.statut,
-    id_categorie: data.id_categorie !== undefined && data.id_categorie !== null && data.id_categorie !== '' ? Number(data.id_categorie) : undefined,
-    id_pays: data.id_pays !== undefined && data.id_pays !== null && data.id_pays !== '' ? Number(data.id_pays) : undefined,
+    id_categorie: data.id_categorie !== undefined && data.id_categorie !== null && data.id_categorie !== '' ? String(data.id_categorie) : undefined,
+    id_pays: data.id_pays !== undefined && data.id_pays !== null && data.id_pays !== '' ? String(data.id_pays) : undefined,
   };
   Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
   return api.put(`/api/produits/${id}`, payload);

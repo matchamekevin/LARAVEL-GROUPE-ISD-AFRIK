@@ -29,8 +29,8 @@ class CommentaireRequest extends FormRequest
             'note'             => 'nullable|integer|min:1|max:5',
             'date'             => 'nullable|date',
             'commentable_type' => 'required|string|in:PRODUIT,FORMATION,BLOG',
-            'commentable_id'   => 'required|integer|min:1',
-            'id_utilisateur'   => 'nullable|integer|exists:utilisateurs,id_utilisateur',
+            'commentable_id'   => 'required|string',
+            'id_utilisateur'   => 'nullable|string|exists:utilisateurs,id_utilisateur',
         ];
     }
 

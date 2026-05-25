@@ -17,7 +17,7 @@ use Illuminate\Support\Str;
 
 class PaiementController extends Controller
 {
-    private function resolvePhoneCountryIsoFromPays(?int $idPays): string
+    private function resolvePhoneCountryIsoFromPays(?string $idPays): string
     {
         if (! $idPays) {
             return 'TG';
@@ -130,7 +130,7 @@ class PaiementController extends Controller
             return response()->json(['message' => 'Nom ou prénom manquant ❌'], 422);
         }
 
-        $phoneCountry = $this->resolvePhoneCountryIsoFromPays((int) ($user->id_pays ?? 0));
+        $phoneCountry = $this->resolvePhoneCountryIsoFromPays($user->id_pays);
         $phoneNumber = $this->normalizePhoneNumberForGateway(
             (string) $user->telephone,
             $user->pays?->code_pays
@@ -254,7 +254,7 @@ class PaiementController extends Controller
         $prenomLivraison = $data['prenom_livraison'] ?? $user->prenom ?? 'ISD';
         $email = $data['email'] ?? $user->email ?? '';
         $telephone = $data['telephone'] ?? $user->telephone ?? '00000000';
-        $phoneCountry = $this->resolvePhoneCountryIsoFromPays((int) ($user->id_pays ?? 0));
+        $phoneCountry = $this->resolvePhoneCountryIsoFromPays($user->id_pays);
         $phoneNumber = $this->normalizePhoneNumberForGateway(
             (string) $telephone,
             $user->pays?->code_pays

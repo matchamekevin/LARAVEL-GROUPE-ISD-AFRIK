@@ -6,17 +6,11 @@ import { resolveFormationImageUrl } from "../utils/mediaUrl";
 
 const API_BASE = (() => {
   if (typeof window !== "undefined") {
-    const { protocol, hostname } = window.location;
-    if (import.meta.env.VITE_API_BASE) {
-      const envBase = import.meta.env.VITE_API_BASE.replace(/\/$/, "");
-      const envLooksLocal = /localhost|127\.0\.0\.1/i.test(envBase);
-      const hostIsLocal = ["localhost", "127.0.0.1"].includes(hostname);
-      if (!envLooksLocal || hostIsLocal) return envBase;
-    }
+    const { hostname, origin } = window.location;
     if (["localhost", "127.0.0.1"].includes(hostname)) {
-      return `${protocol}//${hostname}:8000`;
+      return origin;
     }
-    return window.location.origin;
+    return import.meta.env.VITE_API_BASE?.replace(/\/$/, "") || origin;
   }
   return "";
 })();
@@ -26,16 +20,19 @@ const Entreprise = () => {
   const [formations, setFormations] = useState([]);
   const [activeMonth, setActiveMonth] = useState("");
 
+  console.log("📌 Entreprise.jsx monté, API_BASE =", API_BASE);
+
   // Charger les formations de type "entreprise"
   useEffect(() => {
+    console.log("📡 Fetching:", `${API_BASE}/api/formations/type/entreprise`);
     axios
       .get(`${API_BASE}/api/formations/type/entreprise`)
       .then((res) => {
+        console.log("✅ Formations entreprise reçues:", res.data);
         setFormations(res.data || []);
       })
       .catch((err) => {
-        console.error("Erreur chargement formations:", err);
-        // Afficher plus d'infos pour debug
+        console.error("❌ Erreur chargement formations:", err);
         if (err.response) console.error('Response data:', err.response.data, 'status:', err.response.status);
       });
   }, []);
@@ -124,9 +121,41 @@ const Entreprise = () => {
 
       {/* Liste des formations par mois */}
       <section className="formations-section">
-        {moisList.length === 0 ? (
+        {formations.length === 0 ? (
           <div className="empty-state">
             <p>Aucune formation entreprise disponible pour le moment.</p>
+          </div>
+        ) : moisList.length === 0 ? (
+          <div className="formations-grid">
+            {(formations || []).map((f) => (
+              <article key={f.id_formation} className="formation-card">
+                <div className="card-header-accent" />
+                {getImageUrl(f) && (
+                  <div className="formation-image">
+                    <img src={getImageUrl(f)} alt={f.titre} />
+                  </div>
+                )}
+                <div className="formation-body">
+                  <h3 className="formation-title">{f.titre}</h3>
+                  <p className="formation-desc">{f.description}</p>
+                  <div className="meta-row">
+                    <span className="meta-badge">
+                      {new Date(f.date_debut).toLocaleDateString("fr-FR")}
+                    </span>
+                    <span className="meta-badge">
+                      {f.duree} {f.duree > 1 ? "jours" : "jour"}
+                    </span>
+                    <span className="meta-badge">
+                      {parseInt(f.prix).toLocaleString()} FCFA
+                    </span>
+                  </div>
+                  <div className="card-actions">
+                    <button className="btn-primary" onClick={() => navigate(`/formations/${f.id_formation}/register`)}>S'inscrire</button>
+                    <button className="btn-secondary" onClick={() => navigate(`/formations/${f.id_formation}/details`)}>En savoir plus →</button>
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
         ) : (
           <div className="mois-block">

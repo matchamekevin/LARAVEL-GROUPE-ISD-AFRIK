@@ -29,13 +29,13 @@ use App\Http\Controllers\ProjetController;
 Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     // 🗂️ CATÉGORIES (admin)
     Route::get('/admin/categories-produits',         [CategorieProduitController::class, 'index']);
-    Route::get('/admin/categories-produits/{id}',    [CategorieProduitController::class, 'show'])->where('id', '[0-9]+');
+    Route::get('/admin/categories-produits/{id}',    [CategorieProduitController::class, 'show']);
     Route::post('/admin/categories-produits/bootstrap-ingenierie', [CategorieProduitController::class, 'bootstrapIngenierie']);
     Route::post('/admin/categories-produits/bootstrap-ingenierie-page', [CategorieProduitController::class, 'bootstrapIngenieriePage']);
 
     // 📦 PRODUITS (admin)
     Route::get('/admin/produits',                     [ProduitController::class, 'adminIndex']);
-    Route::get('/admin/produits/{id}',                [ProduitController::class, 'show'])->where('id', '[0-9]+');
+    Route::get('/admin/produits/{id}',                [ProduitController::class, 'show']);
     Route::post('/admin/geovision/sync',              [GeovisionCatalogController::class, 'sync']);
     Route::post('/produits',                          [ProduitController::class, 'store']);
     Route::put('/produits/{id}',                      [ProduitController::class, 'update']);
@@ -53,15 +53,15 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
 
     // 👤 GESTION UTILISATEURS (admin)
     Route::get('/utilisateurs',                      [UtilisateurController::class, 'index']);
-    Route::get('/utilisateurs/{id}',                 [UtilisateurController::class, 'show'])->where('id', '[0-9]+');
-    Route::put('/utilisateurs/{id}',                 [UtilisateurController::class, 'update'])->where('id', '[0-9]+');
-    Route::delete('/utilisateurs/{id}',              [UtilisateurController::class, 'destroy'])->where('id', '[0-9]+');
-    Route::patch('/utilisateurs/{id}/restore',       [UtilisateurController::class, 'restore'])->where('id', '[0-9]+');
+    Route::get('/utilisateurs/{id}',                 [UtilisateurController::class, 'show']);
+    Route::put('/utilisateurs/{id}',                 [UtilisateurController::class, 'update']);
+    Route::delete('/utilisateurs/{id}',              [UtilisateurController::class, 'destroy']);
+    Route::patch('/utilisateurs/{id}/restore',       [UtilisateurController::class, 'restore']);
     Route::post('/utilisateurs/admin-adjoint',       [UtilisateurController::class, 'storeAdminAdjoint'])->middleware('isSuperAdmin');
 
     // 💳 PAIEMENTS (admin lecture)
     Route::get('/admin/paiements',                   [PaiementController::class, 'adminIndex']);
-    Route::get('/admin/paiements/{id}',              [PaiementController::class, 'show'])->where('id', '[0-9]+');
+    Route::get('/admin/paiements/{id}',              [PaiementController::class, 'show']);
 
     // 📝 ACTIVITÉS RÉCENTES (audit + admin actions)
     Route::get('/admin/dashboard',                 [AdminActivityController::class, 'dashboard']);
@@ -69,9 +69,9 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
 
     // 📦 COMMANDES (admin)
     Route::get('/admin/commandes',                   [CommandeController::class, 'adminIndex']);
-    Route::get('/admin/commandes/{id}',              [CommandeController::class, 'adminShow'])->where('id', '[0-9]+');
-    Route::patch('/admin/commandes/{id}/statut',     [CommandeController::class, 'adminUpdateStatus'])->where('id', '[0-9]+');
-    Route::patch('/admin/commandes/{id}/livraison-statut', [CommandeController::class, 'adminUpdateLivraisonStatus'])->where('id', '[0-9]+');
+    Route::get('/admin/commandes/{id}',              [CommandeController::class, 'adminShow']);
+    Route::patch('/admin/commandes/{id}/statut',     [CommandeController::class, 'adminUpdateStatus']);
+    Route::patch('/admin/commandes/{id}/livraison-statut', [CommandeController::class, 'adminUpdateLivraisonStatus']);
 
     // 📚 FORMATIONS (admin CRUD)
     Route::get('/admin/formations',                  [FormationController::class, 'index']);
@@ -83,15 +83,15 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
 
     // 📩 MESSAGES CONTACT (admin)
     Route::get('/admin/contact-messages',            [ContactMessageController::class, 'index']);
-    Route::get('/admin/contact-messages/{id}',       [ContactMessageController::class, 'show'])->where('id', '[0-9]+');
-    Route::patch('/admin/contact-messages/{id}/statut', [ContactMessageController::class, 'updateStatus'])->where('id', '[0-9]+');
-    Route::delete('/admin/contact-messages/{id}',    [ContactMessageController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::get('/admin/contact-messages/{id}',       [ContactMessageController::class, 'show']);
+    Route::patch('/admin/contact-messages/{id}/statut', [ContactMessageController::class, 'updateStatus']);
+    Route::delete('/admin/contact-messages/{id}',    [ContactMessageController::class, 'destroy']);
 
     // 📋 DEVIS PRESTATIONS (admin)
     Route::get('/admin/devis-prestations',            [DevisPrestationController::class, 'index']);
-    Route::get('/admin/devis-prestations/{id}',       [DevisPrestationController::class, 'show'])->where('id', '[0-9]+');
-    Route::patch('/admin/devis-prestations/{id}/statut', [DevisPrestationController::class, 'updateStatus'])->where('id', '[0-9]+');
-    Route::delete('/admin/devis-prestations/{id}',    [DevisPrestationController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::get('/admin/devis-prestations/{id}',       [DevisPrestationController::class, 'show']);
+    Route::patch('/admin/devis-prestations/{id}/statut', [DevisPrestationController::class, 'updateStatus']);
+    Route::delete('/admin/devis-prestations/{id}',    [DevisPrestationController::class, 'destroy']);
 
     // 📬 ROUTAGE EMAIL FORMULAIRES (admin)
     Route::get('/admin/form-mail-routes', [FormMailRouteController::class, 'index']);
@@ -100,16 +100,16 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
 
     // 🤝 DEMANDES REVENDEURS (admin)
     Route::get('/admin/revendeur-demandes',          [RevendeurDemandeController::class, 'index']);
-    Route::get('/admin/revendeur-demandes/{id}',     [RevendeurDemandeController::class, 'show'])->where('id', '[0-9]+');
-    Route::patch('/admin/revendeur-demandes/{id}/statut', [RevendeurDemandeController::class, 'updateStatus'])->where('id', '[0-9]+');
-    Route::delete('/admin/revendeur-demandes/{id}',  [RevendeurDemandeController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::get('/admin/revendeur-demandes/{id}',     [RevendeurDemandeController::class, 'show']);
+    Route::patch('/admin/revendeur-demandes/{id}/statut', [RevendeurDemandeController::class, 'updateStatus']);
+    Route::delete('/admin/revendeur-demandes/{id}',  [RevendeurDemandeController::class, 'destroy']);
 
     // 📧 NEWSLETTER (admin)
     Route::get('/admin/newsletter',                  [NewsletterController::class, 'index']);
-    Route::get('/admin/newsletter/{id}',             [NewsletterController::class, 'show'])->where('id', '[0-9]+');
+    Route::get('/admin/newsletter/{id}',             [NewsletterController::class, 'show']);
     Route::post('/admin/newsletter',                 [NewsletterController::class, 'store']);
-    Route::put('/admin/newsletter/{id}',             [NewsletterController::class, 'update'])->where('id', '[0-9]+');
-    Route::delete('/admin/newsletter/{id}',          [NewsletterController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::put('/admin/newsletter/{id}',             [NewsletterController::class, 'update']);
+    Route::delete('/admin/newsletter/{id}',          [NewsletterController::class, 'destroy']);
 
     // 🏠 MARKETING HOMEPAGE CARDS (admin)
     Route::get('/admin/home-marketing-cards',        [HomeMarketingCardController::class, 'adminIndex']);
@@ -149,16 +149,16 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
 
     // 🖼️ IMAGES (admin)
     Route::get('/admin/images',                      [ImageController::class, 'index']);
-    Route::get('/admin/images/{id}',                 [ImageController::class, 'show'])->where('id', '[0-9]+');
+    Route::get('/admin/images/{id}',                 [ImageController::class, 'show']);
     Route::post('/admin/images/upload',              [ImageController::class, 'upload']);
     Route::post('/admin/images',                     [ImageController::class, 'store']);
-    Route::put('/admin/images/{id}',                 [ImageController::class, 'update'])->where('id', '[0-9]+');
-    Route::delete('/admin/images/{id}',              [ImageController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::put('/admin/images/{id}',                 [ImageController::class, 'update']);
+    Route::delete('/admin/images/{id}',              [ImageController::class, 'destroy']);
 
     // 💬 COMMENTAIRES (admin)
     Route::get('/admin/commentaires',                [CommentaireController::class, 'index']);
-    Route::get('/admin/commentaires/{id}',           [CommentaireController::class, 'show'])->where('id', '[0-9]+');
+    Route::get('/admin/commentaires/{id}',           [CommentaireController::class, 'show']);
     Route::post('/admin/commentaires',               [CommentaireController::class, 'store']);
-    Route::put('/admin/commentaires/{id}',           [CommentaireController::class, 'update'])->where('id', '[0-9]+');
-    Route::delete('/admin/commentaires/{id}',        [CommentaireController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::put('/admin/commentaires/{id}',           [CommentaireController::class, 'update']);
+    Route::delete('/admin/commentaires/{id}',        [CommentaireController::class, 'destroy']);
 });

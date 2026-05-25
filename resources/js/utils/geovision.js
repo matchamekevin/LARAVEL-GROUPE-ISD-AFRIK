@@ -63,7 +63,7 @@ export function getCategoryChildren(category) {
   }
 
   if (Array.isArray(category.children_recursive) && category.children_recursive.length > 0) {
-    const categoryId = Number(category.id ?? category.id_categorie ?? 0);
+    const categoryId = String(category.id ?? category.id_categorie ?? 0);
 
     if (!categoryId) {
       return category.children_recursive;
@@ -71,7 +71,7 @@ export function getCategoryChildren(category) {
 
     // children_recursive can include multiple levels; keep only direct children for UI hierarchy.
     return category.children_recursive.filter(
-      (child) => Number(child?.parent_id ?? 0) === categoryId
+      (child) => String(child?.parent_id ?? 0) === categoryId
     );
   }
 

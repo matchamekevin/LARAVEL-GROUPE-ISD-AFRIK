@@ -130,16 +130,12 @@ class InsertCategoryImages extends Command
     }
 
     /**
-     * Obtenir l'ID numérique pour une catégorie
+     * Obtenir l'UUID d'une catégorie par son nom
      */
-    protected function getCategoryId(string $categoryKey): int
+    protected function getCategoryId(string $categoryKey): string
     {
-        $categoryIds = [
-            'etudiant' => 1,
-            'particulier' => 2,
-            'entreprise' => 3
-        ];
-
-        return $categoryIds[$categoryKey] ?? 0;
+        return DB::table('categories_produits')
+            ->where('nom', 'LIKE', "%{$categoryKey}%")
+            ->value('id_categorie') ?? '';
     }
 }

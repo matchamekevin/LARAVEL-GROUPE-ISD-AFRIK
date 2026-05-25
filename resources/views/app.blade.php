@@ -12,9 +12,22 @@
         html { background: #ffffff; height: 100%; }
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #ffffff; height: 100%; }
         #react-root { min-height: 100vh; display: block; }
-        .init-loader { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #fff; z-index: 9999; transition: opacity 0.4s ease; }
-        .init-loader svg { width: 48px; height: 48px; animation: init-spin 1s linear infinite; }
-        @keyframes init-spin { to { transform: rotate(360deg); } }
+        .init-loader { position: fixed; inset: 0; z-index: 9999; background: #fff; transition: opacity 0.4s ease; overflow-y: auto; }
+        .init-loader-nav { height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; border-bottom: 1px solid #f1f5f9; }
+        .init-loader-nav-links { display: flex; gap: 24px; }
+        .init-loader-main { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .init-loader-hero { margin-bottom: 40px; display: flex; flex-direction: column; gap: 14px; }
+        .init-loader-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 24px; }
+        .init-loader-card { border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden; }
+        .init-loader-card-img { width: 100%; aspect-ratio: 16/10; }
+        .init-loader-card-body { padding: 18px 20px 22px; display: flex; flex-direction: column; gap: 10px; }
+        .init-loader-shape { height: 18px; border-radius: 10px; background: linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%); background-size: 200% 100%; animation: init-shimmer 1.4s infinite; }
+        .init-loader-shape--h36 { height: 36px; }
+        .init-loader-shape--w70 { width: 70%; }
+        .init-loader-shape--w60 { width: 60%; }
+        .init-loader-shape--w50 { width: 50%; }
+        .init-loader-shape--w40 { width: 40%; }
+        @keyframes init-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
     <script>
         /* Répondre silencieusement aux appels du browser logger pour éviter le spam console */
@@ -61,10 +74,47 @@
 </head>
 <body class="font-[Corbel] bg-gray-50 text-gray-900">
     <div id="react-root">
-        <div class="init-loader">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#172243" stroke-width="2">
-                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-            </svg>
+        <div class="init-loader" id="init-loader">
+            <div class="init-loader-nav">
+                <div class="init-loader-shape init-loader-shape--h36 init-loader-shape--w40"></div>
+                <div class="init-loader-nav-links">
+                    <div class="init-loader-shape init-loader-shape--w50"></div>
+                    <div class="init-loader-shape init-loader-shape--w40"></div>
+                    <div class="init-loader-shape init-loader-shape--w50"></div>
+                </div>
+            </div>
+            <div class="init-loader-main">
+                <div class="init-loader-hero">
+                    <div class="init-loader-shape init-loader-shape--h36 init-loader-shape--w70"></div>
+                    <div class="init-loader-shape init-loader-shape--w50"></div>
+                </div>
+                <div class="init-loader-grid">
+                    <div class="init-loader-card">
+                        <div class="init-loader-shape init-loader-card-img"></div>
+                        <div class="init-loader-card-body">
+                            <div class="init-loader-shape init-loader-shape--w70"></div>
+                            <div class="init-loader-shape"></div>
+                            <div class="init-loader-shape init-loader-shape--w50"></div>
+                        </div>
+                    </div>
+                    <div class="init-loader-card">
+                        <div class="init-loader-shape init-loader-card-img"></div>
+                        <div class="init-loader-card-body">
+                            <div class="init-loader-shape init-loader-shape--w70"></div>
+                            <div class="init-loader-shape"></div>
+                            <div class="init-loader-shape init-loader-shape--w50"></div>
+                        </div>
+                    </div>
+                    <div class="init-loader-card">
+                        <div class="init-loader-shape init-loader-card-img"></div>
+                        <div class="init-loader-card-body">
+                            <div class="init-loader-shape init-loader-shape--w70"></div>
+                            <div class="init-loader-shape"></div>
+                            <div class="init-loader-shape init-loader-shape--w50"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     @viteReactRefresh

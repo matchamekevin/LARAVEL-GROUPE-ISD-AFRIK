@@ -2,23 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * Class Facture
- * Représente une facture générée après un paiement validé.
- *
- * @property int $id_facture
- * @property string $numero_facture
- * @property \DateTime $date_facture
- * @property float $montant
- * @property int $id_paiement
- * @property int|null $id_pays
- */
 class Facture extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $table = 'factures';
     protected $primaryKey = 'id_facture';

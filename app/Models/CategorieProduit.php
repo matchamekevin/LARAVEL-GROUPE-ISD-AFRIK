@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class CategorieProduit extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $table = 'categories_produits';
     protected $primaryKey = 'id_categorie';
@@ -81,6 +83,27 @@ class CategorieProduit extends Model
         }
 
         return $crumbs;
+    }
+
+    public function getImageUrlAttribute($value): ?string
+    {
+        if ($this->image_data) {
+            return url('/api/categories-produits/' . $this->id_categorie . '/image');
+        }
+
+        if (!$value) {
+            return null;
+        }
+
+        if (Str::startsWith($value, ['http://', 'https://'])) {
+            return $value;
+        }
+
+        if (Str::startsWith($value, '/api/categories-produits/')) {
+            return url('/api/categories-produits/' . $this->id_categorie . '/image');
+        }
+
+        return $value;
     }
 
     /**

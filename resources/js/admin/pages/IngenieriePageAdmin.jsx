@@ -36,8 +36,8 @@ const INITIAL_SERVICE_FORM = {
   actif: true,
 };
 
-const categoryId = (category) => Number(category?.id || category?.id_categorie || 0);
-const parentId = (category) => Number(category?.parent_id || category?.parent?.id || category?.parent?.id_categorie || 0);
+const categoryId = (category) => String(category?.id || category?.id_categorie || 0);
+const parentId = (category) => String(category?.parent_id || category?.parent?.id || category?.parent?.id_categorie || 0);
 
 const normalizeText = (value) =>
   String(value || '')
@@ -245,7 +245,7 @@ export default function IngenieriePageAdmin() {
   };
 
   const openMailModal = () => {
-    const labels = categories.filter(c => selectedForMail.has(Number(c.id ?? c.id_categorie))).map(c => c.nom || c.slug || c.id);
+    const labels = categories.filter(c => selectedForMail.has(String(c.id ?? c.id_categorie))).map(c => c.nom || c.slug || c.id);
     setMailForm(prev => ({ ...prev, sujet: labels.length ? `Demande: ${labels.join(', ')}` : prev.sujet, message: labels.length ? `Interet pour: ${labels.join(', ')}\n\nMerci.` : prev.message }));
     setMailModalOpen(true);
   };
@@ -374,7 +374,7 @@ export default function IngenieriePageAdmin() {
     try {
       const payload = {
         ...serviceForm,
-        parent_id: Number(serviceForm.parent_id || 0) || null,
+        parent_id: serviceForm.parent_id ? String(serviceForm.parent_id) : null,
         ordre: Number(serviceForm.ordre || 0),
         actif: Boolean(serviceForm.actif),
         segment: INGENIERIE_SEGMENT,

@@ -17,12 +17,12 @@ class ImageService
         return Image::create($data);
     }
 
-    public function find(int $id): ?Image
+    public function find(string $id): ?Image
     {
         return Image::find($id);
     }
 
-    public function update(int $id, array $data): ?Image
+    public function update(string $id, array $data): ?Image
     {
         $image = Image::find($id);
         if (!$image) {
@@ -37,7 +37,7 @@ class ImageService
         return $image->fresh();
     }
 
-    public function delete(int $id): bool
+    public function delete(string $id): bool
     {
         $image = Image::find($id);
         if (!$image) {
@@ -50,7 +50,7 @@ class ImageService
     /**
      * Restaure une image supprimée logiquement (SoftDeletes).
      */
-    public function restore(int $id): ?Image
+    public function restore(string $id): ?Image
     {
         $image = Image::withTrashed()->find($id);
 
@@ -65,7 +65,7 @@ class ImageService
     /**
      * Supprime définitivement une image (force delete).
      */
-    public function forceDelete(int $id): bool
+    public function forceDelete(string $id): bool
     {
         $image = Image::withTrashed()->find($id);
 

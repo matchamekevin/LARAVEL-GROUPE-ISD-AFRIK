@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
 class HomeMarketingCard extends Model
 {
+    use HasUuid;
     public const SECTION_LABELS = [
         'offer' => 'Nos Offres',
         'featured_product' => 'Produits phares',

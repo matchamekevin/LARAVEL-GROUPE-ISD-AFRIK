@@ -144,7 +144,7 @@ export default function GeovisionProduitDetail() {
           from: `${location.pathname}${location.search || ""}`,
           post_login_intent: "pay_product",
           post_login_payload: {
-            id_produit: Number(product.id_produit),
+            id_produit: String(product.id_produit),
             quantite: quantityToPay,
           },
         },
@@ -155,7 +155,7 @@ export default function GeovisionProduitDetail() {
     try {
       const user = getCurrentUser();
       api.post("/produits/paiement", {
-        id_produit: Number(product.id_produit),
+        id_produit: String(product.id_produit),
         quantite: quantityToPay,
         nom_livraison: user.nom || "Client",
         prenom_livraison: user.prenom || "ISD",
@@ -174,7 +174,7 @@ export default function GeovisionProduitDetail() {
               from: `${location.pathname}${location.search || ""}`,
               post_login_intent: "pay_product",
               post_login_payload: {
-                id_produit: Number(product.id_produit),
+                id_produit: String(product.id_produit),
                 quantite: quantityToPay,
               },
             },
@@ -213,8 +213,8 @@ export default function GeovisionProduitDetail() {
       return;
     }
 
-    const targetProductId = Number(payload?.id_produit || 0);
-    if (targetProductId && targetProductId !== Number(product.id_produit)) {
+    const targetProductId = String(payload?.id_produit || 0);
+    if (targetProductId && targetProductId !== String(product.id_produit)) {
       return;
     }
 

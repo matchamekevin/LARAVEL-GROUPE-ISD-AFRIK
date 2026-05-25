@@ -2,17 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-/**
- * Class Image
- * Représente une image liée à un produit, une formation ou un blog.
- */
 class Image extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasUuid;
 
     protected $table = 'images';
     protected $primaryKey = 'id_image';
@@ -37,9 +34,22 @@ class Image extends Model
 
     protected $appends = ['image_url'];
 
+    private function hasImageData(): bool
+    {
+        if (array_key_exists('image_data', $this->attributes)) {
+            return $this->attributes['image_data'] !== null && $this->attributes['image_data'] !== '';
+        }
+
+        if (array_key_exists('has_image_data', $this->attributes)) {
+            return (bool) $this->attributes['has_image_data'];
+        }
+
+        return false;
+    }
+
     public function getImageUrlAttribute(): ?string
     {
-        if ($this->image_data) {
+        if ($this->hasImageData()) {
             return url('/api/images/' . $this->id_image . '/serve');
         }
         if ($this->url) {

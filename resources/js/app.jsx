@@ -6,6 +6,7 @@ import { Toaster } from "react-hot-toast";
 import MainLayout from "./layouts/MainLayout";
 import AutoRefreshProvider from "./providers/AutoRefreshProvider";
 import ScrollToTop from "./components/ScrollToTop";
+import Loader from "./components/Loader";
 import { PAGE_ALIASES, PUBLIC_APP_ROUTES } from "./routes/publicRoutes";
 
 import "../css/app.css";
@@ -78,7 +79,7 @@ function App() {
             <Toaster position="top-right" reverseOrder={false} />
             <MainLayout>
                   <ScrollToTop />
-                <Suspense fallback={null}>
+                <Suspense fallback={<Loader variant="skeleton" count={3} />}>
                     <Routes>
                         {PUBLIC_APP_ROUTES.map(({ path, page }) => (
                             <Route key={path} path={path} element={<LazyPage name={page} />} />

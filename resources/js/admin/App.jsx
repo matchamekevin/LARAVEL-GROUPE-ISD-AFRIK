@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
+
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Products from './pages/Products';
@@ -126,7 +127,35 @@ export default function App() {
     return () => clearInterval(intervalId);
   }, [user]);
 
-  if (!authReady) return null;
+  if (!authReady) {
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', background: '#f8f9fa' }}>
+        <aside style={{ width: 280, background: 'linear-gradient(180deg,#172243,#0f1621)', padding: '2rem 1.5rem', flexShrink: 0 }}>
+          <div style={{ height: 32, width: '70%', borderRadius: 10, background: 'linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'init-shimmer 1.4s infinite' }} />
+          <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {[1,2,3,4].map(i => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 20, height: 20, borderRadius: 6, background: 'linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'init-shimmer 1.4s infinite' }} />
+                <div style={{ height: 18, width: `${50 + i * 5}%`, borderRadius: 10, background: 'linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'init-shimmer 1.4s infinite' }} />
+              </div>
+            ))}
+          </div>
+        </aside>
+        <main style={{ flex: 1, padding: 40, display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div style={{ height: 32, width: '40%', borderRadius: 10, background: 'linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'init-shimmer 1.4s infinite' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: 20 }}>
+            {[1,2].map(i => (
+              <div key={i} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 14, padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ height: 18, width: '60%', borderRadius: 10, background: 'linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'init-shimmer 1.4s infinite' }} />
+                <div style={{ height: 18, borderRadius: 10, background: 'linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'init-shimmer 1.4s infinite' }} />
+                <div style={{ height: 18, width: '50%', borderRadius: 10, background: 'linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)', backgroundSize: '200% 100%', animation: 'init-shimmer 1.4s infinite' }} />
+              </div>
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   if (!user) {
     return (

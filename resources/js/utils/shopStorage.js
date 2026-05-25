@@ -56,7 +56,7 @@ function buildKey(prefix, scope) {
 }
 
 function getProductId(item) {
-  return Number(item?.id_produit || item?.id || 0);
+  return String(item?.id_produit || item?.id || 0);
 }
 
 function normalizeProductSnapshot(product) {
@@ -88,7 +88,7 @@ function normalizeStoredCartItems(items) {
   return (Array.isArray(items) ? items : [])
     .map((item) => {
       const id = getProductId(item);
-      if (!Number.isFinite(id) || id <= 0) return null;
+      if (!id || id === "0") return null;
       return {
         ...item,
         id_produit: id,
@@ -119,7 +119,7 @@ function mergeGuestDataForUser(userId) {
   const favoriteMap = new Map();
   [...userFavorites, ...guestFavorites].forEach((item) => {
     const id = getProductId(item);
-    if (id > 0) {
+    if (id && id !== "0") {
       favoriteMap.set(id, {
         ...item,
         id_produit: id,
@@ -133,13 +133,13 @@ function mergeGuestDataForUser(userId) {
   const cartMap = new Map();
   userCart.forEach((item) => {
     const id = getProductId(item);
-    if (id > 0) {
+    if (id && id !== "0") {
       cartMap.set(id, { ...item, id_produit: id });
     }
   });
   guestCart.forEach((item) => {
     const id = getProductId(item);
-    if (id <= 0) return;
+    if (!id || id === "0") return;
 
     const existing = cartMap.get(id);
     if (existing) {
@@ -174,7 +174,7 @@ export function getFavorites() {
 }
 
 export function isFavorite(productId) {
-  const id = Number(productId);
+  const id = String(productId);
   return getFavorites().some((item) => getProductId(item) === id);
 }
 
@@ -182,7 +182,7 @@ export function toggleFavorite(product) {
   const scope = ensureScopeReady();
   const list = readArray(FAVORITES_KEY_PREFIX, scope);
   const snapshot = normalizeProductSnapshot(product);
-  const id = Number(snapshot.id_produit);
+  const id = String(snapshot.id_produit);
 
   const exists = list.some((item) => getProductId(item) === id);
   const next = exists
@@ -211,7 +211,7 @@ export function addToCart(product, quantite = 1) {
   const scope = ensureScopeReady();
   const list = normalizeStoredCartItems(readArray(CART_KEY_PREFIX, scope));
   const snapshot = normalizeProductSnapshot(product);
-  const id = Number(snapshot.id_produit);
+  const id = String(snapshot.id_produit);
   const qtyToAdd = Math.max(1, Number(quantite || 1));
 
   const index = list.findIndex((item) => getProductId(item) === id);
@@ -238,7 +238,7 @@ export function addToCart(product, quantite = 1) {
 
 export function setCartItemQuantity(productId, quantite) {
   const scope = ensureScopeReady();
-  const id = Number(productId);
+  const id = String(productId);
   const qty = Number(quantite ?? 1);
   let list = normalizeStoredCartItems(readArray(CART_KEY_PREFIX, scope));
 

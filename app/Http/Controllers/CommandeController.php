@@ -207,7 +207,7 @@ class CommandeController extends Controller
     /**
      * GET /api/admin/commandes/{id} — Détail commande (admin)
      */
-    public function adminShow(int $id)
+    public function adminShow(string $id)
     {
         $commande = Commande::with(['utilisateur', 'paiements', 'factures', 'livraison'])
             ->find($id);
@@ -224,7 +224,7 @@ class CommandeController extends Controller
     /**
      * PATCH /api/admin/commandes/{id}/statut — MAJ statut (admin)
      */
-    public function adminUpdateStatus(Request $request, int $id)
+    public function adminUpdateStatus(Request $request, string $id)
     {
         $data = $request->validate([
             'statut' => 'required|string|in:en_attente,payee,payée,annulee,annulée,en_cours,livree,livrée',
@@ -248,7 +248,7 @@ class CommandeController extends Controller
     /**
      * PATCH /api/admin/commandes/{id}/livraison-statut — MAJ statut livraison (admin)
      */
-    public function adminUpdateLivraisonStatus(Request $request, int $id)
+    public function adminUpdateLivraisonStatus(Request $request, string $id)
     {
         $data = $request->validate([
             'statut' => 'required|string|in:en_attente,en_preparation,expediee,en_livraison,livree,echec,retournee',

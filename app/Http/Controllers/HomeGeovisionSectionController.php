@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\HomeGeovisionSection;
 use Illuminate\Http\Request;
 use App\Services\Base64ImageService;
+use Illuminate\Support\Facades\Cache;
+use App\Support\CacheVersion;
 
 class HomeGeovisionSectionController extends Controller
 {
+    private const CACHE_TTL_SECONDS = 300;
     private const DEFAULTS = [
         [
             'title' => 'Caméras',
@@ -63,25 +66,35 @@ class HomeGeovisionSectionController extends Controller
     {
         $this->seedDefaultsIfEmpty();
 
-        return response()->json(
-            HomeGeovisionSection::query()
+        $cacheKey = CacheVersion::key('home_geovision_sections', 'index');
+
+        $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () {
+            return HomeGeovisionSection::query()
                 ->where('is_active', true)
                 ->orderBy('sort_order')
                 ->orderBy('id')
                 ->get()
-        );
+                ->toArray();
+        });
+
+        return response()->json($payload);
     }
 
     public function adminIndex()
     {
         $this->seedDefaultsIfEmpty();
 
-        return response()->json(
-            HomeGeovisionSection::query()
+        $cacheKey = CacheVersion::key('home_geovision_sections', 'admin');
+
+        $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () {
+            return HomeGeovisionSection::query()
                 ->orderBy('sort_order')
                 ->orderByDesc('id')
                 ->get()
-        );
+                ->toArray();
+        });
+
+        return response()->json($payload);
     }
 
     public function store(Request $request)
@@ -107,6 +120,8 @@ class HomeGeovisionSectionController extends Controller
         unset($validated['image']);
 
         $section = HomeGeovisionSection::create($validated);
+
+        CacheVersion::bump('home_geovision_sections');
 
         return response()->json($section, 201);
     }
@@ -135,6 +150,8 @@ class HomeGeovisionSectionController extends Controller
 
         $section->update($validated);
 
+        CacheVersion::bump('home_geovision_sections');
+
         return response()->json($section->fresh());
     }
 
@@ -149,6 +166,8 @@ class HomeGeovisionSectionController extends Controller
     public function destroy(HomeGeovisionSection $section)
     {
         $section->delete();
+
+        CacheVersion::bump('home_geovision_sections');
 
         return response()->json(['success' => true]);
     }

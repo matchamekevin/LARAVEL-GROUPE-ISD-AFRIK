@@ -11,8 +11,10 @@ use App\Services\ProduitService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Support\CacheVersion;
 
 /**
  * ProduitController - VERSION COMPLÈTE AVEC FEDAPAY
@@ -21,6 +23,7 @@ use Illuminate\Support\Str;
 class ProduitController extends Controller
 {
     protected ProduitService $service;
+    private const CACHE_TTL_SECONDS = 180;
 
     public function __construct(ProduitService $service)
     {
@@ -36,15 +39,15 @@ class ProduitController extends Controller
         $excludeIds = $request->query('exclude_categorie_ids');
         $excludeList = [];
         if (is_string($excludeIds) && $excludeIds !== '') {
-            $excludeList = array_values(array_filter(array_map('intval', explode(',', $excludeIds))));
+            $excludeList = array_values(array_filter(array_map('trim', explode(',', $excludeIds))));
         }
 
         $categoryFilter = $request->query('id_categorie');
         $categoryList = [];
         if (is_string($categoryFilter) && $categoryFilter !== '') {
-            $categoryList = array_values(array_filter(array_map('intval', explode(',', $categoryFilter))));
+            $categoryList = array_values(array_filter(array_map('trim', explode(',', $categoryFilter))));
         } elseif (is_array($categoryFilter)) {
-            $categoryList = array_values(array_filter(array_map('intval', $categoryFilter)));
+            $categoryList = array_values(array_filter(array_map('trim', $categoryFilter)));
         }
 
         $statusFilter = $request->query('statut');
@@ -98,32 +101,50 @@ class ProduitController extends Controller
 
     public function vedette(Request $request): JsonResponse
     {
-        $produits = $this->service->getEnVedette($request->query('id_pays'));
+        $cacheKey = CacheVersion::key('produits', 'vedette.' . md5($request->fullUrl()));
 
-        return response()->json([
-            'message' => 'Produits en vedette',
-            'data' => ProduitResource::collection($produits),
-        ]);
+        $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($request) {
+            $produits = $this->service->getEnVedette($request->query('id_pays'));
+
+            return [
+                'message' => 'Produits en vedette',
+                'data' => ProduitResource::collection($produits)->resolve(),
+            ];
+        });
+
+        return response()->json($payload);
     }
 
     public function nouveaux(Request $request): JsonResponse
     {
-        $produits = $this->service->getNouveaux($request->query('id_pays'));
+        $cacheKey = CacheVersion::key('produits', 'nouveaux.' . md5($request->fullUrl()));
 
-        return response()->json([
-            'message' => 'Nouveaux produits',
-            'data' => ProduitResource::collection($produits),
-        ]);
+        $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($request) {
+            $produits = $this->service->getNouveaux($request->query('id_pays'));
+
+            return [
+                'message' => 'Nouveaux produits',
+                'data' => ProduitResource::collection($produits)->resolve(),
+            ];
+        });
+
+        return response()->json($payload);
     }
 
     public function promotions(Request $request): JsonResponse
     {
-        $produits = $this->service->getEnPromotion($request->query('id_pays'));
+        $cacheKey = CacheVersion::key('produits', 'promotions.' . md5($request->fullUrl()));
 
-        return response()->json([
-            'message' => 'Produits en promotion',
-            'data' => ProduitResource::collection($produits),
-        ]);
+        $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($request) {
+            $produits = $this->service->getEnPromotion($request->query('id_pays'));
+
+            return [
+                'message' => 'Produits en promotion',
+                'data' => ProduitResource::collection($produits)->resolve(),
+            ];
+        });
+
+        return response()->json($payload);
     }
 
     public function recherche(Request $request)
@@ -137,7 +158,7 @@ class ProduitController extends Controller
                     ->orWhere('marque', 'ILIKE', "%{$q}%")
                     ->orWhere('description', 'ILIKE', "%{$q}%");
             })
-            ->when($idPays, fn ($q) => $q->where('id_pays', $idPays))
+            ->parPays($idPays)
             ->get();
 
         return response()->json([
@@ -150,22 +171,27 @@ class ProduitController extends Controller
     public function marques(Request $request): JsonResponse
     {
         $idPays = $request->query('id_pays');
+        $cacheKey = CacheVersion::key('produits', 'marques.' . md5($request->fullUrl()));
 
-        $marques = Produit::query()
-            ->when($idPays, fn ($q) => $q->where('id_pays', $idPays))
-            ->where('statut', 'disponible')
-            ->whereNotNull('marque')
-            ->distinct()
-            ->orderBy('marque')
-            ->pluck('marque');
+        $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($idPays) {
+            $marques = Produit::query()
+                ->parPays($idPays)
+                ->where('statut', 'disponible')
+                ->whereNotNull('marque')
+                ->distinct()
+                ->orderBy('marque')
+                ->pluck('marque');
 
-        return response()->json([
-            'message' => 'Marques disponibles',
-            'data' => $marques,
-        ]);
+            return [
+                'message' => 'Marques disponibles',
+                'data' => $marques,
+            ];
+        });
+
+        return response()->json($payload);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         $produit = $this->service->getById($id);
 
@@ -205,7 +231,7 @@ class ProduitController extends Controller
      * POST /api/produits/{id}/acheter
      * Crée une commande + paiement en_attente (auth requise)
      */
-    public function acheterProduit(Request $request, int $id): JsonResponse
+    public function acheterProduit(Request $request, string $id): JsonResponse
     {
         $user = $request->user();
 
@@ -235,7 +261,7 @@ class ProduitController extends Controller
         ]);
 
         $quantite = (int) $data['quantite'];
-        $userId = (int) $user->getKey();
+        $userId = $user->getKey();
         $prixFinal = $produit->isPrixPromoActif() ? (float) $produit->prix_promo : (float) $produit->prix;
         $montant = $prixFinal * $quantite;
 
@@ -307,7 +333,7 @@ class ProduitController extends Controller
      * POST /api/paiements-produit/{idPaiement}/init
      * Initialise FedaPay et retourne le checkout_url (auth requise)
      */
-    public function initPaiementProduit(Request $request, int $idPaiement): JsonResponse
+    public function initPaiementProduit(Request $request, string $idPaiement): JsonResponse
     {
         $authUser = $request->user();
 
@@ -321,7 +347,7 @@ class ProduitController extends Controller
             return response()->json(['message' => 'Paiement introuvable.'], 404);
         }
 
-        if ((int) $paiement->id_utilisateur !== (int) $authUser->getKey() && ! $authUser->is_admin) {
+        if ($paiement->id_utilisateur !== $authUser->getKey() && ! $authUser->is_admin) {
             return response()->json(['message' => 'Accès interdit à ce paiement.'], 403);
         }
 
@@ -398,7 +424,7 @@ class ProduitController extends Controller
     /**
      * Restaurer le stock produit lié à un paiement
      */
-    private function restaurerStockPaiement(int $idPaiement): void
+    private function restaurerStockPaiement(string $idPaiement): void
     {
         $paiement = Paiement::find($idPaiement);
 
@@ -657,13 +683,15 @@ HTML
             throw $e;
         }
 
+        CacheVersion::bump('produits');
+
         return response()->json([
             'message' => 'Produit créé avec succès',
             'data' => new ProduitResource($produit->load(['pays', 'categorie', 'images'])),
         ], 201);
     }
 
-    public function update(ProduitRequest $request, int $id): JsonResponse
+    public function update(ProduitRequest $request, string $id): JsonResponse
     {
         $produit = $this->service->getById($id);
 
@@ -680,13 +708,15 @@ HTML
             throw $e;
         }
 
+        CacheVersion::bump('produits');
+
         return response()->json([
             'message' => 'Produit mis à jour avec succès',
             'data' => new ProduitResource($updated->load(['pays', 'categorie', 'images'])),
         ]);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(string $id): JsonResponse
     {
         $produit = $this->service->getById($id);
 
@@ -695,11 +725,12 @@ HTML
         }
 
         $this->service->delete($produit);
+        CacheVersion::bump('produits');
 
         return response()->json(['message' => 'Produit supprimé avec succès']);
     }
 
-    public function forceDestroy(int $id): JsonResponse
+    public function forceDestroy(string $id): JsonResponse
     {
         $produit = Produit::withTrashed()->find($id);
 
@@ -711,10 +742,12 @@ HTML
             return response()->json(['message' => 'Suppression définitive impossible'], 500);
         }
 
+        CacheVersion::bump('produits');
+
         return response()->json(['message' => 'Produit supprimé définitivement']);
     }
 
-    public function restore(int $id): JsonResponse
+    public function restore(string $id): JsonResponse
     {
         $produit = Produit::withTrashed()->find($id);
 
@@ -727,6 +760,7 @@ HTML
         }
 
         $produit->restore();
+        CacheVersion::bump('produits');
 
         return response()->json([
             'message' => 'Produit restauré avec succès',
@@ -734,7 +768,7 @@ HTML
         ]);
     }
 
-    public function uploadImages(Request $request, int $id): JsonResponse
+    public function uploadImages(Request $request, string $id): JsonResponse
     {
         $replace = $request->boolean('replace');
 
@@ -751,6 +785,7 @@ HTML
         }
 
         $urls = $this->service->uploadImages($produit, $request->file('images'), $replace);
+        CacheVersion::bump('produits');
 
         return response()->json([
             'message' => $replace ? 'Image remplacée avec succès' : count($urls).' image(s) uploadée(s) avec succès',
@@ -758,7 +793,7 @@ HTML
         ], 201);
     }
 
-    public function deleteImage(int $id, int $imageId): JsonResponse
+    public function deleteImage(string $id, string $imageId): JsonResponse
     {
         $produit = $this->service->getById($id);
 
@@ -770,10 +805,12 @@ HTML
             return response()->json(['message' => 'Image introuvable'], 404);
         }
 
+        CacheVersion::bump('produits');
+
         return response()->json(['message' => 'Image supprimée avec succès']);
     }
 
-    public function updateStock(Request $request, int $id): JsonResponse
+    public function updateStock(Request $request, string $id): JsonResponse
     {
         $request->validate([
             'stock' => 'required|integer|min:0',
@@ -799,6 +836,7 @@ HTML
         }
 
         $produit->update($data);
+        CacheVersion::bump('produits');
 
         return response()->json([
             'message' => 'Stock mis à jour',
@@ -807,7 +845,7 @@ HTML
         ]);
     }
 
-    public function toggleVedette(int $id): JsonResponse
+    public function toggleVedette(string $id): JsonResponse
     {
         $produit = $this->service->getById($id);
 
@@ -816,6 +854,7 @@ HTML
         }
 
         $produit->update(['est_en_vedette' => ! $produit->est_en_vedette]);
+        CacheVersion::bump('produits');
 
         return response()->json([
             'message' => $produit->est_en_vedette ? 'Produit mis en vedette' : 'Produit retiré de la vedette',

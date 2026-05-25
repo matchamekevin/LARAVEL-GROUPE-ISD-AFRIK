@@ -15,7 +15,7 @@ Route::prefix('produits')->group(function () {
     Route::get('/marques',           [ProduitController::class, 'marques']);
     Route::get('/slug/{slug}',       [ProduitController::class, 'showBySlug']);
     Route::get('/',                  [ProduitController::class, 'index']);
-    Route::get('/{id}',              [ProduitController::class, 'show'])->where('id', '[0-9]+');
+    Route::get('/{id}',              [ProduitController::class, 'show']);
 });
 
 // ======================================================
@@ -25,5 +25,5 @@ Route::prefix('categories-produits')->group(function () {
     Route::get('/',            [CategorieProduitController::class, 'index']);
     Route::get('/slug/{slug}', [CategorieProduitController::class, 'showBySlug']);
     Route::get('/{id}/image',  [CategorieProduitController::class, 'image']);
-    Route::get('/{id}',        [CategorieProduitController::class, 'show'])->where('id', '[0-9]+');
+    Route::get('/{id}',        [CategorieProduitController::class, 'show']);
 });

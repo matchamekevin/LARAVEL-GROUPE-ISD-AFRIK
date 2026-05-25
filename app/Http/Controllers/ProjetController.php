@@ -4,10 +4,89 @@ namespace App\Http\Controllers;
 
 use App\Models\Projet;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ProjetController extends Controller
 {
+    private const DEFAULT_PROJECTS = [
+        [
+            'title' => "Plateforme ERP & CRM",
+            'category' => "Solutions digitales",
+            'description' => "Mise en place d'une plateforme ERP/CRM pour centraliser les ventes, la relation client et le pilotage financier.",
+            'long_desc' => "Déploiement d'une suite ERP/CRM connectée aux équipes terrain avec tableaux de bord décisionnels, workflow d'approbation et synchronisation multi-sites.",
+            'url' => null,
+            'slug' => 'plateforme-erp-crm',
+            'image_path' => '/images/solutions/im1.webp',
+            'is_active' => true,
+            'sort_order' => 10,
+        ],
+        [
+            'title' => "Vidéosurveillance intelligente",
+            'category' => "Sécurité",
+            'description' => "Installation d'un système de vidéosurveillance IP avec supervision centralisée.",
+            'long_desc' => "Conception et déploiement d'un dispositif de vidéo-protection avec analytics, alertes en temps réel et maintenance proactive.",
+            'url' => null,
+            'slug' => 'videosurveillance-intelligente',
+            'image_path' => '/images/solutions/im3.webp',
+            'is_active' => true,
+            'sort_order' => 20,
+        ],
+        [
+            'title' => "Pilotage drone industriel",
+            'category' => "Drones",
+            'description' => "Fourniture de drones et formation opérationnelle pour l'inspection et la surveillance.",
+            'long_desc' => "Mise en place d'un programme complet incluant équipements, formation des pilotes et procédures de maintenance.",
+            'url' => null,
+            'slug' => 'pilotage-drone-industriel',
+            'image_path' => '/images/solutions/im4.webp',
+            'is_active' => true,
+            'sort_order' => 30,
+        ],
+        [
+            'title' => "Archivage numérique & GED",
+            'category' => "Archivage",
+            'description' => "Digitalisation et gestion documentaire pour optimiser l'accès aux informations.",
+            'long_desc' => "Déploiement d'une plateforme GED avec indexation intelligente, workflows d'approbation et politique de conservation.",
+            'url' => null,
+            'slug' => 'archivage-numerique-ged',
+            'image_path' => '/images/produits/int.webp',
+            'is_active' => true,
+            'sort_order' => 40,
+        ],
+        [
+            'title' => "Infrastructure réseau d'entreprise",
+            'category' => "Infrastructure",
+            'description' => "Refonte complète du réseau LAN/WAN avec segmentation et sécurité renforcée.",
+            'long_desc' => "Architecture réseau redondée, mise en place de VLAN, QoS et supervision 24/7 pour assurer la continuité d'activité.",
+            'url' => null,
+            'slug' => 'infrastructure-reseau-entreprise',
+            'image_path' => '/images/produits/proj.webp',
+            'is_active' => true,
+            'sort_order' => 50,
+        ],
+        [
+            'title' => "Transformation digitale RH & Paie",
+            'category' => "Transformation",
+            'description' => "Automatisation des processus RH et paie pour un pilotage fiable et sécurisé.",
+            'long_desc' => "Implémentation d'outils RH intégrés avec portail collaborateurs, workflow de validation et reporting mensuel.",
+            'url' => null,
+            'slug' => 'transformation-digitale-rh-paie',
+            'image_path' => '/images/solutions/im2.webp',
+            'is_active' => true,
+            'sort_order' => 60,
+        ],
+    ];
+
+    private function seedDefaultsIfEmpty(): void
+    {
+        if (Projet::query()->exists()) {
+            return;
+        }
+
+        foreach (self::DEFAULT_PROJECTS as $project) {
+            Projet::query()->create($project);
+        }
+    }
+
     public function image(Projet $projet)
     {
         if ($projet->image_data) {
@@ -26,11 +105,25 @@ class ProjetController extends Controller
             return response($content, 200, ['Content-Type' => $mimeType]);
         }
 
+        if ($projet->image_path) {
+            $path = $projet->image_path;
+            if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                return redirect()->away($path);
+            }
+
+            $localPath = public_path(ltrim($path, '/'));
+            if (is_file($localPath)) {
+                return response()->file($localPath);
+            }
+        }
+
         return response()->noContent(204);
     }
 
     public function index()
     {
+        $this->seedDefaultsIfEmpty();
+
         return response()->json(
             Projet::query()
                 ->where('is_active', true)
@@ -42,6 +135,8 @@ class ProjetController extends Controller
 
     public function adminIndex()
     {
+        $this->seedDefaultsIfEmpty();
+
         return response()->json(
             Projet::query()
                 ->orderBy('sort_order')

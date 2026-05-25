@@ -150,7 +150,7 @@ class UtilisateurController extends Controller
         return $this->resolveUserAdminLevel($user);
     }
 
-    private function hasAnotherSuperAdmin(?int $exceptUserId = null): bool
+    private function hasAnotherSuperAdmin(?string $exceptUserId = null): bool
     {
         $query = Utilisateur::query()
             ->whereNull('deleted_at')
@@ -240,7 +240,7 @@ class UtilisateurController extends Controller
             return false;
         }
 
-        if ((int) $actor->getAuthIdentifier() !== (int) $target->getAuthIdentifier()) {
+        if ($actor->getAuthIdentifier() !== $target->getAuthIdentifier()) {
             return false;
         }
 
@@ -257,7 +257,7 @@ class UtilisateurController extends Controller
 
         if ($preserveCurrentContext && $request && $request->user()) {
             $actor = $request->user();
-            if ((int) $actor->getAuthIdentifier() === (int) $user->getAuthIdentifier()) {
+            if ($actor->getAuthIdentifier() === $user->getAuthIdentifier()) {
                 $preservedTokenId = $actor->currentAccessToken()?->id;
                 if ($request->hasSession()) {
                     $preservedSessionId = $request->session()->getId();
@@ -375,7 +375,7 @@ class UtilisateurController extends Controller
      * Normalise et valide un numéro de téléphone selon l'indicatif du pays.
      * Retourne la forme E.164 (ex: +22890123456) ou null si invalide.
      */
-    private function normalizeTelephoneForCountry(?string $telephone, ?int $id_pays): ?string
+    private function normalizeTelephoneForCountry(?string $telephone, ?string $id_pays): ?string
     {
         if (! $telephone) {
             return null;
@@ -700,7 +700,7 @@ class UtilisateurController extends Controller
 
             // ✅ Validation des données
             $data = $request->validate([
-                'user_id' => 'required|integer|exists:utilisateurs,id_utilisateur',
+                'user_id' => 'required|string|exists:utilisateurs,id_utilisateur',
                 'code' => 'required|string|size:6',
                 'portal' => 'nullable|in:client,admin',
             ]);
@@ -802,7 +802,7 @@ class UtilisateurController extends Controller
             Log::info('[2FA] 📨 Demande de renvoi du code OTP');
 
             $data = $request->validate([
-                'user_id' => 'required|integer|exists:utilisateurs,id_utilisateur',
+                'user_id' => 'required|string|exists:utilisateurs,id_utilisateur',
                 'portal' => 'nullable|in:client,admin',
             ]);
 
@@ -1209,7 +1209,7 @@ class UtilisateurController extends Controller
                 ], 403);
             }
 
-            if ($requestedAdminLevel === 'superadmin' && $this->hasAnotherSuperAdmin((int) $user->id_utilisateur)) {
+            if ($requestedAdminLevel === 'superadmin' && $this->hasAnotherSuperAdmin($user->id_utilisateur)) {
                 return response()->json([
                     'message' => 'Un seul super admin est autorisé.',
                 ], 422);
@@ -1218,7 +1218,7 @@ class UtilisateurController extends Controller
             if (
                 $this->isSuperAdminUser($user)
                 && $requestedAdminLevel !== 'superadmin'
-                && ! $this->hasAnotherSuperAdmin((int) $user->id_utilisateur)
+                && ! $this->hasAnotherSuperAdmin($user->id_utilisateur)
             ) {
                 return response()->json([
                     'message' => 'Impossible de retirer le seul super admin existant.',

@@ -2,16 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * Class Livraison
- * Représente la livraison d'une commande.
- */
 class Livraison extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $table = 'livraisons';
     protected $primaryKey = 'id_livraison';

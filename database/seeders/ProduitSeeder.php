@@ -21,7 +21,6 @@ class ProduitSeeder extends Seeder
             for ($i = 1; $i <= 10; $i++) {
                 $marque = $marques[array_rand($marques)];
                 Produit::create([
-                    'uuid' => (string) Str::uuid(),
                     'titre' => $categorie->nom . " Produit $i",
                     'slug' => Str::slug($categorie->nom . " Produit $i"),
                     'reference' => strtoupper(Str::random(8)),
@@ -43,8 +42,8 @@ class ProduitSeeder extends Seeder
                     'note_moyenne' => rand(30, 50) / 10,
                     'nombre_avis' => rand(0, 100),
                     'id_categorie' => $categorie->id_categorie,
-                    'id_pays' => 1, // à adapter selon tes pays
-                    'id_utilisateur' => 1, // à adapter selon tes utilisateurs
+                    'id_pays' => DB::table('pays')->value('id_pays'),
+                    'id_utilisateur' => DB::table('utilisateurs')->value('id_utilisateur'),
                     'date_creation' => now(),
                 ]);
             }

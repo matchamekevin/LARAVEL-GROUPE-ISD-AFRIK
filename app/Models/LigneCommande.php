@@ -2,24 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * Class LignesCommande
- * Détail d’une commande : formation ou produit, quantité et prix.
- *
- * @property int $id_ligne
- * @property int $quantite
- * @property float $prix_unitaire
- * @property float $sous_total
- * @property int $id_commande
- * @property int|null $id_produit
- * @property int|null $id_formation
- */
 class LignesCommande extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $table = 'lignes_commandes';   // ✅ nom exact de la table
     protected $primaryKey = 'id_ligne';      // ✅ PK correcte

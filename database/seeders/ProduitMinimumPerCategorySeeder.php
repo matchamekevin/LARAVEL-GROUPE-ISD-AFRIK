@@ -49,17 +49,8 @@ class ProduitMinimumPerCategorySeeder extends Seeder
                     $promoPrice = rand(0, 1) ? rand(65000, max(65000, $price - 5000)) : null;
                     $colors = ['noir', 'gris', 'blanc'];
                     $connectivity = ['Wi-Fi', 'Ethernet', 'USB-C'];
-                    $imagePool = [
-                        '/images/home/hero-1.webp',
-                        '/images/promotions/promo1.webp',
-                        '/images/solutions/im1.webp',
-                        '/images/geovision/cam/cam1.webp',
-                        '/images/geovision/nvr/nvr1.webp',
-                        '/images/default.webp',
-                    ];
 
                     Produit::create([
-                        'uuid' => (string) Str::uuid(),
                         'titre' => $title,
                         'slug' => Str::slug($title . '-' . Str::lower(Str::random(4))),
                         'reference' => strtoupper(Str::random(8)),
@@ -85,7 +76,6 @@ class ProduitMinimumPerCategorySeeder extends Seeder
                         'vues' => rand(0, 500),
                         'note_moyenne' => rand(35, 50) / 10,
                         'nombre_avis' => rand(0, 80),
-                        'image_url' => $imagePool[array_rand($imagePool)],
                         'id_categorie' => $categorie->id_categorie,
                         'id_pays' => $defaultPaysId,
                         'id_utilisateur' => $defaultUserId,

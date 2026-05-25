@@ -1,8 +1,8 @@
-const COUNTRY_CODE_TO_ID = { TG: 1, BJ: 2, BF: 3, CI: 4, NE: 5, OT: 6 };
-const COUNTRY_ID_TO_CODE = { 1: "TG", 2: "BJ", 3: "BF", 4: "CI", 5: "NE", 6: "OT" };
+const COUNTRY_CODE_TO_ID = { TG: "2185de10-a169-43af-8513-5fa9a2117031" };
+const COUNTRY_ID_TO_CODE = { "2185de10-a169-43af-8513-5fa9a2117031": "TG" };
 
 export function countryCodeToId(code) {
-  return COUNTRY_CODE_TO_ID[code] || 1;
+  return COUNTRY_CODE_TO_ID[code] || "2185de10-a169-43af-8513-5fa9a2117031";
 }
 
 export function countryIdToCode(id) {

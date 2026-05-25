@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
 class HomeTestimonial extends Model
 {
+    use HasUuid;
     protected $fillable = [
         'name',
         'role',

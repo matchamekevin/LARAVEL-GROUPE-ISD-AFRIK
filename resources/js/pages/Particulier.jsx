@@ -6,17 +6,11 @@ import { resolveFormationImageUrl } from "../utils/mediaUrl";
 
 const API_BASE = (() => {
   if (typeof window !== "undefined") {
-    const { protocol, hostname } = window.location;
+    const { hostname, origin } = window.location;
     if (["localhost", "127.0.0.1"].includes(hostname)) {
-      return `${protocol}//${hostname}:8000`;
+      return origin;
     }
-    if (import.meta.env.VITE_API_BASE) {
-      const envBase = import.meta.env.VITE_API_BASE.replace(/\/$/, "");
-      const envLooksLocal = /localhost|127\.0\.0\.1/i.test(envBase);
-      const hostIsLocal = ["localhost", "127.0.0.1"].includes(hostname);
-      if (!envLooksLocal || hostIsLocal) return envBase;
-    }
-    return window.location.origin;
+    return import.meta.env.VITE_API_BASE?.replace(/\/$/, "") || origin;
   }
   return "";
 })();

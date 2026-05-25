@@ -4,12 +4,27 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Utilisateur;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class UtilisateurSeeder extends Seeder
 {
     public function run(): void
     {
+        $paysId = DB::table('pays')->value('id_pays');
+        if (!$paysId) {
+            $paysId = (string) \Illuminate\Support\Str::uuid();
+            DB::table('pays')->insert([
+                'id_pays' => $paysId,
+                'nom_pays' => 'Inconnu',
+                'code_pays' => 'XX',
+                'devise_locale' => null,
+                'langue_principale' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
         Utilisateur::firstOrCreate(
             ['email' => 'admin@test.com'],
             [
@@ -23,7 +38,7 @@ class UtilisateurSeeder extends Seeder
                 'can_access_client' => true,
                 'can_access_admin' => true,
                 'date_creation' => now(),
-                'id_pays' => 1,
+                'id_pays' => $paysId,
             ]
         );
 
@@ -40,7 +55,7 @@ class UtilisateurSeeder extends Seeder
                 'can_access_client' => true,
                 'can_access_admin' => false,
                 'date_creation' => now(),
-                'id_pays' => 1,
+                'id_pays' => $paysId,
             ]
         );
 
@@ -57,7 +72,7 @@ class UtilisateurSeeder extends Seeder
                 'can_access_client' => true,
                 'can_access_admin' => true,
                 'date_creation' => now(),
-                'id_pays' => 1,
+                'id_pays' => $paysId,
             ]
         );
     }

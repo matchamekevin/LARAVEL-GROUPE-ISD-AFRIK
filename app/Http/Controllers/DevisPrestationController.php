@@ -129,7 +129,7 @@ class DevisPrestationController extends Controller
     /**
      * GET /api/admin/devis-prestations/{id}
      */
-    public function show(int $id)
+    public function show(string $id)
     {
         $devisPrestation = DevisPrestation::find($id);
 
@@ -143,7 +143,7 @@ class DevisPrestationController extends Controller
     /**
      * PATCH /api/admin/devis-prestations/{id}/statut
      */
-    public function updateStatus(Request $request, int $id)
+    public function updateStatus(Request $request, string $id)
     {
         $data = $request->validate([
             'statut' => 'required|string|in:nouveau,traite',
@@ -167,7 +167,7 @@ class DevisPrestationController extends Controller
     /**
      * DELETE /api/admin/devis-prestations/{id}
      */
-    public function destroy(int $id)
+    public function destroy(string $id)
     {
         $devisPrestation = DevisPrestation::find($id);
 

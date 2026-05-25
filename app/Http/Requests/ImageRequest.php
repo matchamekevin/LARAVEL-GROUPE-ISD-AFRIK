@@ -39,7 +39,7 @@ class ImageRequest extends FormRequest
             'alt'            => 'nullable|string|max:255',
             // Ici on valide uniquement les alias simples
             'imageable_type' => 'required|string|in:PRODUIT,FORMATION,BLOG,CATEGORY',
-            'imageable_id'   => 'required|integer',
+            'imageable_id'   => 'required|string',
         ];
     }
 
@@ -50,7 +50,7 @@ class ImageRequest extends FormRequest
             'url.url'               => 'Le champ url doit être une URL valide.',
             'imageable_type.in'     => 'Le type doit être PRODUIT, FORMATION, BLOG ou CATEGORY.',
             'imageable_id.required' => 'L’ID de l’entité liée est obligatoire.',
-            'imageable_id.integer'  => 'L’ID doit être un entier.',
+            'imageable_id.string'  => 'L’ID doit être une chaîne valide.',
         ];
     }
 }

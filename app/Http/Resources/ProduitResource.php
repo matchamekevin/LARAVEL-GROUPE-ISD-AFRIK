@@ -40,7 +40,7 @@ class ProduitResource extends JsonResource
 
         if (str_contains($url, '127.0.0.1') || str_contains($url, 'localhost')) {
             $parsedPath = parse_url($url, PHP_URL_PATH);
-            if (is_string($parsedPath) && str_starts_with($parsedPath, '/storage/')) {
+            if (is_string($parsedPath)) {
                 $url = $parsedPath;
             } else {
                 return null;
@@ -104,9 +104,9 @@ class ProduitResource extends JsonResource
             'categorie'     => new CategorieProduitResource($this->whenLoaded('categorie')),
             'images'        => ImageResource::collection($this->whenLoaded('images')),
             'commentaires'  => CommentaireResource::collection($this->whenLoaded('commentaires')),
-            'image_url'     => $this->normalizeImageUrl($this->images->first()?->url ?? $this->images->first()?->path) ?? '/images/produits/proj.webp',
+            'image_url'     => $this->normalizeImageUrl($this->images->first()?->image_url ?? $this->images->first()?->url ?? $this->images->first()?->path),
             'image_urls'    => $this->whenLoaded('images', fn () => $this->images
-                ->map(fn ($image) => $this->normalizeImageUrl($image->url ?? $image->path))
+                ->map(fn ($image) => $this->normalizeImageUrl($image->image_url ?? $image->url ?? $image->path))
                 ->filter()
                 ->values()),
             'segment'       => $this->segment ?? $this->categorie?->segment,

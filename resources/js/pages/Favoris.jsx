@@ -23,8 +23,8 @@ export default function Favoris() {
     let cancelled = false;
 
     const idsToFetch = items
-      .map((it) => Number(it.id_produit || it.id || 0))
-      .filter((id) => id > 0 && !imageCache[id]);
+      .map((it) => String(it.id_produit || it.id || 0))
+      .filter((id) => id && id !== "0" && !imageCache[id]);
 
     if (idsToFetch.length === 0) return undefined;
 
@@ -85,7 +85,7 @@ export default function Favoris() {
               item.image_url || item.image || (item.images && item.images[0] && (item.images[0].url || item.images[0].path)) || ""
             ).trim();
             const isPlaceholder = !rawImg || rawImg === "/placeholder.webp" || rawImg === "/images/default.webp" || rawImg === "/images/prod_default.webp";
-            const imageSrc = !isPlaceholder ? rawImg : (imageCache[Number(item.id_produit || item.id)] || "/images/default.webp");
+            const imageSrc = !isPlaceholder ? rawImg : (imageCache[String(item.id_produit || item.id)] || "/images/default.webp");
 
             return (
               <article key={item.id_produit} style={{ display: "grid", gridTemplateColumns: "84px 1fr auto", gap: "12px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "12px" }}>

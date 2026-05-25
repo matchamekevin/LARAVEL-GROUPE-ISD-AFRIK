@@ -32,8 +32,8 @@ export default function Panier() {
     let cancelled = false;
 
     const idsToFetch = items
-      .map((it) => Number(it.id_produit || it.id || 0))
-      .filter((id) => id > 0 && !imageCache[id]);
+      .map((it) => String(it.id_produit || it.id || 0))
+      .filter((id) => id && id !== "0" && !imageCache[id]);
 
     if (idsToFetch.length === 0) return undefined;
 
@@ -84,10 +84,10 @@ export default function Panier() {
 
     const payloadItems = items
       .map((item) => ({
-        id_produit: Number(item.id_produit || item.id || 0),
+        id_produit: String(item.id_produit || item.id || 0),
         quantite: Math.max(1, Number(item.quantite || 1)),
       }))
-      .filter((item) => item.id_produit > 0);
+      .filter((item) => item.id_produit && item.id_produit !== "0");
 
     if (payloadItems.length === 0) {
       toastError("Aucun produit valide dans le panier.");
@@ -139,14 +139,14 @@ export default function Panier() {
               const quantity = Number(item.quantite || 1);
 
               // Prefer explicit id_produit, fall back to id
-              const productId = Number(item.id_produit || item.id || 0);
+              const productId = String(item.id_produit || item.id || 0);
 
               const rawImg = String(item.image_url || item.image || (item.images && item.images[0] && (item.images[0].url || item.images[0].path)) || "").trim();
               const isPlaceholder = !rawImg || rawImg === "/placeholder.webp" || rawImg === "/images/default.webp" || rawImg === "/images/prod_default.webp";
               const imageSrc = !isPlaceholder ? rawImg : (imageCache[productId] || "/images/default.webp");
 
               return (
-                <article key={productId > 0 ? `cart-${productId}` : `cart-fallback-${index}`} style={{ display: "grid", gridTemplateColumns: "84px 1fr auto", gap: "12px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "12px" }}>
+                <article key={productId && productId !== "0" ? `cart-${productId}` : `cart-fallback-${index}`} style={{ display: "grid", gridTemplateColumns: "84px 1fr auto", gap: "12px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "12px" }}>
                   <img src={imageSrc} alt={item.titre} style={{ width: "84px", height: "84px", objectFit: "cover", borderRadius: "10px" }} />
 
                   <div>

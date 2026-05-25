@@ -72,7 +72,7 @@ class CommentaireController extends Controller
     }
 
     /** GET /api/commentaires/{id} : afficher un commentaire */
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         $commentaire = $this->commentaireService->find($id);
 
@@ -84,7 +84,7 @@ class CommentaireController extends Controller
     }
 
     /** PUT /api/commentaires/{id} : mettre à jour un commentaire */
-    public function update(CommentaireRequest $request, int $id): JsonResponse
+    public function update(CommentaireRequest $request, string $id): JsonResponse
     {
         $commentaire = $this->commentaireService->update($id, $request->validated());
 
@@ -96,7 +96,7 @@ class CommentaireController extends Controller
     }
 
     /** DELETE /api/commentaires/{id} : supprimer un commentaire */
-    public function destroy(int $id): JsonResponse
+    public function destroy(string $id): JsonResponse
     {
         $deleted = $this->commentaireService->delete($id);
 

@@ -68,7 +68,7 @@ export default function Footer() {
             Présents dans 5 pays pour accompagner votre croissance.
           </p>
           <div className="footer-contact">
-            <p><i className="fas fa-envelope"></i> contact@isd-afrik.com</p>
+            <p><i className="fas fa-envelope"></i>info@groupeisdafrik.com</p>
             <p><i className="fas fa-map-marker-alt"></i> Lomé, Togo</p>
           </div>
         </div>

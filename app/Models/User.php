@@ -5,22 +5,19 @@ namespace App\Models;
  * @property \Illuminate\Database\Eloquent\Factories\Factory $factory
  */
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens, HasUuid;
 
-    // 👇 Spécifier le nom de la table
     protected $table = 'utilisateurs';
-    
-    // 👇 Spécifier la clé primaire
     protected $primaryKey = 'id_utilisateur';
 
     /**
@@ -29,7 +26,6 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var list<string>
      */
     protected $fillable = [
-        'uuid',
         'name',
         'nom',
         'prenom',
@@ -80,43 +76,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->mot_de_passe;
     }
 
-    protected static function booted(): void
-    {
-        static::creating(function (self $user) {
-            if (Schema::hasColumn('utilisateurs', 'uuid') && empty($user->uuid)) {
-                $user->uuid = (string) Str::uuid();
-            }
-
-            if (empty($user->id_pays) && Schema::hasTable('pays')) {
-                $user->id_pays = \App\Models\Pays::query()->value('id_pays');
-            }
-
-            if (empty($user->date_creation)) {
-                $user->date_creation = now();
-            }
-
-            if (!isset($user->is_admin)) {
-                $user->is_admin = false;
-            }
-
-            if (empty($user->statut)) {
-                $user->statut = 'actif';
-            }
-
-            if (Schema::hasColumn('utilisateurs', 'admin_role') && empty($user->admin_role)) {
-                $user->admin_role = $user->is_admin ? 'admin_adjoint' : 'client';
-            }
-
-            if (Schema::hasColumn('utilisateurs', 'can_access_client') && !isset($user->can_access_client)) {
-                $user->can_access_client = true;
-            }
-
-            if (Schema::hasColumn('utilisateurs', 'can_access_admin') && !isset($user->can_access_admin)) {
-                $user->can_access_admin = (bool) $user->is_admin;
-            }
-        });
-    }
-
     public function setPasswordAttribute($value): void
     {
         $this->attributes['mot_de_passe'] = $value;
@@ -139,9 +98,9 @@ class User extends Authenticatable implements MustVerifyEmail
         return trim(($this->attributes['prenom'] ?? '') . ' ' . ($this->attributes['nom'] ?? ''));
     }
 
-    public function getIdAttribute(): ?int
+    public function getIdAttribute(): ?string
     {
-        return isset($this->attributes['id_utilisateur']) ? (int) $this->attributes['id_utilisateur'] : null;
+        return $this->attributes['id_utilisateur'] ?? null;
     }
     public function formations()
 {

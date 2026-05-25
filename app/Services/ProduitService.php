@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Models\CategorieProduit;
 use App\Models\Produit;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -15,15 +17,46 @@ use Illuminate\Support\Facades\Schema;
  */
 class ProduitService
 {
+    private function selectImageColumns($query): void
+    {
+        $query->select([
+            'id_image',
+            'url',
+            'path',
+            'alt',
+            'imageable_id',
+            'imageable_type',
+            'created_at',
+            'updated_at',
+        ])->addSelect(DB::raw('image_data IS NOT NULL AS has_image_data'));
+    }
+
+    private function baseProduitQuery(bool $withComments = false): Builder
+    {
+        $query = Produit::query()->with([
+            'pays',
+            'images' => function ($q) {
+                $this->selectImageColumns($q);
+            },
+            'categorie.parent.parent',
+        ]);
+
+        if ($withComments) {
+            $query->with('commentaires');
+        }
+
+        return $query;
+    }
+
     /**
      * Catalogue avec filtres + pagination.
      */
     public function getCatalogue(array $filters = []): LengthAwarePaginator
     {
-        $query = Produit::with(['pays', 'images', 'commentaires', 'categorie.parent.parent'])
-                        ->orderByDesc('date_creation');
+        $query = $this->baseProduitQuery()
+            ->orderByDesc('date_creation');
 
-        if (!empty($filters['id_pays'])) {
+        if (!empty($filters['id_pays']) && \Illuminate\Support\Str::isUuid($filters['id_pays'])) {
             $query->where('id_pays', $filters['id_pays']);
         }
 
@@ -151,7 +184,7 @@ class ProduitService
      */
     public function rechercher(string $terme)
     {
-        return Produit::with(['pays', 'images', 'commentaires', 'categorie.parent.parent'])
+        return $this->baseProduitQuery()
             ->where(function ($query) use ($terme) {
                 $query->where('titre', 'LIKE', "%{$terme}%")
                       ->orWhere('description', 'LIKE', "%{$terme}%")
@@ -163,44 +196,47 @@ class ProduitService
 
     public function getEnVedette($idPays = null)
     {
-        return Produit::with(['pays', 'images', 'commentaires', 'categorie.parent.parent'])
+        return $this->baseProduitQuery()
             ->where('est_en_vedette', true)
             ->whereIn('statut', ['disponible', 'actif'])
-            ->when($idPays, fn ($q) => $q->where('id_pays', $idPays))
+            ->parPays($idPays)
             ->orderByDesc('date_creation')
             ->get();
     }
 
     public function getNouveaux($idPays = null)
     {
-        return Produit::with(['pays', 'images', 'commentaires', 'categorie.parent.parent'])
+        return $this->baseProduitQuery()
             ->where('est_nouveau', true)
             ->whereIn('statut', ['disponible', 'actif'])
-            ->when($idPays, fn ($q) => $q->where('id_pays', $idPays))
+            ->parPays($idPays)
             ->orderByDesc('date_creation')
             ->get();
     }
 
     public function getEnPromotion($idPays = null)
     {
-        return Produit::with(['pays', 'images', 'commentaires', 'categorie.parent.parent'])
+        return $this->baseProduitQuery()
             ->where('en_promo', true)
             ->whereIn('statut', ['disponible', 'actif'])
-            ->when($idPays, fn ($q) => $q->where('id_pays', $idPays))
+            ->parPays($idPays)
             ->orderByDesc('date_creation')
             ->get();
     }
 
     public function getBySlug(string $slug): ?Produit
     {
-        return Produit::with(['pays', 'images', 'commentaires', 'categorie.parent.parent.children'])
+        return $this->baseProduitQuery(true)
+            ->with('categorie.parent.parent.children')
             ->where('slug', $slug)
             ->first();
     }
 
-    public function getById(int $id): ?Produit
+    public function getById(string $id): ?Produit
     {
-        return Produit::with(['pays', 'images', 'commentaires', 'categorie.parent.parent.children'])->find($id);
+        return $this->baseProduitQuery(true)
+            ->with('categorie.parent.parent.children')
+            ->find($id);
     }
 
     public function create(array $data): Produit
@@ -211,7 +247,14 @@ class ProduitService
         $produit = Produit::create($payload);
         $this->syncImageUrls($produit, $imageUrls);
 
-        return $produit->fresh(['pays', 'images', 'commentaires', 'categorie.parent.parent']);
+        return $produit->fresh()->load([
+            'pays',
+            'images' => function ($q) {
+                $this->selectImageColumns($q);
+            },
+            'commentaires',
+            'categorie.parent.parent',
+        ]);
     }
 
     public function update(Produit $produit, array $data): Produit
@@ -225,7 +268,14 @@ class ProduitService
             $this->syncImageUrls($produit, $imageUrls);
         }
 
-        return $produit->fresh(['pays', 'images', 'commentaires', 'categorie.parent.parent']);
+        return $produit->fresh()->load([
+            'pays',
+            'images' => function ($q) {
+                $this->selectImageColumns($q);
+            },
+            'commentaires',
+            'categorie.parent.parent',
+        ]);
     }
 
     public function delete(Produit $produit, bool $force = false): ?bool
@@ -233,19 +283,26 @@ class ProduitService
         return $force ? $produit->forceDelete() : $produit->delete();
     }
 
-    public function restore(int $id): ?Produit
+    public function restore(string $id): ?Produit
     {
         $produit = Produit::withTrashed()->find($id);
 
         if ($produit && $produit->deleted_at !== null) {
             $produit->restore();
-            return $produit->fresh(['pays', 'images', 'commentaires', 'categorie.parent.parent']);
+            return $produit->fresh()->load([
+                'pays',
+                'images' => function ($q) {
+                    $this->selectImageColumns($q);
+                },
+                'commentaires',
+                'categorie.parent.parent',
+            ]);
         }
 
         return null;
     }
 
-    public function forceDelete(int $id): bool
+    public function forceDelete(string $id): bool
     {
         $produit = Produit::withTrashed()->find($id);
         return $produit ? (bool) $produit->forceDelete() : false;
@@ -273,7 +330,7 @@ class ProduitService
         return $urls;
     }
 
-    public function deleteImage(Produit $produit, int $imageId): bool
+    public function deleteImage(Produit $produit, string $imageId): bool
     {
         $image = $produit->images()->find($imageId);
         if (!$image) return false;

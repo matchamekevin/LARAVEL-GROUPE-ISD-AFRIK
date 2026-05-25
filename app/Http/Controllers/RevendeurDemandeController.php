@@ -70,7 +70,7 @@ class RevendeurDemandeController extends Controller
         ]);
     }
 
-    public function show(int $id)
+    public function show(string $id)
     {
         $demande = RevendeurDemande::find($id);
 
@@ -155,7 +155,7 @@ class RevendeurDemandeController extends Controller
         ], 201);
     }
 
-    public function updateStatus(Request $request, int $id)
+    public function updateStatus(Request $request, string $id)
     {
         $data = $request->validate([
             'statut' => 'required|string|max:40',
@@ -176,7 +176,7 @@ class RevendeurDemandeController extends Controller
         ]);
     }
 
-    public function destroy(int $id)
+    public function destroy(string $id)
     {
         $demande = RevendeurDemande::find($id);
 

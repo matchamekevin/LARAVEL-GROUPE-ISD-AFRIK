@@ -2,32 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * Class Commande
- * Représente une commande passée par un utilisateur (formation ou produit).
- *
- * @property int $id_commande
- * @property string $numero_commande
- * @property \DateTime $date_commande
- * @property string $statut
- * @property float $montant_total
- * @property float|null $montant_commission
- * @property \DateTime|null $date_livraison
- * @property int $id_utilisateur
- */
 class Commande extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuid;
 
     protected $table = 'commandes';
-
     protected $primaryKey = 'id_commande';
 
     protected $fillable = [
-        'uuid',           // ✅ AJOUTER
         'numero_commande',
         'date_commande',
         'statut',
@@ -37,16 +23,6 @@ class Commande extends Model
         'date_livraison',
         'id_utilisateur',
     ];
-
-    // ✅ AJOUTER cette méthode
-    protected static function booted()
-    {
-        static::creating(function ($model) {
-            if (empty($model->uuid)) {
-                $model->uuid = (string) \Illuminate\Support\Str::uuid();
-            }
-        });
-    }
 
     /** Relations */
 

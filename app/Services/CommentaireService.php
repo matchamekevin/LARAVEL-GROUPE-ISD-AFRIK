@@ -25,7 +25,7 @@ class CommentaireService
         // Forcer le type à respecter la contrainte SQL
         $data['commentable_type'] = $this->mapType($data['commentable_type']);
         $commentaire = Commentaire::create($data);
-        $this->refreshProductRating($commentaire->commentable_type, (int) $commentaire->commentable_id);
+        $this->refreshProductRating($commentaire->commentable_type, $commentaire->commentable_id);
 
         return $commentaire;
     }
@@ -33,7 +33,7 @@ class CommentaireService
     /**
      * Trouver un commentaire par son ID.
      */
-    public function find(int $id): ?Commentaire
+    public function find(string $id): ?Commentaire
     {
         return Commentaire::with(['utilisateur', 'commentable'])->find($id);
     }
@@ -41,7 +41,7 @@ class CommentaireService
     /**
      * Mettre à jour un commentaire existant.
      */
-    public function update(int $id, array $data): ?Commentaire
+    public function update(string $id, array $data): ?Commentaire
     {
         $commentaire = Commentaire::find($id);
         if (!$commentaire) {
@@ -49,7 +49,7 @@ class CommentaireService
         }
 
         $oldType = (string) $commentaire->commentable_type;
-        $oldId = (int) $commentaire->commentable_id;
+        $oldId = $commentaire->commentable_id;
 
         if (!empty($data['commentable_type'])) {
             $data['commentable_type'] = $this->mapType($data['commentable_type']);
@@ -59,7 +59,7 @@ class CommentaireService
         $fresh = $commentaire->fresh();
 
         $this->refreshProductRating($oldType, $oldId);
-        $this->refreshProductRating((string) $fresh->commentable_type, (int) $fresh->commentable_id);
+        $this->refreshProductRating((string) $fresh->commentable_type, $fresh->commentable_id);
 
         return $fresh;
     }
@@ -67,7 +67,7 @@ class CommentaireService
     /**
      * Supprimer un commentaire.
      */
-    public function delete(int $id): bool
+    public function delete(string $id): bool
     {
         $commentaire = Commentaire::find($id);
         if (!$commentaire) {
@@ -75,7 +75,7 @@ class CommentaireService
         }
 
         $type = (string) $commentaire->commentable_type;
-        $targetId = (int) $commentaire->commentable_id;
+        $targetId = $commentaire->commentable_id;
 
         $deleted = (bool) $commentaire->delete();
         if ($deleted) {
@@ -85,9 +85,9 @@ class CommentaireService
         return $deleted;
     }
 
-    private function refreshProductRating(string $commentableType, int $commentableId): void
+    private function refreshProductRating(string $commentableType, string $commentableId): void
     {
-        if (strtoupper($commentableType) !== 'PRODUIT' || $commentableId <= 0) {
+        if (strtoupper($commentableType) !== 'PRODUIT' || $commentableId === '') {
             return;
         }
 

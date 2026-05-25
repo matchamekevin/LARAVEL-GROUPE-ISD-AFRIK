@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Notifications\CustomResetPasswordNotification;
 use Filament\Models\Contracts\FilamentUser;
@@ -16,13 +16,12 @@ use Filament\Panel;
 
 class Utilisateur extends Authenticatable implements FilamentUser
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, HasUuid;
 
     protected $table = 'utilisateurs';
     protected $primaryKey = 'id_utilisateur';
 
     protected $fillable = [
-        'uuid',
         'nom',
         'prenom',
         'email',
@@ -58,15 +57,6 @@ class Utilisateur extends Authenticatable implements FilamentUser
             return $this->avatar;
         }
         return url('/api/auth/' . $this->id_utilisateur . '/avatar');
-    }
-
-    protected static function booted()
-    {
-        static::creating(function ($model) {
-            if (empty($model->uuid)) {
-                $model->uuid = (string) Str::uuid();
-            }
-        });
     }
 
     protected $hidden = [

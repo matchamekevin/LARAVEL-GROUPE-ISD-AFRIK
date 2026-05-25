@@ -38,10 +38,10 @@ class PaysService
     /**
      * Récupère un pays par son ID avec ses relations.
      *
-     * @param int $id
+     * @param string $id
      * @return Pays|null
      */
-    public function getPays(int $id): ?Pays
+    public function getPays(string $id): ?Pays
     {
         return Pays::with(['produits', 'formations'])->find($id);
     }
@@ -66,11 +66,11 @@ class PaysService
     /**
      * Met à jour un pays existant.
      *
-     * @param int $id
+     * @param string $id
      * @param array $data
      * @return Pays|null
      */
-    public function update(int $id, array $data): ?Pays
+    public function update(string $id, array $data): ?Pays
     {
         $pays = Pays::find($id);
         if ($pays) {
@@ -92,10 +92,10 @@ class PaysService
     /**
      * Supprime un pays.
      *
-     * @param int $id
+     * @param string $id
      * @return bool
      */
-    public function delete(int $id): bool
+    public function delete(string $id): bool
     {
         $pays = Pays::find($id);
         if ($pays) {

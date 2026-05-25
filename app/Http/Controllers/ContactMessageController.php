@@ -137,7 +137,7 @@ class ContactMessageController extends Controller
     /**
      * GET /api/admin/contact-messages/{id}
      */
-    public function show(int $id)
+    public function show(string $id)
     {
         $contactMessage = ContactMessage::find($id);
 
@@ -151,7 +151,7 @@ class ContactMessageController extends Controller
     /**
      * PATCH /api/admin/contact-messages/{id}/statut
      */
-    public function updateStatus(Request $request, int $id)
+    public function updateStatus(Request $request, string $id)
     {
         $data = $request->validate([
             'statut' => 'required|string|in:nouveau,lu,en_cours,traite,archivé,archive',
@@ -175,7 +175,7 @@ class ContactMessageController extends Controller
     /**
      * DELETE /api/admin/contact-messages/{id}
      */
-    public function destroy(int $id)
+    public function destroy(string $id)
     {
         $contactMessage = ContactMessage::find($id);
 

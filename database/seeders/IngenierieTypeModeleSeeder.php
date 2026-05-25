@@ -35,12 +35,12 @@ class IngenierieTypeModeleSeeder extends Seeder
         $childrenByParent = [];
         foreach ($categories as $category) {
             if ($category->parent_id) {
-                $childrenByParent[(int) $category->parent_id][] = (int) $category->id_categorie;
+                $childrenByParent[$category->parent_id][] = $category->id_categorie;
             }
         }
 
         $descendantIds = [];
-        $stack = [(int) $root->id_categorie];
+        $stack = [$root->id_categorie];
         while (!empty($stack)) {
             $current = array_pop($stack);
             if (in_array($current, $descendantIds, true)) {
@@ -55,12 +55,12 @@ class IngenierieTypeModeleSeeder extends Seeder
 
         $leafCategories = $categories
             ->filter(function ($category) use ($descendantIds, $childrenByParent, $root) {
-                $id = (int) $category->id_categorie;
+                $id = $category->id_categorie;
                 if (!in_array($id, $descendantIds, true)) {
                     return false;
                 }
 
-                if ($id === (int) $root->id_categorie) {
+                if ($id === $root->id_categorie) {
                     return false;
                 }
 
@@ -122,7 +122,6 @@ class IngenierieTypeModeleSeeder extends Seeder
                 Produit::query()->updateOrCreate(
                     ['reference' => $reference],
                     [
-                        'uuid' => (string) Str::uuid(),
                         'titre' => $title,
                         'slug' => Str::slug($title . '-' . $leaf->id_categorie . '-' . $serial),
                         'description' => "Produit de demonstration pour la sous-categorie {$leaf->nom}.",

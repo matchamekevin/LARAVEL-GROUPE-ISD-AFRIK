@@ -74,7 +74,7 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->delete('/newsletter/{id}', [News
 // 🌍 PAYS
 // ======================================================
 Route::get('/pays', [PaysController::class, 'index']);
-Route::get('/pays/{id}', [PaysController::class, 'show'])->where('id', '[0-9]+');
+Route::get('/pays/{id}', [PaysController::class, 'show']);
 
 // ======================================================
 // 🤝 DEMANDES REVENDEURS
