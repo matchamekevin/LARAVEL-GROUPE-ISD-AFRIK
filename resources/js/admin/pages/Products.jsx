@@ -341,7 +341,8 @@ export default function Products() {
   const [lookupsLoading, setLookupsLoading] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState(null);
 
-  const [activeTab, setActiveTab] = useState('categories');
+  const [activeTab, setActiveTab] = useState('products');
+
 
   const [filters, setFilters] = useState({
     q: '',
@@ -474,7 +475,7 @@ export default function Products() {
       byParent.get(pid).push(getCategoryId(c));
     });
 
-    const stack = [Number(rootId)];
+    const stack = [String(rootId || '')];
     const ids = new Set();
     while (stack.length > 0) {
       const cur = stack.pop();
@@ -488,7 +489,7 @@ export default function Products() {
   }, [categories, getCategoryParentId, getCategoryId]);
 
   const topLevelCategories = useMemo(
-    () => categories.filter((category) => getCategoryParentId(category) === 0),
+    () => categories.filter((category) => getCategoryParentId(category) === ''),
     [categories, getCategoryParentId]
   );
 
@@ -545,8 +546,8 @@ export default function Products() {
     const ids = new Set();
     mainCategoryIds.forEach((rootId) => {
       getDescendantIds(rootId).forEach((id) => {
-        if (!mainCategoryIds.has(Number(id))) {
-          ids.add(Number(id));
+        if (!mainCategoryIds.has(id)) {
+          ids.add(id);
         }
       });
     });
@@ -565,7 +566,7 @@ export default function Products() {
   }, [filteredCategories, allDescendantIds, getCategoryId]);
 
   const subcategoryParentCategories = useMemo(
-    () => mainCategoriesAll.filter((category) => getCategoryId(category) !== Number(editingCategoryId || 0)),
+    () => mainCategoriesAll.filter((category) => getCategoryId(category) !== String(editingCategoryId || '')),
     [mainCategoriesAll, editingCategoryId, getCategoryId]
   );
 
@@ -614,8 +615,8 @@ export default function Products() {
 
   const excludedParentIds = useMemo(() => {
     if (!editingCategoryId) return new Set();
-    const ids = getDescendantIds(Number(editingCategoryId));
-    return new Set(ids.map((v) => Number(v)));
+    const ids = getDescendantIds(editingCategoryId);
+    return new Set(ids.map((v) => String(v)));
   }, [editingCategoryId, getDescendantIds]);
 
   useEffect(() => {
@@ -793,8 +794,24 @@ export default function Products() {
           params.en_vedette = 1;
         }
 
-        const res = await getProducts(params);
-        const nextProducts = Array.isArray(res.data) ? res.data : [];
+        let res = await getProducts(params);
+        let nextProducts = Array.isArray(res.data) ? res.data : [];
+
+        // If no products for segment 'general', fall back to fetching without segment filter
+        if (nextProducts.length === 0) {
+          try {
+            const fallbackParams = { ...params };
+            delete fallbackParams.segment;
+            const fallback = await getProducts(fallbackParams);
+            nextProducts = Array.isArray(fallback.data) ? fallback.data : nextProducts;
+            if (nextProducts.length > 0) {
+              res.meta = fallback.meta;
+            }
+          } catch (fallbackErr) {
+            // ignore fallback error
+          }
+        }
+
         const nextMeta = res.meta || EMPTY_META;
 
         setProducts(nextProducts);
@@ -857,8 +874,24 @@ export default function Products() {
         params.en_vedette = 1;
       }
 
-      const res = await getProducts(params);
-      const nextProducts = Array.isArray(res.data) ? res.data : [];
+      let res = await getProducts(params);
+      let nextProducts = Array.isArray(res.data) ? res.data : [];
+
+      // Fallback if no products for segment 'general'
+      if (nextProducts.length === 0) {
+        try {
+          const fallbackParams = { ...params };
+          delete fallbackParams.segment;
+          const fallback = await getProducts(fallbackParams);
+          nextProducts = Array.isArray(fallback.data) ? fallback.data : nextProducts;
+          if (nextProducts.length > 0) {
+            res.meta = fallback.meta;
+          }
+        } catch (fallbackErr) {
+          // silent fallback fail
+        }
+      }
+
       const nextMeta = res.meta || EMPTY_META;
 
       setProducts(nextProducts);
@@ -1179,7 +1212,7 @@ export default function Products() {
       notifyMutation();
       setSelectedProductIds((previous) => {
         const next = new Set(previous);
-        next.delete(Number(id));
+        next.delete(String(id));
         return next;
       });
       await loadProducts();
@@ -1479,11 +1512,11 @@ export default function Products() {
 
       setSelectedCategoryIds((previous) => {
         const next = new Set(previous);
-        next.delete(Number(id));
+        next.delete(String(id));
         return next;
       });
 
-      if (Number(editingCategoryId) === Number(id)) {
+      if (String(editingCategoryId || '') === String(id)) {
         handleCancelCategoryEdit();
       }
 
@@ -1552,7 +1585,7 @@ export default function Products() {
       }
     }
 
-    if (Number(editingCategoryId || 0) && selectedManagedCategoryIds.includes(Number(editingCategoryId))) {
+    if (editingCategoryId && selectedManagedCategoryIds.includes(String(editingCategoryId))) {
       handleCancelCategoryEdit();
     }
 
@@ -1800,12 +1833,6 @@ export default function Products() {
                 placeholder="Rechercher titre, reference, modele..."
                 compact
               />
-              <button type="button" className="pp-search-admin-btn" onClick={loadProducts} disabled={loading}>
-                Recharger
-              </button>
-              <button type="button" className="pp-search-admin-btn" onClick={handleResetFilters} disabled={loading} style={{ background: 'transparent', color: '#172243' }}>
-                Reinitialiser
-              </button>
             </div>
 
             <div className="admin-products-filters">
@@ -1857,22 +1884,8 @@ export default function Products() {
                 <span>{selectedProductCount} selectionnee(s)</span>
               </label>
               <div className="admin-products-bulk-actions">
-                <button
-                  type="button"
-                  className="admin-products-btn admin-products-btn--outline"
-                  onClick={clearProductSelection}
-                  disabled={selectedProductCount === 0 || bulkProductDeleting}
-                >
-                  Effacer la selection
-                </button>
-                <button
-                  type="button"
-                  className="admin-products-btn admin-products-btn--outline admin-products-danger"
-                  onClick={handleBulkDeleteProducts}
-                  disabled={isBulkProductActionDisabled}
-                >
-                  Supprimer la selection
-                </button>
+                <button type="button" className="admin-bulk-icon-btn" onClick={clearProductSelection} disabled={selectedProductCount === 0 || bulkProductDeleting} aria-label="Effacer la selection"><span className="material-symbols-outlined">close</span></button>
+                <button type="button" className="admin-bulk-icon-btn admin-bulk-icon-btn--danger" onClick={handleBulkDeleteProducts} disabled={isBulkProductActionDisabled} aria-label="Supprimer la selection"><span className="material-symbols-outlined">delete</span></button>
               </div>
             </div>
 
@@ -1955,22 +1968,8 @@ export default function Products() {
                 <span>{selectedManagedCategoryCount} selectionnee(s)</span>
               </label>
               <div className="admin-products-bulk-actions">
-                <button
-                  type="button"
-                  className="admin-products-btn admin-products-btn--outline"
-                  onClick={clearCategorySelection}
-                  disabled={selectedManagedCategoryCount === 0 || bulkCategoryDeleting}
-                >
-                  Effacer la selection
-                </button>
-                <button
-                  type="button"
-                  className="admin-products-btn admin-products-btn--outline admin-products-danger"
-                  onClick={handleBulkDeleteCategories}
-                  disabled={isBulkCategoryActionDisabled}
-                >
-                  Supprimer la selection
-                </button>
+                <button type="button" className="admin-bulk-icon-btn" onClick={clearCategorySelection} disabled={selectedManagedCategoryCount === 0 || bulkCategoryDeleting} aria-label="Effacer la selection"><span className="material-symbols-outlined">close</span></button>
+                <button type="button" className="admin-bulk-icon-btn admin-bulk-icon-btn--danger" onClick={handleBulkDeleteCategories} disabled={isBulkCategoryActionDisabled} aria-label="Supprimer la selection"><span className="material-symbols-outlined">delete</span></button>
               </div>
             </div>
 
@@ -2037,7 +2036,7 @@ export default function Products() {
                                 <input
                                   type="checkbox"
                                   checked={isChecked}
-                                  onChange={() => toggleCategorySelection(Number(id))}
+                                  onChange={() => toggleCategorySelection(String(id))}
                                   disabled={bulkCategoryDeleting}
                                   aria-label={`Selectionner la categorie ${node?.nom || id}`}
                                 />
@@ -2089,15 +2088,23 @@ export default function Products() {
                                   >
                                     <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
                                   </svg>
-                                  <button
-                                    type="button"
-                                    className="admin-products-btn admin-products-btn--outline"
-                                    onClick={() => handleStartCreateCategoryWithParent(Number(id))}
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    height="20px"
+                                    viewBox="0 -960 960 960"
+                                    width="20px"
+                                    fill="#059669"
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-label="Ajouter sous-categorie"
+                                    onClick={() => handleStartCreateCategoryWithParent(String(id))}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleStartCreateCategoryWithParent(String(id)); }}
+                                    style={{ cursor: 'pointer', verticalAlign: 'middle', border: 'none', background: 'transparent', padding: 0, outline: 'none' }}
                                   >
-                                    Ajouter sous-categorie
-                                  </button>
+                                    <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
+                                  </svg>
                                   <DeleteIconButton
-                                    onClick={() => handleDeleteCategory(Number(id))}
+                                    onClick={() => handleDeleteCategory(String(id))}
                                     className="admin-products-btn admin-products-btn--outline admin-products-danger"
                                     title="Supprimer"
                                     ariaLabel={`Supprimer la categorie ${node?.nom || id}`}
@@ -2191,10 +2198,10 @@ export default function Products() {
                     >
                       <option value="">(Racine)</option>
                       {categoryOptions.map((opt) => {
-                        const id = Number(opt.id);
+                        const id = String(opt.id || '');
                         if (!id) return null;
                         // exclude self and descendants to avoid cycles
-                        if (editingCategoryId && (Number(editingCategoryId) === id)) return null;
+                        if (editingCategoryId && String(editingCategoryId) === id) return null;
                         if (editingCategoryId && excludedParentIds.has(id)) return null;
                         const indent = Array.from({ length: Math.max(0, opt.depth) }).map(() => '\u00A0\u00A0').join('');
                         return (

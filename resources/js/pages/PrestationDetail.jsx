@@ -4,6 +4,7 @@ import usePageMeta from "../hooks/usePageMeta";
 import { getCategories } from "../services/ProduitService";
 import { resolveIngenierieDomaines } from "../data/ingenierieDomains";
 import { toastError, toastSuccess } from "../utils/toast";
+import Loader from "../components/Loader";
 import "../styles/prestation-detail.css";
 
 const sanitizeImageUrl = (value) => {
@@ -133,7 +134,7 @@ export default function PrestationDetail() {
     prestation ? prestation.description : "Prestation non disponible"
   );
 
-  if (isLoading) return null;
+  if (isLoading) return <Loader variant="skeleton" type="detail" count={1} />;
 
   const toggleService = (service) => {
     const updated = new Set(selectedServices);

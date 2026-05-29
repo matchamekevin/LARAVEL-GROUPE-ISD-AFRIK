@@ -4,6 +4,9 @@
   padding: var(--spacing-3xl);
   display: grid;
   gap: var(--spacing-xl);
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .admin-formations-hero {
@@ -52,6 +55,7 @@
   border: var(--border-light);
   box-shadow: var(--shadow-md);
   padding: var(--spacing-xl);
+  min-width: 0;
 }
 
 .admin-formations-card h2 {
@@ -193,6 +197,22 @@
   color: var(--color-gray-600);
   line-height: 1.4;
   font-size: var(--font-size-sm);
+}
+
+.admin-formations-places-cell {
+  display: grid;
+  gap: var(--spacing-sm);
+  min-width: 100px;
+}
+.admin-formations-places-cell strong {
+  font-size: var(--font-size-base);
+  color: var(--color-gray-900);
+}
+.admin-formations-places-cell small {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
+  word-break: break-all;
+  line-height: 1.3;
 }
 
 .admin-formations-edit-stack {

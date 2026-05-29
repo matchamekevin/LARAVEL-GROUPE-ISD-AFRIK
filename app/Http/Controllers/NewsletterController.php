@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Newsletter;
@@ -9,9 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class NewsletterController extends Controller
 {
-    public function __construct(private readonly FormMailDispatcher $formMailDispatcher)
-    {
-    }
+    public function __construct(private readonly FormMailDispatcher $formMailDispatcher) {}
 
     // POST /api/newsletter
     public function store(Request $request)
@@ -32,11 +31,11 @@ class NewsletterController extends Controller
                 lines: [
                     'Nouvelle inscription a la newsletter.',
                     '',
-                    'Email: ' . $request->email,
-                    'Date: ' . now()->format('d/m/Y H:i:s'),
+                    'Email: '.$request->email,
+                    'Date: '.now()->format('d/m/Y H:i:s'),
                 ],
                 replyToEmail: $request->email,
-                replyToName: $user ? trim(($user->prenom ?? '') . ' ' . ($user->nom ?? '')) : null,
+                replyToName: $user ? trim(($user->prenom ?? '').' '.($user->nom ?? '')) : null,
             );
         } catch (\Throwable $exception) {
             Log::error('Echec envoi email newsletter', [
@@ -49,15 +48,29 @@ class NewsletterController extends Controller
     }
 
     // GET /api/newsletter
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Newsletter::all());
+        $perPage = max(1, min(50, (int) $request->query('per_page', 20)));
+        $page = max(1, (int) $request->query('page', 1));
+        $newsletters = Newsletter::orderByDesc('created_at')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'data' => $newsletters->items(),
+            'meta' => [
+                'total' => $newsletters->total(),
+                'per_page' => $newsletters->perPage(),
+                'current_page' => $newsletters->currentPage(),
+                'last_page' => $newsletters->lastPage(),
+            ],
+        ]);
     }
 
     // GET /api/newsletter/{id}
     public function show($id)
     {
         $newsletter = Newsletter::findOrFail($id);
+
         return response()->json($newsletter);
     }
 
@@ -67,7 +80,7 @@ class NewsletterController extends Controller
         $newsletter = Newsletter::findOrFail($id);
 
         $request->validate([
-            'email' => 'required|email|unique:newsletters,email,' . $newsletter->id,
+            'email' => 'required|email|unique:newsletters,email,'.$newsletter->id,
         ]);
 
         $newsletter->update(['email' => $request->email]);

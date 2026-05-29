@@ -11,7 +11,64 @@ PIDS_FILE="$LOG_DIR/dev-start.pids"
 mkdir -p "$LOG_DIR"
 
 function check_cmd() {
-  command -v "$1" >/dev/null 2>&1 || { echo "Commande manquante: $1. Installe-la et relance."; exit 1; }
+  if command -v "$1" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if [ "$1" = "php" ]; then
+    cat <<'EOF'
+Commande manquante: php.
+Ce projet demande PHP 8.2+ en local pour exécuter Laravel.
+Exemple Debian/Ubuntu:
+  sudo apt update && sudo apt install php8.2 php8.2-cli php8.2-mbstring php8.2-xml php8.2-curl php8.2-zip php8.2-sqlite3 composer
+EOF
+  else
+    echo "Commande manquante: $1. Installe-la et relance."
+  fi
+  exit 1
+}
+
+function check_php_extensions() {
+  local missing_extensions=()
+  local php_minor_version
+
+  php_minor_version="$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;' 2>/dev/null)"
+
+  for extension in dom simplexml xml xmlreader xmlwriter; do
+    if ! php -r "exit(extension_loaded('$extension') ? 0 : 1);" >/dev/null 2>&1; then
+      missing_extensions+=("$extension")
+    fi
+  done
+
+  if [ "${#missing_extensions[@]}" -gt 0 ]; then
+    echo "Extensions PHP manquantes: ${missing_extensions[*]}"
+    if [ -n "$php_minor_version" ]; then
+      echo "Installe le paquet correspondant à ta version PHP, par exemple:"
+      echo "  sudo apt install php${php_minor_version}-xml"
+      echo "Puis relance ./start.sh"
+    else
+      echo "Installe l'extension XML/DOM correspondant à ta version PHP, puis relance ./start.sh"
+    fi
+    exit 1
+  fi
+}
+
+function check_node_version() {
+  local current_node_version required_node_version
+  current_node_version="$(node -v 2>/dev/null | sed 's/^v//')"
+  required_node_version="20.19.0"
+
+  if [ -z "$current_node_version" ]; then
+    echo "Commande manquante: node. Installe Node.js $required_node_version ou plus récent."
+    exit 1
+  fi
+
+  if [ "$(printf '%s\n%s\n' "$required_node_version" "$current_node_version" | sort -V | head -n1)" != "$required_node_version" ]; then
+    echo "Node.js trop ancien: $current_node_version"
+    echo "Ce projet requiert Node.js $required_node_version ou plus récent pour Vite 7."
+    echo "Installe une version supportée puis relance ./start.sh"
+    exit 1
+  fi
 }
 
 function start() {
@@ -22,7 +79,10 @@ function start() {
   # Installer dépendances PHP si besoin
   if [ ! -f vendor/autoload.php ]; then
     echo "-> vendor manquant, installation composer..."
-    composer install --prefer-dist --no-interaction --no-progress || echo "composer install a échoué"
+    composer install --prefer-dist --no-interaction --no-progress || {
+      echo "composer install a échoué"
+      exit 1
+    }
   fi
 
   # Installer dépendances JS si besoin
@@ -67,11 +127,16 @@ function start() {
     echo "-> Avertissement: Vite ne répond pas encore (voir $LOG_DIR/vite.log)."
   fi
 
-  # Lancer le serveur PHP intégré
+  # Lancer le serveur PHP intégré (avec pdo_pgsql si disponible)
   APP_HOST="${APP_HOST:-127.0.0.1}"
   APP_PORT="${APP_PORT:-8000}"
-  echo "-> Lancement de 'php artisan serve --host=$APP_HOST --port=$APP_PORT'"
-  nohup php artisan serve --host="$APP_HOST" --port="$APP_PORT" > "$LOG_DIR/artisan-serve.log" 2>&1 &
+  PHP_PGSQL_EXTRA=""
+  if [ -f "$ROOT_DIR/pdo_pgsql.so" ] && [ -f "$ROOT_DIR/pgsql.so" ]; then
+    PHP_PGSQL_EXTRA="-d extension=$ROOT_DIR/pdo_pgsql.so -d extension=$ROOT_DIR/pgsql.so"
+  fi
+  if [ -n "$PHP_PGSQL_EXTRA" ]; then PGSQL_STATUS="oui"; else PGSQL_STATUS="non"; fi
+  echo "-> Lancement de 'php -S $APP_HOST:$APP_PORT' (pdo_pgsql: $PGSQL_STATUS)"
+  cd "$ROOT_DIR/public" && nohup php $PHP_PGSQL_EXTRA -S "$APP_HOST:$APP_PORT" "$ROOT_DIR/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php" > "$LOG_DIR/artisan-serve.log" 2>&1 &
   echo $! >> "$PIDS_FILE"
 
   # Lancer le worker de queue seulement si nécessaire
@@ -97,6 +162,20 @@ function start() {
     echo "-> Lancement du worker de queue (QUEUE_CONNECTION=$APP_QUEUE_CONNECTION)"
     nohup php artisan queue:work --sleep=3 --tries=3 --timeout=60 > "$LOG_DIR/queue-worker.log" 2>&1 &
     echo $! >> "$PIDS_FILE"
+  fi
+
+  # Lancer Reverb (WebSocket server)
+  APP_BROADCAST_CONNECTION="${BROADCAST_CONNECTION:-}"
+  if [ -z "$APP_BROADCAST_CONNECTION" ] && [ -f .env ]; then
+    APP_BROADCAST_CONNECTION="$(grep -E '^BROADCAST_CONNECTION=' .env | tail -n 1 | cut -d= -f2- | tr -d '"' | tr -d "'")"
+  fi
+  if [ "$APP_BROADCAST_CONNECTION" = "reverb" ]; then
+    echo "-> Lancement de Reverb (WebSocket)"
+    nohup php artisan reverb:start --host=0.0.0.0 --port=8080 --no-interaction > "$LOG_DIR/reverb.log" 2>&1 &
+    echo $! >> "$PIDS_FILE"
+    echo "-> Reverb démarré sur le port 8080"
+  else
+    echo "-> Reverb ignoré (BROADCAST_CONNECTION=$APP_BROADCAST_CONNECTION)"
   fi
 
   # Lancer le scheduler (optionnel)
@@ -149,7 +228,7 @@ function status() {
 
 function logs() {
   echo "Affichage des logs (Ctrl-C pour quitter):"
-  tail -n 200 -f "$LOG_DIR/vite.log" "$LOG_DIR/artisan-serve.log" "$LOG_DIR/queue-worker.log" "$LOG_DIR/schedule.log"
+  tail -n 200 -f "$LOG_DIR/vite.log" "$LOG_DIR/artisan-serve.log" "$LOG_DIR/queue-worker.log" "$LOG_DIR/reverb.log" "$LOG_DIR/schedule.log"
 }
 
 case "${1:-start}" in
@@ -157,6 +236,8 @@ case "${1:-start}" in
     check_cmd php
     check_cmd composer
     check_cmd npm
+    check_node_version
+    check_php_extensions
     start
     ;;
   stop)

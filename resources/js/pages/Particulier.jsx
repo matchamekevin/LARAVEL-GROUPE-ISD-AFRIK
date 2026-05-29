@@ -51,6 +51,25 @@ const Particulier = () => {
       .catch((err) => console.error("Erreur chargement formations:", err));
   }, []);
 
+  // ⚡ Téléchargement catalogue filtré
+  const handleDownloadCatalogue = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/formations/catalogue?type=particulier`);
+      if (!response.ok) throw new Error('Erreur téléchargement catalogue');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'catalogue-formations-particulier-isd-afrik.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erreur téléchargement catalogue:', error);
+    }
+  };
+
   // ⚡ Gestion inscription
   const handleInscription = (id_formation) => {
     const token = localStorage.getItem("token");
@@ -84,6 +103,17 @@ const Particulier = () => {
           <i className="fas fa-arrow-left"></i> Retour aux formations
         </button>
       </section>
+
+      <button className="catalogue-download-btn" onClick={handleDownloadCatalogue}>
+        <div className="catalogue-download-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <span>Télécharger le catalogue PDF</span>
+      </button>
 
       <section className="etudiant-grid">
         {formations.map((f) => (

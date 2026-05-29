@@ -35,14 +35,18 @@ class IsAdmin
         $isAdminFlag = filter_var($user->is_admin, FILTER_VALIDATE_BOOLEAN);
         $adminRole = strtolower(trim((string) ($user->admin_role ?? '')));
 
-        if (in_array($adminRole, ['admin', 'admin_pays', 'admin_national'], true)) {
-            $adminRole = 'admin_adjoint';
-        }
+        // Normaliser les alias vers les valeurs canoniques
         if ($adminRole === 'super-admin') {
             $adminRole = 'superadmin';
         }
+        if (in_array($adminRole, ['admin_national'], true)) {
+            $adminRole = 'admin_pays';
+        }
+        if ($adminRole === 'admin') {
+            $adminRole = 'admin_adjoint';
+        }
 
-        $hasAdminRole = in_array($adminRole, ['admin_adjoint', 'superadmin'], true);
+        $hasAdminRole = in_array($adminRole, ['admin_adjoint', 'admin_pays', 'superadmin'], true);
 
         if (! $isAdminFlag && ! $hasAdminRole) {
             Log::warning("[IsAdmin] ❌ Utilisateur n'a pas le rôle admin (is_admin=$isAdminFlag, role=$adminRole)");

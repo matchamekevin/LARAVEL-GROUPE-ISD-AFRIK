@@ -21,7 +21,7 @@ class GeovisionCatalogSyncService
         $countryId = Pays::query()->value('id_pays');
         $userId = Utilisateur::query()->value('id_utilisateur');
 
-        if (!$countryId || !$userId) {
+        if (! $countryId || ! $userId) {
             throw new \RuntimeException('Synchronisation GeoVision impossible: pays ou utilisateur manquant.');
         }
 
@@ -37,14 +37,71 @@ class GeovisionCatalogSyncService
 
         $categories = $this->syncCategoryTree($snapshot['tree']);
 
+        $upsertData = [];
+        $imageBatches = [];
+
         foreach ($snapshot['products'] as $product) {
             $category = $categories[$product['category_slug']] ?? null;
 
-            if (!$category) {
+            if (! $category) {
                 continue;
             }
 
-            $this->syncProduct($product, $category, $countryId, $userId);
+            $definition = $product;
+            $payload = [
+                'titre' => $definition['title'],
+                'slug' => $definition['slug'],
+                'reference' => $definition['reference'],
+                'description' => $definition['description'],
+                'description_courte' => $definition['short_description'],
+                'prix' => $definition['price'],
+                'stock' => $definition['stock'],
+                'stock_alerte' => $definition['stock_alert'],
+                'statut' => $definition['status'],
+                'marque' => $definition['brand'],
+                'modele' => $definition['model'],
+                'garantie' => $definition['warranty'],
+                'est_en_vedette' => (bool) ($definition['featured'] ?? false),
+                'est_nouveau' => (bool) ($definition['new'] ?? true),
+                'en_promo' => false,
+                'vues' => 0,
+                'note_moyenne' => 0,
+                'nombre_avis' => 0,
+                'specifications' => json_encode([
+                    'overview' => $definition['overview'],
+                    'tags' => $definition['tags'] ?? [],
+                    'features' => $definition['features'] ?? [],
+                    'platforms' => $definition['platforms'] ?? [],
+                    'use_cases' => $definition['use_cases'] ?? [],
+                    'detail_notes' => $definition['detail_notes'] ?? [],
+                    'source_url' => $definition['source_url'] ?? null,
+                    'technical_specs' => $definition['technical_specs'] ?? [],
+                    'taxonomy' => $definition['taxonomy'] ?? [],
+                ]),
+                'id_categorie' => $category->id_categorie,
+                'id_pays' => $countryId,
+                'id_utilisateur' => $userId,
+                'date_creation' => now(),
+            ];
+
+            $upsertData[] = $payload;
+            $imageBatches[$definition['slug']] = $definition['images'] ?? [];
+        }
+
+        if (! empty($upsertData)) {
+            Produit::query()->upsert($upsertData, ['slug'], [
+                'titre', 'reference', 'description', 'description_courte', 'prix',
+                'stock', 'stock_alerte', 'statut', 'marque', 'modele', 'garantie',
+                'est_en_vedette', 'est_nouveau', 'specifications',
+                'id_categorie', 'id_pays', 'id_utilisateur', 'date_creation',
+            ]);
+        }
+
+        foreach ($imageBatches as $slug => $images) {
+            $product = Produit::query()->where('slug', $slug)->first();
+            if ($product) {
+                $this->syncImages($product, $images);
+            }
         }
 
         return [
@@ -65,7 +122,7 @@ class GeovisionCatalogSyncService
         foreach ($this->rootDefinitions() as $rootIndex => $root) {
             $html = $this->fetchPage($root['source']);
 
-            if (!$html) {
+            if (! $html) {
                 continue;
             }
 
@@ -124,56 +181,56 @@ class GeovisionCatalogSyncService
                 'slug' => 'geovision-cameras',
                 'description' => 'Catalogue officiel GeoVision des caméras IP, intelligentes, thermiques et spécialisées.',
                 'image' => '/images/geovision/cam/cam1.webp',
-                'source' => self::BASE_URL . '/us/products.php?c1=3',
+                'source' => self::BASE_URL.'/us/products.php?c1=3',
             ],
             [
                 'nom' => 'Contrôle d’accès',
                 'slug' => 'geovision-controle-acces',
                 'description' => 'Contrôleurs, lecteurs, logiciels et accessoires officiels GeoVision pour la gestion des accès.',
                 'image' => '/images/geovision/controleur1.webp',
-                'source' => self::BASE_URL . '/us/products.php?c1=25',
+                'source' => self::BASE_URL.'/us/products.php?c1=25',
             ],
             [
                 'nom' => 'LPR / ANPR',
                 'slug' => 'geovision-lpr-anpr',
                 'description' => 'Solutions GeoVision de lecture de plaques, caméras dédiées et logiciels associés.',
                 'image' => '/images/geovision/cam/cam3.webp',
-                'source' => self::BASE_URL . '/us/products.php?c1=7',
+                'source' => self::BASE_URL.'/us/products.php?c1=7',
             ],
             [
                 'nom' => 'VMS & Analytics',
                 'slug' => 'geovision-vms-analytics',
                 'description' => 'Suite officielle GeoVision pour supervision vidéo, analytique, intégration, sauvegarde et mobile.',
                 'image' => '/images/geovision/solution1.webp',
-                'source' => self::BASE_URL . '/us/products.php?c1=14',
+                'source' => self::BASE_URL.'/us/products.php?c1=14',
             ],
             [
                 'nom' => 'Systèmes de surveillance',
                 'slug' => 'geovision-systemes-surveillance',
                 'description' => 'Stations, appliances et systèmes GeoVision pour déploiements VMS, NVR, IA, stockage et mobilité.',
                 'image' => '/images/geovision/solution1.webp',
-                'source' => self::BASE_URL . '/us/products.php?c1=4',
+                'source' => self::BASE_URL.'/us/products.php?c1=4',
             ],
             [
                 'nom' => 'Enregistreurs & décodage',
                 'slug' => 'geovision-enregistreurs-nvr',
                 'description' => 'Standalone, SNVR, DVR, décodeurs et encodeurs GeoVision pour l’enregistrement et l’affichage.',
                 'image' => '/images/geovision/nvr/nvr1.webp',
-                'source' => self::BASE_URL . '/us/products.php?c1=158',
+                'source' => self::BASE_URL.'/us/products.php?c1=158',
             ],
             [
                 'nom' => 'PoE & Réseau',
                 'slug' => 'geovision-poe-reseau',
                 'description' => 'Switches, injecteurs, adaptateurs, extenders et accessoires réseau officiels GeoVision.',
                 'image' => '/images/geovision/solution1.webp',
-                'source' => self::BASE_URL . '/us/products.php?c1=39',
+                'source' => self::BASE_URL.'/us/products.php?c1=39',
             ],
             [
                 'nom' => 'IP Speaker & IO Box',
                 'slug' => 'geovision-ip-speaker-io',
                 'description' => 'Haut-parleurs IP, cartes réseau, IO box et relais GeoVision pour scénarios audio et automatisation.',
                 'image' => '/images/geovision/solution1.webp',
-                'source' => self::BASE_URL . '/us/products.php?c1=31',
+                'source' => self::BASE_URL.'/us/products.php?c1=31',
             ],
         ];
     }
@@ -204,18 +261,18 @@ class GeovisionCatalogSyncService
             foreach ($xpath->query('.//a[contains(@href,"/product/")]', $sectionNode) as $anchorNode) {
                 $product = $this->parseListingCard($xpath, $anchorNode);
 
-                if (!$product) {
+                if (! $product) {
                     continue;
                 }
 
-                if ($categoryImage === '' && !empty($product['image'])) {
+                if ($categoryImage === '' && ! empty($product['image'])) {
                     $categoryImage = $product['image'];
                 }
 
                 $products[] = $product;
             }
 
-            if (!empty($products)) {
+            if (! empty($products)) {
                 $sections[] = [
                     'name' => $name,
                     'image' => $categoryImage,
@@ -284,7 +341,7 @@ class GeovisionCatalogSyncService
     {
         $html = $this->fetchPage($url);
 
-        if (!$html) {
+        if (! $html) {
             return [];
         }
 
@@ -330,7 +387,7 @@ class GeovisionCatalogSyncService
             'source_url' => $url,
         ], function ($value) {
             if (is_array($value)) {
-                return !empty($value);
+                return ! empty($value);
             }
 
             return filled($value);
@@ -338,9 +395,9 @@ class GeovisionCatalogSyncService
     }
 
     /**
-     * @param array<string, mixed> $root
-     * @param array<string, mixed> $card
-     * @param array<string, mixed> $detail
+     * @param  array<string, mixed>  $root
+     * @param  array<string, mixed>  $card
+     * @param  array<string, mixed>  $detail
      * @return array<string, mixed>|null
      */
     private function buildProductDefinition(
@@ -374,7 +431,7 @@ class GeovisionCatalogSyncService
 
         return [
             'title' => $title,
-            'slug' => 'geovision-' . Str::slug($title),
+            'slug' => 'geovision-'.Str::slug($title),
             'reference' => $reference,
             'model' => $title,
             'category_slug' => $categorySlug,
@@ -425,7 +482,7 @@ class GeovisionCatalogSyncService
             ->timeout(45)
             ->get(str_replace(' ', '%20', $url));
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             return null;
         }
 
@@ -436,7 +493,7 @@ class GeovisionCatalogSyncService
     {
         libxml_use_internal_errors(true);
 
-        $document = new \DOMDocument();
+        $document = new \DOMDocument;
         $document->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
 
         return new \DOMXPath($document);
@@ -444,7 +501,7 @@ class GeovisionCatalogSyncService
 
     private function nodeToText(?\DOMNode $node): string
     {
-        if (!$node) {
+        if (! $node) {
             return '';
         }
 
@@ -470,17 +527,34 @@ class GeovisionCatalogSyncService
 
         $candidate = preg_replace('#^/\.\./#', '/', $candidate) ?? $candidate;
 
-        return rtrim(self::BASE_URL, '/') . '/' . ltrim($candidate, '/');
+        return rtrim(self::BASE_URL, '/').'/'.ltrim($candidate, '/');
     }
 
     private function clearExistingCatalog(): void
     {
-        Produit::withTrashed()
+        $productIds = Produit::withTrashed()
             ->whereHas('categorie', fn ($query) => $query->where('segment', 'geovision'))
-            ->get()
-            ->each(function (Produit $product) {
-                $product->forceDelete();
-            });
+            ->pluck('id_produit');
+
+        if ($productIds->isNotEmpty()) {
+            \App\Models\Image::query()
+                ->where('imageable_type', 'PRODUIT')
+                ->whereIn('imageable_id', $productIds)
+                ->forceDelete();
+
+            \App\Models\LignesCommande::query()
+                ->whereIn('id_produit', $productIds)
+                ->forceDelete();
+
+            \App\Models\Commentaire::query()
+                ->where('commentable_type', 'PRODUIT')
+                ->whereIn('commentable_id', $productIds)
+                ->forceDelete();
+
+            Produit::withTrashed()
+                ->whereIn('id_produit', $productIds)
+                ->forceDelete();
+        }
 
         while (CategorieProduit::query()->where('segment', 'geovision')->exists()) {
             $deleted = CategorieProduit::query()
@@ -495,7 +569,7 @@ class GeovisionCatalogSyncService
     }
 
     /**
-     * @param array<int, array<string, mixed>> $tree
+     * @param  array<int, array<string, mixed>>  $tree
      * @return array<string, CategorieProduit>
      */
     private function syncCategoryTree(array $tree, ?CategorieProduit $parent = null): array
@@ -522,7 +596,7 @@ class GeovisionCatalogSyncService
 
             $categories[$node['slug']] = $category;
 
-            if (!empty($node['children']) && is_array($node['children'])) {
+            if (! empty($node['children']) && is_array($node['children'])) {
                 $categories = array_merge(
                     $categories,
                     $this->syncCategoryTree($node['children'], $category)
@@ -534,78 +608,30 @@ class GeovisionCatalogSyncService
     }
 
     /**
-     * @param array<string, mixed> $definition
-     */
-    private function syncProduct(array $definition, CategorieProduit $category, string $countryId, string $userId): void
-    {
-        $product = Produit::query()
-            ->where('slug', $definition['slug'])
-            ->first();
-
-        $payload = [
-            'titre' => $definition['title'],
-            'slug' => $definition['slug'],
-            'reference' => $definition['reference'],
-            'description' => $definition['description'],
-            'description_courte' => $definition['short_description'],
-            'prix' => $definition['price'],
-            'stock' => $definition['stock'],
-            'stock_alerte' => $definition['stock_alert'],
-            'statut' => $definition['status'],
-            'marque' => $definition['brand'],
-            'modele' => $definition['model'],
-            'garantie' => $definition['warranty'],
-            'est_en_vedette' => (bool) ($definition['featured'] ?? false),
-            'est_nouveau' => (bool) ($definition['new'] ?? true),
-            'en_promo' => false,
-            'vues' => 0,
-            'note_moyenne' => 0,
-            'nombre_avis' => 0,
-            'specifications' => [
-                'overview' => $definition['overview'],
-                'tags' => $definition['tags'] ?? [],
-                'features' => $definition['features'] ?? [],
-                'platforms' => $definition['platforms'] ?? [],
-                'use_cases' => $definition['use_cases'] ?? [],
-                'detail_notes' => $definition['detail_notes'] ?? [],
-                'source_url' => $definition['source_url'] ?? null,
-                'technical_specs' => $definition['technical_specs'] ?? [],
-                'taxonomy' => $definition['taxonomy'] ?? [],
-            ],
-            'id_categorie' => $category->id_categorie,
-            'id_pays' => $countryId,
-            'id_utilisateur' => $userId,
-            'date_creation' => now(),
-        ];
-
-        if ($product) {
-            $product->fill($payload);
-            $product->save();
-        } else {
-            $product = Produit::query()->create($payload);
-        }
-
-        $this->syncImages($product, $definition['images'] ?? []);
-    }
-
-    /**
-     * @param array<int, string> $images
+     * @param  array<int, string>  $images
      */
     private function syncImages(Produit $product, array $images): void
     {
         $product->images()->delete();
 
-        collect($images)
+        $insertData = collect($images)
             ->filter(fn ($image) => filled($image))
             ->map(fn ($image) => trim((string) $image))
             ->unique()
             ->values()
-            ->each(function (string $image, int $index) use ($product) {
-                $product->images()->create([
-                    'url' => $image,
-                    'path' => ltrim($image, '/'),
-                    'alt' => sprintf('%s - visuel %d', $product->titre, $index + 1),
-                ]);
-            });
+            ->map(fn (string $image, int $index) => [
+                'url' => $image,
+                'path' => ltrim($image, '/'),
+                'alt' => sprintf('%s - visuel %d', $product->titre, $index + 1),
+                'imageable_type' => 'PRODUIT',
+                'imageable_id' => $product->id_produit,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ])
+            ->all();
+
+        if (! empty($insertData)) {
+            \App\Models\Image::query()->insert($insertData);
+        }
     }
 }

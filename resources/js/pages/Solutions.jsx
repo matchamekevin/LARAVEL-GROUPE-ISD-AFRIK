@@ -16,24 +16,21 @@ export default function Solutions() {
             title: "Solutions de Gestion Classique",
             icon: "fas fa-laptop-code",
             desc: "Pilotez votre entreprise avec efficacité. Des logiciels fiables pour automatiser votre gestion quotidienne, gagner du temps et améliorer votre rentabilité.",
-            items: ["Gestion Commerciale", "Gestion de Stock", "Comptabilité", "Immobilisations", "États Financiers", "Paie & RH"],
-            link: "/produits?segment=general"
+            items: ["Gestion Commerciale", "Gestion de Stock", "Comptabilité", "Immobilisations", "États Financiers", "Paie & RH"]
         },
         {
             id: "metier",
             title: "Solutions Métiers Sectorielles",
             icon: "fas fa-industry",
             desc: "Des logiciels conçus pour votre activité. Chaque secteur a ses réalités. Nos solutions métiers répondent précisément aux besoins de votre domaine.",
-            items: ["Gestion Universitaire", "Gestion Hôtelière", "Gestion Microfinance", "Gestion Pharmacie", "Gestion Assurance IARD", "Gestion Immobilière"],
-            link: "/produits?segment=metier"
+            items: ["Gestion Universitaire", "Gestion Hôtelière", "Gestion Microfinance", "Gestion Pharmacie", "Gestion Assurance IARD", "Gestion Immobilière"]
         },
         {
             id: "plateforme",
             title: "Plateformes Innovantes ISD AFRIK",
             icon: "fas fa-rocket",
             desc: "Nos propres plateformes digitales nouvelle génération. Le GROUPE ISD AFRIK développe également des plateformes intelligentes pour accompagner la transformation digitale africaine.",
-            items: ["Annuaire digital multisupport", "Réservation hôtels & appartements", "CRM & Marketing Automation", "Plateformes de paiement", "Solutions mobiles sur mesure", "Audit & Conseil Digital"],
-            link: "/geovision"
+            items: ["Annuaire digital multisupport", "Réservation hôtels & appartements", "CRM & Marketing Automation", "Plateformes de paiement", "Solutions mobiles sur mesure", "Audit & Conseil Digital"]
         }
     ];
 
@@ -120,7 +117,7 @@ export default function Solutions() {
                                 ))}
                             </ul>
 
-                            <Link to={u.link} className="univers-cta">
+                            <Link to={`/solutions/${u.id}`} className="univers-cta">
                                 Découvrir ces solutions
                             </Link>
                         </article>

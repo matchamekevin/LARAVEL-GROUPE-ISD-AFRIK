@@ -558,22 +558,8 @@ export default function Formations() {
             <span>{selectedFormationCount} selectionnee(s)</span>
           </label>
           <div className="admin-bulk-actions">
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={clearFormationSelection}
-              disabled={selectedFormationCount === 0 || bulkFormationDeleting}
-            >
-              Effacer la selection
-            </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={handleBulkDeleteFormations}
-              disabled={isBulkFormationActionDisabled}
-            >
-              Supprimer la selection
-            </button>
+            <button type="button" className="admin-bulk-icon-btn" onClick={clearFormationSelection} disabled={selectedFormationCount === 0 || bulkFormationDeleting} aria-label="Effacer la selection"><span className="material-symbols-outlined">close</span></button>
+            <button type="button" className="admin-bulk-icon-btn admin-bulk-icon-btn--danger" onClick={handleBulkDeleteFormations} disabled={isBulkFormationActionDisabled} aria-label="Supprimer la selection"><span className="material-symbols-outlined">delete</span></button>
           </div>
         </div>
 
@@ -655,10 +641,10 @@ export default function Formations() {
                         </td>
 
                         <td>
-                          <>
+                          <div className="admin-formations-places-cell">
                             <strong>{f.places_disponibles ?? 0}</strong>
                             <small>ID Pays: {f.id_pays ?? '—'}</small>
-                          </>
+                          </div>
                         </td>
 
                         <td>

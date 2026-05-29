@@ -179,6 +179,7 @@ export default function App() {
       }}>
         <aside style={{
           width: '280px',
+          flexShrink: 0,
           background: 'linear-gradient(180deg, #172243 0%, #0f1621 100%)',
           color: '#ffffff',
           padding: '2rem 1.5rem',
@@ -298,6 +299,8 @@ export default function App() {
 
         <main style={{
           flex: 1,
+          minWidth: 0,
+          overflowX: 'hidden',
           background: '#f8f9fa',
         }}>
           <Routes>

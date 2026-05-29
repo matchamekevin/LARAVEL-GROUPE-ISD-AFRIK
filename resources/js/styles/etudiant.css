@@ -213,3 +213,39 @@
     min-height: auto;
   }
 }
+
+/* Catalogue download button */
+.etudiant-page .catalogue-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #d87f06, #e69500);
+  color: #ffffff;
+  border: none;
+  padding: 14px 30px;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 20px auto;
+  box-shadow: 0 8px 25px rgba(216, 127, 6, 0.4);
+  display: flex;
+  width: fit-content;
+}
+
+.etudiant-page .catalogue-download-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(216, 127, 6, 0.6);
+}
+
+.etudiant-page .catalogue-download-icon {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+}
+
+.etudiant-page .catalogue-download-icon svg {
+  width: 100%;
+  height: 100%;
+}

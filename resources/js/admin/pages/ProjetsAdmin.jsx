@@ -58,7 +58,7 @@ export default function ProjetsAdmin() {
   useEffect(() => { loadData(); }, []);
 
   const visibleItemIds = useMemo(
-    () => items.map((item) => Number(item.id)).filter(Boolean),
+    () => items.map((item) => item.id).filter(Boolean),
     [items]
   );
   const selectedVisibleItemIds = useMemo(
@@ -206,7 +206,7 @@ export default function ProjetsAdmin() {
       }
     }
 
-    if (editingId && selectedVisibleItemIds.includes(Number(editingId))) closeModal();
+    if (editingId && selectedVisibleItemIds.includes(editingId)) closeModal();
 
     await loadData();
     setSelectedItemIds(new Set());
@@ -233,7 +233,7 @@ export default function ProjetsAdmin() {
       setItems((prev) => prev.filter((x) => x.id !== id));
       setSelectedItemIds((previous) => {
         const next = new Set(previous);
-        next.delete(Number(id));
+        next.delete(id);
         return next;
       });
       if (editingId === id) closeModal();
@@ -248,7 +248,7 @@ export default function ProjetsAdmin() {
     <div className="projets-admin-page">
       <div className="projets-admin-header">
         <div>
-          <h1>Projets</h1>
+          <h1>Projets <span className="projets-admin-count">{items.length}</span></h1>
           <p>Gere les projets affiches sur la page <strong>Nos Projets</strong>.</p>
         </div>
         <button type="button" className="btn-primary" onClick={openCreateModal}>
@@ -321,55 +321,68 @@ export default function ProjetsAdmin() {
       )}
 
       <div className="card">
-        <h2>Projets configures ({items.length})</h2>
+        <h2 style={{ marginBottom: '0.75rem' }}>Projets configures ({items.length})</h2>
         <div className="admin-bulk-bar">
           <label className="admin-bulk-select">
             <input type="checkbox" ref={itemSelectionRef} checked={allItemsSelected} onChange={toggleAllItemSelection} disabled={visibleItemIds.length === 0 || bulkDeleting} />
             <span>{selectedItemCount} selectionnee(s)</span>
           </label>
           <div className="admin-bulk-actions">
-            <button type="button" className="btn-secondary" onClick={clearItemSelection} disabled={selectedItemCount === 0 || bulkDeleting}>Effacer la selection</button>
-            <button type="button" className="btn-secondary" onClick={handleBulkDeleteItems} disabled={isBulkActionDisabled}>Supprimer la selection</button>
+            <button type="button" className="admin-bulk-icon-btn" onClick={clearItemSelection} disabled={selectedItemCount === 0 || bulkDeleting} aria-label="Effacer la selection"><span className="material-symbols-outlined">close</span></button>
+            <button type="button" className="admin-bulk-icon-btn admin-bulk-icon-btn--danger" onClick={handleBulkDeleteItems} disabled={isBulkActionDisabled} aria-label="Supprimer la selection"><span className="material-symbols-outlined">delete</span></button>
           </div>
         </div>
         {(
+          <div className="admin-bulk-table-wrap">
           <table className="admin-bulk-table">
             <thead>
               <tr>
-                <th>
+                <th className="col-cb">
                   <input type="checkbox" ref={itemHeaderSelectionRef} checked={allItemsSelected} onChange={toggleAllItemSelection} disabled={visibleItemIds.length === 0 || bulkDeleting} aria-label="Selectionner tous les projets" />
                 </th>
-                <th>ID</th>
-                <th>Image</th>
-                <th>Titre</th>
-                <th>Catégorie</th>
-                <th>Slug</th>
-                <th>Ordre</th>
-                <th>Statut</th>
-                <th>Actions</th>
+                <th className="col-id">ID</th>
+                <th className="col-img">Image</th>
+                <th className="col-title">Titre</th>
+                <th className="col-cat">Catégorie</th>
+                <th className="col-slug">Slug</th>
+                <th className="col-order">Ordre</th>
+                <th className="col-status">Statut</th>
+                <th className="col-actions">Actions</th>
               </tr>
             </thead>
             <tbody>
               {items.map((item) => {
-                const id = Number(item.id);
+                const id = item.id;
                 const isChecked = selectedItemIds.has(id);
                 return (
                   <tr key={item.id}>
-                    <td>
+                    <td className="col-cb">
                       <input type="checkbox" checked={isChecked} onChange={() => toggleItemSelection(id)} disabled={bulkDeleting} aria-label={`Selectionner le projet ${item?.title || id}`} />
                     </td>
-                    <td>{item.id}</td>
-                    <td>
+                    <td className="col-id">
+                      <div className="projets-admin-cell-id" title={item.id}>{item.id}</div>
+                    </td>
+                    <td className="col-img">
                       {imageSrc(item) ? (
                         <img src={imageSrc(item)} alt={item.title} className="projets-admin-thumb" />
                       ) : '—'}
                     </td>
-                    <td className="projets-admin-cell-title">{item.title}</td>
-                    <td><span className="projets-admin-cat">{item.category}</span></td>
-                    <td><code className="projets-admin-slug">{item.slug}</code></td>
-                    <td>{item.sort_order ?? 0}</td>
-                    <td><span className={`projets-admin-status ${item.is_active ? 'projets-admin-status--active' : 'projets-admin-status--inactive'}`}>{item.is_active ? 'Actif' : 'Inactif'}</span></td>
-                    <td>
+                    <td className="col-title">
+                      <div className="projets-admin-cell-title" title={item.title}>{item.title}</div>
+                    </td>
+                    <td className="col-cat">
+                      <span className="projets-admin-cat" title={item.category}>{item.category}</span>
+                    </td>
+                    <td className="col-slug">
+                      <code className="projets-admin-slug" title={item.slug}>{item.slug}</code>
+                    </td>
+                    <td className="col-order">{item.sort_order ?? 0}</td>
+                    <td className="col-status">
+                      <span className={`projets-admin-status ${item.is_active ? 'projets-admin-status--active' : 'projets-admin-status--inactive'}`}>
+                        {item.is_active ? 'Actif' : 'Inactif'}
+                      </span>
+                    </td>
+                    <td className="col-actions">
                       <button type="button" className="projets-admin-btn-edit" onClick={() => startEdit(item)} aria-label={`Editer le projet ${item?.title || item.id}`}>
                         <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#274483">
                           <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
@@ -382,6 +395,7 @@ export default function ProjetsAdmin() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

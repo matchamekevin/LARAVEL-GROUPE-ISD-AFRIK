@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { me, updateMyProfile, changeMyPassword } from '../api';
 import { toastError, toastSuccess, toastInfo } from '../../utils/toast';
 import { notifyMutation } from '../../utils/mutationBus';
+import PasswordInput from '../components/PasswordInput';
 import '../styles/admin-shared.css';
 import '../styles/settings.css';
 
@@ -327,38 +328,26 @@ export default function Settings() {
           </h2>
           
           <div style={{marginBottom: '1rem'}}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151', fontSize: '0.9rem' }}>
-              Mot de passe actuel
-            </label>
-            <input
-              type="password"
+            <PasswordInput
+              label="Mot de passe actuel"
               value={password.current_password}
               onChange={(e) => handlePasswordChange('current_password', e.target.value)}
-              style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '0.5rem', fontSize: '1rem' }}
             />
           </div>
 
           <div style={{marginBottom: '1rem'}}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151', fontSize: '0.9rem' }}>
-              Nouveau mot de passe
-            </label>
-            <input
-              type="password"
+            <PasswordInput
+              label="Nouveau mot de passe"
               value={password.new_password}
               onChange={(e) => handlePasswordChange('new_password', e.target.value)}
-              style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '0.5rem', fontSize: '1rem' }}
             />
           </div>
 
           <div style={{marginBottom: '1rem'}}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151', fontSize: '0.9rem' }}>
-              Confirmer le nouveau mot de passe
-            </label>
-            <input
-              type="password"
+            <PasswordInput
+              label="Confirmer le nouveau mot de passe"
               value={password.new_password_confirmation}
               onChange={(e) => handlePasswordChange('new_password_confirmation', e.target.value)}
-              style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '0.5rem', fontSize: '1rem' }}
             />
           </div>
 

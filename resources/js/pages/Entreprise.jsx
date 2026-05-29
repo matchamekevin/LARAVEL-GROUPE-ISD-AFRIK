@@ -74,6 +74,25 @@ const Entreprise = () => {
     if (!activeMonth && moisList.length > 0) setActiveMonth(moisList[0]);
   }, [moisList, activeMonth]);
 
+  // ⚡ Téléchargement catalogue filtré
+  const handleDownloadCatalogue = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/formations/catalogue?type=entreprise`);
+      if (!response.ok) throw new Error('Erreur téléchargement catalogue');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'catalogue-formations-entreprise-isd-afrik.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erreur téléchargement catalogue:', error);
+    }
+  };
+
   const getImageUrl = (f) => {
     return resolveFormationImageUrl(f?.images?.[0]?.url, API_BASE);
   };
@@ -92,6 +111,17 @@ const Entreprise = () => {
           </button>
         </div>
       </section>
+
+      <button className="catalogue-download-btn" onClick={handleDownloadCatalogue}>
+        <div className="catalogue-download-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <span>Télécharger le catalogue PDF</span>
+      </button>
 
       {/* Pourquoi choisir */}
       <section className="details-section">

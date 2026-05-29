@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect } from "react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
 import axios from "axios";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -65,20 +65,33 @@ function LazyPage({ name }) {
     );
 }
 
+const INIT_LOADER_MIN_MS = 800;
+
 function App() {
+    const [initDone, setInitDone] = useState(false);
+
     useEffect(() => {
+        const minTimer = setTimeout(() => setInitDone(true), INIT_LOADER_MIN_MS);
+
+        return () => clearTimeout(minTimer);
+    }, []);
+
+    useEffect(() => {
+        if (!initDone) return;
         const el = document.querySelector(".init-loader");
         if (el) {
             el.style.opacity = "0";
-            setTimeout(() => el.remove(), 500);
+            setTimeout(() => {
+                if (el.parentNode) el.remove();
+            }, 400);
         }
-    }, []);
+    }, [initDone]);
 
     return (
         <BrowserRouter>
+            <ScrollToTop />
             <Toaster position="top-right" reverseOrder={false} />
             <MainLayout>
-                  <ScrollToTop />
                 <Suspense fallback={<Loader variant="skeleton" count={3} />}>
                     <Routes>
                         {PUBLIC_APP_ROUTES.map(({ path, page }) => (

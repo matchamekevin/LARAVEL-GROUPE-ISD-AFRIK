@@ -9,7 +9,7 @@ function hasExplicitCountry() {
 }
 
 function withCountry(params = {}) {
-  if (hasExplicitCountry() && (params.id_pays === undefined || params.id_pays === null)) {
+  if (hasExplicitCountry() && params.id_pays === undefined) {
     return { ...params, id_pays: countryCodeToId(getStoredCountry()) };
   }
   return params;

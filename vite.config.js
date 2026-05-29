@@ -63,6 +63,14 @@ export default defineConfig(({ mode }) => {
                     target: 'http://127.0.0.1:8000',
                     changeOrigin: true,
                 },
+                '/images': {
+                    target: 'http://127.0.0.1:8000',
+                    changeOrigin: true,
+                },
+                '/logo.webp': {
+                    target: 'http://127.0.0.1:8000',
+                    changeOrigin: true,
+                },
             },
         },
         plugins: [
@@ -95,7 +103,6 @@ export default defineConfig(({ mode }) => {
             },
         },
         optimizeDeps: {
-            // Prébundle explicite des deps critiques pour éviter les chargements en échec au premier hit
             include: [
                 'react',
                 'react-dom',
@@ -105,6 +112,8 @@ export default defineConfig(({ mode }) => {
                 'react-i18next',
                 'react-hot-toast',
                 '@tanstack/react-query',
+                'pusher-js',
+                'laravel-echo',
             ],
         },
     };

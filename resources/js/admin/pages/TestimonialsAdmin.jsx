@@ -8,6 +8,7 @@ import {
 import { toastError, toastSuccess } from '../../utils/toast';
 import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
+import Modal from '../components/Modal';
 import { pickDisplayMediaUrl } from '../../utils/mediaUrl';
 import '../styles/admin-shared.css';
 import '../styles/testimonials.css';
@@ -31,6 +32,7 @@ export default function TestimonialsAdmin() {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
   const [selectedItemIds, setSelectedItemIds] = useState(new Set());
+  const [showModal, setShowModal] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const itemSelectionRef = useRef(null);
   const itemHeaderSelectionRef = useRef(null);
@@ -119,6 +121,12 @@ export default function TestimonialsAdmin() {
       avatar: null,
       existing_avatar: avatarSrc(item),
     });
+    setShowModal(true);
+  }
+
+  function closeModal() {
+    resetForm();
+    setShowModal(false);
   }
 
   async function handleSubmit(e) {
@@ -160,7 +168,7 @@ export default function TestimonialsAdmin() {
         await createHomeTestimonial(payload);
       }
 
-      resetForm();
+      closeModal();
       await loadData();
       toastSuccess(editing ? 'Avis mis a jour.' : 'Avis cree.');
       notifyMutation();
@@ -273,130 +281,75 @@ export default function TestimonialsAdmin() {
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1 style={{ fontSize: '2rem', color: '#172243', marginBottom: '0.6rem' }}>Avis Clients</h1>
-      <p style={{ color: '#4b5563', marginTop: 0, marginBottom: '1.4rem' }}>
-        Gere la section <strong>Ce que disent nos clients</strong> affichee sur la page d'accueil.
-      </p>
+    <div className="admin-testimonials-page">
+      <div className="admin-testimonials-header">
+        <div>
+          <h1>Avis Clients</h1>
+          <p>
+            Gere la section <strong>Ce que disent nos clients</strong> affichee sur la page d'accueil.
+          </p>
+        </div>
+        <button className="admin-open-modal-btn" onClick={() => { resetForm(); setShowModal(true); }}>
+          <span className="material-symbols-outlined">add</span>
+          Nouvel avis
+        </button>
+      </div>
 
-      <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h2 style={{ marginBottom: '0.75rem' }}>{editingId ? 'Modifier un avis' : 'Nouvel avis'}</h2>
+      <Modal isOpen={showModal} onClose={closeModal} title={editingId ? 'Modifier un avis' : 'Nouvel avis'} size="lg">
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '0.8rem' }}>
           <div style={{ display: 'grid', gap: '0.8rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Nom / organisation
-              <input
-                type="text"
-                placeholder="Nom / organisation"
-                value={form.name}
-                onChange={(e) => setField('name', e.target.value)}
-                required
-              />
+              <input type="text" placeholder="Nom / organisation" value={form.name} onChange={(e) => setField('name', e.target.value)} required />
             </label>
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Fonction
-              <input
-                type="text"
-                placeholder="Fonction"
-                value={form.role}
-                onChange={(e) => setField('role', e.target.value)}
-              />
+              <input type="text" placeholder="Fonction" value={form.role} onChange={(e) => setField('role', e.target.value)} />
             </label>
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Entreprise (court)
-              <input
-                type="text"
-                placeholder="Entreprise (court)"
-                value={form.company}
-                onChange={(e) => setField('company', e.target.value)}
-              />
+              <input type="text" placeholder="Entreprise (court)" value={form.company} onChange={(e) => setField('company', e.target.value)} />
             </label>
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Note
-              <input
-                type="number"
-                min={1}
-                max={5}
-                placeholder="Note"
-                value={form.rating}
-                onChange={(e) => setField('rating', e.target.value)}
-              />
+              <input type="number" min={1} max={5} placeholder="Note" value={form.rating} onChange={(e) => setField('rating', e.target.value)} />
             </label>
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Ordre
-              <input
-                type="number"
-                min={0}
-                placeholder="Ordre"
-                value={form.sort_order}
-                onChange={(e) => setField('sort_order', e.target.value)}
-              />
+              <input type="number" min={0} placeholder="Ordre" value={form.sort_order} onChange={(e) => setField('sort_order', e.target.value)} />
             </label>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', alignSelf: 'end' }}>
-              <input
-                type="checkbox"
-                checked={form.is_active}
-                onChange={(e) => setField('is_active', e.target.checked)}
-              />
+              <input type="checkbox" checked={form.is_active} onChange={(e) => setField('is_active', e.target.checked)} />
               Actif
             </label>
           </div>
 
           <label style={{ display: 'grid', gap: '0.35rem' }}>
             Temoignage
-            <textarea
-              rows={4}
-              placeholder="Temoignage"
-              value={form.text}
-              onChange={(e) => setField('text', e.target.value)}
-              required
-            />
+            <textarea rows={4} placeholder="Temoignage" value={form.text} onChange={(e) => setField('text', e.target.value)} required />
           </label>
 
           <label style={{ display: 'grid', gap: '0.35rem' }}>
             Avatar / logo
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setField('avatar', e.target.files?.[0] || null)}
-            />
+            <input type="file" accept="image/*" onChange={(e) => setField('avatar', e.target.files?.[0] || null)} />
           </label>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div className="admin-modal-actions">
             {form.existing_avatar ? (
-              <img
-                src={form.existing_avatar}
-                alt="Avatar actuel"
-                style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '999px', border: '1px solid #e5e7eb' }}
-              />
+              <img src={form.existing_avatar} alt="Avatar actuel" style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '999px', border: '1px solid #e5e7eb' }} />
             ) : null}
             <button className="btn-primary" type="submit" disabled={saving}>
               {saving ? 'Enregistrement...' : (editingId ? 'Mettre a jour' : 'Creer')}
             </button>
-            {editingId ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                height="24px"
-                viewBox="0 -960 960 960"
-                width="24px"
-                fill="#000000"
-                role="button"
-                tabIndex={0}
-                onMouseDown={(e) => e.preventDefault()}
-                aria-label="Annuler"
-                onClick={() => { if (!saving) resetForm(); }}
-                onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !saving) resetForm(); }}
-                style={{ cursor: saving ? 'default' : 'pointer', verticalAlign: 'middle', border: 'none', background: 'transparent', padding: 0, outline: 'none' }}
-              >
-                <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
-              </svg>
-            ) : null}
+            <button className="btn-secondary" type="button" onClick={closeModal} disabled={saving}>
+              Annuler
+            </button>
           </div>
         </form>
-      </div>
+      </Modal>
 
-      <div className="card">
-        <h2 style={{ marginBottom: '0.75rem' }}>Avis configures ({items.length})</h2>
+      <div className="admin-testimonials-card">
+        <h2 className="admin-testimonials-card-title">Avis configures ({items.length})</h2>
         <div className="admin-bulk-bar">
           <label className="admin-bulk-select">
             <input
@@ -409,103 +362,96 @@ export default function TestimonialsAdmin() {
             <span>{selectedItemCount} selectionnee(s)</span>
           </label>
           <div className="admin-bulk-actions">
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={clearItemSelection}
-              disabled={selectedItemCount === 0 || bulkDeleting}
-            >
-              Effacer la selection
-            </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={handleBulkDeleteItems}
-              disabled={isBulkActionDisabled}
-            >
-              Supprimer la selection
-            </button>
+            <button type="button" className="admin-bulk-icon-btn" onClick={clearItemSelection} disabled={selectedItemCount === 0 || bulkDeleting} aria-label="Effacer la selection"><span className="material-symbols-outlined">close</span></button>
+            <button type="button" className="admin-bulk-icon-btn admin-bulk-icon-btn--danger" onClick={handleBulkDeleteItems} disabled={isBulkActionDisabled} aria-label="Supprimer la selection"><span className="material-symbols-outlined">delete</span></button>
           </div>
         </div>
         {(
-          <table className="admin-bulk-table">
-            <thead>
-              <tr>
-                <th style={{ width: '40px' }}>
-                  <input
-                    type="checkbox"
-                    ref={itemHeaderSelectionRef}
-                    checked={allItemsSelected}
-                    onChange={toggleAllItemSelection}
-                    disabled={visibleItemIds.length === 0 || bulkDeleting}
-                    aria-label="Selectionner tous les avis"
-                  />
-                </th>
-                <th>ID</th>
-                <th>Avatar</th>
-                <th>Nom</th>
-                <th>Role</th>
-                <th>Entreprise</th>
-                <th>Note</th>
-                <th>Ordre</th>
-                <th>Statut</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => {
-                const id = Number(item.id);
-                const isChecked = selectedItemIds.has(id);
-                return (
-                  <tr key={item.id}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => toggleItemSelection(id)}
-                        disabled={bulkDeleting}
-                        aria-label={`Selectionner l'avis ${item?.name || id}`}
-                      />
-                    </td>
-                    <td>{item.id}</td>
-                  <td>
-                    {avatarSrc(item) ? (
-                      <img
-                        src={avatarSrc(item)}
-                        alt={item.name}
-                        style={{ width: '52px', height: '52px', objectFit: 'cover', borderRadius: '999px', border: '1px solid #e5e7eb' }}
-                      />
-                    ) : '—'}
-                  </td>
-                  <td>{item.name}</td>
-                  <td>{item.role || '—'}</td>
-                  <td>{item.company || '—'}</td>
-                  <td>{item.rating || 0}/5</td>
-                  <td>{item.sort_order ?? 0}</td>
-                  <td>{item.is_active ? 'Actif' : 'Inactif'}</td>
-                  <td>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      height="24px"
-                      viewBox="0 -960 960 960"
-                      width="24px"
-                      fill="#274483"
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`Editer l'avis ${item?.name || item.id}`}
-                      onClick={() => startEdit(item)}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') startEdit(item); }}
-                      style={{ cursor: 'pointer', verticalAlign: 'middle' }}
-                    >
-                      <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
-                    </svg>
-                    <DeleteIconButton onClick={() => handleDelete(item.id)} className="btn-secondary" title="Supprimer" ariaLabel={`Supprimer l'avis ${item?.name || item.id}`} />
-                  </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="admin-testimonials-table-wrap">
+            <table className="admin-testimonials-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '40px' }}>
+                    <input
+                      type="checkbox"
+                      ref={itemHeaderSelectionRef}
+                      checked={allItemsSelected}
+                      onChange={toggleAllItemSelection}
+                      disabled={visibleItemIds.length === 0 || bulkDeleting}
+                      aria-label="Selectionner tous les avis"
+                    />
+                  </th>
+                  <th>ID</th>
+                  <th>Avatar</th>
+                  <th>Nom</th>
+                  <th>Role</th>
+                  <th>Entreprise</th>
+                  <th>Note</th>
+                  <th>Ordre</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => {
+                  const id = Number(item.id);
+                  const isChecked = selectedItemIds.has(id);
+                  return (
+                    <tr key={item.id}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleItemSelection(id)}
+                          disabled={bulkDeleting}
+                          aria-label={`Selectionner l'avis ${item?.name || id}`}
+                        />
+                      </td>
+                      <td>{String(item.id).substring(0, 8)}…</td>
+                      <td>
+                        {avatarSrc(item) ? (
+                          <img
+                            src={avatarSrc(item)}
+                            alt={item.name}
+                            className="admin-testimonials-avatar"
+                          />
+                        ) : <span className="admin-testimonials-no-avatar">—</span>}
+                      </td>
+                      <td>{item.name}</td>
+                      <td>{item.role || '—'}</td>
+                      <td>{item.company || '—'}</td>
+                      <td><span className="admin-testimonials-rating">{item.rating || 0}/5</span></td>
+                      <td>{item.sort_order ?? 0}</td>
+                      <td>
+                        <span className={`admin-testimonials-status ${item.is_active ? 'is-active' : 'is-inactive'}`}>
+                          {item.is_active ? 'Actif' : 'Inactif'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="admin-testimonials-actions">
+                          <button
+                            type="button"
+                            className="admin-bulk-icon-btn"
+                            onClick={() => startEdit(item)}
+                            aria-label={`Editer l'avis ${item?.name || item.id}`}
+                          >
+                            <span className="material-symbols-outlined">edit</span>
+                          </button>
+                          <DeleteIconButton
+                            onClick={() => handleDelete(item.id)}
+                            className="admin-bulk-icon-btn admin-bulk-icon-btn--danger"
+                            style={{ width: 32, height: 32 }}
+                            title="Supprimer"
+                            ariaLabel={`Supprimer l'avis ${item?.name || item.id}`}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

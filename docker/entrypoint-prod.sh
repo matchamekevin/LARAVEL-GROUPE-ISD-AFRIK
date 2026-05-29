@@ -129,6 +129,7 @@ echo "✓ Setup complete, launching supervisord..."
 # (Les activer explicitement quand une queue/cron est configurée.)
 ENABLE_QUEUE_WORKER=${ENABLE_QUEUE_WORKER:-false}
 ENABLE_SCHEDULER=${ENABLE_SCHEDULER:-false}
+ENABLE_REVERB=${ENABLE_REVERB:-false}
 
 SUPERVISOR_CONF=/etc/supervisor/conf.d/supervisord.conf
 cat >"$SUPERVISOR_CONF" <<'EOF'
@@ -174,6 +175,23 @@ user=root
 EOF
 else
 	echo "Queue worker disabled (ENABLE_QUEUE_WORKER=$ENABLE_QUEUE_WORKER, QUEUE_CONNECTION=$QUEUE_CONNECTION)" >&2
+fi
+
+if [ "$ENABLE_REVERB" = "true" ]; then
+	cat >>"$SUPERVISOR_CONF" <<'EOF'
+
+[program:reverb]
+command=/usr/local/bin/php /var/www/html/artisan reverb:start --host=0.0.0.0 --port=8080 --no-interaction --env=production
+autostart=true
+autorestart=true
+stderr_logfile=/dev/stderr
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+stderr_logfile_maxbytes=0
+user=root
+EOF
+else
+	echo "Reverb disabled (set ENABLE_REVERB=true to enable)" >&2
 fi
 
 if [ "$ENABLE_SCHEDULER" = "true" ]; then

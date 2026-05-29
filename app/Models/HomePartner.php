@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 class HomePartner extends Model
 {
     use HasUuid;
+
     protected $hidden = ['image_data', 'image_mime'];
 
     protected $fillable = [
@@ -30,10 +31,10 @@ class HomePartner extends Model
     public function getImageUrlAttribute(): ?string
     {
         if ($this->image_data) {
-            return url('/api/home-partners/' . $this->id . '/image');
+            return '/api/home-partners/'.$this->id.'/image';
         }
 
-        if (!$this->image_path) {
+        if (! $this->image_path) {
             return null;
         }
 
@@ -45,7 +46,7 @@ class HomePartner extends Model
             return $this->image_path;
         }
 
-        if (!Storage::disk('public')->exists($this->image_path)) {
+        if (! Storage::disk('public')->exists($this->image_path)) {
             return null;
         }
 

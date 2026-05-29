@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\HomeTestimonial;
-use Illuminate\Http\Request;
 use App\Services\Base64ImageService;
+use Illuminate\Http\Request;
 
 class HomeTestimonialController extends Controller
 {
@@ -79,6 +79,7 @@ class HomeTestimonialController extends Controller
 
         $rows = collect(self::DEFAULT_TESTIMONIALS)->map(function (array $item) {
             return [
+                'id' => (string) \Illuminate\Support\Str::uuid(),
                 ...$item,
                 'created_at' => now(),
                 'updated_at' => now(),

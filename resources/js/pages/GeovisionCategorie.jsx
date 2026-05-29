@@ -132,8 +132,7 @@ export default function GeovisionCategorie() {
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearch = useDeferredValue(searchQuery);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
-  const [categoryRefreshToken, setCategoryRefreshToken] = useState(0);
-  const [productsRefreshToken, setProductsRefreshToken] = useState(0);
+
 
   const fetchProducts = useCallback(async (isSilent = false) => {
     if (!category?.slug) {
@@ -209,14 +208,14 @@ export default function GeovisionCategorie() {
     fetchProducts(false);
   }, [fetchProducts]);
 
-  // Polling silencieux
+  // Polling silencieux (intervalle long: le global AutoRefresh gère les mises à jour rapides)
   useLivePolling(() => fetchProducts(true), {
-    intervalMs: 5000,
+    intervalMs: 30000,
     enabled: Boolean(category?.slug) && !loadingProducts,
   });
 
   useLivePolling(() => fetchCategory(true), {
-    intervalMs: 5000,
+    intervalMs: 30000,
     enabled: !loadingCategory,
   });
 

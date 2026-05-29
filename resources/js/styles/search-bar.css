@@ -220,3 +220,19 @@
   .pp-search input[type="search"] { font-size: 0.82rem; padding: 4px 2px; }
   .pp-search-icon { width: 14px; height: 14px; }
 }
+
+.pp-search-admin .pp-search-admin-icon-btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.pp-search-admin .pp-search-admin-icon-btn .material-symbols-outlined {
+  font-size: 1.3rem;
+}
+.pp-search-admin .pp-search-admin-icon-btn--outline {
+  background: transparent !important;
+  color: #172243 !important;
+}

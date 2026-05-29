@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\ImageRequest;
 use App\Http\Resources\ImageResource;
 use App\Models\Image;
@@ -24,12 +23,13 @@ class ImageController extends Controller
     }
 
     /**
-     * GET /api/images : lister toutes les images
+     * GET /api/images : lister toutes les images (paginated)
      */
-    public function index()
+    public function index(Request $request)
     {
-        $images = $this->imageService->all();
-        return ImageResource::collection($images);
+        $perPage = max(1, min(50, (int) $request->query('per_page', 20)));
+
+        return $this->imageService->paginate($perPage);
     }
 
     /**
@@ -64,6 +64,7 @@ class ImageController extends Controller
     public function store(ImageRequest $request): JsonResponse
     {
         $image = $this->imageService->create($request->validated());
+
         return response()->json(new ImageResource($image), 201);
     }
 
@@ -74,7 +75,7 @@ class ImageController extends Controller
     {
         $image = $this->imageService->find($id);
 
-        if (!$image) {
+        if (! $image) {
             return response()->json(['message' => 'Image introuvable'], 404);
         }
 
@@ -88,7 +89,7 @@ class ImageController extends Controller
     {
         $image = $this->imageService->update($id, $request->validated());
 
-        if (!$image) {
+        if (! $image) {
             return response()->json(['message' => 'Image introuvable'], 404);
         }
 
@@ -102,7 +103,7 @@ class ImageController extends Controller
     {
         $deleted = $this->imageService->delete($id);
 
-        if (!$deleted) {
+        if (! $deleted) {
             return response()->json(['message' => 'Image introuvable'], 404);
         }
 
@@ -116,7 +117,7 @@ class ImageController extends Controller
     {
         $image = $this->imageService->restore($id);
 
-        if (!$image) {
+        if (! $image) {
             return response()->json(['message' => 'Image introuvable ou non supprimée'], 404);
         }
 
@@ -130,7 +131,7 @@ class ImageController extends Controller
     {
         $deleted = $this->imageService->forceDelete($id);
 
-        if (!$deleted) {
+        if (! $deleted) {
             return response()->json(['message' => 'Image introuvable'], 404);
         }
 
@@ -144,7 +145,7 @@ class ImageController extends Controller
     {
         $image = Image::find($id);
 
-        if (!$image) {
+        if (! $image) {
             abort(404);
         }
 

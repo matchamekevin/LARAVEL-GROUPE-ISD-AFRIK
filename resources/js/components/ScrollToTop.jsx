@@ -1,135 +1,278 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { useLocation, useNavigationType } from "react-router-dom";
 
-const STORAGE_KEY = "scroll_positions";
+const STORAGE_KEY = "isd:scroll:positions:v1";
+const MAX_ENTRIES = 200;
+const PERSIST_DELAY_MS = 120;
+
+function resolveScrollKey(location) {
+  if (location?.key && location.key !== "default") {
+    return `k:${location.key}`;
+  }
+
+  return `u:${location?.pathname || ""}${location?.search || ""}${location?.hash || ""}`;
+}
+
+function clampScroll(value) {
+  const nextValue = Number(value);
+  if (!Number.isFinite(nextValue) || nextValue <= 0) {
+    return 0;
+  }
+
+  return Math.floor(nextValue);
+}
+
+function normalizePositions(payload) {
+  const source = payload?.positions && typeof payload.positions === "object"
+    ? payload.positions
+    : payload && typeof payload === "object"
+      ? payload
+      : {};
+
+  const normalized = {};
+
+  Object.entries(source).forEach(([key, entry]) => {
+    if (!key) {
+      return;
+    }
+
+    if (typeof entry === "number") {
+      const y = clampScroll(entry);
+      if (y > 0) {
+        normalized[key] = { y, updatedAt: Date.now() };
+      }
+      return;
+    }
+
+    if (entry && typeof entry === "object") {
+      const y = clampScroll(entry.y);
+      if (y > 0) {
+        normalized[key] = {
+          y,
+          updatedAt: Number(entry.updatedAt) || Date.now(),
+        };
+      }
+    }
+  });
+
+  return normalized;
+}
+
+function prunePositions(positions) {
+  const entries = Object.entries(positions || {}).sort(
+    (a, b) => Number(b[1]?.updatedAt || 0) - Number(a[1]?.updatedAt || 0)
+  );
+
+  return Object.fromEntries(entries.slice(0, MAX_ENTRIES));
+}
 
 function loadPositions() {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
   try {
-    return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "{}");
+    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return {};
+    }
+    return normalizePositions(JSON.parse(raw));
   } catch {
     return {};
   }
 }
 
-function savePositions(positions) {
+function persistPositions(positions) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(positions));
+    const pruned = prunePositions(positions);
+    window.sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ version: 1, positions: pruned })
+    );
   } catch {}
 }
 
-function forceScroll(y) {
-  const top = y || 0;
+function setWindowScroll(y) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const top = clampScroll(y);
   window.scrollTo(0, top);
-  document.documentElement.scrollTop = top;
-  document.body.scrollTop = top;
+  if (document?.documentElement) {
+    document.documentElement.scrollTop = top;
+  }
+  if (document?.body) {
+    document.body.scrollTop = top;
+  }
 }
 
 export default function ScrollToTop() {
-  const { pathname } = useLocation();
+  const location = useLocation();
   const navigationType = useNavigationType();
-  const cache = useRef(null);
-  const debounceTimer = useRef(null);
-  const prevPathname = useRef(pathname);
+  const scrollKey = resolveScrollKey(location);
+  const positionsRef = useRef(loadPositions());
+  const activeKeyRef = useRef(scrollKey);
+  const persistTimerRef = useRef(null);
+  const rafSaveRef = useRef(null);
 
-  useLayoutEffect(() => {
-    window.history.scrollRestoration = "manual";
-  });
-
-  useLayoutEffect(() => {
-    if (!cache.current) {
-      cache.current = loadPositions();
+  const flushPersist = () => {
+    if (persistTimerRef.current) {
+      clearTimeout(persistTimerRef.current);
+      persistTimerRef.current = null;
     }
-    const positions = cache.current;
+    persistPositions(positionsRef.current);
+  };
 
-    if (prevPathname.current !== pathname) {
-      prevPathname.current = pathname;
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-        debounceTimer.current = null;
-        savePositions(cache.current);
-      }
+  const schedulePersist = () => {
+    if (persistTimerRef.current) {
+      clearTimeout(persistTimerRef.current);
     }
+    persistTimerRef.current = setTimeout(flushPersist, PERSIST_DELAY_MS);
+  };
 
-    if (navigationType === "POP") {
-      const savedY = positions[pathname];
-      console.log(`[ScrollToTop] POP path=${pathname} savedY=${savedY}`, JSON.stringify(positions));
-      if (savedY !== undefined) {
-        forceScroll(savedY);
-
-        const raf = requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            console.log(`[ScrollToTop] POP RAF restore -> scrollY=${window.scrollY}`);
-            forceScroll(savedY);
-          });
-        });
-        const t1 = setTimeout(() => {
-          console.log(`[ScrollToTop] POP 200ms restore -> scrollY=${window.scrollY}`);
-          forceScroll(savedY);
-        }, 200);
-        const t2 = setTimeout(() => {
-          console.log(`[ScrollToTop] POP 800ms restore -> scrollY=${window.scrollY}`);
-          forceScroll(savedY);
-        }, 800);
-        const t3 = setTimeout(() => {
-          console.log(`[ScrollToTop] POP 1500ms restore -> scrollY=${window.scrollY}`);
-          forceScroll(savedY);
-        }, 1500);
-
-        return () => {
-          cancelAnimationFrame(raf);
-          clearTimeout(t1);
-          clearTimeout(t2);
-          clearTimeout(t3);
-        };
-      }
+  const saveCurrentPosition = (key) => {
+    if (typeof window === "undefined" || !key) {
+      return;
     }
 
-    // PUSH / REPLACE — scroll to top
-    forceScroll(0);
-    console.log(`[ScrollToTop] ${navigationType} path=${pathname} -> scrollY=${window.scrollY}`);
-    delete positions[pathname];
-    savePositions(positions);
+    const currentY = clampScroll(window.scrollY || window.pageYOffset || 0);
 
-    const raf = requestAnimationFrame(() => {
-      requestAnimationFrame(() => forceScroll(0));
+    if (currentY === 0) {
+      delete positionsRef.current[key];
+    } else {
+      positionsRef.current[key] = {
+        y: currentY,
+        updatedAt: Date.now(),
+      };
+    }
+
+    schedulePersist();
+  };
+
+  const restoreScrollPosition = (targetY, withRetry = false) => {
+    setWindowScroll(targetY);
+    const rafOne = requestAnimationFrame(() => {
+      setWindowScroll(targetY);
     });
-    const t1 = setTimeout(() => forceScroll(0), 200);
-    const t2 = setTimeout(() => {
-      if (window.scrollY !== 0) forceScroll(0);
-    }, 800);
+    const rafTwo = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setWindowScroll(targetY);
+      });
+    });
+    const timers = [];
+
+    if (withRetry && targetY > 0 && typeof window !== "undefined") {
+      [120, 280, 520, 900, 1400].forEach((delay) => {
+        const timer = window.setTimeout(() => {
+          const delta = Math.abs((window.scrollY || 0) - targetY);
+          if (delta > 2) {
+            setWindowScroll(targetY);
+          }
+        }, delay);
+        timers.push(timer);
+      });
+    }
 
     return () => {
-      cancelAnimationFrame(raf);
-      clearTimeout(t1);
-      clearTimeout(t2);
+      cancelAnimationFrame(rafOne);
+      cancelAnimationFrame(rafTwo);
+      timers.forEach((timerId) => {
+        clearTimeout(timerId);
+      });
     };
-  }, [pathname, navigationType]);
+  };
 
   useEffect(() => {
-    if (!cache.current) cache.current = {};
+    if (typeof window === "undefined" || !("scrollRestoration" in window.history)) {
+      return;
+    }
 
-    const save = () => {
-      const y = window.scrollY;
-      if (y === 0) {
-        delete cache.current[pathname];
-      } else {
-        cache.current[pathname] = y;
-      }
-      clearTimeout(debounceTimer.current);
-      debounceTimer.current = setTimeout(() => savePositions(cache.current), 300);
+    const previousValue = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+
+    return () => {
+      window.history.scrollRestoration = previousValue;
     };
-
-    window.addEventListener("scroll", save, { passive: true });
-    return () => window.removeEventListener("scroll", save);
-  }, [pathname]);
-
-  useEffect(() => {
-    const sync = () => {
-      if (cache.current) savePositions(cache.current);
-    };
-    window.addEventListener("beforeunload", sync);
-    return () => window.removeEventListener("beforeunload", sync);
   }, []);
+
+  useLayoutEffect(() => {
+    const previousKey = activeKeyRef.current;
+    if (previousKey && previousKey !== scrollKey) {
+      saveCurrentPosition(previousKey);
+      flushPersist();
+    }
+
+    activeKeyRef.current = scrollKey;
+
+    const targetY =
+      navigationType === "POP" ? clampScroll(positionsRef.current?.[scrollKey]?.y) : 0;
+
+    const cleanupRestore = restoreScrollPosition(targetY, navigationType === "POP");
+
+    return () => {
+      cleanupRestore();
+    };
+  }, [navigationType, scrollKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleScroll = () => {
+      if (rafSaveRef.current !== null) {
+        return;
+      }
+
+      rafSaveRef.current = requestAnimationFrame(() => {
+        rafSaveRef.current = null;
+        saveCurrentPosition(scrollKey);
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafSaveRef.current !== null) {
+        cancelAnimationFrame(rafSaveRef.current);
+        rafSaveRef.current = null;
+      }
+      saveCurrentPosition(scrollKey);
+      flushPersist();
+    };
+  }, [scrollKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        saveCurrentPosition(scrollKey);
+        flushPersist();
+      }
+    };
+
+    const handlePageHide = () => {
+      saveCurrentPosition(scrollKey);
+      flushPersist();
+    };
+
+    window.addEventListener("pagehide", handlePageHide);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("pagehide", handlePageHide);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [scrollKey]);
 
   return null;
 }

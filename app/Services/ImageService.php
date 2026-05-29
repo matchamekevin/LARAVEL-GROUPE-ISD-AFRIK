@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Http\Resources\ImageResource;
 use App\Models\Image;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ImageService
 {
@@ -11,9 +13,17 @@ class ImageService
         return Image::orderByDesc('created_at')->get();
     }
 
+    public function paginate(int $perPage = 20): AnonymousResourceCollection
+    {
+        $images = Image::orderByDesc('created_at')->paginate($perPage);
+
+        return ImageResource::collection($images);
+    }
+
     public function create(array $data): Image
     {
         $data['imageable_type'] = $this->mapType($data['imageable_type']);
+
         return Image::create($data);
     }
 
@@ -25,22 +35,23 @@ class ImageService
     public function update(string $id, array $data): ?Image
     {
         $image = Image::find($id);
-        if (!$image) {
+        if (! $image) {
             return null;
         }
 
-        if (!empty($data['imageable_type'])) {
+        if (! empty($data['imageable_type'])) {
             $data['imageable_type'] = $this->mapType($data['imageable_type']);
         }
 
         $image->update($data);
+
         return $image->fresh();
     }
 
     public function delete(string $id): bool
     {
         $image = Image::find($id);
-        if (!$image) {
+        if (! $image) {
             return false;
         }
 
@@ -56,6 +67,7 @@ class ImageService
 
         if ($image && $image->deleted_at !== null) {
             $image->restore();
+
             return $image->fresh();
         }
 

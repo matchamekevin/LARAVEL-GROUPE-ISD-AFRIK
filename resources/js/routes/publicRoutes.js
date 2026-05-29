@@ -4,6 +4,7 @@ export const PAGE_ALIASES = {
   Fiabilite: "Fiablite",
   Developpement: "DeveloppementApplications",
   PrestationDetail: "PrestationDetail",
+  SolutionDetail: "SolutionDetail",
 };
 
 export const PUBLIC_APP_ROUTES = [
@@ -12,6 +13,7 @@ export const PUBLIC_APP_ROUTES = [
   { path: "/login", page: "Login" },
   { path: "/client/dashboard", page: "Dashboard" },
   { path: "/solutions", page: "Solutions" },
+  { path: "/solutions/:slug", page: "SolutionDetail" },
   { path: "/formations", page: "Formations" },
   { path: "/projets", page: "Projets" },
   { path: "/projets/:slug", page: "ProjetPresentation" },

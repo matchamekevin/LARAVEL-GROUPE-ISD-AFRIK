@@ -11,13 +11,14 @@ export default function MainLayout({ children }) {
     const navigate = useNavigate();
     const retryCountRef = useRef(0);
     const MAX_RETRIES = 3;
-    const VERIFY_INTERVAL = 10000; // 10 secondes
+    const VERIFY_INTERVAL = 60000; // 60 secondes (le header gère aussi les sessions)
 
     useEffect(() => {
         const ignoredPaths = ["/login", "/register", "/forgot-password", "/verify-otp"];
         let intervalId = null;
 
         async function verifyClientSession() {
+            if (document.visibilityState === 'hidden') return;
             const token = tokenService.getToken();
             
             if (!token) {
@@ -93,8 +94,8 @@ export default function MainLayout({ children }) {
             }
         }
 
-        // Vérifier au montage et ensuite tous les 10s
-        verifyClientSession();
+        // Vérifier au montage sur onglet visible, puis périodiquement
+        if (document.visibilityState !== 'hidden') verifyClientSession();
         intervalId = window.setInterval(verifyClientSession, VERIFY_INTERVAL);
 
         // Listener pour les événements de token

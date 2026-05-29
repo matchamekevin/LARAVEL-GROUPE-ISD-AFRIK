@@ -89,7 +89,7 @@ return [
             'transport' => 'failover',
             'mailers' => [
                 'smtp',
-                'log',
+                'brevo',
             ],
             'retry_after' => 60,
         ],
@@ -97,8 +97,8 @@ return [
         'roundrobin' => [
             'transport' => 'roundrobin',
             'mailers' => [
-                'ses',
-                'postmark',
+                'smtp',
+                'brevo',
             ],
             'retry_after' => 60,
         ],

@@ -10,7 +10,17 @@ return [
     |--------------------------------------------------------------------------
     */
     'broadcasting' => [
-        // ...
+        'echo' => [
+            'broadcaster' => 'reverb',
+            'key' => env('REVERB_APP_KEY'),
+            'wsHost' => env('REVERB_HOST', 'localhost'),
+            'wsPort' => env('REVERB_PORT', 8080),
+            'wssPort' => env('REVERB_PORT', 8080),
+            'forceTLS' => env('REVERB_SCHEME', 'http') === 'https',
+            'encrypted' => env('REVERB_SCHEME', 'http') === 'https',
+            'enabledTransports' => ['ws', 'wss'],
+            'disableStats' => true,
+        ],
     ],
 
     /*

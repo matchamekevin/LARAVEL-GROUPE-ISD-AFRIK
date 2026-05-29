@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 class HomeGeovisionSection extends Model
 {
     use HasUuid;
+
     protected $hidden = ['image_data', 'image_mime'];
 
     protected $fillable = [
@@ -32,10 +33,10 @@ class HomeGeovisionSection extends Model
     public function getImageUrlAttribute(): ?string
     {
         if ($this->image_data) {
-            return url('/api/home-geovision-sections/' . $this->id . '/image');
+            return '/api/home-geovision-sections/'.$this->id.'/image';
         }
 
-        if (!$this->image_path) {
+        if (! $this->image_path) {
             return null;
         }
 
@@ -47,7 +48,7 @@ class HomeGeovisionSection extends Model
             return $this->image_path;
         }
 
-        if (!Storage::disk('public')->exists($this->image_path)) {
+        if (! Storage::disk('public')->exists($this->image_path)) {
             return null;
         }
 

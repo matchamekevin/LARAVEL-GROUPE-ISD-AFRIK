@@ -6,6 +6,7 @@ import { notifyMutation } from "../../utils/mutationBus";
 import '../styles/admin-shared.css';
 import '../styles/users.css';
 import SearchBar from '../../components/SearchBar';
+import Modal from '../components/Modal';
 
 import { ROLE_LABELS, normalizeRole } from '../utils/roles';
 
@@ -127,6 +128,7 @@ export default function Users() {
   const [accessDrafts, setAccessDrafts] = useState({});
   const [phoneError, setPhoneError] = useState(null);
   const [adminForm, setAdminForm] = useState(INITIAL_ADMIN_FORM);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
 
   const actorId = actorUser?.id ?? actorUser?.id_utilisateur ?? null;
@@ -427,6 +429,7 @@ export default function Users() {
         two_factor_enabled: true,
       }));
 
+      setShowCreateModal(false);
       toastSuccess(`✅ Admin adjoint créé. Email envoyé à ${created?.email || adminForm.email}`);
       notifyMutation();
       reloadUsers();
@@ -521,133 +524,77 @@ export default function Users() {
 
 
       {actorIsSuperAdmin && (
-        <div className="admin-users-create-card">
-          <div className="admin-users-list-card-header">
-            <div>
-              <h2>Créer un compte administratif</h2>
-              <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-                L&apos;utilisateur recevra ses accès temporaires par email.
-              </p>
-            </div>
-          </div>
-
-          <form className="admin-users-create-form" onSubmit={handleCreateAdminAdjoint}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              <input
-                className="admin-user-role-select"
-                type="text"
-                placeholder="Nom"
-                value={adminForm.nom}
-                onChange={(e) => setAdminForm((previous) => ({ ...previous, nom: e.target.value }))}
-                required
-              />
-              <input
-                className="admin-user-role-select"
-                type="text"
-                placeholder="Prénom"
-                value={adminForm.prenom}
-                onChange={(e) => setAdminForm((previous) => ({ ...previous, prenom: e.target.value }))}
-                required
-              />
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
-              <input
-                className="admin-user-role-select"
-                type="email"
-                placeholder="Email professionnel"
-                value={adminForm.email}
-                onChange={(e) => setAdminForm((previous) => ({ ...previous, email: e.target.value }))}
-                required
-              />
-              <input
-                className="admin-user-role-select"
-                type="text"
-                placeholder="Téléphone"
-                value={adminForm.telephone}
-                onChange={(e) => {
-                  setPhoneError(null);
-                  setAdminForm((previous) => ({ ...previous, telephone: e.target.value }));
-                }}
-              />
-            </div>
-            {phoneError && (
-              <div style={{ color: '#DC2626', fontSize: '0.9rem', marginTop: '0.5rem' }}>{phoneError}</div>
-            )}
-
-            <div style={{ marginTop: '1rem' }}>
-              {countries.length > 0 ? (
-                <select
-                  className="admin-user-role-select"
-                  value={adminForm.id_pays}
-                  onChange={(e) => setAdminForm((previous) => ({ ...previous, id_pays: e.target.value }))}
-                  required
-                >
-                  <option value="">Choisir le pays d&apos;affectation</option>
-                  {countries.map((country) => (
-                    <option key={country.id} value={country.id}>
-                      {country.nom}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  className="admin-user-role-select"
-                  type="number"
-                  min="1"
-                  placeholder="ID pays"
-                  value={adminForm.id_pays}
-                  onChange={(e) => setAdminForm((previous) => ({ ...previous, id_pays: e.target.value }))}
-                  required
-                />
-              )}
-            </div>
-
-            <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '0.75rem', border: '1px solid #e2e8f0' }}>
-              <p style={{ margin: '0 0 1rem 0', fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>Type de compte admin :</p>
-              <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>
-                  <input 
-                    type="radio" 
-                    name="admin_role" 
-                    value="admin_pays" 
-                    checked={adminForm.admin_role === 'admin_pays'} 
-                    onChange={(e) => setAdminForm(prev => ({ ...prev, admin_role: e.target.value }))}
-                  />
-                  Admin Pays / National
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>
-                  <input 
-                    type="radio" 
-                    name="admin_role" 
-                    value="admin_adjoint" 
-                    checked={adminForm.admin_role === 'admin_adjoint'} 
-                    onChange={(e) => setAdminForm(prev => ({ ...prev, admin_role: e.target.value }))}
-                  />
-                  Admin Adjoint
-                </label>
-              </div>
-            </div>
-
-            <div className="admin-users-create-actions" style={{ marginTop: '1.5rem' }}>
-              <label className="admin-user-access-check">
-                <input
-                  type="checkbox"
-                  checked={adminForm.two_factor_enabled}
-                  onChange={(e) => setAdminForm((previous) => ({ ...previous, two_factor_enabled: e.target.checked }))}
-                />
-                Activer la double authentification (2FA)
-              </label>
-              <button type="submit" className="admin-user-action-btn reactivate" disabled={creatingAdmin}>
-                {creatingAdmin ? '⏳ Création...' : "Créer le compte administratif"}
-              </button>
-            </div>
-          </form>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+          <button className="admin-open-modal-btn" onClick={() => { setAdminForm(INITIAL_ADMIN_FORM); setShowCreateModal(true); setPhoneError(null); }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Créer un compte administratif
+          </button>
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', background: '#f1f5f9', padding: '4px', borderRadius: '0.75rem', border: '1px solid #e2e8f0' }}>
+      <Modal isOpen={showCreateModal} onClose={() => { setShowCreateModal(false); setAdminForm(INITIAL_ADMIN_FORM); setPhoneError(null); }} title="Créer un compte administratif" size="lg">
+        <p style={{ margin: '0 0 1rem', fontSize: '0.85rem', color: '#64748b' }}>
+          L&apos;utilisateur recevra ses accès temporaires par email.
+        </p>
+        <form onSubmit={handleCreateAdminAdjoint}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            <input className="admin-user-role-select" type="text" placeholder="Nom" value={adminForm.nom} onChange={(e) => setAdminForm((p) => ({ ...p, nom: e.target.value }))} required />
+            <input className="admin-user-role-select" type="text" placeholder="Prénom" value={adminForm.prenom} onChange={(e) => setAdminForm((p) => ({ ...p, prenom: e.target.value }))} required />
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+            <input className="admin-user-role-select" type="email" placeholder="Email professionnel" value={adminForm.email} onChange={(e) => setAdminForm((p) => ({ ...p, email: e.target.value }))} required />
+            <input className="admin-user-role-select" type="text" placeholder="Téléphone" value={adminForm.telephone} onChange={(e) => { setPhoneError(null); setAdminForm((p) => ({ ...p, telephone: e.target.value })); }} />
+          </div>
+          {phoneError && <div style={{ color: '#DC2626', fontSize: '0.9rem', marginTop: '0.5rem' }}>{phoneError}</div>}
+
+          <div style={{ marginTop: '1rem' }}>
+            {countries.length > 0 ? (
+              <select className="admin-user-role-select" value={adminForm.id_pays} onChange={(e) => setAdminForm((p) => ({ ...p, id_pays: e.target.value }))} required>
+                <option value="">Choisir le pays d&apos;affectation</option>
+                {countries.map((country) => (
+                  <option key={country.id} value={country.id}>{country.nom}</option>
+                ))}
+              </select>
+            ) : (
+              <input className="admin-user-role-select" type="number" min="1" placeholder="ID pays" value={adminForm.id_pays} onChange={(e) => setAdminForm((p) => ({ ...p, id_pays: e.target.value }))} required />
+            )}
+          </div>
+
+          <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '0.75rem', border: '1px solid #e2e8f0' }}>
+            <p style={{ margin: '0 0 1rem 0', fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>Type de compte admin :</p>
+            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>
+                <input type="radio" name="admin_role" value="admin_pays" checked={adminForm.admin_role === 'admin_pays'} onChange={(e) => setAdminForm((p) => ({ ...p, admin_role: e.target.value }))} />
+                Admin Pays / National
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>
+                <input type="radio" name="admin_role" value="admin_adjoint" checked={adminForm.admin_role === 'admin_adjoint'} onChange={(e) => setAdminForm((p) => ({ ...p, admin_role: e.target.value }))} />
+                Admin Adjoint
+              </label>
+            </div>
+          </div>
+
+          <div className="admin-modal-actions">
+            <label className="admin-user-access-check" style={{ flex: 1 }}>
+              <input type="checkbox" checked={adminForm.two_factor_enabled} onChange={(e) => setAdminForm((p) => ({ ...p, two_factor_enabled: e.target.checked }))} />
+              Activer la double authentification (2FA)
+            </label>
+            <button type="submit" className="btn-primary" disabled={creatingAdmin}>
+              {creatingAdmin ? '⏳ Création...' : "Créer le compte"}
+            </button>
+            <button type="button" className="btn-secondary" onClick={() => { setShowCreateModal(false); setAdminForm(INITIAL_ADMIN_FORM); setPhoneError(null); }} disabled={creatingAdmin}>
+              Annuler
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <div className="admin-users-toolbar">
+        <div className="admin-users-filter-group">
           <button 
             onClick={() => setFilter('all')} 
             className={`admin-filter-tab ${filter === 'all' ? 'active' : ''}`}
@@ -701,7 +648,7 @@ export default function Users() {
           </button>
         </div>
 
-        <form className="admin-users-search" onSubmit={handleSearchSubmit} style={{ marginBottom: 0, flex: 1, maxWidth: '500px' }}>
+        <form className="admin-users-search" onSubmit={handleSearchSubmit}>
           <SearchBar
             placeholder="Rechercher un nom ou email..."
             value={searchInput}
@@ -711,6 +658,15 @@ export default function Users() {
         </form>
       </div>
 
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+            <button className="admin-open-modal-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18, marginRight: 6, verticalAlign: 'middle' }}>
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Créer un compte administratif
+            </button>
+          </div>
           <div className="admin-users-list-card">
             <div className="admin-users-list-card-header">
               <h2>Liste des Utilisateurs</h2>

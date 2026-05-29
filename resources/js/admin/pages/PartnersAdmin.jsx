@@ -8,6 +8,7 @@ import {
 import { toastError, toastSuccess } from '../../utils/toast';
 import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
+import Modal from '../components/Modal';
 import { pickDisplayMediaUrl } from '../../utils/mediaUrl';
 import '../styles/admin-shared.css';
 import '../styles/partners.css';
@@ -27,6 +28,7 @@ export default function PartnersAdmin() {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
   const [selectedItemIds, setSelectedItemIds] = useState(new Set());
+  const [showModal, setShowModal] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const itemSelectionRef = useRef(null);
   const itemHeaderSelectionRef = useRef(null);
@@ -111,6 +113,12 @@ export default function PartnersAdmin() {
       image: null,
       existing_image: imageSrc(item),
     });
+    setShowModal(true);
+  }
+
+  function closeModal() {
+    resetForm();
+    setShowModal(false);
   }
 
   async function handleSubmit(e) {
@@ -143,7 +151,7 @@ export default function PartnersAdmin() {
         await createHomePartner(payload);
       }
 
-      resetForm();
+      closeModal();
       await loadData();
       toastSuccess(editing ? 'Partenaire mis a jour.' : 'Partenaire cree.');
       notifyMutation();
@@ -257,88 +265,59 @@ export default function PartnersAdmin() {
 
   return (
     <div style={{ padding: '2rem' }}>
-      <h1 style={{ fontSize: '2rem', color: '#172243', marginBottom: '0.6rem' }}>Partenaires technologiques</h1>
-      <p style={{ color: '#4b5563', marginTop: 0, marginBottom: '1.4rem' }}>
-        Gere la section <strong>Nos partenaires technologiques</strong> affichee sur la page d'accueil.
-      </p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.4rem', flexWrap: 'wrap' }}>
+        <div>
+          <h1 style={{ fontSize: '2rem', color: '#172243', margin: 0 }}>Partenaires technologiques</h1>
+          <p style={{ color: '#4b5563', margin: '0.3rem 0 0' }}>
+            Gere la section <strong>Nos partenaires technologiques</strong> affichee sur la page d'accueil.
+          </p>
+        </div>
+        <button className="admin-open-modal-btn" onClick={() => { resetForm(); setShowModal(true); }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Ajouter un partenaire
+        </button>
+      </div>
 
-      <div className="card">
-        <h2 style={{ marginBottom: '0.75rem' }}>{editingId ? 'Modifier partenaire' : 'Ajouter un partenaire'}</h2>
+      <Modal isOpen={showModal} onClose={closeModal} title={editingId ? 'Modifier partenaire' : 'Ajouter un partenaire'}>
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'grid', gap: '0.75rem' }}>
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Nom
-              <input
-                type="text"
-                placeholder="Nom"
-                value={form.name}
-                onChange={(e) => setField('name', e.target.value)}
-                required
-              />
+              <input type="text" placeholder="Nom" value={form.name} onChange={(e) => setField('name', e.target.value)} required />
             </label>
 
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Ordre
-              <input
-                type="number"
-                min={0}
-                placeholder="Ordre"
-                value={form.sort_order}
-                onChange={(e) => setField('sort_order', e.target.value)}
-              />
+              <input type="number" min={0} placeholder="Ordre" value={form.sort_order} onChange={(e) => setField('sort_order', e.target.value)} />
             </label>
 
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', alignSelf: 'end' }}>
-              <input
-                type="checkbox"
-                checked={form.is_active}
-                onChange={(e) => setField('is_active', e.target.checked)}
-              />
+              <input type="checkbox" checked={form.is_active} onChange={(e) => setField('is_active', e.target.checked)} />
               Actif
             </label>
 
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Logo partenaire
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setField('image', e.target.files?.[0] || null)}
-              />
+              <input type="file" accept="image/*" onChange={(e) => setField('image', e.target.files?.[0] || null)} />
             </label>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div className="admin-modal-actions">
               {form.existing_image ? (
-                <img
-                  src={form.existing_image}
-                  alt="Image actuelle"
-                  style={{ width: '90px', height: '58px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#fff' }}
-                />
+                <img src={form.existing_image} alt="Image actuelle" style={{ width: '90px', height: '58px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#fff' }} />
               ) : null}
               <button className="btn-primary" type="submit" disabled={saving}>
                 {saving ? 'Enregistrement...' : (editingId ? 'Mettre a jour' : 'Creer')}
               </button>
-              {editingId ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  height="24px"
-                  viewBox="0 -960 960 960"
-                  width="24px"
-                  fill="#000000"
-                  role="button"
-                  tabIndex={0}
-                  onMouseDown={(e) => e.preventDefault()}
-                  aria-label="Annuler"
-                  onClick={() => { if (!saving) resetForm(); }}
-                  onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !saving) resetForm(); }}
-                  style={{ cursor: saving ? 'default' : 'pointer', verticalAlign: 'middle', border: 'none', background: 'transparent', padding: 0, outline: 'none' }}
-                >
-                  <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
-                </svg>
-              ) : null}
+              <button className="btn-secondary" type="button" onClick={closeModal} disabled={saving}>
+                Annuler
+              </button>
             </div>
           </div>
         </form>
-      </div>
+      </Modal>
 
       <div className="card">
         <h2 style={{ marginBottom: '0.75rem' }}>Partenaires configures ({items.length})</h2>
@@ -353,30 +332,17 @@ export default function PartnersAdmin() {
             />
             <span>{selectedItemCount} selectionnee(s)</span>
           </label>
-          <div className="admin-bulk-actions">
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={clearItemSelection}
-              disabled={selectedItemCount === 0 || bulkDeleting}
-            >
-              Effacer la selection
-            </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={handleBulkDeleteItems}
-              disabled={isBulkActionDisabled}
-            >
-              Supprimer la selection
-            </button>
+            <div className="admin-bulk-actions">
+            <button type="button" className="admin-bulk-icon-btn" onClick={clearItemSelection} disabled={selectedItemCount === 0 || bulkDeleting} aria-label="Effacer la selection"><span className="material-symbols-outlined">close</span></button>
+            <button type="button" className="admin-bulk-icon-btn admin-bulk-icon-btn--danger" onClick={handleBulkDeleteItems} disabled={isBulkActionDisabled} aria-label="Supprimer la selection"><span className="material-symbols-outlined">delete</span></button>
           </div>
         </div>
         {(
+          <div className="admin-bulk-table-wrap">
           <table className="admin-bulk-table">
             <thead>
               <tr>
-                <th style={{ width: '40px' }}>
+                <th className="col-cb">
                   <input
                     type="checkbox"
                     ref={itemHeaderSelectionRef}
@@ -386,12 +352,12 @@ export default function PartnersAdmin() {
                     aria-label="Selectionner tous les partenaires"
                   />
                 </th>
-                <th>ID</th>
-                <th>Logo</th>
-                <th>Nom</th>
-                <th>Ordre</th>
-                <th>Statut</th>
-                <th>Actions</th>
+                <th className="col-id">ID</th>
+                <th className="col-img">Logo</th>
+                <th className="col-title">Nom</th>
+                <th className="col-order">Ordre</th>
+                <th className="col-status">Statut</th>
+                <th className="col-actions">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -400,7 +366,7 @@ export default function PartnersAdmin() {
                 const isChecked = selectedItemIds.has(id);
                 return (
                   <tr key={item.id}>
-                    <td>
+                    <td className="col-cb">
                       <input
                         type="checkbox"
                         checked={isChecked}
@@ -409,32 +375,33 @@ export default function PartnersAdmin() {
                         aria-label={`Selectionner le partenaire ${item?.name || id}`}
                       />
                     </td>
-                    <td>{item.id}</td>
-                  <td>
+                    <td className="col-id">{item.id}</td>
+                  <td className="col-img">
                     {imageSrc(item) ? (
                       <img
                         src={imageSrc(item)}
                         alt={item.name}
-                        style={{ width: '100px', height: '48px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#fff', padding: '4px' }}
+                        className="admin-table-thumb"
+                        style={{ objectFit: 'contain', background: '#fff', padding: '4px' }}
                       />
                     ) : '—'}
                   </td>
-                  <td>{item.name}</td>
-                  <td>{item.sort_order ?? 0}</td>
-                  <td>{item.is_active ? 'Actif' : 'Inactif'}</td>
-                  <td>
+                  <td className="col-title"><div className="admin-table-cell-title">{item.name}</div></td>
+                  <td className="col-order">{item.sort_order ?? 0}</td>
+                  <td className="col-status"><span className={`admin-badge ${item.is_active ? 'admin-badge-success' : 'admin-badge-gray'}`}>{item.is_active ? 'Actif' : 'Inactif'}</span></td>
+                  <td className="col-actions">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      height="24px"
+                      height="20px"
                       viewBox="0 -960 960 960"
-                      width="24px"
+                      width="20px"
                       fill="#274483"
                       role="button"
                       tabIndex={0}
                       aria-label={`Editer le partenaire ${item?.name || item.id}`}
                       onClick={() => startEdit(item)}
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') startEdit(item); }}
-                      style={{ cursor: 'pointer', verticalAlign: 'middle' }}
+                      className="admin-table-btn-edit"
                     >
                       <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
                     </svg>
@@ -445,6 +412,7 @@ export default function PartnersAdmin() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

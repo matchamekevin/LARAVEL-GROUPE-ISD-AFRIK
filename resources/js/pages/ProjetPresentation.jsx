@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import Loader from "../components/Loader";
 import usePageMeta from "../hooks/usePageMeta";
 import { getApiBase } from "../utils/apiBase";
 import "../styles/projets-new.css";
@@ -30,7 +31,7 @@ export default function ProjetPresentation() {
     projet?.long_desc || projet?.description || "Présentation de nos projets"
   );
 
-  if (loading) return null;
+  if (loading) return <Loader variant="skeleton" count={3} />;
 
   if (!projet) {
     return (

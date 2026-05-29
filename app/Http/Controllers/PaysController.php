@@ -38,14 +38,14 @@ class PaysController extends Controller
     /**
      * Affiche un pays spécifique avec ses produits et formations.
      *
-     * @param string $id
      * @return JsonResponse|PaysResource
      */
     public function show(string $id)
     {
-        $pays = $this->service->getPays($id);
+        $with = request()->query('with') ? explode(',', request()->query('with')) : ['produits', 'formations'];
+        $pays = $this->service->getPays($id, $with);
 
-        if (!$pays) {
+        if (! $pays) {
             return response()->json(['message' => 'Pays introuvable'], 404);
         }
 
@@ -55,7 +55,6 @@ class PaysController extends Controller
     /**
      * Crée un nouveau pays.
      *
-     * @param PaysRequest $request
      * @return JsonResponse
      */
     public function store(PaysRequest $request)
@@ -69,24 +68,20 @@ class PaysController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Erreur lors de la création du pays',
-                'details' => $e->getMessage()
+                'details' => $e->getMessage(),
             ], 400);
         }
     }
 
     /**
      * Met à jour un pays existant.
-     *
-     * @param PaysRequest $request
-     * @param string $id
-     * @return JsonResponse
      */
     public function update(PaysRequest $request, string $id): JsonResponse
     {
         try {
             $pays = $this->service->update($id, $request->validated());
 
-            if (!$pays) {
+            if (! $pays) {
                 return response()->json(['message' => 'Pays introuvable'], 404);
             }
 
@@ -94,20 +89,17 @@ class PaysController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Erreur lors de la mise à jour du pays',
-                'details' => $e->getMessage()
+                'details' => $e->getMessage(),
             ], 400);
         }
     }
 
     /**
      * Supprime un pays.
-     *
-     * @param string $id
-     * @return JsonResponse
      */
     public function destroy(string $id): JsonResponse
     {
-        if (!$this->service->delete($id)) {
+        if (! $this->service->delete($id)) {
             return response()->json(['message' => 'Pays introuvable'], 404);
         }
 

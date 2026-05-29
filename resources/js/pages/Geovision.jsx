@@ -156,7 +156,7 @@ export default function Geovision() {
   useLivePolling(
     () => backgroundLoadFamilies(),
     {
-      intervalMs: 4000,
+      intervalMs: 30000,
       enabled: true,
     }
   );

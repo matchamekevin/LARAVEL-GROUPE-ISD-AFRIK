@@ -2,6 +2,30 @@
    USERS ADMIN PAGE STYLES
    ======================================== */
 
+/* ── Toolbar: filter tabs + search ── */
+.admin-users-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-users-filter-group {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.admin-users-toolbar .admin-users-search {
+  margin-bottom: 0;
+  flex: 1;
+  max-width: 500px;
+}
+
 .admin-users-page {
   padding: var(--spacing-3xl);
   display: grid;

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getApiBase } from "./utils/apiBase";
+import { getCachedResponse, setCachedResponse, invalidateCache } from "./utils/responseCache";
 
 function normalizeApiBase(raw) {
   if (!raw) return '';
@@ -11,13 +12,22 @@ const computedBase = apiBase ? `${apiBase.replace(/\/$/, '')}/api` : '/api';
 
 const api = axios.create({
   baseURL: computedBase,
-  timeout: 30000, // 30s timeout in case of slow prod responses
+  timeout: 30000,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
 });
+
+const CACHEABLE_METHODS = ['get'];
+const SKIP_CACHE_PATTERNS = ['/auth/', '/profile', '/content-version', '/paiement'];
+
+function isCacheable(config) {
+  if (!CACHEABLE_METHODS.includes(config.method?.toLowerCase())) return false;
+  const url = config.url || '';
+  return !SKIP_CACHE_PATTERNS.some(p => url.includes(p));
+}
 
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
@@ -26,11 +36,29 @@ api.interceptors.request.use((config) => {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
+
+  if (config.method?.toLowerCase() === 'get' && isCacheable(config)) {
+    const cached = getCachedResponse(config.url, config.params);
+    if (cached) {
+      config.__cached = true;
+    }
+  }
+
   return config;
 });
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    if (res.config?.method?.toLowerCase() === 'get' && isCacheable(res.config) && !res.config.__cacheBypass) {
+      setCachedResponse(res.config.url, res.config.params, res.data);
+    }
+
+    if (res.config?.method?.toLowerCase() !== 'get') {
+      invalidateCache();
+    }
+
+    return res;
+  },
   (err) => {
     const isCancelled = axios.isCancel(err);
     const isAborted = err.code === 'ECONNABORTED';
@@ -52,18 +80,15 @@ api.interceptors.response.use(
       // ignore logging errors
     }
 
-    // simple retry/backoff for network timeouts or missing response
     const config = err.config || {};
     if (!config || isCancelled) return Promise.reject(err);
 
-    // Only retry on true timeouts or network failures, not on every aborted request
-    // (ECONNABORTED with timeout message is a timeout, otherwise it might be a manual abort)
     const isTimeout = isAborted && err.message?.toLowerCase().includes('timeout');
     const shouldRetry = (isTimeout || isNetworkError) && (config.__retryCount || 0) < 2;
 
     if (shouldRetry) {
       config.__retryCount = (config.__retryCount || 0) + 1;
-      const delay = 1000 * config.__retryCount; // 1s, 2s
+      const delay = 1000 * config.__retryCount;
       console.warn(`Retrying request (${config.__retryCount}/2) in ${delay}ms...`, config.url);
       return new Promise((resolve) => setTimeout(resolve, delay)).then(() => api(config));
     }

@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CommentaireRequest;
 use App\Http\Resources\CommentaireResource;
-use App\Services\FormMailDispatcher;
 use App\Services\CommentaireService;
+use App\Services\FormMailDispatcher;
 use App\Services\FormMailRouteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,10 +22,12 @@ class CommentaireController extends Controller
         private readonly FormMailDispatcher $formMailDispatcher
     ) {}
 
-    /** GET /api/commentaires : liste des commentaires */
-    public function index()
+    /** GET /api/commentaires : liste des commentaires paginée */
+    public function index(Request $request)
     {
-        $commentaires = $this->commentaireService->all();
+        $perPage = max(1, min(50, (int) $request->query('per_page', 20)));
+        $commentaires = $this->commentaireService->all($perPage);
+
         return CommentaireResource::collection($commentaires);
     }
 
@@ -49,16 +51,16 @@ class CommentaireController extends Controller
                     lines: [
                         'Un nouvel avis produit a ete publie.',
                         '',
-                        'Produit ID: ' . (string) ($payload['commentable_id'] ?? '-'),
-                        'Utilisateur ID: ' . (string) ($payload['id_utilisateur'] ?? '-'),
-                        'Note: ' . (string) ($payload['note'] ?? 'Non notee'),
+                        'Produit ID: '.(string) ($payload['commentable_id'] ?? '-'),
+                        'Utilisateur ID: '.(string) ($payload['id_utilisateur'] ?? '-'),
+                        'Note: '.(string) ($payload['note'] ?? 'Non notee'),
                         'Contenu:',
                         (string) ($payload['contenu'] ?? '-'),
                         '',
-                        'Date: ' . now()->format('d/m/Y H:i:s'),
+                        'Date: '.now()->format('d/m/Y H:i:s'),
                     ],
                     replyToEmail: $user?->email ?? null,
-                    replyToName: trim((string) (($user?->prenom ?? '') . ' ' . ($user?->nom ?? '')))
+                    replyToName: trim((string) (($user?->prenom ?? '').' '.($user?->nom ?? '')))
                 );
             } catch (\Throwable $exception) {
                 Log::error('Echec envoi email avis produit', [
@@ -76,7 +78,7 @@ class CommentaireController extends Controller
     {
         $commentaire = $this->commentaireService->find($id);
 
-        if (!$commentaire) {
+        if (! $commentaire) {
             return response()->json(['message' => 'Commentaire introuvable'], 404);
         }
 
@@ -88,7 +90,7 @@ class CommentaireController extends Controller
     {
         $commentaire = $this->commentaireService->update($id, $request->validated());
 
-        if (!$commentaire) {
+        if (! $commentaire) {
             return response()->json(['message' => 'Commentaire introuvable'], 404);
         }
 
@@ -100,7 +102,7 @@ class CommentaireController extends Controller
     {
         $deleted = $this->commentaireService->delete($id);
 
-        if (!$deleted) {
+        if (! $deleted) {
             return response()->json(['message' => 'Commentaire introuvable'], 404);
         }
 

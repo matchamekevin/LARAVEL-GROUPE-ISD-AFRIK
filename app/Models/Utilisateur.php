@@ -2,30 +2,33 @@
 
 namespace App\Models;
 
+use App\Notifications\CustomResetPasswordNotification;
 use App\Traits\HasUuid;
+use Carbon\Carbon;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
-use App\Notifications\CustomResetPasswordNotification;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
 
-class Utilisateur extends Authenticatable implements FilamentUser
+class Utilisateur extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, HasUuid;
+    use HasApiTokens, HasFactory, HasUuid, Notifiable, SoftDeletes;
 
     protected $table = 'utilisateurs';
+
     protected $primaryKey = 'id_utilisateur';
 
     protected $fillable = [
+        'name',
         'nom',
         'prenom',
         'email',
         'telephone',
+        'password',
         'mot_de_passe',
         'is_admin',
         'statut',
@@ -41,6 +44,8 @@ class Utilisateur extends Authenticatable implements FilamentUser
         'avatar',
         'avatar_data',
         'avatar_mime',
+        'email_verified_at',
+        'date_creation',
     ];
 
     protected $appends = ['avatar_url'];
@@ -48,15 +53,16 @@ class Utilisateur extends Authenticatable implements FilamentUser
     public function getAvatarUrlAttribute(): ?string
     {
         if ($this->avatar_data) {
-            return url('/api/auth/' . $this->id_utilisateur . '/avatar');
+            return '/api/auth/'.$this->id_utilisateur.'/avatar';
         }
-        if (!$this->avatar) {
+        if (! $this->avatar) {
             return null;
         }
         if (str_starts_with($this->avatar, 'http://') || str_starts_with($this->avatar, 'https://')) {
             return $this->avatar;
         }
-        return url('/api/auth/' . $this->id_utilisateur . '/avatar');
+
+        return '/api/auth/'.$this->id_utilisateur.'/avatar';
     }
 
     protected $hidden = [
@@ -69,15 +75,15 @@ class Utilisateur extends Authenticatable implements FilamentUser
     ];
 
     protected $casts = [
-        'email_verified_at'     => 'datetime',
-        'is_admin'              => 'boolean',
-        'statut'                => 'string',
-        'can_access_client'     => 'boolean',
-        'can_access_admin'      => 'boolean',
-        'two_factor_enabled'    => 'boolean',
+        'email_verified_at' => 'datetime',
+        'is_admin' => 'boolean',
+        'statut' => 'string',
+        'can_access_client' => 'boolean',
+        'can_access_admin' => 'boolean',
+        'two_factor_enabled' => 'boolean',
         'two_factor_expires_at' => 'datetime',
-        'last_login'            => 'datetime',
-        'mot_de_passe'          => 'hashed',
+        'last_login' => 'datetime',
+        'mot_de_passe' => 'hashed',
     ];
 
     /** Authentification : mot de passe personnalisé */
@@ -90,6 +96,35 @@ class Utilisateur extends Authenticatable implements FilamentUser
     public function sendPasswordResetNotification($token, $url = null): void
     {
         $this->notify(new CustomResetPasswordNotification($token, $url));
+    }
+
+    /** Alias Breeze pour le mot de passe */
+    public function setPasswordAttribute($value): void
+    {
+        $this->attributes['mot_de_passe'] = $value;
+    }
+
+    public function getPasswordAttribute(): ?string
+    {
+        return $this->attributes['mot_de_passe'] ?? null;
+    }
+
+    /** Alias Breeze pour le nom */
+    public function setNameAttribute($value): void
+    {
+        $parts = preg_split('/\s+/', trim((string) $value), 2);
+        $this->attributes['prenom'] = $parts[0] ?? '';
+        $this->attributes['nom'] = $parts[1] ?? ($parts[0] ?? '');
+    }
+
+    public function getNameAttribute(): string
+    {
+        return $this->getFilamentName();
+    }
+
+    public function getIdAttribute(): ?string
+    {
+        return $this->attributes['id_utilisateur'] ?? null;
     }
 
     /** Gestion du 2FA */
@@ -131,16 +166,12 @@ class Utilisateur extends Authenticatable implements FilamentUser
     /** Nom affiché dans Filament */
     public function getFilamentName(): string
     {
-        $fullName = trim(($this->prenom ?? '') . ' ' . ($this->nom ?? ''));
-        return !empty($fullName) ? $fullName : ($this->email ?? 'Utilisateur #' . $this->id_utilisateur);
+        $fullName = trim(($this->prenom ?? '').' '.($this->nom ?? ''));
+
+        return ! empty($fullName) ? $fullName : ($this->email ?? 'Utilisateur #'.$this->id_utilisateur);
     }
 
     public function getUserName(): string
-    {
-        return $this->getFilamentName();
-    }
-
-    public function getNameAttribute(): string
     {
         return $this->getFilamentName();
     }
@@ -149,7 +180,7 @@ class Utilisateur extends Authenticatable implements FilamentUser
     public function formations()
     {
         return $this->belongsToMany(Formation::class, 'formation_user', 'id_utilisateur', 'id_formation')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 
     public function produits()

@@ -214,7 +214,7 @@
     line-height: 1.6;
   }
 
-  .formations-container .catalogue-download-btn {
+  .catalogue-download-btn {
     display: inline-flex;
     align-items: center;
     gap: 12px;
@@ -231,17 +231,17 @@
     box-shadow: 0 8px 25px rgba(251, 156, 8, 0.4);
   }
 
-  .formations-container .catalogue-download-btn:hover {
+  .catalogue-download-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 35px rgba(251, 156, 8, 0.6);
   }
 
-  .formations-container .catalogue-download-icon {
+  .catalogue-download-icon {
     width: 22px;
     height: 22px;
   }
 
-  .formations-container .catalogue-download-icon svg {
+  .catalogue-download-icon svg {
     width: 100%;
     height: 100%;
   }

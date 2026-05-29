@@ -8,6 +8,7 @@ import {
 import { toastError, toastSuccess } from '../../utils/toast';
 import { notifyMutation } from '../../utils/mutationBus';
 import DeleteIconButton from '../components/DeleteIconButton';
+import Modal from '../components/Modal';
 import '../styles/admin-shared.css';
 import '../styles/marketing.css';
 
@@ -31,6 +32,7 @@ export default function MarketingAdmin() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
+  const [showModal, setShowModal] = useState(false);
 
 
   function cardImageSrc(card) {
@@ -84,6 +86,12 @@ export default function MarketingAdmin() {
       image: null,
       existing_image: cardImageSrc(card),
     });
+    setShowModal(true);
+  }
+
+  function closeModal() {
+    resetForm();
+    setShowModal(false);
   }
 
   async function handleSubmit(e) {
@@ -119,7 +127,7 @@ export default function MarketingAdmin() {
       } else {
         await createHomeMarketingCard(payload);
       }
-      resetForm();
+      closeModal();
       await loadData();
       toastSuccess(editing ? 'Carte marketing mise a jour.' : 'Carte marketing creee.');
       notifyMutation();
@@ -150,15 +158,145 @@ export default function MarketingAdmin() {
     };
   }, [cards]);
 
-  return (
-    <div style={{ padding: '2rem' }}>
-      <h1 style={{ fontSize: '2rem', color: '#172243', marginBottom: '0.6rem' }}>Marketing Accueil</h1>
-      <p style={{ color: '#4b5563', marginTop: 0, marginBottom: '1.4rem' }}>
-        Gérez les cartes de <strong>Nos Offres</strong> et <strong>Produits phares</strong> affichées sur la page d'accueil.
-      </p>
+  function renderTable(items, columns) {
+    if (items.length === 0) {
+      return <div className="admin-marketing-empty" style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>Aucune carte dans cette section.</div>;
+    }
 
-      <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h2 style={{ marginBottom: '0.75rem' }}>{editingId ? 'Modifier une carte' : 'Nouvelle carte'}</h2>
+    return (
+      <div className="admin-marketing-table-wrap">
+        <table className="admin-marketing-table">
+          <thead>
+            <tr>
+              {columns.map((col) => (
+                <th key={col.key}>{col.label}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item) => (
+              <tr key={item.id}>
+                {columns.map((col) => (
+                  <td key={col.key}>
+                    {col.render ? col.render(item) : item[col.key] ?? '—'}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  const offerColumns = [
+    { key: 'id', label: 'ID', render: (item) => String(item.id).substring(0, 8) + '…' },
+    {
+      key: 'image', label: 'Image',
+      render: (item) => {
+        const src = cardImageSrc(item);
+        return src ? <img src={src} alt={item.title} /> : <span className="admin-marketing-no-image">—</span>;
+      },
+    },
+    { key: 'title', label: 'Titre' },
+    { key: 'meta_text', label: 'Meta', render: (item) => item.meta_text || '—' },
+    { key: 'sort_order', label: 'Ordre', render: (item) => item.sort_order ?? 0 },
+    {
+      key: 'statut', label: 'Statut',
+      render: (item) => (
+        <span className={`admin-marketing-status ${item.is_active ? 'is-active' : 'is-inactive'}`}>
+          {item.is_active ? 'Active' : 'Inactive'}
+        </span>
+      ),
+    },
+    {
+      key: 'actions', label: 'Actions',
+      render: (item) => (
+        <div className="admin-marketing-actions">
+          <button
+            type="button"
+            className="admin-bulk-icon-btn"
+            onClick={() => startEdit(item)}
+            aria-label={`Editer la carte ${item?.title || item.id}`}
+          >
+            <span className="material-symbols-outlined">edit</span>
+          </button>
+          <DeleteIconButton
+            onClick={() => handleDelete(item.id)}
+            className="admin-bulk-icon-btn admin-bulk-icon-btn--danger"
+            style={{ width: 32, height: 32 }}
+            title="Supprimer"
+            ariaLabel={`Supprimer la carte ${item?.title || item.id}`}
+          />
+        </div>
+      ),
+    },
+  ];
+
+  const featuredColumns = [
+    { key: 'id', label: 'ID', render: (item) => String(item.id).substring(0, 8) + '…' },
+    {
+      key: 'image', label: 'Image',
+      render: (item) => {
+        const src = cardImageSrc(item);
+        return src ? <img src={src} alt={item.title} /> : <span className="admin-marketing-no-image">—</span>;
+      },
+    },
+    { key: 'title', label: 'Titre' },
+    {
+      key: 'badge', label: 'Badge',
+      render: (item) => item.badge_text ? <span className="admin-marketing-badge">{item.badge_text}</span> : '—',
+    },
+    { key: 'meta_text', label: 'Prix/Meta', render: (item) => item.meta_text || '—' },
+    { key: 'sort_order', label: 'Ordre', render: (item) => item.sort_order ?? 0 },
+    {
+      key: 'statut', label: 'Statut',
+      render: (item) => (
+        <span className={`admin-marketing-status ${item.is_active ? 'is-active' : 'is-inactive'}`}>
+          {item.is_active ? 'Active' : 'Inactive'}
+        </span>
+      ),
+    },
+    {
+      key: 'actions', label: 'Actions',
+      render: (item) => (
+        <div className="admin-marketing-actions">
+          <button
+            type="button"
+            className="admin-bulk-icon-btn"
+            onClick={() => startEdit(item)}
+            aria-label={`Editer la carte ${item?.title || item.id}`}
+          >
+            <span className="material-symbols-outlined">edit</span>
+          </button>
+          <DeleteIconButton
+            onClick={() => handleDelete(item.id)}
+            className="admin-bulk-icon-btn admin-bulk-icon-btn--danger"
+            style={{ width: 32, height: 32 }}
+            title="Supprimer"
+            ariaLabel={`Supprimer la carte ${item?.title || item.id}`}
+          />
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="admin-marketing-page">
+      <div className="admin-marketing-header">
+        <div>
+          <h1>Marketing Accueil</h1>
+          <p>
+            Gérez les cartes de <strong>Nos Offres</strong> et <strong>Produits phares</strong> affichées sur la page d'accueil.
+          </p>
+        </div>
+        <button className="admin-open-modal-btn" onClick={() => { resetForm(); setShowModal(true); }}>
+          <span className="material-symbols-outlined">add</span>
+          Nouvelle carte
+        </button>
+      </div>
+
+      <Modal isOpen={showModal} onClose={closeModal} title={editingId ? 'Modifier une carte' : 'Nouvelle carte'} size="lg">
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '0.8rem' }}>
           <div style={{ display: 'grid', gap: '0.8rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
             <label style={{ display: 'grid', gap: '0.35rem' }}>
@@ -170,238 +308,72 @@ export default function MarketingAdmin() {
             </label>
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Titre
-              <input
-                type="text"
-                placeholder="Titre"
-                value={form.title}
-                onChange={(e) => setField('title', e.target.value)}
-                required
-              />
+              <input type="text" placeholder="Titre" value={form.title} onChange={(e) => setField('title', e.target.value)} required />
             </label>
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Prix / meta
-              <input
-                type="text"
-                placeholder={form.section === 'offer' ? 'Inscription ouverte / Prix' : 'Sur mesure / Prix'}
-                value={form.meta_text}
-                onChange={(e) => setField('meta_text', e.target.value)}
-              />
+              <input type="text" placeholder={form.section === 'offer' ? 'Inscription ouverte / Prix' : 'Sur mesure / Prix'} value={form.meta_text} onChange={(e) => setField('meta_text', e.target.value)} />
             </label>
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Badge
-              <input
-                type="text"
-                placeholder={form.section === 'featured_product' ? 'Badge (Logiciels, Drone...)' : 'Badge optionnel'}
-                value={form.badge_text}
-                onChange={(e) => setField('badge_text', e.target.value)}
-              />
+              <input type="text" placeholder={form.section === 'featured_product' ? 'Badge (Logiciels, Drone...)' : 'Badge optionnel'} value={form.badge_text} onChange={(e) => setField('badge_text', e.target.value)} />
             </label>
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Texte bouton
-              <input
-                type="text"
-                placeholder="Texte bouton (ex: Je profite, En savoir plus)"
-                value={form.cta_label}
-                onChange={(e) => setField('cta_label', e.target.value)}
-              />
+              <input type="text" placeholder="Texte bouton (ex: Je profite, En savoir plus)" value={form.cta_label} onChange={(e) => setField('cta_label', e.target.value)} />
             </label>
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               URL de redirection
-              <input
-                type="text"
-                placeholder="URL de redirection (ex: /formations ou https://...)"
-                value={form.target_url}
-                onChange={(e) => setField('target_url', e.target.value)}
-              />
+              <input type="text" placeholder="URL de redirection (ex: /formations ou https://...)" value={form.target_url} onChange={(e) => setField('target_url', e.target.value)} />
             </label>
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Ordre d'affichage
-              <input
-                type="number"
-                min={0}
-                placeholder="Ordre d'affichage"
-                value={form.sort_order}
-                onChange={(e) => setField('sort_order', e.target.value)}
-              />
+              <input type="number" min={0} placeholder="Ordre d'affichage" value={form.sort_order} onChange={(e) => setField('sort_order', e.target.value)} />
             </label>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', alignSelf: 'end' }}>
-              <input
-                type="checkbox"
-                checked={form.is_active}
-                onChange={(e) => setField('is_active', e.target.checked)}
-              />
+              <input type="checkbox" checked={form.is_active} onChange={(e) => setField('is_active', e.target.checked)} />
               Active
             </label>
           </div>
 
           <label style={{ display: 'grid', gap: '0.35rem' }}>
             Description
-            <textarea
-              rows={3}
-              placeholder="Description"
-              value={form.description}
-              onChange={(e) => setField('description', e.target.value)}
-            />
+            <textarea rows={3} placeholder="Description" value={form.description} onChange={(e) => setField('description', e.target.value)} />
           </label>
 
           <div style={{ display: 'grid', gap: '0.45rem' }}>
             <label style={{ display: 'grid', gap: '0.35rem' }}>
               Image
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setField('image', e.target.files?.[0] || null)}
-              />
+              <input type="file" accept="image/*" onChange={(e) => setField('image', e.target.files?.[0] || null)} />
             </label>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div className="admin-modal-actions">
             {form.existing_image ? (
-              <img
-                src={form.existing_image}
-                alt="Image actuelle"
-                style={{ width: '72px', height: '52px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #e5e7eb' }}
-              />
+              <img src={form.existing_image} alt="Image actuelle" style={{ width: '72px', height: '52px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #e5e7eb' }} />
             ) : null}
             <button className="btn-primary" type="submit" disabled={saving}>
               {saving ? 'Enregistrement...' : (editingId ? 'Mettre à jour' : 'Créer')}
             </button>
-            {editingId ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                height="24px"
-                viewBox="0 -960 960 960"
-                width="24px"
-                fill="#000000"
-                role="button"
-                tabIndex={0}
-                onMouseDown={(e) => e.preventDefault()}
-                aria-label="Annuler"
-                onClick={() => { if (!saving) resetForm(); }}
-                onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !saving) resetForm(); }}
-                style={{ cursor: saving ? 'default' : 'pointer', verticalAlign: 'middle', border: 'none', background: 'transparent', padding: 0, outline: 'none' }}
-              >
-                <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
-              </svg>
-            ) : null}
+            <button className="btn-secondary" type="button" onClick={closeModal} disabled={saving}>
+              Annuler
+            </button>
           </div>
         </form>
-      </div>
+      </Modal>
 
-      <div className="card">
-        <h2 style={{ marginBottom: '0.75rem' }}>Cartes configurées</h2>
+      <div className="admin-marketing-card">
+        <h2 className="admin-marketing-card-title">Cartes configurées</h2>
         {(
-          <div style={{ display: 'grid', gap: '1rem' }}>
+          <div className="admin-marketing-sections">
             <div>
-              <h3 style={{ marginBottom: '0.45rem', color: '#172243' }}>Nos Offres ({grouped.offer.length})</h3>
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Image</th>
-                    <th>Titre</th>
-                    <th>Meta</th>
-                    <th>Ordre</th>
-                    <th>Statut</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {grouped.offer.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.id}</td>
-                      <td>
-                        {cardImageSrc(item) ? (
-                          <img
-                            src={cardImageSrc(item)}
-                            alt={item.title}
-                            style={{ width: '64px', height: '44px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #e5e7eb' }}
-                          />
-                        ) : '—'}
-                      </td>
-                      <td>{item.title}</td>
-                      <td>{item.meta_text || '—'}</td>
-                      <td>{item.sort_order ?? 0}</td>
-                      <td>{item.is_active ? 'Active' : 'Inactive'}</td>
-                      <td>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          height="24px"
-                          viewBox="0 -960 960 960"
-                          width="24px"
-                          fill="#274483"
-                          role="button"
-                          tabIndex={0}
-                          aria-label={`Editer la carte ${item?.title || item.id}`}
-                          onClick={() => startEdit(item)}
-                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') startEdit(item); }}
-                          style={{ cursor: 'pointer', verticalAlign: 'middle' }}
-                        >
-                          <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
-                        </svg>
-                        <DeleteIconButton onClick={() => handleDelete(item.id)} className="btn-secondary" title="Supprimer" ariaLabel={`Supprimer la carte ${item?.title || item.id}`} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <h3 className="admin-marketing-section-title">Nos Offres ({grouped.offer.length})</h3>
+              {renderTable(grouped.offer, offerColumns)}
             </div>
 
             <div>
-              <h3 style={{ marginBottom: '0.45rem', color: '#172243' }}>Produits phares ({grouped.featured_product.length})</h3>
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Image</th>
-                    <th>Titre</th>
-                    <th>Badge</th>
-                    <th>Prix/Meta</th>
-                    <th>Ordre</th>
-                    <th>Statut</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {grouped.featured_product.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.id}</td>
-                      <td>
-                        {cardImageSrc(item) ? (
-                          <img
-                            src={cardImageSrc(item)}
-                            alt={item.title}
-                            style={{ width: '64px', height: '44px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #e5e7eb' }}
-                          />
-                        ) : '—'}
-                      </td>
-                      <td>{item.title}</td>
-                      <td>{item.badge_text || '—'}</td>
-                      <td>{item.meta_text || '—'}</td>
-                      <td>{item.sort_order ?? 0}</td>
-                      <td>{item.is_active ? 'Active' : 'Inactive'}</td>
-                      <td>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          height="24px"
-                          viewBox="0 -960 960 960"
-                          width="24px"
-                          fill="#274483"
-                          role="button"
-                          tabIndex={0}
-                          aria-label={`Editer la carte ${item?.title || item.id}`}
-                          onClick={() => startEdit(item)}
-                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') startEdit(item); }}
-                          style={{ cursor: 'pointer', verticalAlign: 'middle' }}
-                        >
-                          <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
-                        </svg>
-                        <DeleteIconButton onClick={() => handleDelete(item.id)} className="btn-secondary" title="Supprimer" ariaLabel={`Supprimer la carte ${item?.title || item.id}`} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <h3 className="admin-marketing-section-title">Produits phares ({grouped.featured_product.length})</h3>
+              {renderTable(grouped.featured_product, featuredColumns)}
             </div>
           </div>
         )}

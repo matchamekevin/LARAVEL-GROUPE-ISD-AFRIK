@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 class HomeMarketingCard extends Model
 {
     use HasUuid;
+
     public const SECTION_LABELS = [
         'offer' => 'Nos Offres',
         'featured_product' => 'Produits phares',
@@ -48,10 +49,10 @@ class HomeMarketingCard extends Model
     public function getImageUrlAttribute(): ?string
     {
         if ($this->image_data) {
-            return url('/api/home-marketing-cards/' . $this->id . '/image');
+            return '/api/home-marketing-cards/'.$this->id.'/image';
         }
 
-        if (!$this->image_path) {
+        if (! $this->image_path) {
             return null;
         }
 
@@ -63,7 +64,7 @@ class HomeMarketingCard extends Model
             return $this->image_path;
         }
 
-        if (!Storage::disk('public')->exists($this->image_path)) {
+        if (! Storage::disk('public')->exists($this->image_path)) {
             return null;
         }
 

@@ -111,67 +111,80 @@ export default function Ingenierie() {
 </section>
 
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-                {!isLoading && (
-                    <div className="ingenierie-grid"> 
-                        {domaines.length ? domaines.map((domaine) => (
-                            <article 
-                                key={domaine.slug} 
-                                id={`domaine-${domaine.slug}`}
-                                className="ingenierie-card"
-                            >
-                                {domaine.image && !imageHidden[domaine.slug] ? (
-                                    <img
-                                        src={domaine.image}
-                                        alt={domaine.title}
-                                        loading="lazy"
-                                        decoding="async"
-                                        className="ingenierie-card-image"
-                                        data-original={domaine.image}
-                                        style={{
-                                            opacity: imageLoaded[domaine.slug] ? 1 : 0,
-                                            transition: "opacity 0.4s ease-in-out"
-                                        }}
-                                        onLoad={() => handleImageLoad(domaine.slug)}
-                                        onError={(e) => handleImageError(e, domaine.slug)}
-                                    />
-                                ) : (
-                                    <div className="ingenierie-card-image ingenierie-card-image--empty" aria-hidden="true"></div>
-                                )}
-                                <div className="ingenierie-card-overlay"></div>
+                <div className="ingenierie-grid"> 
+                    {isLoading ? (
+                        Array.from({ length: 4 }).map((_, i) => (
+                            <article key={i} className="ingenierie-card">
+                                <div className="ingenierie-card-image ingenierie-skeleton-img" />
+                                <div className="ingenierie-card-overlay" />
                                 <div className="ingenierie-card-content">
-                                    <h3 className="ingenierie-card-title">{domaine.title}</h3>
-                                    <p className="ingenierie-card-desc">{domaine.description}</p>
-
-                                    {domaine.services?.length > 0 && (
-                                      <div className="ingenierie-card-tags">
-                                        {domaine.services.slice(0, 3).map((svc) => (
-                                          <span key={svc} className="ingenierie-tag">{svc}</span>
-                                        ))}
-                                        {domaine.services.length > 3 && (
-                                          <span className="ingenierie-tag ingenierie-tag-more">+{domaine.services.length - 3}</span>
-                                        )}
-                                      </div>
-                                    )}
-
+                                    <div className="ingenierie-skeleton-line ingenierie-skeleton-title" />
+                                    <div className="ingenierie-skeleton-line ingenierie-skeleton-desc" />
+                                    <div className="ingenierie-skeleton-line ingenierie-skeleton-desc-short" />
                                     <div className="ingenierie-card-actions">
-                                        <Link 
-                                            to={`/prestation/${domaine.slug}`}
-                                            className="ingenierie-btn"
-                                        >
-                                            {domaine.services?.length || domaine.technologies?.length || domaine.deliverables?.length
-                                              ? "Voir les prestations →"
-                                              : "Prestations →"}
-                                        </Link>
+                                        <div className="ingenierie-skeleton-btn" />
                                     </div>
                                 </div>
-                            </article> 
-                        )) : (
-                            <p className="ingenierie-card-desc">
-                                {domaines.length ? "Aucun domaine ne correspond à votre sélection." : "Aucun domaine disponible pour le moment."}
-                            </p>
-                        )}
-                    </div>
-                )}
+                            </article>
+                        ))
+                    ) : domaines.length ? domaines.map((domaine) => (
+                        <article 
+                            key={domaine.slug} 
+                            id={`domaine-${domaine.slug}`}
+                            className="ingenierie-card"
+                        >
+                            {domaine.image && !imageHidden[domaine.slug] ? (
+                                <img
+                                    src={domaine.image}
+                                    alt={domaine.title}
+                                    loading="lazy"
+                                    decoding="async"
+                                    className="ingenierie-card-image"
+                                    data-original={domaine.image}
+                                    style={{
+                                        opacity: imageLoaded[domaine.slug] ? 1 : 0,
+                                        transition: "opacity 0.4s ease-in-out"
+                                    }}
+                                    onLoad={() => handleImageLoad(domaine.slug)}
+                                    onError={(e) => handleImageError(e, domaine.slug)}
+                                />
+                            ) : (
+                                <div className="ingenierie-card-image ingenierie-card-image--empty" aria-hidden="true"></div>
+                            )}
+                            <div className="ingenierie-card-overlay"></div>
+                            <div className="ingenierie-card-content">
+                                <h3 className="ingenierie-card-title">{domaine.title}</h3>
+                                <p className="ingenierie-card-desc">{domaine.description}</p>
+
+                                {domaine.services?.length > 0 && (
+                                  <div className="ingenierie-card-tags">
+                                    {domaine.services.slice(0, 3).map((svc) => (
+                                      <span key={svc} className="ingenierie-tag">{svc}</span>
+                                    ))}
+                                    {domaine.services.length > 3 && (
+                                      <span className="ingenierie-tag ingenierie-tag-more">+{domaine.services.length - 3}</span>
+                                    )}
+                                  </div>
+                                )}
+
+                                <div className="ingenierie-card-actions">
+                                    <Link 
+                                        to={`/prestation/${domaine.slug}`}
+                                        className="ingenierie-btn"
+                                    >
+                                        {domaine.services?.length || domaine.technologies?.length || domaine.deliverables?.length
+                                          ? "Voir les prestations →"
+                                          : "Prestations →"}
+                                    </Link>
+                                </div>
+                            </div>
+                        </article> 
+                    )) : (
+                        <p className="ingenierie-card-desc">
+                            {domaines.length ? "Aucun domaine ne correspond à votre sélection." : "Aucun domaine disponible pour le moment."}
+                        </p>
+                    )}
+                </div>
             </section>
             <section className="ingenierie-cta">
                 <h2 className="ingenierie-cta-title">Projet à réaliser ?</h2>

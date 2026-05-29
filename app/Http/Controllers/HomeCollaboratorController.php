@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\HomeCollaborator;
-use Illuminate\Http\Request;
 use App\Services\Base64ImageService;
+use Illuminate\Http\Request;
 
 class HomeCollaboratorController extends Controller
 {
@@ -44,6 +44,7 @@ class HomeCollaboratorController extends Controller
 
         $rows = collect(self::DEFAULT_COLLABORATORS)->map(function (array $item) {
             return [
+                'id' => (string) \Illuminate\Support\Str::uuid(),
                 'name' => $item['name'],
                 'image_path' => $item['image_path'],
                 'object_position' => $item['object_position'] ?? null,

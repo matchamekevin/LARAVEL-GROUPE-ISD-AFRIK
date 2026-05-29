@@ -23,6 +23,7 @@ class Pays extends Model
         'code_pays',
         'devise_locale',
         'langue_principale',
+        'alpha2',
     ];
 
     /**

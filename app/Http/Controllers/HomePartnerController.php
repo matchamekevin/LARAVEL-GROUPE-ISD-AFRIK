@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\HomePartner;
-use Illuminate\Http\Request;
 use App\Services\Base64ImageService;
+use Illuminate\Http\Request;
 
 class HomePartnerController extends Controller
 {
@@ -79,6 +79,7 @@ class HomePartnerController extends Controller
 
         $rows = collect(self::DEFAULT_PARTNERS)->map(function (array $item) {
             return [
+                'id' => (string) \Illuminate\Support\Str::uuid(),
                 'name' => $item['name'],
                 'image_path' => $item['image_path'],
                 'is_active' => $item['is_active'] ?? true,

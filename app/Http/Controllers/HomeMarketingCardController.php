@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\HomeMarketingCard;
-use Illuminate\Http\Request;
 use App\Services\Base64ImageService;
+use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class HomeMarketingCardController extends Controller
@@ -221,6 +221,7 @@ class HomeMarketingCardController extends Controller
 
             HomeMarketingCard::insert($cards->map(function (array $card) {
                 return [
+                    'id' => (string) \Illuminate\Support\Str::uuid(),
                     ...$card,
                     'created_at' => now(),
                     'updated_at' => now(),

@@ -5,18 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\AdminLog;
 use App\Models\AuditLog;
 use App\Models\Commande;
-use App\Models\ContactMessage;
-use App\Models\DevisPrestation;
-use App\Models\Formation;
-use App\Models\HomeCollaborator;
 use App\Models\HomeMarketingCard;
-use App\Models\HomePartner;
-use App\Models\HomeTestimonial;
 use App\Models\Paiement;
 use App\Models\Produit;
-use App\Models\RevendeurDemande;
 use App\Models\Utilisateur;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class AdminActivityController extends Controller
@@ -222,14 +216,6 @@ class AdminActivityController extends Controller
         $recentActivity = $this->buildRecentActivities(8, true);
         $paidExpression = $this->paidStatusSql();
 
-        $paidPaymentsQuery = Paiement::query()->whereRaw("{$paidExpression} IN ('reussi', 'approved', 'payee')");
-
-        $productsCount = Produit::query()
-            ->whereHas('categorie', function ($query) {
-                $query->where('segment', 'general');
-            })
-            ->count();
-
         $topCustomers = Utilisateur::query()
             ->select('utilisateurs.id_utilisateur', 'utilisateurs.prenom', 'utilisateurs.nom', 'utilisateurs.email')
             ->join('commandes', 'utilisateurs.id_utilisateur', '=', 'commandes.id_utilisateur')
@@ -240,23 +226,50 @@ class AdminActivityController extends Controller
             ->limit(5)
             ->get();
 
+        $stats = DB::select("SELECT
+            (SELECT COUNT(*) FROM commandes) AS orders,
+            (SELECT COUNT(*) FROM paiements) AS payments,
+            (SELECT COUNT(*) FROM commandes WHERE LOWER(statut) LIKE '%attente%') AS pending_orders,
+            (SELECT COUNT(*) FROM formations) AS formations,
+            (SELECT COUNT(*) FROM contact_messages) AS messages,
+            (SELECT COUNT(*) FROM revendeur_demandes) AS revendeur_demandes,
+            (SELECT COUNT(*) FROM devis_prestations) AS devis_prestations,
+            (SELECT COUNT(*) FROM home_testimonials) AS testimonials,
+            (SELECT COUNT(*) FROM home_collaborators) AS collaborators,
+            (SELECT COUNT(*) FROM home_partners) AS partners,
+            (SELECT COUNT(*) FROM paiements WHERE {$paidExpression} IN ('reussi', 'approved', 'payee')) AS paid_payments,
+            (SELECT COALESCE(SUM(montant), 0) FROM paiements WHERE {$paidExpression} IN ('reussi', 'approved', 'payee')) AS revenue
+        ")[0] ?? (object) [];
+
+        $productsCount = Produit::query()
+            ->whereHas('categorie', function ($query) {
+                $query->where('segment', 'general');
+            })
+            ->count();
+
+        $homeMarketingCards = HomeMarketingCard::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("SUM(CASE WHEN section IN ('offer', 'featured_product') THEN 1 ELSE 0 END) as marketing_cards")
+            ->selectRaw("SUM(CASE WHEN section IN ('home_promotion', 'promotion_page') THEN 1 ELSE 0 END) as home_promotions")
+            ->first();
+
         return response()->json([
             'users' => $this->visibleUsersCount($actor),
-            'orders' => Commande::query()->count(),
-            'payments' => Paiement::query()->count(),
-            'paidPayments' => (clone $paidPaymentsQuery)->count(),
-            'revenue' => (float) (clone $paidPaymentsQuery)->sum('montant'),
-            'pendingOrders' => Commande::query()->where('statut', 'like', '%attente%')->count(),
+            'orders' => (int) ($stats->orders ?? 0),
+            'payments' => (int) ($stats->payments ?? 0),
+            'paidPayments' => (int) ($stats->paid_payments ?? 0),
+            'revenue' => (float) ($stats->revenue ?? 0),
+            'pendingOrders' => (int) ($stats->pending_orders ?? 0),
             'products' => $productsCount,
-            'formations' => Formation::query()->count(),
-            'messages' => ContactMessage::query()->count(),
-            'revendeurDemandes' => RevendeurDemande::query()->count(),
-            'devisPrestations' => DevisPrestation::query()->count(),
-            'marketingCardsCount' => HomeMarketingCard::query()->whereIn('section', ['offer', 'featured_product'])->count(),
-            'homePromotionsCount' => HomeMarketingCard::query()->whereIn('section', ['home_promotion', 'promotion_page'])->count(),
-            'testimonials' => HomeTestimonial::query()->count(),
-            'collaborators' => HomeCollaborator::query()->count(),
-            'partners' => HomePartner::query()->count(),
+            'formations' => (int) ($stats->formations ?? 0),
+            'messages' => (int) ($stats->messages ?? 0),
+            'revendeurDemandes' => (int) ($stats->revendeur_demandes ?? 0),
+            'devisPrestations' => (int) ($stats->devis_prestations ?? 0),
+            'marketingCardsCount' => (int) ($homeMarketingCards->marketing_cards ?? 0),
+            'homePromotionsCount' => (int) ($homeMarketingCards->home_promotions ?? 0),
+            'testimonials' => (int) ($stats->testimonials ?? 0),
+            'collaborators' => (int) ($stats->collaborators ?? 0),
+            'partners' => (int) ($stats->partners ?? 0),
             'recentActivity' => $recentActivity,
             'topCustomers' => $topCustomers,
         ]);

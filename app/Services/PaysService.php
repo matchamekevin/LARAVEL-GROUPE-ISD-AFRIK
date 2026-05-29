@@ -11,7 +11,6 @@ class PaysService
     /**
      * Récupère la liste des pays avec filtres et pagination.
      *
-     * @param array $filters
      * @return LengthAwarePaginator|Collection
      */
     public function getCatalogue(array $filters = [])
@@ -19,15 +18,15 @@ class PaysService
         $query = Pays::query();
 
         // 🔍 Filtres
-        if (!empty($filters['nom'])) {
+        if (! empty($filters['nom'])) {
             $query->where('nom_pays', 'LIKE', '%'.$filters['nom'].'%');
         }
 
-        if (!empty($filters['code'])) {
+        if (! empty($filters['code'])) {
             $query->where('code_pays', $filters['code']);
         }
 
-        if (!empty($filters['langue'])) {
+        if (! empty($filters['langue'])) {
             $query->where('langue_principale', $filters['langue']);
         }
 
@@ -36,28 +35,30 @@ class PaysService
     }
 
     /**
-     * Récupère un pays par son ID avec ses relations.
+     * Récupère un pays par son ID, avec relations optionnelles.
      *
-     * @param string $id
-     * @return Pays|null
+     * @param  array  $with  Relations à charger (ex: ['produits', 'formations'])
      */
-    public function getPays(string $id): ?Pays
+    public function getPays(string $id, array $with = []): ?Pays
     {
-        return Pays::with(['produits', 'formations'])->find($id);
+        $query = Pays::query();
+        if (! empty($with)) {
+            $query->with($with);
+        }
+
+        return $query->find($id);
     }
 
     /**
      * Crée un nouveau pays.
      *
-     * @param array $data
-     * @return Pays
      * @throws \Exception
      */
     public function create(array $data): Pays
     {
         // Vérifie si le code_pays existe déjà
         if (Pays::where('code_pays', $data['code_pays'])->exists()) {
-            throw new \Exception("Ce code pays existe déjà.");
+            throw new \Exception('Ce code pays existe déjà.');
         }
 
         return Pays::create($data);
@@ -65,10 +66,6 @@ class PaysService
 
     /**
      * Met à jour un pays existant.
-     *
-     * @param string $id
-     * @param array $data
-     * @return Pays|null
      */
     public function update(string $id, array $data): ?Pays
     {
@@ -77,31 +74,31 @@ class PaysService
             // Vérifie si le nouveau code_pays est déjà utilisé par un autre pays
             if (isset($data['code_pays'])) {
                 $exists = Pays::where('code_pays', $data['code_pays'])
-                              ->where('id_pays', '!=', $id)
-                              ->exists();
+                    ->where('id_pays', '!=', $id)
+                    ->exists();
                 if ($exists) {
-                    throw new \Exception("Ce code pays est déjà attribué à un autre pays.");
+                    throw new \Exception('Ce code pays est déjà attribué à un autre pays.');
                 }
             }
 
             $pays->update($data);
         }
+
         return $pays;
     }
 
     /**
      * Supprime un pays.
-     *
-     * @param string $id
-     * @return bool
      */
     public function delete(string $id): bool
     {
         $pays = Pays::find($id);
         if ($pays) {
             $pays->delete();
+
             return true;
         }
+
         return false;
     }
 }

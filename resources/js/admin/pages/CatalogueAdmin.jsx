@@ -171,8 +171,8 @@ const matchesSearchQuery = (query, values) => {
   return tokens.every((token) => haystack.includes(token));
 };
 
-const getCategoryId = (category) => String(category?.id || category?.id_categorie || 0);
-const getCategoryParentId = (category) => String(category?.parent_id || category?.parent?.id || category?.parent?.id_categorie || 0);
+const getCategoryId = (category) => String(category?.id ?? category?.id_categorie ?? '');
+const getCategoryParentId = (category) => String(category?.parent_id ?? category?.parent?.id ?? category?.parent?.id_categorie ?? '');
 
 const normalizeImageSrc = (value) => {
   const raw = String(value || '').trim();
@@ -811,7 +811,7 @@ params.id_categorie = String(modelCategoryFilter);
       }
     }
 
-    if (editingCategoryId && selectedFamilyIdList.includes(Number(editingCategoryId))) {
+    if (editingCategoryId && selectedFamilyIdList.includes(String(editingCategoryId))) {
       handleCloseCategoryModal();
     }
 
@@ -880,7 +880,7 @@ params.id_categorie = String(modelCategoryFilter);
       }
     }
 
-    if (editingCategoryId && selectedCategoryIdList.includes(Number(editingCategoryId))) {
+    if (editingCategoryId && selectedCategoryIdList.includes(String(editingCategoryId))) {
       handleCloseCategoryModal();
     }
 
@@ -976,12 +976,12 @@ params.id_categorie = String(modelCategoryFilter);
       setCategories((prev) => prev.filter((c) => c.id !== id));
       setSelectedCategoryIds((previous) => {
         const next = new Set(previous);
-        next.delete(Number(id));
+        next.delete(String(id));
         return next;
       });
       setSelectedFamilyIds((previous) => {
         const next = new Set(previous);
-        next.delete(Number(id));
+        next.delete(String(id));
         return next;
       });
       toastSuccess('Categorie GeoVision supprimee.');
@@ -1129,7 +1129,7 @@ params.id_categorie = String(modelCategoryFilter);
             <div className="admin-catalogue-card-head">
               <h2>Liste categories GeoVision (sous-categories)</h2>
               <div className="admin-catalogue-row-actions">
-                    <button type="button" className="btn-secondary" onClick={handleOpenCreateCategory}>Nouvelle categorie</button>
+                    <button type="button" className="admin-bulk-icon-btn" onClick={handleOpenCreateCategory} aria-label="Nouvelle categorie"><span className="material-symbols-outlined">add</span></button>
                   </div>
             </div>
             <div className="admin-catalogue-filters">
@@ -1153,22 +1153,8 @@ params.id_categorie = String(modelCategoryFilter);
                 <span>{selectedCategoryCount} selectionnee(s)</span>
               </label>
               <div className="admin-bulk-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={clearCategorySelection}
-                  disabled={selectedCategoryCount === 0 || bulkCategoryDeleting}
-                >
-                  Effacer la selection
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={handleBulkDeleteCategories}
-                  disabled={isBulkCategoryActionDisabled}
-                >
-                  Supprimer la selection
-                </button>
+                <button type="button" className="admin-bulk-icon-btn" onClick={clearCategorySelection} disabled={selectedCategoryCount === 0 || bulkCategoryDeleting} aria-label="Effacer la selection"><span className="material-symbols-outlined">close</span></button>
+                <button type="button" className="admin-bulk-icon-btn admin-bulk-icon-btn--danger" onClick={handleBulkDeleteCategories} disabled={isBulkCategoryActionDisabled} aria-label="Supprimer la selection"><span className="material-symbols-outlined">delete</span></button>
               </div>
             </div>
 
@@ -1201,14 +1187,14 @@ params.id_categorie = String(modelCategoryFilter);
                   <tbody>
                     {filteredCategories.map((cat) => {
                       const id = cat.id || cat.id_categorie;
-                      const isChecked = selectedCategoryIds.has(Number(id));
+                      const isChecked = selectedCategoryIds.has(String(id));
                       return (
                         <tr key={id}>
                           <td>
                             <input
                               type="checkbox"
                               checked={isChecked}
-                              onChange={() => toggleCategorySelection(Number(id))}
+                              onChange={() => toggleCategorySelection(String(id))}
                               disabled={bulkCategoryDeleting}
                               aria-label={`Selectionner la categorie ${cat?.nom || id}`}
                             />
@@ -1273,7 +1259,7 @@ params.id_categorie = String(modelCategoryFilter);
             <div className="admin-catalogue-card-head">
               <h2>Liste modeles GeoVision</h2>
                 <div className="admin-catalogue-row-actions">
-                <button type="button" className="btn-secondary" onClick={handleOpenCreateModel}>Nouveau modele</button>
+                <button type="button" className="admin-bulk-icon-btn" onClick={handleOpenCreateModel} aria-label="Nouveau modele"><span className="material-symbols-outlined">add</span></button>
               </div>
             </div>
 
@@ -1299,22 +1285,8 @@ params.id_categorie = String(modelCategoryFilter);
                 <span>{selectedModelCount} selectionnee(s)</span>
               </label>
               <div className="admin-bulk-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={clearModelSelection}
-                  disabled={selectedModelCount === 0 || bulkModelDeleting}
-                >
-                  Effacer la selection
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={handleBulkDeleteModels}
-                  disabled={isBulkModelActionDisabled}
-                >
-                  Supprimer la selection
-                </button>
+                <button type="button" className="admin-bulk-icon-btn" onClick={clearModelSelection} disabled={selectedModelCount === 0 || bulkModelDeleting} aria-label="Effacer la selection"><span className="material-symbols-outlined">close</span></button>
+                <button type="button" className="admin-bulk-icon-btn admin-bulk-icon-btn--danger" onClick={handleBulkDeleteModels} disabled={isBulkModelActionDisabled} aria-label="Supprimer la selection"><span className="material-symbols-outlined">delete</span></button>
               </div>
             </div>
 
@@ -1428,7 +1400,7 @@ params.id_categorie = String(modelCategoryFilter);
             <div className="admin-catalogue-card-head">
               <h2>Liste familles GeoVision (categories parent)</h2>
                 <div className="admin-catalogue-row-actions">
-                <button type="button" className="btn-secondary" onClick={handleOpenCreateFamily}>Nouvelle famille</button>
+                <button type="button" className="admin-bulk-icon-btn" onClick={handleOpenCreateFamily} aria-label="Nouvelle famille"><span className="material-symbols-outlined">add</span></button>
               </div>
             </div>
 
@@ -1453,22 +1425,8 @@ params.id_categorie = String(modelCategoryFilter);
                 <span>{selectedFamilyCount} selectionnee(s)</span>
               </label>
               <div className="admin-bulk-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={clearFamilySelection}
-                  disabled={selectedFamilyCount === 0 || bulkFamilyDeleting}
-                >
-                  Effacer la selection
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={handleBulkDeleteFamilies}
-                  disabled={isBulkFamilyActionDisabled}
-                >
-                  Supprimer la selection
-                </button>
+                <button type="button" className="admin-bulk-icon-btn" onClick={clearFamilySelection} disabled={selectedFamilyCount === 0 || bulkFamilyDeleting} aria-label="Effacer la selection"><span className="material-symbols-outlined">close</span></button>
+                <button type="button" className="admin-bulk-icon-btn admin-bulk-icon-btn--danger" onClick={handleBulkDeleteFamilies} disabled={isBulkFamilyActionDisabled} aria-label="Supprimer la selection"><span className="material-symbols-outlined">delete</span></button>
               </div>
             </div>
 
@@ -1617,7 +1575,7 @@ params.id_categorie = String(modelCategoryFilter);
                       <option value="">Aucun parent</option>
                       {geovisionFamilies.map((cat) => {
                         const id = getCategoryId(cat);
-                        if (editingCategoryId && Number(editingCategoryId) === Number(id)) {
+                        if (editingCategoryId && String(editingCategoryId) === String(id)) {
                           return null;
                         }
                         return <option key={id} value={id}>{cat.nom}</option>;

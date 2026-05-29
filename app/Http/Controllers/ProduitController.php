@@ -8,13 +8,13 @@ use App\Models\Commande;
 use App\Models\Paiement;
 use App\Models\Produit;
 use App\Services\ProduitService;
+use App\Support\CacheVersion;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Support\CacheVersion;
 
 /**
  * ProduitController - VERSION COMPLÈTE AVEC FEDAPAY
@@ -23,6 +23,7 @@ use App\Support\CacheVersion;
 class ProduitController extends Controller
 {
     protected ProduitService $service;
+
     private const CACHE_TTL_SECONDS = 180;
 
     public function __construct(ProduitService $service)
@@ -101,7 +102,7 @@ class ProduitController extends Controller
 
     public function vedette(Request $request): JsonResponse
     {
-        $cacheKey = CacheVersion::key('produits', 'vedette.' . md5($request->fullUrl()));
+        $cacheKey = CacheVersion::key('produits', 'vedette.'.md5($request->fullUrl()));
 
         $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($request) {
             $produits = $this->service->getEnVedette($request->query('id_pays'));
@@ -117,7 +118,7 @@ class ProduitController extends Controller
 
     public function nouveaux(Request $request): JsonResponse
     {
-        $cacheKey = CacheVersion::key('produits', 'nouveaux.' . md5($request->fullUrl()));
+        $cacheKey = CacheVersion::key('produits', 'nouveaux.'.md5($request->fullUrl()));
 
         $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($request) {
             $produits = $this->service->getNouveaux($request->query('id_pays'));
@@ -133,7 +134,7 @@ class ProduitController extends Controller
 
     public function promotions(Request $request): JsonResponse
     {
-        $cacheKey = CacheVersion::key('produits', 'promotions.' . md5($request->fullUrl()));
+        $cacheKey = CacheVersion::key('produits', 'promotions.'.md5($request->fullUrl()));
 
         $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($request) {
             $produits = $this->service->getEnPromotion($request->query('id_pays'));
@@ -151,27 +152,41 @@ class ProduitController extends Controller
     {
         $q = $request->input('q');
         $idPays = $request->query('id_pays');
+        $perPage = max(1, min(50, (int) $request->query('per_page', 12)));
 
-        $produits = Produit::where(function ($query) use ($q) {
-                $query->where('titre', 'ILIKE', "%{$q}%")
-                    ->orWhere('slug', 'ILIKE', "%{$q}%")
-                    ->orWhere('marque', 'ILIKE', "%{$q}%")
-                    ->orWhere('description', 'ILIKE', "%{$q}%");
-            })
-            ->parPays($idPays)
-            ->get();
+        $cacheKey = CacheVersion::key('produits', 'recherche.'.md5($request->fullUrl()));
 
-        return response()->json([
-            'message' => "Résultats pour \"$q\"",
-            'total' => $produits->count(),
-            'data' => $produits,
-        ]);
+        $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($q, $idPays, $perPage) {
+            $produits = Produit::with(['pays', 'images'])
+                ->where(function ($query) use ($q) {
+                    $query->where('titre', 'ILIKE', "%{$q}%")
+                        ->orWhere('slug', 'ILIKE', "%{$q}%")
+                        ->orWhere('marque', 'ILIKE', "%{$q}%")
+                        ->orWhere('description', 'ILIKE', "%{$q}%");
+                })
+                ->parPays($idPays)
+                ->orderByDesc('date_creation')
+                ->paginate($perPage);
+
+            return [
+                'message' => "Résultats pour \"$q\"",
+                'data' => ProduitResource::collection($produits->items()),
+                'meta' => [
+                    'total' => $produits->total(),
+                    'par_page' => $produits->perPage(),
+                    'page_actuelle' => $produits->currentPage(),
+                    'derniere_page' => $produits->lastPage(),
+                ],
+            ];
+        });
+
+        return response()->json($payload);
     }
 
     public function marques(Request $request): JsonResponse
     {
         $idPays = $request->query('id_pays');
-        $cacheKey = CacheVersion::key('produits', 'marques.' . md5($request->fullUrl()));
+        $cacheKey = CacheVersion::key('produits', 'marques.'.md5($request->fullUrl()));
 
         $payload = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($idPays) {
             $marques = Produit::query()
@@ -193,7 +208,11 @@ class ProduitController extends Controller
 
     public function show(string $id): JsonResponse
     {
-        $produit = $this->service->getById($id);
+        $cacheKey = CacheVersion::key('produits', 'detail.'.$id);
+
+        $produit = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($id) {
+            return $this->service->getById($id);
+        });
 
         if (! $produit) {
             return response()->json(['message' => 'Produit introuvable'], 404);
@@ -209,7 +228,11 @@ class ProduitController extends Controller
 
     public function showBySlug(string $slug): JsonResponse
     {
-        $produit = $this->service->getBySlug($slug);
+        $cacheKey = CacheVersion::key('produits', 'slug.'.md5($slug));
+
+        $produit = Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($slug) {
+            return $this->service->getBySlug($slug);
+        });
 
         if (! $produit) {
             return response()->json(['message' => 'Produit introuvable'], 404);
@@ -490,6 +513,7 @@ HTML
             if ($request->isMethod('get')) {
                 return $this->redirectWithFallback($frontendUrl.'/paiement/result?status=erreur&message='.urlencode('Transaction introuvable'));
             }
+
             return response()->json(['message' => 'Paramètre transaction manquant.'], 400);
         }
 
@@ -502,6 +526,7 @@ HTML
             if ($request->isMethod('get')) {
                 return $this->redirectWithFallback($frontendUrl.'/paiement/result?status=erreur&message='.urlencode('Paiement introuvable'));
             }
+
             return response()->json(['message' => 'Paiement introuvable.'], 404);
         }
 
@@ -537,6 +562,7 @@ HTML
                     'type' => 'commande',
                     'id' => $paiement->id_commande,
                 ]);
+
                 return $this->redirectWithFallback($frontendUrl.'/paiement/result?'.$params);
             }
 
@@ -577,9 +603,9 @@ HTML
                     $errorMessage = match ($fedapayStatus) {
                         'canceled' => 'Paiement annulé par l\'utilisateur',
                         'declined' => 'Transaction refusée par la banque ou l\'opérateur (solde insuffisant, code erroné, etc.)',
-                        'expired'  => 'Le délai de paiement a expiré',
-                        'pending'  => 'Paiement annulé — vous avez fermé la fenêtre de paiement',
-                        default    => 'Erreur de paiement : '.$fedapayStatus,
+                        'expired' => 'Le délai de paiement a expiré',
+                        'pending' => 'Paiement annulé — vous avez fermé la fenêtre de paiement',
+                        default => 'Erreur de paiement : '.$fedapayStatus,
                     };
 
                     if (! empty($details['description'])) {

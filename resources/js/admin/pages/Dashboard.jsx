@@ -265,15 +265,50 @@ export default function Dashboard() {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.8rem' }}>
             <h2 style={{ fontSize: '1.08rem', margin: 0, color: '#0f172a', fontWeight: 700 }}>
-              <i className="fas fa-wave-square" style={{ marginRight: '0.5rem', color: '#2563eb' }} />
+              <i className="fas fa-chart-line" style={{ marginRight: '0.5rem', color: '#2563eb' }} />
               Activité récente
             </h2>
             <span style={{ color: '#64748b', fontSize: '0.85rem' }}>{mergedRecentActivity.length} évènements</span>
           </div>
 
-          {mergedRecentActivity.length === 0 && (
+          {mergedRecentActivity.length === 0 ? (
             <div style={{ color: '#64748b', textAlign: 'center', padding: '1.8rem 1rem' }}>
               Aucune activité à afficher pour le moment.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {mergedRecentActivity.map((item) => (
+                <div key={item.id} style={{
+                  display: 'flex', alignItems: 'center', gap: '0.75rem',
+                  padding: '0.65rem 0.75rem', borderRadius: '0.75rem',
+                  background: '#f8fafc', border: '1px solid #f1f5f9',
+                }}>
+                  <span style={{
+                    width: '2rem', height: '2rem', borderRadius: '0.5rem',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    background: `${item.color || '#64748b'}18`, color: item.color || '#64748b',
+                    flexShrink: 0, fontSize: '0.85rem',
+                  }}>
+                    <i className={`fas ${item.icon || 'fa-circle'}`} />
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontWeight: 600, fontSize: '0.88rem', color: '#0f172a' }}>
+                      {item.title}
+                    </p>
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>
+                      {item.subtitle}
+                    </p>
+                  </div>
+                  {item.amount != null && (
+                    <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0f172a', whiteSpace: 'nowrap' }}>
+                      {CURRENCY.format(item.amount)}
+                    </span>
+                  )}
+                  <span style={{ fontSize: '0.7rem', color: '#94a3b8', whiteSpace: 'nowrap' }}>
+                    {item.date ? new Date(item.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         </section>

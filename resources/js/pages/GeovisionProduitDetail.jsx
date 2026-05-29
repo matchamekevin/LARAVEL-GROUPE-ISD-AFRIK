@@ -222,7 +222,7 @@ export default function GeovisionProduitDetail() {
     handleProductPayment(product, Math.max(1, Number(payload?.quantite || 1)));
   }, [location.state, paymentLoading, product?.id_produit]);
 
-  if (loading) return null;
+  if (loading) return <Loader variant="skeleton" type="detail" />;
 
   if (!product) {
     return (

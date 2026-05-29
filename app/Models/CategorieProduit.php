@@ -12,7 +12,9 @@ class CategorieProduit extends Model
     use HasFactory, HasUuid;
 
     protected $table = 'categories_produits';
+
     protected $primaryKey = 'id_categorie';
+
     public $timestamps = true;
 
     protected $hidden = ['image_data', 'image_mime'];
@@ -88,10 +90,10 @@ class CategorieProduit extends Model
     public function getImageUrlAttribute($value): ?string
     {
         if ($this->image_data) {
-            return url('/api/categories-produits/' . $this->id_categorie . '/image');
+            return '/api/categories-produits/'.$this->id_categorie.'/image';
         }
 
-        if (!$value) {
+        if (! $value) {
             return null;
         }
 
@@ -100,7 +102,7 @@ class CategorieProduit extends Model
         }
 
         if (Str::startsWith($value, '/api/categories-produits/')) {
-            return url('/api/categories-produits/' . $this->id_categorie . '/image');
+            return '/api/categories-produits/'.$this->id_categorie.'/image';
         }
 
         return $value;
@@ -128,7 +130,7 @@ class CategorieProduit extends Model
     private static function appendChildrenToOptions($parent, &$options, $level): void
     {
         foreach ($parent->children as $child) {
-            $options[$child->id_categorie] = str_repeat('— ', $level) . $child->nom;
+            $options[$child->id_categorie] = str_repeat('— ', $level).$child->nom;
             self::appendChildrenToOptions($child, $options, $level + 1);
         }
     }

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/formationDetails.css";
+import Loader from "../components/Loader";
 import { getApiBase } from "../utils/apiBase";
 import { resolveFormationImageUrl } from "../utils/mediaUrl";
 import { toastError } from "../utils/toast";
@@ -43,7 +44,7 @@ const FormationDetails = () => {
     return resolveFormationImageUrl(formation?.images?.[0]?.url, getApiBase());
   };
 
-  if (loading) return null;
+  if (loading) return <Loader variant="skeleton" type="detail" />;
 
   if (error || !formation) {
     return (

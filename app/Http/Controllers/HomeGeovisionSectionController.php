@@ -3,14 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\HomeGeovisionSection;
-use Illuminate\Http\Request;
 use App\Services\Base64ImageService;
-use Illuminate\Support\Facades\Cache;
 use App\Support\CacheVersion;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class HomeGeovisionSectionController extends Controller
 {
     private const CACHE_TTL_SECONDS = 300;
+
     private const DEFAULTS = [
         [
             'title' => 'Caméras',
@@ -49,6 +50,7 @@ class HomeGeovisionSectionController extends Controller
         }
 
         $rows = collect(self::DEFAULTS)->map(fn (array $item) => [
+            'id' => (string) \Illuminate\Support\Str::uuid(),
             'title' => $item['title'],
             'description' => $item['description'],
             'image_path' => $item['image_path'],

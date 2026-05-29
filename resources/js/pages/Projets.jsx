@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import usePageMeta from "../hooks/usePageMeta";
 import { getApiBase } from "../utils/apiBase";
+import Loader from "../components/Loader";
 import "../styles/projets-new.css";
 
 export default function Projets() {
@@ -39,7 +40,9 @@ export default function Projets() {
             </section>
 
             <section className="projets-section">
-                {!loading && (
+                {loading ? (
+                    <Loader variant="skeleton" count={3} />
+                ) : (
                     <div className="projets-grid">
                         {projets.map((projet) => (
                             <article key={projet.id} className="projet-card">

@@ -9,10 +9,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Image extends Model
 {
-    use HasFactory, SoftDeletes, HasUuid;
+    use HasFactory, HasUuid, SoftDeletes;
 
     protected $table = 'images';
+
     protected $primaryKey = 'id_image';
+
     public $timestamps = true;
 
     protected $hidden = ['image_data', 'image_mime'];
@@ -50,14 +52,16 @@ class Image extends Model
     public function getImageUrlAttribute(): ?string
     {
         if ($this->hasImageData()) {
-            return url('/api/images/' . $this->id_image . '/serve');
+            return '/api/images/'.$this->id_image.'/serve';
         }
         if ($this->url) {
             if (str_starts_with($this->url, 'http://') || str_starts_with($this->url, 'https://') || str_starts_with($this->url, '/')) {
                 return $this->url;
             }
-            return url($this->url);
+
+            return '/'.ltrim($this->url, '/');
         }
+
         return null;
     }
 

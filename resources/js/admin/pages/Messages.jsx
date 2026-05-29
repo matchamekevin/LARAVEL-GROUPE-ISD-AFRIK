@@ -29,6 +29,33 @@ function statusClass(status) {
   return 'is-neutral';
 }
 
+function statusIcon(status) {
+  const s = String(status || 'nouveau').toLowerCase();
+  if (s === 'lu' || s === 'traite') return 'check_circle';
+  if (s === 'valide') return 'check_circle';
+  if (s === 'rejete') return 'cancel';
+  if (s === 'en_cours') return 'schedule';
+  return 'radio_button_unchecked';
+}
+
+const STATUS_LABELS = {
+  nouveau: 'Nouveau',
+  lu: 'Marquer lu',
+  traite: 'Traiter',
+  en_cours: 'En cours',
+  valide: 'Valider',
+  rejete: 'Rejeter',
+};
+
+const STATUS_ICONS = {
+  nouveau: 'radio_button_unchecked',
+  lu: 'visibility',
+  traite: 'check_circle',
+  en_cours: 'schedule',
+  valide: 'check_circle',
+  rejete: 'cancel',
+};
+
 export default function Messages() {
   const [contactMessages, setContactMessages] = useState([]);
   const [demandes, setDemandes] = useState([]);
@@ -304,6 +331,182 @@ export default function Messages() {
     }
   );
 
+  function renderStatusActions(statuses, currentStatus, onStatusChange, isDisabled) {
+    return statuses
+      .filter((s) => s !== currentStatus)
+      .map((statut) => (
+        <button
+          key={statut}
+          type="button"
+          className="admin-bulk-icon-btn"
+          onClick={() => onStatusChange(statut)}
+          disabled={isDisabled}
+          title={STATUS_LABELS[statut] || statut}
+          aria-label={`${STATUS_LABELS[statut] || statut}`}
+        >
+          <span className="material-symbols-outlined">{STATUS_ICONS[statut]}</span>
+        </button>
+      ));
+  }
+
+  function renderTable(section, { data, columns, statuses, onStatusChange, onDelete, pagination, loading }) {
+    if (pagination.total === 0 && data.length === 0) {
+      return <div className="admin-messages-empty">Aucune donnee.</div>;
+    }
+
+    return (
+      <>
+        <div className="admin-messages-table-wrap">
+          <table className="admin-messages-table">
+            <thead>
+              <tr>
+                {columns.map((col) => (
+                  <th key={col.key}>{col.label}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((row) => (
+                <tr key={row.id}>
+                  {columns.map((col) => (
+                    <td key={col.key}>
+                      {col.render ? col.render(row) : row[col.key] ?? '—'}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {data.length > 0 && (
+          <div className="admin-messages-pagination">
+            <span className="admin-messages-pagination-info">
+              Affichage {pagination.from || 0}-{pagination.to || 0} sur {pagination.total || 0}
+            </span>
+            <div className="admin-messages-pagination-controls">
+              <button
+                type="button"
+                className="admin-messages-pagination-btn"
+                onClick={() => {
+                  if (section === 'contact') setContactPage((p) => Math.max(1, p - 1));
+                  if (section === 'demande') setDemandePage((p) => Math.max(1, p - 1));
+                  if (section === 'devis') setDevisPage((p) => Math.max(1, p - 1));
+                }}
+                disabled={pagination.current_page <= 1}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>chevron_left</span>
+                Precedent
+              </button>
+              <span className="admin-messages-pagination-info">
+                Page {pagination.current_page} / {pagination.last_page}
+              </span>
+              <button
+                type="button"
+                className="admin-messages-pagination-btn"
+                onClick={() => {
+                  if (section === 'contact') setContactPage((p) => p + 1);
+                  if (section === 'demande') setDemandePage((p) => p + 1);
+                  if (section === 'devis') setDevisPage((p) => p + 1);
+                }}
+                disabled={pagination.current_page >= pagination.last_page}
+              >
+                Suivant
+                <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>chevron_right</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  const contactColumns = [
+    { key: 'id', label: 'ID', render: (m) => `#${m.id}` },
+    { key: 'nom', label: 'Nom', render: (m) => <strong>{m.nom_complet || 'Sans nom'}</strong> },
+    { key: 'email', label: 'Email', render: (m) => <a href={`mailto:${m.email}`}>{m.email}</a> },
+    { key: 'sujet', label: 'Sujet', render: (m) => m.sujet || '—' },
+    {
+      key: 'statut', label: 'Statut',
+      render: (m) => (
+        <span className={`admin-messages-status ${statusClass(m.statut)}`}>
+          {m.statut || 'nouveau'}
+        </span>
+      ),
+    },
+    {
+      key: 'actions', label: 'Actions',
+      render: (m) => (
+        <div className="admin-messages-actions">
+          {renderStatusActions(CONTACT_STATUSES, m.statut, (statut) => handleContactStatus(m.id, statut))}
+          <DeleteIconButton
+            onClick={() => handleDeleteContact(m.id)}
+            className="admin-bulk-icon-btn admin-bulk-icon-btn--danger"
+            style={{ width: 32, height: 32 }}
+            title="Supprimer"
+            ariaLabel={`Supprimer le message de ${m?.nom_complet || m?.email || m.id}`}
+          />
+        </div>
+      ),
+    },
+  ];
+
+  const demandeColumns = [
+    { key: 'id', label: 'ID', render: (d) => `#${d.id}` },
+    { key: 'entreprise', label: 'Entreprise', render: (d) => <strong>{d.nom_entreprise || '—'}</strong> },
+    { key: 'email', label: 'Email', render: (d) => <a href={`mailto:${d.email_professionnel}`}>{d.email_professionnel || '—'}</a> },
+    { key: 'pays', label: 'Pays', render: (d) => d.pays || '—' },
+    {
+      key: 'statut', label: 'Statut',
+      render: (d) => (
+        <span className={`admin-messages-status ${statusClass(d.statut)}`}>
+          {d.statut || 'nouveau'}
+        </span>
+      ),
+    },
+    {
+      key: 'actions', label: 'Actions',
+      render: (d) => (
+        <div className="admin-messages-actions">
+          {renderStatusActions(DEMANDE_STATUSES, d.statut, (statut) => handleDemandeStatus(d.id, statut))}
+        </div>
+      ),
+    },
+  ];
+
+  const devisColumns = [
+    { key: 'id', label: 'ID', render: (d) => `#${d.id}` },
+    { key: 'prestation', label: 'Prestation', render: (d) => <strong>{d.prestation_name || '—'}</strong> },
+    { key: 'slug', label: 'Slug', render: (d) => d.prestation_slug || '—' },
+    {
+      key: 'date', label: 'Date',
+      render: (d) => d.created_at ? new Date(d.created_at).toLocaleString('fr-FR') : '—',
+    },
+    {
+      key: 'statut', label: 'Statut',
+      render: (d) => (
+        <span className={`admin-messages-status ${statusClass(d.statut)}`}>
+          {d.statut || 'nouveau'}
+        </span>
+      ),
+    },
+    {
+      key: 'actions', label: 'Actions',
+      render: (d) => (
+        <div className="admin-messages-actions">
+          {renderStatusActions(DEVIS_STATUSES, d.statut, (statut) => handleDevisStatus(d.id, statut))}
+          <DeleteIconButton
+            onClick={() => handleDeleteDevis(d.id)}
+            className="admin-bulk-icon-btn admin-bulk-icon-btn--danger"
+            style={{ width: 32, height: 32 }}
+            title="Supprimer"
+            ariaLabel={`Supprimer la demande de devis ${d?.prestation_name || d.id}`}
+          />
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="admin-messages-page">
       <header className="admin-messages-hero">
@@ -331,9 +534,12 @@ export default function Messages() {
 
       {(
         <>
-          <section className="admin-messages-card">
+          <section className="admin-messages-card admin-messages-card--contact">
             <div className="admin-messages-card-head">
-              <h2>Messages de contact</h2>
+              <div className="admin-messages-card-head-left">
+                <span className="admin-messages-card-icon admin-messages-card-icon--contact material-symbols-outlined">mail</span>
+                <h2>Messages de contact</h2>
+              </div>
               <span className="admin-messages-counter">{contactPagination.total || contactMessages.length}</span>
             </div>
 
@@ -361,99 +567,20 @@ export default function Messages() {
               </select>
             </div>
 
-            {(contactPagination.total === 0 && contactMessages.length === 0) ? (
-              <div className="admin-messages-empty">Aucun message de contact.</div>
-            ) : (
-              <>
-                <div className="admin-messages-table-wrap">
-                  <table className="admin-messages-table">
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Nom</th>
-                        <th>Email</th>
-                        <th>Sujet</th>
-                        <th>Statut</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {contactMessages.map((m) => (
-                        <tr key={m.id}>
-                          <td>#{m.id}</td>
-                          <td>
-                            <strong>{m.nom_complet || 'Sans nom'}</strong>
-                          </td>
-                          <td>
-                            <a href={`mailto:${m.email}`}>{m.email}</a>
-                          </td>
-                          <td>{m.sujet || '—'}</td>
-                          <td>
-                            <span className={`admin-messages-status ${statusClass(m.statut)}`}>
-                              {m.statut || 'nouveau'}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="admin-messages-actions">
-                              {CONTACT_STATUSES.map((statut) => (
-                                <button
-                                  key={statut}
-                                  type="button"
-                                  className="btn-secondary"
-                                  onClick={() => handleContactStatus(m.id, statut)}
-                                >
-                                  {statut === 'lu' ? 'Marquer lu' : statut === 'traite' ? 'Traiter' : 'Nouveau'}
-                                </button>
-                              ))}
-                              <DeleteIconButton
-                                onClick={() => handleDeleteContact(m.id)}
-                                className="admin-messages-danger"
-                                title="Supprimer"
-                                ariaLabel={`Supprimer le message de ${m?.nom_complet || m?.email || m.id}`}
-                              />
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {contactMessages.length > 0 && (
-                  <div className="admin-messages-pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1rem 1.25rem' }}>
-                    <span className="admin-messages-counter">
-                      Affichage {contactPagination.from || 0}-{contactPagination.to || 0} sur {contactPagination.total || 0}
-                    </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() => setContactPage((p) => Math.max(1, p - 1))}
-                        disabled={contactPagination.current_page <= 1}
-                      >
-                        Précédent
-                      </button>
-                      <span className="admin-messages-counter">
-                        Page {contactPagination.current_page} / {contactPagination.last_page}
-                      </span>
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() => setContactPage((p) => p + 1)}
-                        disabled={contactPagination.current_page >= contactPagination.last_page}
-                      >
-                        Suivant
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
+            {renderTable('contact', {
+              data: contactMessages,
+              columns: contactColumns,
+              pagination: contactPagination,
+              loading,
+            })}
           </section>
 
-          <section className="admin-messages-card">
+          <section className="admin-messages-card admin-messages-card--demande">
             <div className="admin-messages-card-head">
-              <h2>Demandes revendeurs</h2>
+              <div className="admin-messages-card-head-left">
+                <span className="admin-messages-card-icon admin-messages-card-icon--demande material-symbols-outlined">store</span>
+                <h2>Demandes revendeurs</h2>
+              </div>
               <span className="admin-messages-counter">{demandePagination.total || demandes.length}</span>
             </div>
 
@@ -481,93 +608,20 @@ export default function Messages() {
               </select>
             </div>
 
-            {(demandePagination.total === 0 && demandes.length === 0) ? (
-              <div className="admin-messages-empty">Aucune demande revendeur.</div>
-            ) : (
-              <>
-                <div className="admin-messages-table-wrap">
-                  <table className="admin-messages-table">
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Entreprise</th>
-                        <th>Email</th>
-                        <th>Pays</th>
-                        <th>Statut</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {demandes.map((d) => (
-                        <tr key={d.id}>
-                          <td>#{d.id}</td>
-                          <td>
-                            <strong>{d.nom_entreprise || '—'}</strong>
-                          </td>
-                          <td>
-                            <a href={`mailto:${d.email_professionnel}`}>{d.email_professionnel || '—'}</a>
-                          </td>
-                          <td>{d.pays}</td>
-                          <td>
-                            <span className={`admin-messages-status ${statusClass(d.statut)}`}>
-                              {d.statut || 'nouveau'}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="admin-messages-actions">
-                              {DEMANDE_STATUSES.map((statut) => (
-                                <button
-                                  key={statut}
-                                  type="button"
-                                  className="btn-secondary"
-                                  onClick={() => handleDemandeStatus(d.id, statut)}
-                                >
-                                  {statut === 'en_cours' ? 'En cours' : statut === 'valide' ? 'Valider' : statut === 'rejete' ? 'Rejeter' : 'Nouveau'}
-                                </button>
-                              ))}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {demandes.length > 0 && (
-                  <div className="admin-messages-pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1rem 1.25rem' }}>
-                    <span className="admin-messages-counter">
-                      Affichage {demandePagination.from || 0}-{demandePagination.to || 0} sur {demandePagination.total || 0}
-                    </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() => setDemandePage((p) => Math.max(1, p - 1))}
-                        disabled={demandePagination.current_page <= 1}
-                      >
-                        Précédent
-                      </button>
-                      <span className="admin-messages-counter">
-                        Page {demandePagination.current_page} / {demandePagination.last_page}
-                      </span>
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() => setDemandePage((p) => p + 1)}
-                        disabled={demandePagination.current_page >= demandePagination.last_page}
-                      >
-                        Suivant
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
+            {renderTable('demande', {
+              data: demandes,
+              columns: demandeColumns,
+              pagination: demandePagination,
+              loading,
+            })}
           </section>
 
-          <section className="admin-messages-card">
+          <section className="admin-messages-card admin-messages-card--devis">
             <div className="admin-messages-card-head">
-              <h2>Demandes de devis prestations</h2>
+              <div className="admin-messages-card-head-left">
+                <span className="admin-messages-card-icon admin-messages-card-icon--devis material-symbols-outlined">description</span>
+                <h2>Demandes de devis prestations</h2>
+              </div>
               <span className="admin-messages-counter">{devisPagination.total || devisPrestations.length}</span>
             </div>
 
@@ -595,92 +649,12 @@ export default function Messages() {
               </select>
             </div>
 
-            {(devisPagination.total === 0 && devisPrestations.length === 0) ? (
-              <div className="admin-messages-empty">Aucune demande de devis.</div>
-            ) : (
-              <>
-                <div className="admin-messages-table-wrap">
-                  <table className="admin-messages-table">
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Prestation</th>
-                        <th>Slug</th>
-                        <th>Date</th>
-                        <th>Statut</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {devisPrestations.map((devis) => (
-                        <tr key={devis.id}>
-                          <td>#{devis.id}</td>
-                          <td>
-                            <strong>{devis.prestation_name || '—'}</strong>
-                          </td>
-                          <td>{devis.prestation_slug || '—'}</td>
-                          <td>{devis.created_at ? new Date(devis.created_at).toLocaleString('fr-FR') : '—'}</td>
-                          <td>
-                            <span className={`admin-messages-status ${statusClass(devis.statut)}`}>
-                              {devis.statut || 'nouveau'}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="admin-messages-actions">
-                              {DEVIS_STATUSES.map((statut) => (
-                                <button
-                                  key={statut}
-                                  type="button"
-                                  className="btn-secondary"
-                                  onClick={() => handleDevisStatus(devis.id, statut)}
-                                >
-                                  {statut === 'traite' ? 'Traiter' : 'Nouveau'}
-                                </button>
-                              ))}
-                              <DeleteIconButton
-                                onClick={() => handleDeleteDevis(devis.id)}
-                                className="admin-messages-danger"
-                                title="Supprimer"
-                                ariaLabel={`Supprimer la demande de devis ${devis?.prestation_name || devis.id}`}
-                              />
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {devisPrestations.length > 0 && (
-                  <div className="admin-messages-pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1rem 1.25rem' }}>
-                    <span className="admin-messages-counter">
-                      Affichage {devisPagination.from || 0}-{devisPagination.to || 0} sur {devisPagination.total || 0}
-                    </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() => setDevisPage((p) => Math.max(1, p - 1))}
-                        disabled={devisPagination.current_page <= 1}
-                      >
-                        Précédent
-                      </button>
-                      <span className="admin-messages-counter">
-                        Page {devisPagination.current_page} / {devisPagination.last_page}
-                      </span>
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() => setDevisPage((p) => p + 1)}
-                        disabled={devisPagination.current_page >= devisPagination.last_page}
-                      >
-                        Suivant
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
+            {renderTable('devis', {
+              data: devisPrestations,
+              columns: devisColumns,
+              pagination: devisPagination,
+              loading,
+            })}
           </section>
         </>
       )}

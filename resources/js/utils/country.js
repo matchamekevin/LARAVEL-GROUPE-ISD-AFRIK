@@ -1,8 +1,8 @@
-const COUNTRY_CODE_TO_ID = { TG: "2185de10-a169-43af-8513-5fa9a2117031" };
-const COUNTRY_ID_TO_CODE = { "2185de10-a169-43af-8513-5fa9a2117031": "TG" };
+const COUNTRY_CODE_TO_ID = { TG: "4b019109-b586-4450-a420-c36cb065ace8" };
+const COUNTRY_ID_TO_CODE = { "4b019109-b586-4450-a420-c36cb065ace8": "TG" };
 
 export function countryCodeToId(code) {
-  return COUNTRY_CODE_TO_ID[code] || "2185de10-a169-43af-8513-5fa9a2117031";
+  return COUNTRY_CODE_TO_ID[code] || "4b019109-b586-4450-a420-c36cb065ace8";
 }
 
 export function countryIdToCode(id) {

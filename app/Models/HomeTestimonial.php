@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 class HomeTestimonial extends Model
 {
     use HasUuid;
+
     protected $fillable = [
         'name',
         'role',
@@ -33,10 +34,10 @@ class HomeTestimonial extends Model
     public function getAvatarUrlAttribute(): ?string
     {
         if ($this->avatar_data) {
-            return url('/api/home-testimonials/' . $this->id . '/image');
+            return '/api/home-testimonials/'.$this->id.'/image';
         }
 
-        if (!$this->avatar_path) {
+        if (! $this->avatar_path) {
             return null;
         }
 
@@ -48,7 +49,7 @@ class HomeTestimonial extends Model
             return $this->avatar_path;
         }
 
-        if (!Storage::disk('public')->exists($this->avatar_path)) {
+        if (! Storage::disk('public')->exists($this->avatar_path)) {
             return null;
         }
 

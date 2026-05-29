@@ -2,6 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Auth\TwoFactorChallenge;
+use App\Filament\Widgets\ChiffreAffaireStats;
+use App\Http\Middleware\RedirectTo2FA;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -15,12 +18,9 @@ use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
-use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Routing\Middleware\SubstituteBindings; // ✅ importer ton middleware
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\View\Middleware\ShareErrorsFromSession;
-use App\Http\Middleware\RedirectTo2FA; // ✅ importer ton middleware
-use App\Filament\Auth\TwoFactorChallenge;
-use App\Filament\Widgets\ChiffreAffaireStats; // ✅ importer ton widget
+use Illuminate\View\Middleware\ShareErrorsFromSession; // ✅ importer ton widget
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -60,8 +60,12 @@ class AdminPanelProvider extends PanelProvider
                 // ❌ NE PAS mettre RedirectTo2FA ici
             ])
             ->authMiddleware([
-                RedirectTo2FA::class, // ✅ ton middleware en premier
+                RedirectTo2FA::class,
                 Authenticate::class,
-            ]);
+            ])
+            ->renderHook(
+                'panels::head.end',
+                fn () => view('filament.echo-setup'),
+            );
     }
 }

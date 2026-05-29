@@ -8,13 +8,13 @@ use App\Models\Produit;
 class CommentaireService
 {
     /**
-     * Récupérer tous les commentaires (triés par date de création).
+     * Récupérer tous les commentaires paginés (triés par date de création).
      */
-    public function all()
+    public function all(int $perPage = 20)
     {
         return Commentaire::with(['utilisateur', 'commentable'])
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate($perPage);
     }
 
     /**
@@ -44,14 +44,14 @@ class CommentaireService
     public function update(string $id, array $data): ?Commentaire
     {
         $commentaire = Commentaire::find($id);
-        if (!$commentaire) {
+        if (! $commentaire) {
             return null;
         }
 
         $oldType = (string) $commentaire->commentable_type;
         $oldId = $commentaire->commentable_id;
 
-        if (!empty($data['commentable_type'])) {
+        if (! empty($data['commentable_type'])) {
             $data['commentable_type'] = $this->mapType($data['commentable_type']);
         }
 
@@ -70,7 +70,7 @@ class CommentaireService
     public function delete(string $id): bool
     {
         $commentaire = Commentaire::find($id);
-        if (!$commentaire) {
+        if (! $commentaire) {
             return false;
         }
 

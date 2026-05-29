@@ -2,6 +2,8 @@
    ADMIN SHARED DESIGN SYSTEM
    ======================================== */
 
+@import '../../styles/search-bar.css';
+
 /* Color Palette Variables */
 :root {
   /* Primary Colors by Section */
@@ -289,6 +291,160 @@ body, html {
   height: 18px;
 }
 
+/* ── Bulk table wrapper ── */
+.admin-bulk-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  width: 100%;
+}
+
+.admin-bulk-table-wrap .admin-bulk-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+  background: #fff;
+}
+
+.admin-bulk-table-wrap .admin-bulk-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #4b5563;
+  background: #f8fafc;
+  border-bottom: 2px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.admin-bulk-table-wrap .admin-bulk-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.88rem;
+  vertical-align: middle;
+}
+
+.admin-bulk-table-wrap .admin-bulk-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+/* ── Column width classes ── */
+.col-cb { width: 48px; text-align: center; }
+.col-id { width: 100px; }
+.col-img { width: 110px; }
+.col-title { width: auto; min-width: 120px; }
+.col-pos { width: 140px; }
+.col-order { width: 70px; text-align: center; }
+.col-status { width: 90px; text-align: center; }
+.col-actions { width: 90px; text-align: right; white-space: nowrap; }
+
+/* ── Thumbnail images in tables ── */
+.admin-table-thumb {
+  width: 90px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  display: block;
+}
+
+/* ── Title cell ── */
+.admin-table-cell-title {
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ── Position cell ── */
+.admin-table-cell-pos {
+  font-size: 0.82rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ── Edit button in table ── */
+.admin-table-btn-edit {
+  cursor: pointer;
+  vertical-align: middle;
+  border: none;
+  background: transparent;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.admin-table-btn-edit:hover {
+  background: #eef2ff;
+}
+
+/* ── Responsive: tablet ── */
+@media (max-width: 1024px) {
+  .admin-bulk-table-wrap .admin-bulk-table th,
+  .admin-bulk-table-wrap .admin-bulk-table td {
+    padding: 10px 12px;
+    font-size: 0.82rem;
+  }
+  .admin-table-thumb {
+    width: 72px;
+    height: 46px;
+  }
+  .col-id { width: 80px; }
+  .col-pos { width: 110px; }
+  .col-img { width: 90px; }
+}
+
+/* ── Responsive: mobile ── */
+@media (max-width: 768px) {
+  .admin-bulk-table-wrap .admin-bulk-table th,
+  .admin-bulk-table-wrap .admin-bulk-table td {
+    padding: 8px 10px;
+    font-size: 0.78rem;
+  }
+  .admin-bulk-table-wrap .admin-bulk-table {
+    min-width: 700px;
+  }
+  .admin-table-thumb {
+    width: 60px;
+    height: 38px;
+    border-radius: 6px;
+  }
+  .col-id { width: 60px; }
+  .col-img { width: 76px; }
+  .col-pos { width: 90px; }
+  .col-order { width: 56px; }
+  .col-status { width: 72px; }
+  .col-actions { width: 72px; }
+}
+
+/* ── Responsive: small mobile ── */
+@media (max-width: 480px) {
+  .admin-bulk-table-wrap .admin-bulk-table th,
+  .admin-bulk-table-wrap .admin-bulk-table td {
+    padding: 6px 8px;
+    font-size: 0.72rem;
+  }
+  .admin-bulk-table-wrap .admin-bulk-table {
+    min-width: 560px;
+  }
+  .admin-table-thumb {
+    width: 48px;
+    height: 32px;
+  }
+  .col-id { width: 48px; }
+  .col-img { width: 62px; }
+  .col-pos { width: 72px; }
+  .col-order { width: 44px; }
+  .col-status { width: 58px; }
+  .col-actions { width: 58px; }
+}
+
 /* ========================================
    FORMS
    ======================================== */
@@ -313,7 +469,7 @@ body, html {
 .admin-form-field small {
   font-size: var(--font-size-sm);
   color: var(--color-gray-600);
-  margin-top: -var(--spacing-sm);
+  margin-top: -0.5rem;
 }
 
 .admin-form-input,
@@ -812,6 +968,60 @@ body, html {
   animation: slideUp 0.3s ease;
 }
 
+.admin-modal--lg {
+  max-width: 700px;
+}
+
+.admin-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--color-gray-200);
+  position: sticky;
+  top: 0;
+  background: var(--color-white);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  z-index: 1;
+}
+
+.admin-modal-header h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.admin-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-400);
+  transition: all 0.2s ease;
+}
+
+.admin-modal-close:hover {
+  background: var(--color-gray-100);
+  color: var(--color-gray-700);
+}
+
+.admin-modal-body {
+  padding: 1.5rem;
+}
+
+.admin-modal-overlay {
+  cursor: pointer;
+}
+
+.admin-modal > * {
+  cursor: default;
+}
+
 @keyframes slideUp {
   from {
     transform: translateY(20px);
@@ -821,6 +1031,94 @@ body, html {
     transform: translateY(0);
     opacity: 1;
   }
+}
+
+/* Password input */
+.admin-password-wrap label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.admin-password-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.admin-password-input-group input {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+  border: 1px solid var(--color-gray-300);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+  background: #ffffff;
+  color: var(--gray-900);
+}
+
+.admin-password-input-group input:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.admin-password-toggle {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-400);
+  transition: color 0.2s ease;
+}
+
+.admin-password-toggle:hover {
+  color: var(--color-gray-600);
+}
+
+/* Admin open-modal button */
+.admin-open-modal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.admin-open-modal-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.admin-open-modal-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Form action buttons in modals */
+.admin-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
 }
 
 /* ========================================
@@ -931,6 +1229,37 @@ body, html {
   .admin-table td, .admin-table th { padding: 6px 8px; }
   .admin-badge { font-size: 0.65rem; padding: 2px 6px; }
   .admin-btn { font-size: 0.75rem; padding: 6px 10px; }
+}
+
+/* ── Bulk action icon buttons ── */
+.admin-bulk-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  color: #4b5563;
+}
+.admin-bulk-icon-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+.admin-bulk-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.admin-bulk-icon-btn .material-symbols-outlined {
+  font-size: 1.15rem;
+}
+.admin-bulk-icon-btn--danger:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b91c1c;
 }
 
 @media (max-width: 600px) {

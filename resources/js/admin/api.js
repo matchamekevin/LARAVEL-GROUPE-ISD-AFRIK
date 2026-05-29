@@ -21,6 +21,13 @@ if (typeof window !== 'undefined') {
       adminPendingRequests.clear();
     }
   });
+
+  // Real-time cache invalidation via WebSocket content-changed event
+  window.addEventListener('content-changed', () => {
+    adminCacheVersion += 1;
+    adminCache.clear();
+    adminPendingRequests.clear();
+  });
 }
 
 function hashString(value) {

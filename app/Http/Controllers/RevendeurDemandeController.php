@@ -10,9 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class RevendeurDemandeController extends Controller
 {
-    public function __construct(private readonly FormMailDispatcher $formMailDispatcher)
-    {
-    }
+    public function __construct(private readonly FormMailDispatcher $formMailDispatcher) {}
 
     public function index(Request $request)
     {
@@ -39,10 +37,13 @@ class RevendeurDemandeController extends Controller
 
         $paginator = $query->paginate($perPage, ['*'], 'page', $page)->appends($request->query());
 
-        $nouveau = RevendeurDemande::where('statut', 'nouveau')->count();
-        $en_cours = RevendeurDemande::where('statut', 'en_cours')->count();
-        $valide = RevendeurDemande::where('statut', 'valide')->count();
-        $rejete = RevendeurDemande::where('statut', 'rejete')->count();
+        $stats = RevendeurDemande::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("SUM(CASE WHEN statut = 'nouveau' THEN 1 ELSE 0 END) as nouveau")
+            ->selectRaw("SUM(CASE WHEN statut = 'en_cours' THEN 1 ELSE 0 END) as en_cours")
+            ->selectRaw("SUM(CASE WHEN statut = 'valide' THEN 1 ELSE 0 END) as valide")
+            ->selectRaw("SUM(CASE WHEN statut = 'rejete' THEN 1 ELSE 0 END) as rejete")
+            ->first();
 
         return response()->json([
             'data' => $paginator->items(),
@@ -62,10 +63,10 @@ class RevendeurDemandeController extends Controller
             ],
             'stats' => [
                 'total' => $paginator->total(),
-                'nouveau' => $nouveau,
-                'en_cours' => $en_cours,
-                'valide' => $valide,
-                'rejete' => $rejete,
+                'nouveau' => (int) $stats->nouveau,
+                'en_cours' => (int) $stats->en_cours,
+                'valide' => (int) $stats->valide,
+                'rejete' => (int) $stats->rejete,
             ],
         ]);
     }
@@ -74,7 +75,7 @@ class RevendeurDemandeController extends Controller
     {
         $demande = RevendeurDemande::find($id);
 
-        if (!$demande) {
+        if (! $demande) {
             return response()->json(['message' => 'Demande introuvable'], 404);
         }
 
@@ -122,21 +123,21 @@ class RevendeurDemandeController extends Controller
                 lines: [
                     'Nouvelle demande revendeur recue.',
                     '',
-                    'Entreprise: ' . $validated['nom_entreprise'],
-                    'Pays: ' . $validated['pays'],
-                    'Ville: ' . ($validated['ville'] ?? '-'),
-                    'Telephone: ' . $validated['telephone'],
-                    'Email professionnel: ' . $validated['email_professionnel'],
-                    'Representant: ' . $validated['representant_nom'],
-                    'Fonction: ' . ($validated['representant_fonction'] ?? '-'),
-                    'Telephone representant: ' . ($validated['representant_telephone'] ?? '-'),
-                    'Email representant: ' . ($validated['representant_email'] ?? '-'),
-                    'Zone couverture: ' . ($validated['zone_couverture'] ?? '-'),
-                    'Experience: ' . ($validated['experience_annees'] ?? '-'),
+                    'Entreprise: '.$validated['nom_entreprise'],
+                    'Pays: '.$validated['pays'],
+                    'Ville: '.($validated['ville'] ?? '-'),
+                    'Telephone: '.$validated['telephone'],
+                    'Email professionnel: '.$validated['email_professionnel'],
+                    'Representant: '.$validated['representant_nom'],
+                    'Fonction: '.($validated['representant_fonction'] ?? '-'),
+                    'Telephone representant: '.($validated['representant_telephone'] ?? '-'),
+                    'Email representant: '.($validated['representant_email'] ?? '-'),
+                    'Zone couverture: '.($validated['zone_couverture'] ?? '-'),
+                    'Experience: '.($validated['experience_annees'] ?? '-'),
                     'Motivation:',
                     (string) ($validated['motivation'] ?? '-'),
                     '',
-                    'Date: ' . now()->format('d/m/Y H:i:s'),
+                    'Date: '.now()->format('d/m/Y H:i:s'),
                 ],
                 replyToEmail: $validated['email_professionnel'],
                 replyToName: $validated['nom_entreprise']
@@ -163,7 +164,7 @@ class RevendeurDemandeController extends Controller
 
         $demande = RevendeurDemande::find($id);
 
-        if (!$demande) {
+        if (! $demande) {
             return response()->json(['message' => 'Demande introuvable'], 404);
         }
 
@@ -180,7 +181,7 @@ class RevendeurDemandeController extends Controller
     {
         $demande = RevendeurDemande::find($id);
 
-        if (!$demande) {
+        if (! $demande) {
             return response()->json(['message' => 'Demande introuvable'], 404);
         }
 

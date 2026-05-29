@@ -18,6 +18,7 @@ class PaysResource extends JsonResource
             'id'      => $this->id_pays,
             'nom'     => $this->nom_pays,
             'code'    => $this->code_pays,
+            'alpha2'  => $this->alpha2,
             'devise'  => $this->devise_locale,
             'langue'  => $this->langue_principale,
 

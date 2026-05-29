@@ -64,12 +64,15 @@ export function useLivePolling(
         safeRefresh();
       }
     };
+    const onContentChanged = () => safeRefresh();
     window.addEventListener("isd-mutation", onMutation);
+    window.addEventListener("content-changed", onContentChanged);
     window.addEventListener("storage", (e) => {
       if (e.key === "_isd_mutation") onMutation();
     });
     return () => {
       window.removeEventListener("isd-mutation", onMutation);
+      window.removeEventListener("content-changed", onContentChanged);
     };
   }, [enabled, listenMutations, safeRefresh]);
 

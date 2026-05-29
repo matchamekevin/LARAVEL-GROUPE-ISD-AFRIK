@@ -421,22 +421,8 @@ export default function PromotionsAdmin() {
             <span>{selectedCardCount} selectionnee(s)</span>
           </label>
           <div className="admin-bulk-actions">
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={clearCardSelection}
-              disabled={selectedCardCount === 0 || bulkDeleting}
-            >
-              Effacer la selection
-            </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={handleBulkDeleteCards}
-              disabled={isBulkCardActionDisabled}
-            >
-              Supprimer la selection
-            </button>
+            <button type="button" className="admin-bulk-icon-btn" onClick={clearCardSelection} disabled={selectedCardCount === 0 || bulkDeleting} aria-label="Effacer la selection"><span className="material-symbols-outlined">close</span></button>
+            <button type="button" className="admin-bulk-icon-btn admin-bulk-icon-btn--danger" onClick={handleBulkDeleteCards} disabled={isBulkCardActionDisabled} aria-label="Supprimer la selection"><span className="material-symbols-outlined">delete</span></button>
           </div>
         </div>
 

@@ -31,15 +31,22 @@ class ProduitService
         ])->addSelect(DB::raw('image_data IS NOT NULL AS has_image_data'));
     }
 
-    private function baseProduitQuery(bool $withComments = false): Builder
+    private function baseProduitQuery(bool $withComments = false, string $categoryDepth = 'full'): Builder
     {
-        $query = Produit::query()->with([
+        $with = [
             'pays',
             'images' => function ($q) {
                 $this->selectImageColumns($q);
             },
-            'categorie.parent.parent',
-        ]);
+        ];
+
+        if ($categoryDepth === 'full') {
+            $with[] = 'categorie.parent.parent';
+        } else {
+            $with[] = 'categorie';
+        }
+
+        $query = Produit::query()->with($with);
 
         if ($withComments) {
             $query->with('commentaires');
@@ -53,16 +60,16 @@ class ProduitService
      */
     public function getCatalogue(array $filters = []): LengthAwarePaginator
     {
-        $query = $this->baseProduitQuery()
+        $query = $this->baseProduitQuery(false, 'shallow')
             ->orderByDesc('date_creation');
 
-        if (!empty($filters['id_pays']) && \Illuminate\Support\Str::isUuid($filters['id_pays'])) {
+        if (! empty($filters['id_pays']) && \Illuminate\Support\Str::isUuid($filters['id_pays'])) {
             $query->where('id_pays', $filters['id_pays']);
         }
 
-        if (!empty($filters['statuts']) && is_array($filters['statuts'])) {
+        if (! empty($filters['statuts']) && is_array($filters['statuts'])) {
             $query->whereIn('statut', $filters['statuts']);
-        } elseif (!empty($filters['statut'])) {
+        } elseif (! empty($filters['statut'])) {
             $query->where('statut', $filters['statut']);
         } else {
             // Valeur par défaut tolérante: certains jeux de données utilisent "actif" au lieu de "disponible".
@@ -82,30 +89,30 @@ class ProduitService
             }
         }
 
-        if (!empty($filters['id_categories']) && is_array($filters['id_categories'])) {
+        if (! empty($filters['id_categories']) && is_array($filters['id_categories'])) {
             $query->whereIn('id_categorie', $filters['id_categories']);
-        } elseif (!empty($filters['id_categorie'])) {
+        } elseif (! empty($filters['id_categorie'])) {
             $query->where('id_categorie', $filters['id_categorie']);
         }
 
-        if (!empty($filters['segment'])) {
+        if (! empty($filters['segment'])) {
             $query->whereHas('categorie', function ($categorieQuery) use ($filters) {
                 $categorieQuery->where('segment', $filters['segment']);
             });
         }
 
-        if (!empty($filters['category_slug'])) {
+        if (! empty($filters['category_slug'])) {
             $category = CategorieProduit::query()
                 ->select(['id_categorie', 'parent_id'])
                 ->where('slug', $filters['category_slug'])
                 ->first();
 
-            if (!$category) {
+            if (! $category) {
                 $query->whereRaw('1 = 0');
             } else {
                 $categoryIds = [$category->id_categorie];
 
-                if (!empty($filters['include_descendants'])) {
+                if (! empty($filters['include_descendants'])) {
                     $categoryIds = $this->collectDescendantCategoryIds($category);
                 }
 
@@ -113,51 +120,51 @@ class ProduitService
             }
         }
 
-        if (!empty($filters['exclude_categorie_ids']) && is_array($filters['exclude_categorie_ids'])) {
+        if (! empty($filters['exclude_categorie_ids']) && is_array($filters['exclude_categorie_ids'])) {
             $query->whereNotIn('id_categorie', $filters['exclude_categorie_ids']);
         }
 
-        if (!empty($filters['prix_min'])) {
+        if (! empty($filters['prix_min'])) {
             $query->where('prix', '>=', $filters['prix_min']);
         }
 
-        if (!empty($filters['prix_max'])) {
+        if (! empty($filters['prix_max'])) {
             $query->where('prix', '<=', $filters['prix_max']);
         }
 
-        if (!empty($filters['marque'])) {
+        if (! empty($filters['marque'])) {
             $query->where('marque', $filters['marque']);
         }
 
-        if (!empty($filters['modele'])) {
-            $query->where('modele', 'LIKE', '%' . $filters['modele'] . '%');
+        if (! empty($filters['modele'])) {
+            $query->where('modele', 'LIKE', '%'.$filters['modele'].'%');
         }
 
-        if (!empty($filters['en_vedette'])) {
+        if (! empty($filters['en_vedette'])) {
             $query->where('est_en_vedette', true);
         }
 
-        if (!empty($filters['en_promo'])) {
+        if (! empty($filters['en_promo'])) {
             $query->where('en_promo', true);
         }
 
-        if (!empty($filters['est_nouveau'])) {
+        if (! empty($filters['est_nouveau'])) {
             $query->where('est_nouveau', true);
         }
 
-        if (!empty($filters['recherche'])) {
+        if (! empty($filters['recherche'])) {
             $terme = $filters['recherche'];
             $query->where(function ($q) use ($terme) {
                 $q->where('titre', 'LIKE', "%{$terme}%")
-                  ->orWhere('description', 'LIKE', "%{$terme}%")
-                  ->orWhere('marque', 'LIKE', "%{$terme}%")
-                  ->orWhere('reference', 'LIKE', "%{$terme}%")
-                  ->orWhere('modele', 'LIKE', "%{$terme}%")
-                  ->orWhere('slug', 'LIKE', "%{$terme}%");
+                    ->orWhere('description', 'LIKE', "%{$terme}%")
+                    ->orWhere('marque', 'LIKE', "%{$terme}%")
+                    ->orWhere('reference', 'LIKE', "%{$terme}%")
+                    ->orWhere('modele', 'LIKE', "%{$terme}%")
+                    ->orWhere('slug', 'LIKE', "%{$terme}%");
             });
         }
 
-        if (!empty($filters['tri'])) {
+        if (! empty($filters['tri'])) {
             switch ($filters['tri']) {
                 case 'prix_asc':
                     $query->orderBy('prix', 'asc');
@@ -184,11 +191,11 @@ class ProduitService
      */
     public function rechercher(string $terme)
     {
-        return $this->baseProduitQuery()
+        return $this->baseProduitQuery(false, 'shallow')
             ->where(function ($query) use ($terme) {
                 $query->where('titre', 'LIKE', "%{$terme}%")
-                      ->orWhere('description', 'LIKE', "%{$terme}%")
-                      ->orWhere('marque', 'LIKE', "%{$terme}%");
+                    ->orWhere('description', 'LIKE', "%{$terme}%")
+                    ->orWhere('marque', 'LIKE', "%{$terme}%");
             })
             ->orderByDesc('date_creation')
             ->get();
@@ -196,7 +203,7 @@ class ProduitService
 
     public function getEnVedette($idPays = null)
     {
-        return $this->baseProduitQuery()
+        return $this->baseProduitQuery(false, 'shallow')
             ->where('est_en_vedette', true)
             ->whereIn('statut', ['disponible', 'actif'])
             ->parPays($idPays)
@@ -206,7 +213,7 @@ class ProduitService
 
     public function getNouveaux($idPays = null)
     {
-        return $this->baseProduitQuery()
+        return $this->baseProduitQuery(false, 'shallow')
             ->where('est_nouveau', true)
             ->whereIn('statut', ['disponible', 'actif'])
             ->parPays($idPays)
@@ -216,7 +223,7 @@ class ProduitService
 
     public function getEnPromotion($idPays = null)
     {
-        return $this->baseProduitQuery()
+        return $this->baseProduitQuery(false, 'shallow')
             ->where('en_promo', true)
             ->whereIn('statut', ['disponible', 'actif'])
             ->parPays($idPays)
@@ -289,6 +296,7 @@ class ProduitService
 
         if ($produit && $produit->deleted_at !== null) {
             $produit->restore();
+
             return $produit->fresh()->load([
                 'pays',
                 'images' => function ($q) {
@@ -305,6 +313,7 @@ class ProduitService
     public function forceDelete(string $id): bool
     {
         $produit = Produit::withTrashed()->find($id);
+
         return $produit ? (bool) $produit->forceDelete() : false;
     }
 
@@ -327,14 +336,18 @@ class ProduitService
             ]);
             $urls[] = $img->image_url;
         }
+
         return $urls;
     }
 
     public function deleteImage(Produit $produit, string $imageId): bool
     {
         $image = $produit->images()->find($imageId);
-        if (!$image) return false;
+        if (! $image) {
+            return false;
+        }
         $image->delete();
+
         return true;
     }
 
@@ -347,7 +360,7 @@ class ProduitService
             ->with('childrenRecursive')
             ->find($category->id_categorie);
 
-        if (!$root) {
+        if (! $root) {
             return [];
         }
 
@@ -376,7 +389,7 @@ class ProduitService
         }
 
         // Si le segment n'est pas explicitement fourni, l'hériter de la catégorie.
-        if ((empty($data['segment']) || $data['segment'] === null) && !empty($data['id_categorie'])) {
+        if ((empty($data['segment']) || $data['segment'] === null) && ! empty($data['id_categorie'])) {
             $categorySegment = CategorieProduit::query()
                 ->where('id_categorie', $data['id_categorie'])
                 ->value('segment');
@@ -392,7 +405,7 @@ class ProduitService
         // Si la colonne 'segment' n'existe pas dans la table (migration non appliquée),
         // retirer la clé pour éviter une QueryException lors de l'update.
         try {
-            if (!Schema::hasColumn('produits', 'segment')) {
+            if (! Schema::hasColumn('produits', 'segment')) {
                 unset($data['segment']);
             }
         } catch (\Throwable $e) {
@@ -404,7 +417,7 @@ class ProduitService
             $data['specifications'] = $this->normalizeSpecifications($data['specifications']);
         }
 
-        if ($isCreating && (!array_key_exists('date_creation', $data) || empty($data['date_creation']))) {
+        if ($isCreating && (! array_key_exists('date_creation', $data) || empty($data['date_creation']))) {
             $data['date_creation'] = now();
         }
 
@@ -462,7 +475,7 @@ class ProduitService
             'taxonomy' => $taxonomy,
         ], function ($value) {
             if (is_array($value)) {
-                return !empty($value);
+                return ! empty($value);
             }
 
             return filled($value);
@@ -481,8 +494,8 @@ class ProduitService
 
         $normalizedUrls->each(function (string $url) use ($produit) {
             $normalizedUrl = $url;
-            if (!str_starts_with($normalizedUrl, 'http://') && !str_starts_with($normalizedUrl, 'https://') && !str_starts_with($normalizedUrl, '/')) {
-                $normalizedUrl = '/storage/' . ltrim($normalizedUrl, '/');
+            if (! str_starts_with($normalizedUrl, 'http://') && ! str_starts_with($normalizedUrl, 'https://') && ! str_starts_with($normalizedUrl, '/')) {
+                $normalizedUrl = '/storage/'.ltrim($normalizedUrl, '/');
             }
 
             $path = $normalizedUrl;
