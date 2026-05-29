@@ -7,7 +7,7 @@ import LanguageSelector from "./LanguageSelector";
 import { getCartCount, getFavoritesCount, subscribeStoreUpdates } from "../utils/shopStorage";
 import { getApiBase } from "../utils/apiBase";
 import tokenService from "../services/tokenService";
-import { getStoredCountry, setStoredCountry } from "../utils/country";
+import { getStoredCountry, setStoredCountry, countryIdToCode } from "../utils/country";
 import "../styles/header.css";
 
 // FontAwesome est importé via `@fortawesome/fontawesome-free` dans `resources/js/app.jsx`
@@ -29,10 +29,6 @@ function Header() {
   const hoverTimeout = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
-
-  const countryMap = {
-    "4b019109-b586-4450-a420-c36cb065ace8": "TG",
-  };
 
   const handleLogout = () => {
     tokenService.clearSession();
@@ -81,7 +77,7 @@ function Header() {
         const u = JSON.parse(storedUser);
         setUserData(u);
         setUserName(`${u.nom || ""} ${u.prenom || ""}`.trim() || u.name || null);
-        setCountry(countryMap[u.id_pays] || "TG");
+        setCountry(countryIdToCode(u.id_pays) || "TG");
         if (u.langue) {
           setLang(u.langue);
         }
